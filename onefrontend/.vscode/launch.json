@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Run :: gofiber",
+            "name": "Run :: onefrontend (go-chi)",
             "type": "go",
             "request": "launch",
             "mode": "auto",

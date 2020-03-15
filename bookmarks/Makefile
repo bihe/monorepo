@@ -31,14 +31,6 @@ update:
 coverage:
 	@-$(MAKE) -s go-test-coverage
 
-docker-build:
-	@-$(MAKE) -s __docker-build
-
-docker-run:
-	@-$(MAKE) -s __docker-run
-
-
-
 
 go-compile: go-clean go-build
 
@@ -76,13 +68,5 @@ go-update:
 go-test-coverage:
 	@echo "  >  Go test coverage ..."
 	go test -race -coverprofile="coverage.txt" -covermode atomic ./...
-
-__docker-build:
-	@echo " ... building docker image"
-	docker build -t bookmarks .
-
-__docker-run:
-	@echo " ... running docker image"
-	docker run -it -p 127.0.0.1:3000:3000 -v "$(PWD)/_etc":/opt/bookmarks/etc -v "$(PWD)/_logs":/opt/bookmarks/logs -v "$(PWD)/uploads":/opt/bookmarks/uploads bookmarks
 
 .PHONY: compile release test run clean coverage

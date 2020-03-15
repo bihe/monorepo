@@ -16,6 +16,7 @@ _etc/application.json
 _etc/application.yaml
 
 uploads/
+logs/
 
 bookmarks.api
 

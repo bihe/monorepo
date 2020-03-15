@@ -31,11 +31,6 @@ clean:
 swagger:
 	@-$(MAKE) go-swagger
 
-docker:
-	@-$(MAKE) do-docker-build
-
-docker-run:
-	@-$(MAKE) do-docker-run
 
 go-compile: go-clean go-build
 
@@ -74,13 +69,5 @@ go-swagger:
 	# go get -u github.com/swaggo/swag/cmd/swag
 	@echo "  >  Create/Update the swagger files"
 	swag init -g server.go
-
-do-docker-build:
-	@echo "  >  Build docker image mydms ..."
-	docker build -t mydms .
-
-do-docker-run:
-	@echo "  >  Run docker image mydms ..."
-	docker run -it -p 127.0.0.1:3000:3000 -v "$(PWD)/.":/opt/mydms/etc mydms
 
 .PHONY: compile release test run clean coverage

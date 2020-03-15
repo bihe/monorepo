@@ -28,12 +28,6 @@ update:
 coverage:
 	@-$(MAKE) -s go-test-coverage
 
-docker-build:
-	@-$(MAKE) -s __docker-build
-
-docker-run:
-	@-$(MAKE) -s __docker-run
-
 frontend:
 	@-$(MAKE) do-frontend-build
 
@@ -72,14 +66,6 @@ go-update:
 go-test-coverage:
 	@echo "  >  Go test coverage ..."
 	go test -race -coverprofile="coverage.txt" -covermode atomic ./...
-
-__docker-build:
-	@echo " ... building docker image"
-	docker build -t onefrontend .
-
-__docker-run:
-	@echo " ... running docker image"
-	docker run -it -p 127.0.0.1:3000:3000 -v "$(PWD)/etc":/opt/onefrontend/etc onefrontend
 
 do-frontend-build:
 	@echo "  >  Building angular frontend ..."

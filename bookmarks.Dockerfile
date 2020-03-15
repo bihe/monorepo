@@ -3,15 +3,17 @@
 FROM golang:alpine AS BACKEND-BUILD
 
 ARG buildtime_variable_version=1.0.0
-ARG buildtime_variable_timestamp=20200217
-ARG buildtime_variable_commit=b75038e5e9924b67db7bbf3b1147a8e3512b2acb
+ARG buildtime_variable_timestamp=YYYYMMDD
+ARG buildtime_variable_commit=githash
 
 ENV VERSION=${buildtime_variable_version}
 ENV BUILD=${buildtime_variable_timestamp}
 ENV COMMIT=${buildtime_variable_commit}
 
 WORKDIR /backend-build
-COPY . .
+COPY ./bookmarks ./bookmarks
+COPY ./commons-go ./commons-go
+WORKDIR /backend-build/bookmarks
 RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -tags prod -o bookmarks.api ./cmd/server/*.go
 ## --------------------------------------------------------------------------
 
@@ -22,10 +24,10 @@ LABEL author="henrik@binggl.net"
 WORKDIR /opt/bookmarks
 RUN mkdir -p /opt/bookmarks/etc && mkdir -p /opt/bookmarks/logs && mkdir -p /opt/bookmarks/templates && mkdir -p /opt/bookmarks/uploads
 ## required folders assets && templates
-COPY --from=BACKEND-BUILD /backend-build/assets /opt/bookmarks/assets
-COPY --from=BACKEND-BUILD /backend-build/templates /opt/bookmarks/templates
+COPY --from=BACKEND-BUILD /backend-build/bookmarks/assets /opt/bookmarks/assets
+COPY --from=BACKEND-BUILD /backend-build/bookmarks/templates /opt/bookmarks/templates
 ## the executable
-COPY --from=BACKEND-BUILD /backend-build/bookmarks.api /opt/bookmarks
+COPY --from=BACKEND-BUILD /backend-build/bookmarks/bookmarks.api /opt/bookmarks
 EXPOSE 3000
 
 # Do not run as root user

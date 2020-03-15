@@ -1,6 +1,0 @@
-.git
-./web/angular.frontend/node_modules
-./web/angular.frontend/dist
-.build/
-.vscode/
-logs/

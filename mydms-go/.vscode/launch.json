@@ -11,7 +11,10 @@
             "mode": "auto",
             "program": "${workspaceFolder}/server.go",
             "env": {},
-			"args": [],
+			"args": [
+                "-port",
+                "3002"
+            ],
             "internalConsoleOptions": "openOnSessionStart",
             "showLog": true
         }

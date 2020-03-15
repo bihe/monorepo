@@ -5,19 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Run :: login-go (go-chi)",
+            "name": "Launch",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/cmd/server/main.go",
-            "args": [
-                "--port",
-                "3001",
-                "-c",
-                "../../application.json",
-                "-b",
-                "../.."
-            ],
+            "program": "${workspaceFolder}/main.go",
+            "env": {},
+            "args": [],
             "internalConsoleOptions": "openOnSessionStart",
             "showLog": true,
             "output": "debug"

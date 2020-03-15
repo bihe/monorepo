@@ -35,12 +35,6 @@ swagger:
 run:
 	@-$(MAKE) -s go-compile go-run
 
-docker-build:
-	@-$(MAKE) -s __docker-build
-
-docker-run:
-	@-$(MAKE) -s __docker-run
-
 
 go-compile: go-clean go-build
 
@@ -82,14 +76,6 @@ go-clean:
 	@echo "  >  Cleaning build cache"
 	go clean ./...
 	rm -f ./login.api
-
-__docker-build:
-	@echo " ... building docker image"
-	docker build -t login .
-
-__docker-run:
-	@echo " ... running docker image"
-	docker run -it -p 127.0.0.1:3000:3000 -v "$(PWD)":/opt/login/etc login
 
 .PHONY: compile release test run clean coverage
 

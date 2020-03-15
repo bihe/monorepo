@@ -11,6 +11,8 @@
             "mode": "auto",
             "program": "${workspaceFolder}/cmd/server/main.go",
             "args": [
+                "--port",
+                "3003",
                 "-c",
                 "../../_etc/application.yaml",
                 "-b",

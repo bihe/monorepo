@@ -1,0 +1,39 @@
+{
+    "security": {
+        "jwtIssuer": "issuer name",
+        "jwtSecret": "secret password",
+        "cookieName": "cookie name",
+        "loginRedirect": "URL",
+        "claim": {
+            "name": "name",
+            "url": "URL",
+            "roles": ["Role1", "Rolde2"]
+        },
+        "cacheDuration": "10m"
+    },
+    "database": {
+        "connectionString": "user:pass@tcp(10.0.0.1:3306)/mydms?parseTime=true"
+    },
+    "upload": {
+        "allowedFileTypes": [],
+        "maxUploadSize": 1000,
+        "UploadPath": "/tep/"
+    },
+    "filestore":{
+        "region": "eu-central-1",
+        "bucket": "bucket-name",
+        "key": "aws-key",
+        "secret": "aws-secret"
+    },
+    "logging": {
+        "filePath": "./_logs/bookmars-api.log",
+        "logLevel": "info"
+    },
+    "cors": {
+        "origins": ["*"],
+        "methods": ["GET", "POST"],
+        "headers": ["Accept", "Authorization"],
+        "credentials": true,
+        "maxAge": 500
+    }
+}

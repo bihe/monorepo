@@ -1,0 +1,11 @@
+time="2019-11-09T19:26:41+01:00" level=info msg="🚀 Starting server ..."
+time="2019-11-09T19:26:41+01:00" level=info msg="💻 Listening on 'localhost:3000'"
+time="2019-11-09T19:26:41+01:00" level=info msg="🔖 Version: '2.0.0-20190926.211500'\n"
+time="2019-11-09T19:26:53+01:00" level=debug msg="return the application metadata info" func=appinfo.Get
+time="2019-11-09T19:26:56+01:00" level=debug msg="return the application metadata info" func=appinfo.Get
+time="2019-11-09T19:27:01+01:00" level=info msg="\nShutdown with timeout: 5s\n"
+time="2019-11-09T19:27:01+01:00" level=info msg="Server stopped"
+time="2019-11-09T19:27:48+01:00" level=info msg="\nShutdown with timeout: 5s\n"
+time="2019-11-09T19:27:48+01:00" level=info msg="Server stopped"
+time="2019-11-09T19:28:19+01:00" level=info msg="\nShutdown with timeout: 5s\n"
+time="2019-11-09T19:28:19+01:00" level=info msg="Server stopped"

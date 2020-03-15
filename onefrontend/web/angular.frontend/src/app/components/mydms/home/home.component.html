@@ -1,0 +1,77 @@
+<div class="documents">
+
+    <div class="application_title">
+      <div>
+        mydms:/
+      </div>
+
+      <div class="float-right version_info d-none d-sm-block">
+        {{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}
+      </div>
+    </div>
+
+    <div class="document_cards">
+
+        <mat-card class="document_card" *ngFor="let item of documents; let i = index" id="{{ item.id }}" >
+            <mat-card-title>
+            <span class="document_card_title" matTooltip="{{ item.title }}" matTooltipPosition="below" (click)="editDocument(item)">{{ item.title | ellipsis:30 }}</span>
+            </mat-card-title>
+            <mat-card-content>
+                <span class="invoice-number-element">
+                    <span *ngIf="item.invoiceNumber != null">Nbr:&nbsp;</span><span class="invoice-number">{{ item.invoiceNumber }}</span>
+                </span>
+
+                <div class="senders">
+                    <span class="sender-tag" *ngFor="let sender of item.senders">
+                        <i *ngIf="sender != ''" class="fa fa-truck" aria-hidden="true"></i>&nbsp;{{ sender | ellipsis: 25 }}
+                    </span>
+                </div>
+                <div class="tags">
+                    <span class="tag" *ngIf="item.tags == null">
+                        <i class="fa fa-hashtag" aria-hidden="true"></i>-
+                    </span>
+
+                    <span class="tag" *ngFor="let tag of item.tags">
+                        <i *ngIf="tag != ''" class="fa fa-hashtag" aria-hidden="true"></i>{{ tag | ellipsis: 25 }}
+                    </span>
+                </div>
+
+                <div class="download">
+                    <a href="{{ baseApiUrl }}/api/v1/file/?path={{ item.previewLink }}" target="_blank" class="download_cloud"><i class="fa fa-cloud-download fa-3x download_icon" aria-hidden="true"></i></a>
+                </div>
+
+            </mat-card-content>
+            <mat-card-footer class="document_card_footer">
+                <strong>{{ item.created | dfmt:"DD.MM.YYYY" }}</strong>
+                <span *ngIf="item.modified !=  null"> / m:<strong>{{ item.modified | dfmt:"DD.MM.YYYY" }}</strong></span>
+            </mat-card-footer>
+
+            <div *ngIf="item.amount > 0" class="amount">&euro; {{ item.amount }}</div>
+
+
+        </mat-card>
+
+        <div *ngIf="totalEntries == 0" class="no_search_results">
+            <h4>No results found - either nothing is there, or your search did not return any results!</h4>
+            <p>
+                <button mat-raised-button class="clear__search" (click)="clearSearch()"><i class="fa fa-recycle" aria-hidden="true"></i> clear the search!</button>
+            </p>
+        </div>
+
+        <div *ngIf="shownResults < totalEntries" class="show_more_results">
+            <p>Currently showing {{ shownResults }} result<span *ngIf="shownResults > 1">s</span> of total {{ totalEntries }}</p>
+            <button mat-icon-button class="more__results" (click)="showMoreResults()" matTooltip="Load more results"><i class="fa fa-ellipsis-h" aria-hidden="true"></i></button>
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="add" >
+    <button mat-fab
+        color="accent"
+        (click)="addDocument()">
+        <i class="fa fa-plus fa-2x" aria-hidden="true" matTooltip="Add a new document" matTooltipPosition="before"></i>
+    </button>
+</div>

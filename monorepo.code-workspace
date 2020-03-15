@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "mydms-go"
+		},
+		{
+			"path": "commons-go"
+		},
+		{
+			"path": "login-go"
+		},
+		{
+			"path": "bookmarks"
+		},
+		{
+			"path": "onefrontend"
+		}
+	],
+	"settings": {}
+}

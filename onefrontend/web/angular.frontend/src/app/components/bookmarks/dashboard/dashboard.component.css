@@ -1,0 +1,43 @@
+.dashboard {
+  display: block;
+  margin-bottom: 30px;
+}
+
+.dashboard_card {
+  max-width: 400px;
+  display: inline-block;
+  margin: 20px;
+}
+
+.dashboard_card_title {
+  color: black;
+}
+
+.dashboard_card_title:hover {
+  text-decoration: none;
+}
+
+.dashboard_card_footer {
+  font-weight: bold;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.8em;
+  padding: 5px;
+  text-align: right;
+  color: #999999;
+}
+
+
+.application_title {
+  display: block;
+  padding: 10px;
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+  background-color: #E5E8E8;
+  margin-bottom: 19px;
+  border-bottom: solid 1px #aaaaaa;
+}
+
+.version_info {
+  position: relative;
+  top: -18px;
+  font-size: 0.9em;
+}

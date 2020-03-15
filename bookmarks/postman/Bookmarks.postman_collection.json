@@ -1,0 +1,234 @@
+{
+	"info": {
+		"_postman_id": "e9746ff4-51da-4ed2-8969-164194731fe5",
+		"name": "Bookmarks",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "https://localhost:3001/api/v1/appinfo",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/api/v1/bookmarks/app/info",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"bookmarks",
+						"app",
+						"info"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "https://localhost:3001/api/v1/bookmarks",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"id\": \"0aa7e411-1d56-4e11-b9e7-c616548edc7a\",\n\t\"displayName\": \"DisplayName\",\n\t\"path\": \"/\",\n\t\"type\": \"node\",\n\t\"url\": \"http://a.b.c.de\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/api/v1/bookmarks",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"bookmarks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "https://localhost:3001/api/v1/bookmarks/8e136d49-f4f2-4be6-9b37-0e66caff10db",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3000/api/v1/bookmarks/0aa7e411-1d56-4e11-b9e7-c616548edc7a",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"bookmarks",
+						"0aa7e411-1d56-4e11-b9e7-c616548edc7a"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "https://localhost:3001/api/v1/bookmarks ",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"id\": \"0aa7e411-1d56-4e11-b9e7-c616548edc7a\",\n    \"path\": \"/\",\n    \"displayName\": \"DisplayName_updated\",\n    \"url\": \"http://a.b.c.de\",\n    \"sortOrder\": 0,\n    \"type\": \"Node\",\n    \"created\": \"2020-02-14T15:00:37.364574Z\",\n    \"childCount\": 0,\n    \"accessCount\": 0,\n    \"favicon\": \"\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/api/v1/bookmarks",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"bookmarks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "https://localhost:3001/api/v1/bookmarks/71caff9d-6323-4844-b84e-e7d525777c3d",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/api/v1/bookmarks/0aa7e411-1d56-4e11-b9e7-c616548edc7a",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"bookmarks",
+						"0aa7e411-1d56-4e11-b9e7-c616548edc7a"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "https://localhost:3001/api/v1/bookmarks/find?path=/",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/api/v1/bookmarks/bypath?path=/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"bookmarks",
+						"bypath"
+					],
+					"query": [
+						{
+							"key": "path",
+							"value": "/"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}

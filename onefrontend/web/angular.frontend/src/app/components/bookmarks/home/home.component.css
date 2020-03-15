@@ -1,0 +1,218 @@
+.bookmarks_content {
+  padding-left: 0px;
+}
+
+.bookmarks_breadcrumb {
+  display: block;
+  padding: 10px;
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+}
+
+.drop_highlight {
+  background-color: #E67E22;
+}
+
+.drop_highlight_not {
+  background-color: #E5E8E8;
+}
+
+.bookmarks_breadcrumb a.root {
+  font-weight: bold;
+}
+
+.bookmarks_breadcrumb a.root:hover {
+  cursor: pointer;
+}
+
+.bookmarks_breadcrumb a.rootroot {
+  font-weight: bold;
+  color: darkred;
+}
+
+.bookmarks_breadcrumb a.rootroot:hover {
+  cursor: pointer;
+}
+
+.bookmarks_list {
+  display: block;
+  padding-bottom: 35px;
+}
+
+.bookmark_item {
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-top: solid 1px #999999;
+  background-color: #ffffff;
+  cursor: move;
+}
+
+.bookmark_item:last-child {
+  border-bottom: solid 1px #999999;
+}
+
+@media (max-width: 575.98px) {
+  .bookmark_item {
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-top: solid 1px #999999;
+    background-color: #ffffff;
+    cursor: default;
+  }
+
+}
+
+a.bookmark_name {
+  font-weight: bold;
+  font-family: 'Source Code Pro', monospace;
+  font-size: 1.2em;
+}
+
+a.bookmark_folder {
+  font-weight: bold;
+  font-family: 'Source Code Pro', monospace;
+  font-size: 1.2em;
+}
+
+a.bookmark_folder:hover {
+  cursor: pointer;
+}
+
+a.bookmark_url {
+  font-family: 'Source Code Pro', monospace;
+}
+
+.bookmark_actions {
+  float: right;
+  padding-right: 0px;
+  position: relative;
+  top: -7px;
+}
+
+a.bookmark_actions {
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+.bookmark_child_items {
+  font-weight: bold;
+  position: relative;
+  left: 5px;
+  top: -4px;
+}
+
+.bookmark_index {
+  font-weight: bold;
+  color: #999999;
+  font-size: 0.7em;
+  width: 10px;
+  display: inline-block;
+}
+
+.bookmark_path_info {
+  vertical-align: top;
+  font-weight: bold;
+  font-family: 'Source Code Pro', monospace;
+  font-size: 1.2em;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.bookmark_path_info:hover {
+  text-decoration: underline;
+}
+
+.bookmark_folder_icon {
+  vertical-align: middle;
+}
+
+.bookmark_search {
+  position: relative;
+  top: -18px;
+  font-size: 0.9em;
+}
+
+.bookmark_search_responsive {
+  font-style: italic;
+}
+
+.bookmark_path_edit_action {
+  vertical-align: baseline;
+}
+
+@media (max-width: 575.98px) {
+
+  .bookmark_path_edit_action {
+    vertical-align: sub;
+  }
+
+}
+
+.bookmark_path_edit_action:hover {
+  cursor: pointer;
+  color: red;
+}
+
+
+.bookmark_path_edit {
+  /* display: block; */
+  width: 95%;
+  height: calc(1.5em + .75rem + 2px);
+  padding: .375rem .75rem;
+  /* font-size: 1rem; */
+  font-weight: 400;
+  line-height: 1.5;
+  color: #495057;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  border-radius: .25rem;
+  transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+
+.add {
+  cursor: pointer;
+  position: fixed;
+  bottom: 50px;
+  right: 30px;
+}
+
+@media (max-width: 575.98px) {
+
+  .bookmark_path_edit {
+    /* display: block; */
+    width: 80%;
+    height: calc(1.5em + .75rem + 2px);
+    padding: .375rem .75rem;
+    /* font-size: 1rem; */
+    font-weight: 400;
+    line-height: 1.5;
+    color: #495057;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+  }
+
+  .add {
+    cursor: pointer;
+    position: fixed;
+    top: 2px;
+    right: 10px;
+    height: 40px;
+    z-index: 99;
+  }
+
+}
+
+.bookmark_favicon {
+  width: 16px;
+  height: 16px;
+  vertical-align: text-top;
+}
+
+

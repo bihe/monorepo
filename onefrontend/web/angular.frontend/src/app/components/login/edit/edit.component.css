@@ -1,0 +1,58 @@
+body,
+.edit_container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  height: 100%;
+  width: 100%;
+  padding-left:0px;
+  padding-right:0px;
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+}
+
+.heading {
+  background-color: #CD6155;
+  padding: 5px;
+}
+.heading p {
+  font-size: 1.2em;
+  color: white;
+  font-family: 'Source Code Pro';
+  padding: 2px;
+  margin: 0px;
+}
+
+.content {
+  /*height: 100%;*/
+  flex: 1;
+}
+
+.editjson {
+  font-size: 1.1em;
+  font-family: 'Source Code Pro', 'Courier New', Courier, monospace;
+  padding: 10px;
+  width: 100%;
+  border:none;
+  background-color: darkslategrey;
+  color: #D7DBDD;
+
+  box-sizing: border-box; /* fit parent width */
+  height: 100%;
+
+}
+
+.save {
+  position: absolute;
+  right: 30px;
+  bottom: 70px;
+  color: black;
+  font-size: 1.3em;
+}
+
+.home {
+  position: absolute;
+  right: 30px;
+  bottom: 170px;
+  color: black;
+  font-size: 1.3em;
+}

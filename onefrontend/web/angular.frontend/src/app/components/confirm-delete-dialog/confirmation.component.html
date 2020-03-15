@@ -1,0 +1,19 @@
+<h2 mat-dialog-title>Really delete {{ name }}?</h2>
+<mat-dialog-content class="dialog-height">
+
+    <p>Do you really want to delete the selected item '{{ name }}'?</p>
+
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+
+  <button
+    mat-raised-button
+    mat-dialog-close>No</button>
+
+  <button
+    mat-raised-button
+    color="accent"
+    (click)="onConfirmDelete()">
+   
+    Yes</button>
+</mat-dialog-actions>

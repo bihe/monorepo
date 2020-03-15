@@ -1,0 +1,877 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "the purpose of this application is to provide bookmarks management independent of browsers",
+    "title": "implements the HTTP API of the bookmarks-application.",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+    },
+    "version": "1.0.0"
+  },
+  "host": "bookmarks.binggl.net",
+  "basePath": "/api/v1",
+  "paths": {
+    "/api/v1/bookmarks": {
+      "put": {
+        "description": "use the supplied payload to update a existing bookmark",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "bookmarks"
+        ],
+        "summary": "update a bookmark",
+        "operationId": "UpdateBookmark",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Bookmark"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Result",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "400": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "use the supplied payload to create a new bookmark",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "bookmarks"
+        ],
+        "summary": "create a bookmark",
+        "operationId": "CreateBookmark",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Bookmark"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Result",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "400": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/bookmarks/allpaths": {
+      "get": {
+        "description": "determine all available paths for the given user",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "bookmarks"
+        ],
+        "summary": "return all paths",
+        "operationId": "GetAllPaths",
+        "responses": {
+          "200": {
+            "description": "BookmarksPathsResponse",
+            "schema": {
+              "$ref": "#/definitions/BookmarksPathsResponse"
+            }
+          },
+          "400": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "404": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/bookmarks/byname": {
+      "get": {
+        "description": "search for bookmarks by name and return a list of search-results",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "bookmarks"
+        ],
+        "summary": "get bookmarks by name",
+        "operationId": "GetBookmarksByName",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "BookmarkList",
+            "schema": {
+              "$ref": "#/definitions/BookmarkList"
+            }
+          },
+          "400": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/bookmarks/bypath": {
+      "get": {
+        "description": "returns a list of bookmarks for a given path",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "bookmarks"
+        ],
+        "summary": "get bookmarks by path",
+        "operationId": "GetBookmarksByPath",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "BookmarkList",
+            "schema": {
+              "$ref": "#/definitions/BookmarkList"
+            }
+          },
+          "400": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/bookmarks/favicon": {
+      "get": {
+        "description": "return the stored favicon for the given bookmark or return the default favicon",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "bookmarks"
+        ],
+        "summary": "get the favicon from bookmark",
+        "operationId": "GetFavicon",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Favicon as a file"
+          },
+          "400": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/bookmarks/fetch": {
+      "get": {
+        "description": "fetch the URL of the specified bookmark and forward to the destination",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "bookmarks"
+        ],
+        "summary": "forward to the bookmark",
+        "operationId": "FetchAndForward",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Found, redirect to URL"
+          },
+          "400": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "404": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/bookmarks/folder": {
+      "get": {
+        "description": "returns the folder identified by the given path",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "bookmarks"
+        ],
+        "summary": "get bookmark folder by path",
+        "operationId": "GetBookmarksFolderByPath",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "BookmarkResult",
+            "schema": {
+              "$ref": "#/definitions/BookmarkResult"
+            }
+          },
+          "400": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "404": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/bookmarks/mostvisited/{num}": {
+      "get": {
+        "description": "return the most recently visited bookmarks",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "bookmarks"
+        ],
+        "summary": "get recent accessed bookmarks",
+        "operationId": "GetMostVisited",
+        "parameters": [
+          {
+            "name": "num",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "BookmarkList",
+            "schema": {
+              "$ref": "#/definitions/BookmarkList"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/bookmarks/sortorder": {
+      "put": {
+        "description": "provide a new sortorder for a list of IDS",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "bookmarks"
+        ],
+        "summary": "change the sortorder of bookmarks",
+        "operationId": "UpdateSortOrder",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/BookmarksSortOrder"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Result",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "400": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/bookmarks/{id}": {
+      "get": {
+        "description": "returns a single bookmark specified by it's ID",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "bookmarks"
+        ],
+        "summary": "get a bookmark by id",
+        "operationId": "GetBookmarkByID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bookmark",
+            "schema": {
+              "$ref": "#/definitions/Bookmark"
+            }
+          },
+          "400": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "404": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "delete the bookmark identified by the supplied id",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "bookmarks"
+        ],
+        "summary": "delete a bookmark",
+        "operationId": "DeleteBookmark",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Result",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "400": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      }
+    },
+    "/appinfo": {
+      "get": {
+        "description": "meta-data of the application including authenticated user and version",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "appinfo"
+        ],
+        "summary": "provides information about the application",
+        "operationId": "HandleAppInfo",
+        "responses": {
+          "200": {
+            "description": "Meta",
+            "schema": {
+              "$ref": "#/definitions/Meta"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Bookmark": {
+      "description": "Bookmark is the model provided via the REST API",
+      "type": "object",
+      "properties": {
+        "accessCount": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "AccessCount"
+        },
+        "childCount": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ChildCount"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Created"
+        },
+        "displayName": {
+          "type": "string",
+          "x-go-name": "DisplayName"
+        },
+        "favicon": {
+          "type": "string",
+          "x-go-name": "Favicon"
+        },
+        "id": {
+          "type": "string",
+          "x-go-name": "ID"
+        },
+        "modified": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Modified"
+        },
+        "path": {
+          "type": "string",
+          "x-go-name": "Path"
+        },
+        "sortOrder": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "SortOrder"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "Node",
+            "Folder"
+          ],
+          "x-go-name": "Type"
+        },
+        "url": {
+          "type": "string",
+          "x-go-name": "URL"
+        }
+      },
+      "x-go-package": "github.com/bihe/bookmarks/internal/server/api"
+    },
+    "BookmarkList": {
+      "description": "BookmarkList is a collection of Bookmarks",
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Count"
+        },
+        "message": {
+          "type": "string",
+          "x-go-name": "Message"
+        },
+        "success": {
+          "type": "boolean",
+          "x-go-name": "Success"
+        },
+        "value": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Bookmark"
+          },
+          "x-go-name": "Value"
+        }
+      },
+      "x-go-package": "github.com/bihe/bookmarks/internal/server/api"
+    },
+    "BookmarkResult": {
+      "description": "BookmarkResult has additional information about a Bookmark",
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "x-go-name": "Message"
+        },
+        "success": {
+          "type": "boolean",
+          "x-go-name": "Success"
+        },
+        "value": {
+          "$ref": "#/definitions/Bookmark"
+        }
+      },
+      "x-go-package": "github.com/bihe/bookmarks/internal/server/api"
+    },
+    "BookmarksPathsResponse": {
+      "description": "BookmarksPathsResponse returns available Paths",
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Count"
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Paths"
+        }
+      },
+      "x-go-package": "github.com/bihe/bookmarks/internal/server/api"
+    },
+    "BookmarksSortOrder": {
+      "description": "BookmarksSortOrder contains a sorting for a list of ids",
+      "type": "object",
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "IDs"
+        },
+        "sortOrder": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "x-go-name": "SortOrder"
+        }
+      },
+      "x-go-package": "github.com/bihe/bookmarks/internal/server/api"
+    },
+    "Meta": {
+      "description": "Meta specifies application metadata",
+      "type": "object",
+      "properties": {
+        "userInfo": {
+          "$ref": "#/definitions/UserInfo"
+        },
+        "versionInfo": {
+          "$ref": "#/definitions/VersionInfo"
+        }
+      },
+      "x-go-package": "github.com/bihe/commons-go/handler"
+    },
+    "ProblemDetail": {
+      "description": "\"Note that both \"type\" and \"instance\" accept relative URIs; this means\nthat they must be resolved relative to the document's base URI\"",
+      "type": "object",
+      "title": "ProblemDetail combines the fields defined in RFC7807",
+      "properties": {
+        "detail": {
+          "description": "Detail is a human-readable explanation specific to this occurrence of the problem",
+          "type": "string",
+          "x-go-name": "Detail"
+        },
+        "instance": {
+          "description": "Instance is a URI reference that identifies the specific occurrence of the problem",
+          "type": "string",
+          "x-go-name": "Instance"
+        },
+        "status": {
+          "description": "Status is the HTTP status code",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Status"
+        },
+        "title": {
+          "description": "Title is a short, human-readable summary of the problem type",
+          "type": "string",
+          "x-go-name": "Title"
+        },
+        "type": {
+          "description": "Type is a URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the problem",
+          "type": "string",
+          "x-go-name": "Type"
+        }
+      },
+      "x-go-package": "github.com/bihe/commons-go/errors"
+    },
+    "Result": {
+      "description": "Result is a generic response with a string value",
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "x-go-name": "Message"
+        },
+        "success": {
+          "type": "boolean",
+          "x-go-name": "Success"
+        },
+        "value": {
+          "type": "string",
+          "x-go-name": "Value"
+        }
+      },
+      "x-go-package": "github.com/bihe/bookmarks/internal/server/api"
+    },
+    "UserInfo": {
+      "description": "UserInfo provides information about the currently logged-in user",
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "x-go-name": "DisplayName"
+        },
+        "email": {
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Roles"
+        },
+        "userId": {
+          "type": "string",
+          "x-go-name": "UserID"
+        },
+        "userName": {
+          "type": "string",
+          "x-go-name": "UserName"
+        }
+      },
+      "x-go-package": "github.com/bihe/commons-go/handler"
+    },
+    "VersionInfo": {
+      "description": "VersionInfo is used to provide version and build",
+      "type": "object",
+      "properties": {
+        "buildNumber": {
+          "type": "string",
+          "x-go-name": "Build"
+        },
+        "version": {
+          "type": "string",
+          "x-go-name": "Version"
+        }
+      },
+      "x-go-package": "github.com/bihe/commons-go/handler"
+    }
+  }
+}

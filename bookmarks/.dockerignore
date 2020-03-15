@@ -1,0 +1,6 @@
+.git
+frontend.angular/node_modules
+frontend.angular/dist
+.build/
+postman
+.vscode/

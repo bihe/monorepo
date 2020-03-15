@@ -1,0 +1,42 @@
+<div class="edit_bookmark_layout">
+  <h1 mat-dialog-title *ngIf="bookmark.id === ''">Create a new bookmark</h1>
+  <h1 mat-dialog-title *ngIf="bookmark.id !== ''">Update bookmark</h1>
+  <form class="bookmark-form" #bookmarkForm="ngForm" name="bookmarkForm">
+    <div class="edit_bookmark_container">
+      <div>
+        <mat-radio-group [(ngModel)]="type" name="type" [disabled]="bookmark.id !== ''" class="dialog-form-input">
+          <mat-radio-button value="Node" class="radio">Bookmark</mat-radio-button>
+          <mat-radio-button value="Folder">Folder</mat-radio-button>
+        </mat-radio-group>
+      </div>
+
+      <mat-form-field>
+        <input class="dialog-form-input" matInput placeholder="Name" name="displayName" [(ngModel)]="bookmark.displayName" required>
+      </mat-form-field>
+      <mat-form-field *ngIf="type !== 'Folder'">
+        <input class="dialog-form-input" matInput placeholder="URL" name="url" [(ngModel)]="bookmark.url" [required]="type !== 'folder'">
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Path</mat-label>
+        <mat-select [(ngModel)]="selectedPath" name="selectedPath">
+          <mat-option *ngFor="let path of data.absolutePaths" [value]="path" required>
+            {{path}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <section *ngIf="type !== 'Folder'">
+        <mat-checkbox class="dialog-form-input" name="refreshFavicon" [(ngModel)]="reloadFavicon">Re-fetch Favicon</mat-checkbox>
+      </section>
+
+      <div mat-dialog-actions class="create_bookmark_layout">
+        <button mat-raised-button (click)="onNoClick()">Cancel</button>
+        <button mat-raised-button color="primary"
+          (click)="onSave()"
+          [disabled]="!bookmarkForm.form.valid"
+          >Save</button>
+      </div>
+    </div>
+  </form>
+</div>
+

@@ -1,0 +1,101 @@
+<div class="application_title">
+    <div>
+      mydms:/
+    </div>
+
+    <div class="float-right version_info d-none d-sm-block">
+      {{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}
+    </div>
+</div>
+
+<mat-card>
+
+    <mat-card-header class="document_heading">
+        <div mat-card-avatar class="document__icon"><i class="fa fa-file-pdf-o fa-2x" aria-hidden="true"></i></div>
+        <mat-card-title class="document_heading">
+            <mat-form-field color="warn" hintLabel="Specify the name of the document" class="document_title">
+                <input matInput placeholder="Document title" [(ngModel)]="documentTitle">
+            </mat-form-field>
+
+
+        </mat-card-title>
+
+    </mat-card-header>
+
+    <div class="upload__zone upload_section">
+            <div class="drop-container" [hidden]="uploadFileName != ''"
+                ngFileDrop
+                (uploadOutput)="onUploadOutput($event)"
+                [uploadInput]="uploadInput"
+                [ngClass]="{ 'is-drop-over': dragOver }">
+                <span class="upload__zone_dd_text">Upload Drag &amp; Drop Zone</span>
+
+
+                <div class="upload__file">
+                    <input type="file" #fileUpload
+                        ngFileSelect (uploadOutput)="onUploadOutput($event)"
+                        [uploadInput]="uploadInput" style="display: none;">
+                    <span (click)="fileUpload.click()" >or <span style="text-decoration:underline">choose</span> a file</span>
+                </div>
+
+            </div>
+
+            <div class="uploadfile" *ngIf="uploadFileName != ''">
+                <div class="pull-left">
+                  <span class="upload_link">
+                    <i class="fa fa-cloud-download" aria-hidden="true"></i>&nbsp;<a target="_blank" href="{{ baseApiUrl }}/api/v1/file/?path={{ encodedUploadFileName }}">{{ uploadFileName | ellipsis:50 }}</a>
+                  </span>
+                </div>
+                <div class="pull-right">
+                  <i class="fa fa-times" aria-hidden="true" (click)="onClearUploadedFile()"></i>
+                </div>
+                <br/>
+            </div>
+    </div>
+
+
+
+    <mat-card-content>
+        <div *ngIf="showAmount === true">
+            <mat-form-field color="warn" hintLabel="Optional amount">
+                <input type="number" matInput placeholder="Amount" [(ngModel)]="documentAmount">
+            </mat-form-field>
+        </div>
+
+        <div class="invoice_number">
+            <mat-form-field color="warn" hintLabel="Optional invoice number" class="document_invoicenumber">
+                <input matInput placeholder="Invoice Number" [(ngModel)]="invoiceNumber">
+            </mat-form-field>
+        </div>
+        <div class="tags">
+
+            <tag-input [(ngModel)]='selectedSenders' required
+            secondaryPlaceholder="Add a sender"
+            placeholder="+senders"
+            >
+                <tag-input-dropdown
+                [autocompleteObservable]='searchForSenders'></tag-input-dropdown>
+
+            </tag-input>
+
+            <tag-input [(ngModel)]='selectedTags'
+            secondaryPlaceholder="Add a tag"
+            placeholder="+tags"
+            >
+                <tag-input-dropdown
+                [autocompleteObservable]='searchForTags'></tag-input-dropdown>
+
+            </tag-input>
+
+
+
+        </div>
+    </mat-card-content>
+
+    <mat-card-actions>
+        <button mat-raised-button (click)="onCancel()">Cancel</button>
+        <button mat-raised-button class="pull-right save" (click)="onSave()" [disabled]="!isFormValid()" >Save</button>
+        <button *ngIf="!isNewDocument" mat-raised-button class="pull-right delete" (click)="onDelete()">Delete</button>
+    </mat-card-actions>
+
+</mat-card>

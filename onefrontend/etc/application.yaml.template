@@ -1,0 +1,33 @@
+---
+jwt:
+  jwtIssuer: issuer
+  jwtSecret: <secret>
+  cookieName: <cookie_name>
+  loginRedirect: http://localhost:3000
+  claim:
+    name: bookmarks
+    url: http://localhost:3000
+    roles:
+    - User
+    - Admin
+  cacheDuration: 10m
+
+logging:
+  filePath: "/temp/file"
+  requestPath: "/temp/request"
+  logLevel: debug
+
+cookies:
+  domain: dot.com
+  path: /path
+  secure: true
+
+assetDir: "./assets"
+assetPrefix: "prefix"
+
+frontendDir: "./ui"
+frontendPrefix: "ui"
+
+errorPath: error
+startUrl: http://url
+environment: Development

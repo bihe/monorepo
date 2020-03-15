@@ -1,0 +1,33 @@
+<div class="dashboard">
+
+  <div class="application_title">
+    <div>
+      sites:/
+    </div>
+
+    <div class="float-right version_info d-none d-sm-block">
+      {{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}
+    </div>
+  </div>
+
+  <mat-card class="dashboard_card" *ngFor="let item of userInfo?.userSites; let i = index" id="{{ item.id }}" >
+    <mat-card-title>
+      <a class="dashboard_card_title" href="{{ item.url }}" target="_blank">{{ item.name | ellipsis: 20}}</a>
+    </mat-card-title>
+    <mat-card-content>
+      <img src="assets/favicon.ico"
+        class="bookmark_favicon"
+        loading="lazy"
+        width="16px" height="16px"
+        alt="favicon"/>
+      &nbsp;
+      <a href="{{ item.url }}" target="_blank">{{ item.url | ellipsis:25 }}</a>
+    </mat-card-content>
+    <mat-card-footer class="dashboard_card_footer">
+      roles: <span class="permission" *ngFor="let perm of item?.permissions"><i class="fa fa-hashtag" aria-hidden="true"></i>{{ perm | ellipsis: 15 }}</span>
+    </mat-card-footer>
+  </mat-card>
+
+
+  <button *ngIf="userInfo?.editable" mat-fab color="accent" class="edit" (click)="edit()"><i class="fa fa-cogs fa-2x" aria-hidden="true"></i></button>
+</div>

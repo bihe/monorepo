@@ -1,0 +1,44 @@
+/* You can add global styles to this file, and also import other style files */
+@import '~@angular/material/prebuilt-themes/deeppurple-amber.css';
+@import 'https://fonts.googleapis.com/icon?family=Material+Icons';
+@import url('https://fonts.googleapis.com/css?family=Roboto+Mono|Source+Code+Pro&display=swap');
+
+.success {
+  background-color: #27AE60 !important;
+}
+
+.error {
+  background-color: #A93226 !important;
+}
+
+.info {
+  background-color: #5DADE2  !important;
+}
+
+.mat-card-header-text {
+  width: 100%;
+}
+
+html, body { margin: 0; padding: 0; height: 100%; font-family: 'Roboto Mono', monospace; font-size: 0.9em; }
+
+/*
+ overwrite some boostrap defaults
+*/
+button:focus {
+  outline: none;
+}
+
+
+.my-full-screen-dialog {
+  width: 50vw !important;
+}
+
+@media (max-width: 575.98px) {
+  .my-full-screen-dialog {
+    height: 100vh;
+    width: 100vw !important;
+    max-width: none !important;
+  }
+}
+
+

@@ -1,0 +1,17 @@
+<footer class="footer ">
+  <div class="container-fluid">
+      <p class="text-muted">
+
+        <span class="d-block d-sm-none">
+          <i class="fa fa-copyright" aria-hidden="true"></i> {{ year }} HB
+          | <small><span matTooltip="{{ appData?.versionInfo?.version }}" matTooltipPosition="before" style="color:indigo">{{ appData?.versionInfo?.version | ellipsis:35 }}</span></small>
+        </span>
+
+        <span class="d-none d-sm-inline">
+          <i class="fa fa-copyright" aria-hidden="true"></i> {{ year }} Henrik.Binggl
+          <span class="d-none d-sm-inline">| <strong>binggl.net</strong> | <span class="fa fa-code-fork"></span>&nbsp;<span style="color:indigo">{{ appData?.versionInfo?.version }}-{{ appData?.versionInfo?.buildNumber }}</span>, ui: <span style="color:darkviolet">{{ appData?.uiRuntime }}</span>
+          </span>
+        </span>
+      </p>
+      </div>
+</footer>

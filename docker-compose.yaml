@@ -58,5 +58,18 @@ services:
         restart:
             on-failure
 
+    db:
+        image: mariadb:10.4
+        networks:
+            - app-network
+        ports:
+            - "3306:3306"
+        volumes:
+            - ./db:/docker-entrypoint-initdb.d
+        restart:
+            on-failure
+        environment:
+            MYSQL_ROOT_PASSWORD: mariadb
+
 networks:
     app-network: {}

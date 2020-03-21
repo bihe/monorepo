@@ -13,13 +13,13 @@ import (
 	"time"
 
 	"github.com/bihe/bookmarks/internal/store"
+	"github.com/go-chi/chi"
+	"github.com/jinzhu/gorm"
+	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/commons/cookies"
 	"golang.binggl.net/commons/errors"
 	"golang.binggl.net/commons/handler"
 	"golang.binggl.net/commons/security"
-	"github.com/go-chi/chi"
-	"github.com/jinzhu/gorm"
-	"github.com/stretchr/testify/assert"
 
 	_ "github.com/jinzhu/gorm/dialects/sqlite" // use sqlite for testing
 )
@@ -529,7 +529,8 @@ func TestCreateBookmark(t *testing.T) {
 			payload: `{
 				"displayName": "Folder",
 				"path": "/",
-				"type": "Folder"
+				"type": "Folder",
+				"customFavicon": "https://sdtimes.com/wp-content/uploads/2018/01/bootstrap-stack-490x412.png"
 			}`,
 			status:   http.StatusCreated,
 			response: "",

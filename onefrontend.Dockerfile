@@ -1,10 +1,14 @@
 ## fronted build-phase
 ## --------------------------------------------------------------------------
 FROM node:lts-alpine AS FRONTEND-BUILD
+
+ARG FRONTEND_MODE=prod
+ENV FRONTEND_MODE=${FRONTEND_MODE}
+
 WORKDIR /frontend-build
 COPY ./onefrontend/web/angular.frontend .
-RUN ls -l .
-RUN rm -f package-lock.json && yarn global add @angular/cli@latest && yarn install && yarn run build --prod --base-href /ui/
+RUN echo ${FRONTEND_MODE}
+RUN rm -f package-lock.json && yarn global add @angular/cli@latest && yarn install && yarn run ${FRONTEND_MODE} --base-href /ui/
 ## --------------------------------------------------------------------------
 
 ## backend build-phase

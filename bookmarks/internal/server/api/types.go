@@ -27,17 +27,18 @@ const (
 // Bookmark is the model provided via the REST API
 // swagger:model
 type Bookmark struct {
-	ID          string     `json:"id"`
-	Path        string     `json:"path"`
-	DisplayName string     `json:"displayName"`
-	URL         string     `json:"url"`
-	SortOrder   int        `json:"sortOrder"`
-	Type        NodeType   `json:"type"`
-	Created     time.Time  `json:"created"`
-	Modified    *time.Time `json:"modified,omitempty"`
-	ChildCount  int        `json:"childCount"`
-	AccessCount int        `json:"accessCount"`
-	Favicon     string     `json:"favicon"`
+	ID            string     `json:"id"`
+	Path          string     `json:"path"`
+	DisplayName   string     `json:"displayName"`
+	URL           string     `json:"url"`
+	SortOrder     int        `json:"sortOrder"`
+	Type          NodeType   `json:"type"`
+	Created       time.Time  `json:"created"`
+	Modified      *time.Time `json:"modified,omitempty"`
+	ChildCount    int        `json:"childCount"`
+	AccessCount   int        `json:"accessCount"`
+	Favicon       string     `json:"favicon"`
+	CustomFavicon string     `json:"customFavicon"`
 }
 
 // BookmarkList is a collection of Bookmarks

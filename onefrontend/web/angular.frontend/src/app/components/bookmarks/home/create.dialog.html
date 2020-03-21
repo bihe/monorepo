@@ -25,9 +25,13 @@
         </mat-select>
       </mat-form-field>
 
-      <section *ngIf="type !== 'Folder'">
-        <mat-checkbox class="dialog-form-input" name="refreshFavicon" [(ngModel)]="reloadFavicon">Re-fetch Favicon</mat-checkbox>
+      <section *ngIf="type !== 'Folder' && toggleCustomFavicon === false">
+        <mat-checkbox class="dialog-form-input" name="reloadFav" [(ngModel)]="reloadFavicon">Re-fetch Favicon</mat-checkbox>
       </section>
+      <mat-checkbox class="dialog-form-input" name="toggleCustFav" [(ngModel)]="toggleCustomFavicon">Custom Favicon</mat-checkbox>
+      <mat-form-field *ngIf="toggleCustomFavicon === true">
+        <input class="dialog-form-input" matInput placeholder="Favicon URL" name="customFavicon" [(ngModel)]="customFavicon" [required]="toggleCustomFavicon === true">
+      </mat-form-field>
 
       <div mat-dialog-actions class="create_bookmark_layout">
         <button mat-raised-button (click)="onNoClick()">Cancel</button>

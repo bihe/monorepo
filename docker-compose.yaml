@@ -1,62 +1,6 @@
 version: '3'
 
 services:
-    
-    login-3001:
-        build: 
-            context: .
-            dockerfile: ./login.Dockerfile
-        image: login
-        networks:
-            - app-network
-        ports:
-            - "3001:3000"
-        volumes:
-            - ./login-go:/opt/login/etc
-        restart:
-            on-failure
-
-    mydms-3002:
-        build: 
-            context: .
-            dockerfile: ./mydms.Dockerfile
-        image: mydms
-        networks:
-            - app-network
-        ports:
-            - "3002:3000"
-        volumes:
-            - ./mydms-go:/opt/mydms/etc
-        restart:
-            on-failure
-
-    bookmarks-3003:
-        build: 
-            context: .
-            dockerfile: ./bookmarks.Dockerfile
-        image: bookmarks
-        networks:
-            - app-network
-        ports:
-            - "3003:3000"
-        volumes:
-            - ./bookmarks/_etc:/opt/bookmarks/etc
-        restart:
-            on-failure
-
-    onefrontend-3000:
-        build: 
-            context: .
-            dockerfile: ./onefrontend.Dockerfile
-        image: onefrontend
-        networks:
-            - app-network
-        ports:
-            - "3000:3000"
-        volumes:
-            - ./onefrontend/etc:/opt/onefrontend/etc
-        restart:
-            on-failure
 
     db:
         image: mariadb:10.4
@@ -68,8 +12,79 @@ services:
             - ./db:/docker-entrypoint-initdb.d
         restart:
             on-failure
+        healthcheck:
+            test: "/usr/bin/mysql --host=127.0.0.1 --user=root --password=mariadb --execute \"SHOW DATABASES;\""
+            interval: 4s
+            timeout: 4s
+            retries: 6
         environment:
             MYSQL_ROOT_PASSWORD: mariadb
+    
+    login-3001:
+        build: 
+            context: .
+            dockerfile: ./login.Dockerfile
+        image: login
+        depends_on:
+            - db
+        networks:
+            - app-network
+        ports:
+            - "3001:3000"
+        volumes:
+            - ./login-go:/opt/login/etc
+        restart:
+            always
+
+    mydms-3002:
+        build: 
+            context: .
+            dockerfile: ./mydms.Dockerfile
+        image: mydms
+        depends_on:
+            - db
+        networks:
+            - app-network
+        ports:
+            - "3002:3000"
+        volumes:
+            - ./mydms-go:/opt/mydms/etc
+        restart:
+            always
+
+    bookmarks-3003:
+        build: 
+            context: .
+            dockerfile: ./bookmarks.Dockerfile
+        image: bookmarks
+        depends_on:
+            - db
+        networks:
+            - app-network
+        ports:
+            - "3003:3000"
+        volumes:
+            - ./bookmarks/_etc:/opt/bookmarks/etc
+        restart:
+            always
+
+    onefrontend-3000:
+        build: 
+            context: .
+            args: 
+                FRONTEND_MODE: integration
+            dockerfile: ./onefrontend.Dockerfile
+        image: onefrontend
+        depends_on:
+            - db
+        networks:
+            - app-network
+        ports:
+            - "3000:3000"
+        volumes:
+            - ./onefrontend/etc:/opt/onefrontend/etc
+        restart:
+            always
 
 networks:
     app-network: {}

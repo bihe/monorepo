@@ -31,7 +31,7 @@ func GetFaviconFromURL(url string) (fileName string, payload []byte, err error) 
 		// no favicon found on page
 		// fall back to the standard to get the favicon from the base-path
 		iconURL = fmt.Sprintf("%s/%s", baseURL, DefaultFaviconName)
-		if payload, err = fetchURL(iconURL); err != nil {
+		if payload, err = FetchURL(iconURL); err != nil {
 			err = fmt.Errorf("could not fetch favicon '%s': %v", iconURL, err)
 			return
 		}
@@ -57,11 +57,29 @@ func GetFaviconFromURL(url string) (fileName string, payload []byte, err error) 
 		iconURL = pageURL + iconURL
 	}
 
-	if payload, err = fetchURL(iconURL); err != nil {
+	if payload, err = FetchURL(iconURL); err != nil {
 		err = fmt.Errorf("could not fetch favicon '%s': %v", iconURL, err)
 		return
 	}
 	return
+}
+
+// FetchURL retrieves the payload of the specified URL
+func FetchURL(url string) ([]byte, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch page: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("got status %d", resp.StatusCode)
+	}
+
+	content, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read content body: %v", err)
+	}
+	return content, nil
 }
 
 func parseURL(uri string) (scheme, baseURL, pageURL string, err error) {
@@ -84,7 +102,7 @@ func parseHtmlPageForFavicon(url string) (iconUrl, fileName string, err error) {
 		page []byte
 	)
 
-	if page, err = fetchURL(url); err != nil {
+	if page, err = FetchURL(url); err != nil {
 		return
 	}
 	if iconUrl, err = tryFaviconDefinitions(page); err != nil {
@@ -94,23 +112,6 @@ func parseHtmlPageForFavicon(url string) (iconUrl, fileName string, err error) {
 	parts := strings.Split(iconUrl, "/")
 	fileName = parts[len(parts)-1]
 	return iconUrl, fileName, nil
-}
-
-func fetchURL(url string) ([]byte, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("could not fetch page: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("got status %d", resp.StatusCode)
-	}
-
-	content, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("could not read content body: %v", err)
-	}
-	return content, nil
 }
 
 func tryFaviconDefinitions(page []byte) (string, error) {

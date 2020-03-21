@@ -13,7 +13,9 @@ export class CreateBookmarksDialog implements OnInit {
   bookmark: BookmarkModel
   type: string
   selectedPath: string
-  reloadFavicon: boolean
+  reloadFavicon = false;
+  toggleCustomFavicon = false;
+  customFavicon = '';
 
   constructor(public dialogRef: MatDialogRef<CreateBookmarksDialog>,
     @Inject(MAT_DIALOG_DATA) public data: CreateBookmarkModel)
@@ -49,9 +51,11 @@ export class CreateBookmarksDialog implements OnInit {
     if (this.type === 'Folder') {
       itemType = ItemType.Folder;
     }
+
     this.bookmark.type = itemType;
     this.bookmark.path = this.selectedPath;
     this.bookmark.favicon = this.reloadFavicon ? '' : this.bookmark.favicon;
+    this.bookmark.customFavicon = this.customFavicon;
     this.dialogRef.close({
       result: true,
       model: this.bookmark

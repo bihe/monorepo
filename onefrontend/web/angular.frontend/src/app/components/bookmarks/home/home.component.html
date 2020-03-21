@@ -77,14 +77,15 @@
 
         <span *ngIf="item.type === 'Folder'">
           <a class="bookmark_folder" (click)="gotoPath(item.path + '/' + item.displayName)">
-          <mat-icon matBadge="{{ item.childCount }}"
-            matBadgeColor="accent"
-            class="bookmark_folder_icon"
-            *ngIf="item.childCount > 0">folder</mat-icon>
-
-          <mat-icon
-            class="bookmark_folder_icon"
-            *ngIf="item.childCount === 0">folder</mat-icon>
+          <mat-icon *ngIf="(item.favicon === null || item.favicon === '')"
+            class="bookmark_folder_icon">folder</mat-icon>
+          <img *ngIf="item.favicon !== null && item.favicon !== ''"
+            [defaultImage]="defaultFavicon"
+            [lazyLoad]="customFavicon(item.id)"
+            class="bookmark_favicon"
+            width="16px" height="16px"
+            alt="favicon"/>
+          <span *ngIf="item.childCount > 0" class="badge badge-warning">{{ item.childCount }}</span>
           </a>
           <span *ngIf="searchMode">&nbsp;</span>
           <span class="badge badge-dark bookmark_path_info" *ngIf="searchMode" (click)="gotoPath(item.path)">{{ item.path }}</span>&nbsp;

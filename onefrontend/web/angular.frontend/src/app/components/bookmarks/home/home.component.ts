@@ -19,6 +19,20 @@ import { CreateBookmarksDialog } from './create.dialog';
 
 const bookmarkPath = '/bookmarks'
 
+// plain javascript logic
+function changeFavicon(head: HTMLHeadElement, src: string) {
+  var link = document.createElement('link'),
+    oldLink = document.getElementById('site-favicon');
+  link.id = 'site-favicon';
+  link.rel = 'shortcut icon';
+  link.href = src;
+  if (oldLink) {
+    head.removeChild(oldLink);
+  }
+  head.appendChild(link);
+}
+
+
 @Component({
   selector: 'app-bookmarks-home',
   templateUrl: './home.component.html',
@@ -77,6 +91,12 @@ export class BookmarkHomeComponent implements OnInit {
               this.titleService.setTitle('Bookmarks');
             } else {
               this.titleService.setTitle(folderResult.value.displayName);
+              const head = document.getElementsByTagName('head')[0];
+              if (folderResult.value.favicon !== '' && folderResult.value.favicon !== null) {
+                changeFavicon(head, this.customFavicon(folderResult.value.id));
+              } else {
+                changeFavicon(head, this.defaultFavicon);
+              }
             }
 
             let path = folderResult.value.path;
@@ -288,7 +308,6 @@ export class BookmarkHomeComponent implements OnInit {
       console.log('dialog was closed');
       if (data.result) {
         let bookmark: BookmarkModel = data.model;
-        bookmark.favicon = '';
         console.log(bookmark);
 
         this.bookmarksService.createBookmark(bookmark).subscribe(
@@ -461,7 +480,7 @@ export class BookmarkHomeComponent implements OnInit {
   }
 
   get defaultFavicon(): string {
-    return 'assets/favicon.ico';
+    return 'assets/folder.svg';
   }
 
   customFavicon(id: string): string {

@@ -34,11 +34,11 @@ import (
 
 	"github.com/bihe/bookmarks/internal/favicon"
 	"github.com/bihe/bookmarks/internal/store"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
 	"golang.binggl.net/commons/errors"
 	"golang.binggl.net/commons/handler"
 	"golang.binggl.net/commons/security"
-	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
 )
 
 // BookmarksAPI implement the handler for the API
@@ -405,9 +405,9 @@ func (b *BookmarksAPI) GetMostVisited(user security.User, w http.ResponseWriter,
 //       "$ref": "#/definitions/ProblemDetail"
 func (b *BookmarksAPI) Create(user security.User, w http.ResponseWriter, r *http.Request) error {
 	var (
-		id      string
-		payload *BookmarkRequest
-		t       store.NodeType
+		savedItem store.Bookmark
+		payload   *BookmarkRequest
+		t         store.NodeType
 	)
 
 	payload = &BookmarkRequest{}
@@ -441,13 +441,24 @@ func (b *BookmarksAPI) Create(user security.User, w http.ResponseWriter, r *http
 		if err != nil {
 			return err
 		}
-		id = item.ID
+		savedItem = item
 		return nil
 	}); err != nil {
 		handler.LogFunction("api.Create").Errorf("could not create a new bookmark: %v", err)
 		return errors.ServerError{Err: fmt.Errorf("error creating a new bookmark: %v", err), Request: r}
 	}
 
+	// if no specific favicon was supplied, immediately fetch one
+	if savedItem.Favicon == "" && savedItem.Type == store.Node {
+		// fire&forget, run this in background and do not wait for the result
+		go b.fetchFavicon(savedItem, user)
+	}
+	if payload.CustomFavicon != "" {
+		// fire&forget, run this in background and do not wait for the result
+		go b.fetchFaviconURL(payload.CustomFavicon, savedItem, user)
+	}
+
+	id := savedItem.ID
 	handler.LogFunction("api.Create").Infof("bookmark created with ID: %s", id)
 	return render.Render(w, r, ResultResponse{
 		Result: &Result{
@@ -569,6 +580,10 @@ func (b *BookmarksAPI) Update(user security.User, w http.ResponseWriter, r *http
 		if item.Favicon == "" {
 			// fire&forget, run this in background and do not wait for the result
 			go b.fetchFavicon(item, user)
+		}
+		if payload.CustomFavicon != "" {
+			// fire&forget, run this in background and do not wait for the result
+			go b.fetchFaviconURL(payload.CustomFavicon, item, user)
 		}
 
 		if existing.Type == store.Folder && (existingDisplayName != payload.DisplayName || existingPath != payload.Path) {
@@ -956,6 +971,59 @@ func (b *BookmarksAPI) GetFavicon(user security.User, w http.ResponseWriter, r *
 
 	http.ServeFile(w, r, fullPath)
 	return nil
+}
+
+func (b *BookmarksAPI) fetchFaviconURL(url string, bm store.Bookmark, user security.User) {
+	payload, err := favicon.FetchURL(url)
+	if err != nil {
+		handler.LogFunction("api.fetchFaviconURL").Errorf("cannot fetch favicon from URL '%s': %v", url, err)
+		return
+	}
+	favicon := ""
+	parts := strings.Split(url, "/")
+	if len(parts) > 0 {
+		favicon = parts[len(parts)-1] // last element
+	} else {
+		handler.LogFunction("api.fetchFaviconURL").Errorf("cannot get favicon-filname from URL '%s': %v", url, err)
+		return
+	}
+
+	if len(payload) > 0 {
+		hashPayload, err := hashInput(payload)
+		if err != nil {
+			handler.LogFunction("api.fetchFaviconURL").Errorf("could not hash payload: '%v'", err)
+			return
+		}
+		hashFilename, err := hashInput([]byte(favicon))
+		if err != nil {
+			handler.LogFunction("api.fetchFaviconURL").Errorf("could not hash filename: '%v'", err)
+			return
+		}
+		ext := filepath.Ext(favicon)
+		filename := fmt.Sprintf("%s_%s%s", hashFilename, hashPayload, ext)
+		fullPath := path.Join(b.BasePath, b.FaviconPath, filename)
+
+		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+			handler.LogFunction("api.fetchFaviconURL").Warnf("got favicon payload length of '%d' for URL '%s'", len(payload), url)
+
+			if err := ioutil.WriteFile(fullPath, payload, 0644); err != nil {
+				handler.LogFunction("api.fetchFaviconURL").Errorf("could not write favicon to file '%s': %v", fullPath, err)
+				return
+			}
+		}
+
+		// also update the favicon for the bookmark
+		if err := b.Repository.InUnitOfWork(func(repo store.Repository) error {
+			bm.Favicon = filename
+			_, err := repo.Update(bm)
+			return err
+		}); err != nil {
+			handler.LogFunction("api.fetchFaviconURL").Errorf("could not update bookmark with favicon '%s': %v", filename, err)
+		}
+
+	} else {
+		handler.LogFunction("api.fetchFaviconURL").Warnf("not payload for favicon from URL '%s'", url)
+	}
 }
 
 func (b *BookmarksAPI) fetchFavicon(bm store.Bookmark, user security.User) {

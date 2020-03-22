@@ -7,12 +7,15 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"syscall"
 	"time"
 
 	"github.com/bihe/bookmarks/internal"
 	"github.com/bihe/bookmarks/internal/config"
 	"github.com/bihe/bookmarks/internal/server"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"github.com/wangii/emoji"
 
 	log "github.com/sirupsen/logrus"
@@ -39,16 +42,10 @@ func run() (err error) {
 		Build:   Build,
 	}
 
-	args := parseFlags()
-	appConfig := configFromFile(args.ConfigFile)
-	apiSrv := server.Create(args.BasePath, appConfig, version, args.Environment)
-
-	if args.Environment != "" {
-		appConfig.Environment = args.Environment
-	}
-
+	hostName, port, basePath, appConfig := readConfig()
+	apiSrv := server.Create(basePath, appConfig, version)
 	setupLog(appConfig)
-	addr := fmt.Sprintf("%s:%d", args.HostName, args.Port)
+	addr := fmt.Sprintf("%s:%d", hostName, port)
 	httpSrv := &http.Server{Addr: addr, Handler: apiSrv}
 
 	go func() {
@@ -85,46 +82,34 @@ func graceful(s *http.Server, timeout time.Duration) error {
 // internal logic / helpers
 // --------------------------------------------------------------------------
 
-// args is used to configure the API server
-type args struct {
-	HostName    string
-	Port        int
-	ConfigFile  string
-	BasePath    string
-	Environment string
-}
+func readConfig() (hostname string, port int, basePath string, conf config.AppConfig) {
+	flag.String("hostname", "localhost", "the server hostname")
+	flag.Int("port", 3000, "network port to listen")
+	flag.String("basepath", "./", "the base path of the application")
 
-func parseFlags() *args {
-	c := new(args)
-	flag.StringVar(&c.HostName, "hostname", "localhost", "the server hostname")
-	flag.IntVar(&c.Port, "port", 3000, "network port to listen")
-	flag.StringVar(&c.BasePath, "b", "./", "the base path of the application")
-	flag.StringVar(&c.ConfigFile, "c", "application.json", "path to the application c file")
-	flag.StringVar(&c.Environment, "e", "Development", "name of the environment to use")
-	flag.Parse()
-	return c
-}
-
-func configFromFile(configFileName string) config.AppConfig {
-	if !fileExists(configFileName) {
-		// if the given filename does not exists, use the filename from an environment variable
-		// if that fails as well, the logic will panic below
-		configFileName = os.Getenv("CONFIG_FILE_NAME")
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.Parse()
+	if err := viper.BindPFlags(pflag.CommandLine); err != nil {
+		panic(fmt.Sprintf("Could not bind to command line: %v", err))
 	}
-	f, err := os.Open(configFileName)
-	if err != nil {
-		panic(fmt.Sprintf("Could not open specific config file '%s': %v", configFileName, err))
-	}
-	defer f.Close()
 
-	c, err := config.GetSettings(f)
-	if err != nil {
-		panic(fmt.Sprintf("Could not get server config values from file '%s': %v", configFileName, err))
-	}
-	return *c
-}
+	basePath = viper.GetString("basepath")
+	hostname = viper.GetString("hostname")
+	port = viper.GetInt("port")
 
-func fileExists(filename string) bool {
-	_, err := os.Stat(filename)
-	return !os.IsNotExist(err)
+	viper.SetConfigName("application")                  // name of config file (without extension)
+	viper.SetConfigType("yaml")                         // type of the config-file
+	viper.AddConfigPath(path.Join(basePath, "./_etc/")) // path to look for the config file in
+	viper.AddConfigPath(path.Join(basePath, "./etc/"))  // path to look for the config file in
+	viper.AddConfigPath(path.Join(basePath, "."))       // optionally look for config in the working directory
+	viper.SetEnvPrefix("bm")                            // use this prefix for environment variabls to overwrite
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err != nil {
+		panic(fmt.Sprintf("Could not get server configuration values: %v", err))
+	}
+	if err := viper.Unmarshal(&conf); err != nil {
+		panic(fmt.Sprintf("Could not unmarshall server configuration values: %v", err))
+	}
+	return
 }

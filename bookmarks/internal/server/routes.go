@@ -5,11 +5,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"golang.binggl.net/commons/handler"
-	"golang.binggl.net/commons/security"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
+	"golang.binggl.net/commons/handler"
+	"golang.binggl.net/commons/security"
 )
 
 // routes performs setup of middlewares and API handlers
@@ -26,10 +26,10 @@ func (s *Server) routes() {
 
 	// setup cors for single frontend
 	cors := cors.New(cors.Options{
-		AllowedOrigins:   s.cors.AllowedOrigins,
-		AllowedMethods:   s.cors.AllowedMethods,
-		AllowedHeaders:   s.cors.AllowedHeaders,
-		AllowCredentials: s.cors.AllowCredentials,
+		AllowedOrigins:   s.cors.Origins,
+		AllowedMethods:   s.cors.Methods,
+		AllowedHeaders:   s.cors.Headers,
+		AllowCredentials: s.cors.Credentials,
 		MaxAge:           s.cors.MaxAge,
 	})
 	r.Use(cors.Handler)

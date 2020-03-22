@@ -39,20 +39,15 @@ type Server struct {
 }
 
 // Create instantiates a new Server instance
-func Create(basePath string, config config.AppConfig, version internal.VersionInfo, environment string) *Server {
+func Create(basePath string, config config.AppConfig, version internal.VersionInfo) *Server {
 	base, err := filepath.Abs(basePath)
 	if err != nil {
 		panic(fmt.Sprintf("cannot resolve basepath '%s', %v", basePath, err))
 	}
 
-	env := config.Environment
-	if environment != "" {
-		env = environment
-	}
-
 	// setup repository
 	// ------------------------------------------------------------------
-	con, err := gorm.Open(config.DB.Dialect, config.DB.ConnStr)
+	con, err := gorm.Open(config.Database.Dialect, config.Database.ConnectionString)
 	if err != nil {
 		panic(fmt.Sprintf("cannot create database connection: %v", err))
 	}
@@ -93,7 +88,7 @@ func Create(basePath string, config config.AppConfig, version internal.VersionIn
 		Handler:        baseHandler,
 		Repository:     repository,
 		BasePath:       basePath,
-		FaviconPath:    config.FaviconPath,
+		FaviconPath:    config.FaviconUploadPath,
 		DefaultFavicon: config.DefaultFavicon,
 	}
 
@@ -101,16 +96,16 @@ func Create(basePath string, config config.AppConfig, version internal.VersionIn
 	// ------------------------------------------------------------------
 
 	jwtOptions := security.JwtOptions{
-		JwtSecret:  config.Sec.JwtSecret,
-		JwtIssuer:  config.Sec.JwtIssuer,
-		CookieName: config.Sec.CookieName,
+		JwtSecret:  config.Security.JwtSecret,
+		JwtIssuer:  config.Security.JwtIssuer,
+		CookieName: config.Security.CookieName,
 		RequiredClaim: security.Claim{
-			Name:  config.Sec.Claim.Name,
-			URL:   config.Sec.Claim.URL,
-			Roles: config.Sec.Claim.Roles,
+			Name:  config.Security.Claim.Name,
+			URL:   config.Security.Claim.URL,
+			Roles: config.Security.Claim.Roles,
 		},
-		RedirectURL:   config.Sec.LoginRedirect,
-		CacheDuration: config.Sec.CacheDuration,
+		RedirectURL:   config.Security.LoginRedirect,
+		CacheDuration: config.Security.CacheDuration,
 		ErrorPath:     config.ErrorPath,
 	}
 
@@ -118,9 +113,9 @@ func Create(basePath string, config config.AppConfig, version internal.VersionIn
 		basePath:       base,
 		jwtOpts:        jwtOptions,
 		cookieSettings: cookieSettings,
-		logConfig:      config.Log,
+		logConfig:      config.Logging,
 		cors:           config.Cors,
-		environment:    env,
+		environment:    config.Environment,
 		appInfoAPI:     appInfo,
 		errorHandler:   errHandler,
 		bookmarkAPI:    bookmarkAPI,

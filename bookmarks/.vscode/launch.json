@@ -13,11 +13,10 @@
             "args": [
                 "--port",
                 "3003",
-                "-c",
-                "../../_etc/application.yaml",
-                "-b",
+                "--basepath",
                 "../.."
             ],
+            "envFile": "${workspaceFolder}/.env",
             "internalConsoleOptions": "openOnSessionStart",
             "showLog": true,
             "output": "debug"

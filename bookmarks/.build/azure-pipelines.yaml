@@ -14,7 +14,6 @@ variables:
   GO111MODULE: 'on'
   DOCKER_BUILDKIT: 1
   TSTAMP: $[format('{0:yyyyMMdd}', pipeline.startTime)]
-  imageName: 'bihe/bookmarks-go'
 
 steps:
 
@@ -44,7 +43,7 @@ steps:
 - script: |
     go version
     go get -v -t -d ./...
-  workingDirectory: '$(modulePath)'
+  workingDirectory: '$(modulePath)/bookmarks'
   continueOnError: false
   displayName: 'Get dependencies'
 
@@ -56,12 +55,12 @@ steps:
       bash <(curl -s https://codecov.io/bash)
     fi
   continueOnError: false
-  workingDirectory: '$(modulePath)'
+  workingDirectory: '$(modulePath)/bookmarks'
   displayName: 'Run unit tests'
 
 - script: |
     go build -v cmd/server/*.go
-  workingDirectory: '$(modulePath)'
+  workingDirectory: '$(modulePath)/bookmarks'
   continueOnError: false
   displayName: 'Build App: bookmakrs-go'
 

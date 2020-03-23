@@ -5,10 +5,13 @@ import (
 	"time"
 )
 
+// NodeType identifies a node
 type NodeType int
 
 const (
+	// Node is the std value - a node in a tree
 	Node NodeType = iota
+	// Folder defines a structure/grouping of nodes
 	Folder
 )
 

@@ -50,6 +50,7 @@ type BookmarksAPI struct {
 	DefaultFavicon string
 }
 
+// GetBookmarkByID retrieves a bookmark by id
 // swagger:operation GET /api/v1/bookmarks/{id} bookmarks GetBookmarkByID
 //
 // get a bookmark by id
@@ -92,7 +93,7 @@ func (b *BookmarksAPI) GetBookmarkByID(user security.User, w http.ResponseWriter
 
 	handler.LogFunction("api.GetBookmarkByID").Debugf("try to get bookmark by ID: '%s' for user: '%s'", id, user.Username)
 
-	bookmark, err := b.Repository.GetBookmarkById(id, user.Username)
+	bookmark, err := b.Repository.GetBookmarkByID(id, user.Username)
 	if err != nil {
 		handler.LogFunction("api.GetBookmarkByID").Warnf("cannot get bookmark by ID: '%s', %v", id, err)
 		return errors.NotFoundError{Err: fmt.Errorf("no bookmark with ID '%s' avaliable", id), Request: r}
@@ -101,6 +102,7 @@ func (b *BookmarksAPI) GetBookmarkByID(user security.User, w http.ResponseWriter
 	return render.Render(w, r, BookmarkResponse{Bookmark: entityToModel(bookmark)})
 }
 
+// GetBookmarksByPath retrieves bookmarks by path
 // swagger:operation GET /api/v1/bookmarks/bypath bookmarks GetBookmarksByPath
 //
 // get bookmarks by path
@@ -156,6 +158,7 @@ func (b *BookmarksAPI) GetBookmarksByPath(user security.User, w http.ResponseWri
 	return render.Render(w, r, BookmarkListResponse{BookmarkList: &result})
 }
 
+// GetBookmarksFolderByPath retrieve bookmark folder by path
 // swagger:operation GET /api/v1/bookmarks/folder bookmarks GetBookmarksFolderByPath
 //
 // get bookmark folder by path
@@ -226,6 +229,7 @@ func (b *BookmarksAPI) GetBookmarksFolderByPath(user security.User, w http.Respo
 	}})
 }
 
+// GetAllPaths returns all paths
 // swagger:operation GET /api/v1/bookmarks/allpaths bookmarks GetAllPaths
 //
 // return all paths
@@ -269,6 +273,7 @@ func (b *BookmarksAPI) GetAllPaths(user security.User, w http.ResponseWriter, r 
 	})
 }
 
+// GetBookmarksByName retrieve bookmarks by name
 // swagger:operation GET /api/v1/bookmarks/byname bookmarks GetBookmarksByName
 //
 // get bookmarks by name
@@ -324,6 +329,7 @@ func (b *BookmarksAPI) GetBookmarksByName(user security.User, w http.ResponseWri
 	return render.Render(w, r, BookmarkListResponse{BookmarkList: &result})
 }
 
+// GetMostVisited retrieves recent accessed bookmarks
 // swagger:operation GET /api/v1/bookmarks/mostvisited/{num} bookmarks GetMostVisited
 //
 // get recent accessed bookmarks
@@ -375,6 +381,7 @@ func (b *BookmarksAPI) GetMostVisited(user security.User, w http.ResponseWriter,
 	return render.Render(w, r, BookmarkListResponse{BookmarkList: &result})
 }
 
+// Create a new bookmark
 // swagger:operation POST /api/v1/bookmarks bookmarks CreateBookmark
 //
 // create a bookmark
@@ -470,6 +477,7 @@ func (b *BookmarksAPI) Create(user security.User, w http.ResponseWriter, r *http
 	})
 }
 
+// Update a bookmark
 // swagger:operation PUT /api/v1/bookmarks bookmarks UpdateBookmark
 //
 // update a bookmark
@@ -520,7 +528,7 @@ func (b *BookmarksAPI) Update(user security.User, w http.ResponseWriter, r *http
 
 	if err := b.Repository.InUnitOfWork(func(repo store.Repository) error {
 		// 1) fetch the existing bookmark by id
-		existing, err := repo.GetBookmarkById(payload.ID, user.Username)
+		existing, err := repo.GetBookmarkByID(payload.ID, user.Username)
 		if err != nil {
 			handler.LogFunction("api.Update").Warnf("could not find bookmark by id '%s': %v", payload.ID, err)
 			return err
@@ -642,9 +650,8 @@ func (b *BookmarksAPI) Update(user security.User, w http.ResponseWriter, r *http
 		var badRequest errors.BadRequestError
 		if er.As(err, &badRequest) {
 			return badRequest
-		} else {
-			return errors.ServerError{Err: fmt.Errorf("error updating bookmark: %v", err), Request: r}
 		}
+		return errors.ServerError{Err: fmt.Errorf("error updating bookmark: %v", err), Request: r}
 	}
 
 	handler.LogFunction("api.Update").Infof("updated bookmark with ID '%s'", id)
@@ -691,6 +698,7 @@ func updateChildCountOfPath(path, username string, repo store.Repository) error 
 	return nil
 }
 
+// Delete a bookmark by id
 // swagger:operation Delete /api/v1/bookmarks/{id} bookmarks DeleteBookmark
 //
 // delete a bookmark
@@ -731,7 +739,7 @@ func (b *BookmarksAPI) Delete(user security.User, w http.ResponseWriter, r *http
 
 	if err := b.Repository.InUnitOfWork(func(repo store.Repository) error {
 		// 1) fetch the existing bookmark by id
-		existing, err := repo.GetBookmarkById(id, user.Username)
+		existing, err := repo.GetBookmarkByID(id, user.Username)
 		if err != nil {
 			handler.LogFunction("api.Update").Warnf("could not find bookmark by id '%s': %v", id, err)
 			return err
@@ -764,6 +772,7 @@ func (b *BookmarksAPI) Delete(user security.User, w http.ResponseWriter, r *http
 	})
 }
 
+// UpdateSortOrder modifies the display sort-order
 // swagger:operation PUT /api/v1/bookmarks/sortorder bookmarks UpdateSortOrder
 //
 // change the sortorder of bookmarks
@@ -807,7 +816,7 @@ func (b *BookmarksAPI) UpdateSortOrder(user security.User, w http.ResponseWriter
 	var updates int
 	if err := b.Repository.InUnitOfWork(func(repo store.Repository) error {
 		for i, item := range payload.IDs {
-			bm, err := repo.GetBookmarkById(item, user.Username)
+			bm, err := repo.GetBookmarkByID(item, user.Username)
 			if err != nil {
 				handler.LogFunction("api.UpdateSortOrder").Errorf("could not get bookmark by id '%s', %v", item, err)
 				return err
@@ -820,7 +829,7 @@ func (b *BookmarksAPI) UpdateSortOrder(user security.User, w http.ResponseWriter
 				handler.LogFunction("api.UpdateSortOrder").Errorf("could not update bookmark: %v", err)
 				return err
 			}
-			updates += 1
+			updates++
 		}
 		return nil
 	}); err != nil {
@@ -837,7 +846,8 @@ func (b *BookmarksAPI) UpdateSortOrder(user security.User, w http.ResponseWriter
 	})
 }
 
-// swagger:operation GET /api/v1/bookmarks/fetch bookmarks FetchAndForward
+// FetchAndForward retrievs a bookmark by id and forwards to the url of the bookmark
+// swagger:operation GET /api/v1/bookmarks/fetch/{id} bookmarks FetchAndForward
 //
 // forward to the bookmark
 //
@@ -879,7 +889,7 @@ func (b *BookmarksAPI) FetchAndForward(user security.User, w http.ResponseWriter
 
 	redirectURL := ""
 	if err := b.Repository.InUnitOfWork(func(repo store.Repository) error {
-		existing, err := repo.GetBookmarkById(id, user.Username)
+		existing, err := repo.GetBookmarkByID(id, user.Username)
 		if err != nil {
 			handler.LogFunction("api.FetchAndForward").Warnf("could not find bookmark by id '%s': %v", id, err)
 			return err
@@ -891,7 +901,7 @@ func (b *BookmarksAPI) FetchAndForward(user security.User, w http.ResponseWriter
 		}
 
 		// update the access-count of nodes
-		existing.AccessCount += 1
+		existing.AccessCount++
 		if _, err := repo.Update(existing); err != nil {
 			handler.LogFunction("api.FetchAndForward").Warnf("could not update bookmark '%s': %v", id, err)
 			return err
@@ -910,9 +920,8 @@ func (b *BookmarksAPI) FetchAndForward(user security.User, w http.ResponseWriter
 
 		if er.As(err, &badRequest) {
 			return badRequest
-		} else {
-			return errors.ServerError{Err: fmt.Errorf("error fetching and updating bookmark: %v", err), Request: r}
 		}
+		return errors.ServerError{Err: fmt.Errorf("error fetching and updating bookmark: %v", err), Request: r}
 	}
 	handler.LogFunction("api.FetchAndForward").Debugf("will redirect to bookmark URL '%s'", redirectURL)
 
@@ -920,7 +929,8 @@ func (b *BookmarksAPI) FetchAndForward(user security.User, w http.ResponseWriter
 	return nil
 }
 
-// swagger:operation GET /api/v1/bookmarks/favicon bookmarks GetFavicon
+// GetFavicon for the specified bookmark
+// swagger:operation GET /api/v1/bookmarks/favicon/{id} bookmarks GetFavicon
 //
 // get the favicon from bookmark
 //
@@ -956,7 +966,7 @@ func (b *BookmarksAPI) GetFavicon(user security.User, w http.ResponseWriter, r *
 
 	handler.LogFunction("api.GetFavicon").Debugf("try to fetch bookmark with ID '%s'", id)
 
-	existing, err := b.Repository.GetBookmarkById(id, user.Username)
+	existing, err := b.Repository.GetBookmarkByID(id, user.Username)
 	if err != nil {
 		handler.LogFunction("api.GetFavicon").Errorf("could not find bookmark by id '%s': %v", id, err)
 		return errors.NotFoundError{Err: fmt.Errorf("could not find bookmark with ID '%s'", id), Request: r}

@@ -30,7 +30,7 @@ import (
 
 const userName = "username"
 
-var raisedError = fmt.Errorf("error")
+var errRaised = fmt.Errorf("error")
 
 // common components necessary for handlers
 var baseHandler = handler.Handler{
@@ -65,9 +65,9 @@ type MockRepository struct {
 	fail bool
 }
 
-func (r *MockRepository) GetBookmarkById(id, username string) (store.Bookmark, error) {
+func (r *MockRepository) GetBookmarkByID(id, username string) (store.Bookmark, error) {
 	if r.fail {
-		return store.Bookmark{}, raisedError
+		return store.Bookmark{}, errRaised
 	}
 	return store.Bookmark{
 		DisplayName: "displayname",
@@ -83,7 +83,7 @@ func (r *MockRepository) GetBookmarkById(id, username string) (store.Bookmark, e
 	}, nil
 }
 
-func TestGetBookmarkById(t *testing.T) {
+func TestGetBookmarkByID(t *testing.T) {
 	// arrange
 	r := chi.NewRouter()
 	r.Use(jwtUser)
@@ -138,7 +138,7 @@ func TestGetBookmarkById(t *testing.T) {
 
 func (r *MockRepository) GetBookmarksByPath(path, username string) ([]store.Bookmark, error) {
 	if r.fail {
-		return make([]store.Bookmark, 0), raisedError
+		return make([]store.Bookmark, 0), errRaised
 	}
 
 	bm := store.Bookmark{
@@ -164,7 +164,7 @@ func TestGetBookmarkByPath(t *testing.T) {
 		Handler:    baseHandler,
 		Repository: &MockRepository{},
 	}
-	reqUrl := "/api/v1/bookmarks/bypath"
+	reqURL := "/api/v1/bookmarks/bypath"
 	function := bookmarkAPI.Secure(bookmarkAPI.GetBookmarksByPath)
 	rec := httptest.NewRecorder()
 	var bl BookmarkList
@@ -173,8 +173,8 @@ func TestGetBookmarkByPath(t *testing.T) {
 	q.Set("path", "/")
 
 	// act
-	r.Get(reqUrl, function)
-	req, _ := http.NewRequest("GET", reqUrl+"?"+q.Encode(), nil)
+	r.Get(reqURL, function)
+	req, _ := http.NewRequest("GET", reqURL+"?"+q.Encode(), nil)
 	r.ServeHTTP(rec, req)
 
 	// assert
@@ -190,8 +190,8 @@ func TestGetBookmarkByPath(t *testing.T) {
 	bookmarkAPI.Repository = &MockRepository{fail: true}
 	rec = httptest.NewRecorder()
 
-	r.Get(reqUrl, function)
-	req, _ = http.NewRequest("GET", reqUrl+"?"+q.Encode(), nil)
+	r.Get(reqURL, function)
+	req, _ = http.NewRequest("GET", reqURL+"?"+q.Encode(), nil)
 	r.ServeHTTP(rec, req)
 
 	// assert
@@ -207,8 +207,8 @@ func TestGetBookmarkByPath(t *testing.T) {
 	bookmarkAPI.Repository = &MockRepository{}
 	rec = httptest.NewRecorder()
 
-	r.Get(reqUrl, function)
-	req, _ = http.NewRequest("GET", reqUrl, nil)
+	r.Get(reqURL, function)
+	req, _ = http.NewRequest("GET", reqURL, nil)
 	r.ServeHTTP(rec, req)
 
 	// assert
@@ -217,7 +217,7 @@ func TestGetBookmarkByPath(t *testing.T) {
 
 func (r *MockRepository) GetFolderByPath(path, username string) (store.Bookmark, error) {
 	if r.fail {
-		return store.Bookmark{}, raisedError
+		return store.Bookmark{}, errRaised
 	}
 
 	bm := store.Bookmark{
@@ -241,7 +241,7 @@ func TestGetBookmarkFolderBypath(t *testing.T) {
 		Handler:    baseHandler,
 		Repository: &MockRepository{},
 	}
-	reqUrl := "/api/v1/bookmarks/folder"
+	reqURL := "/api/v1/bookmarks/folder"
 	function := bookmarkAPI.Secure(bookmarkAPI.GetBookmarksFolderByPath)
 	rec := httptest.NewRecorder()
 	var br BookmarkResult
@@ -251,8 +251,8 @@ func TestGetBookmarkFolderBypath(t *testing.T) {
 	q.Set("path", "/")
 
 	// act
-	r.Get(reqUrl, function)
-	req, _ := http.NewRequest("GET", reqUrl+"?"+q.Encode(), nil)
+	r.Get(reqURL, function)
+	req, _ := http.NewRequest("GET", reqURL+"?"+q.Encode(), nil)
 	r.ServeHTTP(rec, req)
 
 	// assert
@@ -271,8 +271,8 @@ func TestGetBookmarkFolderBypath(t *testing.T) {
 	bookmarkAPI.Repository = &MockRepository{}
 	rec = httptest.NewRecorder()
 
-	r.Get(reqUrl, function)
-	req, _ = http.NewRequest("GET", reqUrl+"?"+q.Encode(), nil)
+	r.Get(reqURL, function)
+	req, _ = http.NewRequest("GET", reqURL+"?"+q.Encode(), nil)
 	r.ServeHTTP(rec, req)
 
 	assert.Equal(t, true, br.Success)
@@ -282,8 +282,8 @@ func TestGetBookmarkFolderBypath(t *testing.T) {
 	bookmarkAPI.Repository = &MockRepository{fail: true}
 	rec = httptest.NewRecorder()
 
-	r.Get(reqUrl, function)
-	req, _ = http.NewRequest("GET", reqUrl+"?"+q.Encode(), nil)
+	r.Get(reqURL, function)
+	req, _ = http.NewRequest("GET", reqURL+"?"+q.Encode(), nil)
 	r.ServeHTTP(rec, req)
 
 	// assert
@@ -293,8 +293,8 @@ func TestGetBookmarkFolderBypath(t *testing.T) {
 	bookmarkAPI.Repository = &MockRepository{}
 	rec = httptest.NewRecorder()
 
-	r.Get(reqUrl, function)
-	req, _ = http.NewRequest("GET", reqUrl, nil)
+	r.Get(reqURL, function)
+	req, _ = http.NewRequest("GET", reqURL, nil)
 	r.ServeHTTP(rec, req)
 
 	// assert
@@ -303,7 +303,7 @@ func TestGetBookmarkFolderBypath(t *testing.T) {
 
 func (r *MockRepository) GetBookmarksByName(name, username string) ([]store.Bookmark, error) {
 	if r.fail {
-		return make([]store.Bookmark, 0), raisedError
+		return make([]store.Bookmark, 0), errRaised
 	}
 
 	bm := store.Bookmark{
@@ -329,7 +329,7 @@ func TestGetBookmarkByName(t *testing.T) {
 		Handler:    baseHandler,
 		Repository: &MockRepository{},
 	}
-	reqUrl := "/api/v1/bookmarks/byname"
+	reqURL := "/api/v1/bookmarks/byname"
 	function := bookmarkAPI.Secure(bookmarkAPI.GetBookmarksByName)
 	rec := httptest.NewRecorder()
 	var bl BookmarkList
@@ -338,8 +338,8 @@ func TestGetBookmarkByName(t *testing.T) {
 	q.Set("name", "displayname")
 
 	// act
-	r.Get(reqUrl, function)
-	req, _ := http.NewRequest("GET", reqUrl+"?"+q.Encode(), nil)
+	r.Get(reqURL, function)
+	req, _ := http.NewRequest("GET", reqURL+"?"+q.Encode(), nil)
 	r.ServeHTTP(rec, req)
 
 	// assert
@@ -355,8 +355,8 @@ func TestGetBookmarkByName(t *testing.T) {
 	bookmarkAPI.Repository = &MockRepository{fail: true}
 	rec = httptest.NewRecorder()
 
-	r.Get(reqUrl, function)
-	req, _ = http.NewRequest("GET", reqUrl+"?"+q.Encode(), nil)
+	r.Get(reqURL, function)
+	req, _ = http.NewRequest("GET", reqURL+"?"+q.Encode(), nil)
 	r.ServeHTTP(rec, req)
 
 	// assert
@@ -372,8 +372,8 @@ func TestGetBookmarkByName(t *testing.T) {
 	bookmarkAPI.Repository = &MockRepository{}
 	rec = httptest.NewRecorder()
 
-	r.Get(reqUrl, function)
-	req, _ = http.NewRequest("GET", reqUrl, nil)
+	r.Get(reqURL, function)
+	req, _ = http.NewRequest("GET", reqURL, nil)
 	r.ServeHTTP(rec, req)
 
 	// assert
@@ -382,7 +382,7 @@ func TestGetBookmarkByName(t *testing.T) {
 
 func (r *MockRepository) GetMostRecentBookmarks(username string, limit int) ([]store.Bookmark, error) {
 	if r.fail {
-		return make([]store.Bookmark, 0), raisedError
+		return make([]store.Bookmark, 0), errRaised
 	}
 
 	bm := store.Bookmark{
@@ -408,15 +408,15 @@ func TestGetMostVisited(t *testing.T) {
 		Handler:    baseHandler,
 		Repository: &MockRepository{},
 	}
-	defUrl := "/api/v1/bookmarks/mostvisited/{num}"
-	reqUrl := "/api/v1/bookmarks/mostvisited/1"
+	defURL := "/api/v1/bookmarks/mostvisited/{num}"
+	reqURL := "/api/v1/bookmarks/mostvisited/1"
 	function := bookmarkAPI.Secure(bookmarkAPI.GetMostVisited)
 	rec := httptest.NewRecorder()
 	var bl BookmarkList
 
 	// act
-	r.Get(defUrl, function)
-	req, _ := http.NewRequest("GET", reqUrl, nil)
+	r.Get(defURL, function)
+	req, _ := http.NewRequest("GET", reqURL, nil)
 	r.ServeHTTP(rec, req)
 
 	// assert
@@ -432,8 +432,8 @@ func TestGetMostVisited(t *testing.T) {
 	bookmarkAPI.Repository = &MockRepository{fail: true}
 	rec = httptest.NewRecorder()
 
-	r.Get(defUrl, function)
-	req, _ = http.NewRequest("GET", reqUrl, nil)
+	r.Get(defURL, function)
+	req, _ = http.NewRequest("GET", reqURL, nil)
 	r.ServeHTTP(rec, req)
 
 	// assert
@@ -449,7 +449,7 @@ func TestGetMostVisited(t *testing.T) {
 	bookmarkAPI.Repository = &MockRepository{fail: true}
 	rec = httptest.NewRecorder()
 
-	r.Get(defUrl, function)
+	r.Get(defURL, function)
 	req, _ = http.NewRequest("GET", "/api/v1/bookmarks/mostvisited/0", nil)
 	r.ServeHTTP(rec, req)
 
@@ -480,7 +480,7 @@ func repository(t *testing.T) (store.Repository, *gorm.DB) {
 
 func (r *MockRepository) InUnitOfWork(fn func(repo store.Repository) error) error {
 	if r.fail {
-		return raisedError
+		return errRaised
 	}
 	return nil
 }
@@ -496,7 +496,7 @@ func TestCreateBookmark(t *testing.T) {
 		Handler:    baseHandler,
 		Repository: repo,
 	}
-	defUrl := "/api/v1/bookmarks"
+	defURL := "/api/v1/bookmarks"
 	function := bookmarkAPI.Secure(bookmarkAPI.Create)
 
 	mockAPI := &BookmarksAPI{
@@ -574,8 +574,8 @@ func TestCreateBookmark(t *testing.T) {
 			var result ResultResponse
 
 			// act
-			r.Post(defUrl, tc.function)
-			req, _ := http.NewRequest("POST", defUrl, strings.NewReader(tc.payload))
+			r.Post(defURL, tc.function)
+			req, _ := http.NewRequest("POST", defURL, strings.NewReader(tc.payload))
 			req.Header.Add("Content-Type", "application/json")
 			r.ServeHTTP(rec, req)
 
@@ -1335,7 +1335,7 @@ func TestFetchAndForward(t *testing.T) {
 
 func (r *MockRepository) GetAllPaths(username string) ([]string, error) {
 	if r.fail {
-		return nil, raisedError
+		return nil, errRaised
 	}
 
 	return []string{"/", "/a", "/b"}, nil
@@ -1576,7 +1576,7 @@ func (m *mockRepository) GetPathChildCount(path, username string) ([]store.NodeC
 	return nil, nil
 }
 
-func (m *mockRepository) GetBookmarkById(id, username string) (store.Bookmark, error) {
+func (m *mockRepository) GetBookmarkByID(id, username string) (store.Bookmark, error) {
 	return store.Bookmark{}, nil
 }
 

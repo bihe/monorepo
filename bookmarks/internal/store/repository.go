@@ -1,6 +1,5 @@
 // Package store is responsible to interact with the storage backend used for bookmarks
 // this is done by implementing a repository for the datbase
-
 package store
 
 import (
@@ -30,7 +29,7 @@ type Repository interface {
 	GetPathChildCount(path, username string) ([]NodeCount, error)
 	GetAllPaths(username string) ([]string, error)
 
-	GetBookmarkById(id, username string) (Bookmark, error)
+	GetBookmarkByID(id, username string) (Bookmark, error)
 	GetFolderByPath(path, username string) (Bookmark, error)
 }
 
@@ -114,8 +113,8 @@ func (r *dbRepository) GetMostRecentBookmarks(username string, limit int) ([]Boo
 	return bookmarks, h.Error
 }
 
-// GetBookmarkById returns the bookmark specified by the given id - for the user
-func (r *dbRepository) GetBookmarkById(id, username string) (Bookmark, error) {
+// GetBookmarkByID returns the bookmark specified by the given id - for the user
+func (r *dbRepository) GetBookmarkByID(id, username string) (Bookmark, error) {
 	var bookmark Bookmark
 	h := r.con().Where(&Bookmark{ID: id, UserName: username}).First(&bookmark)
 	return bookmark, h.Error

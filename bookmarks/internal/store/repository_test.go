@@ -144,7 +144,7 @@ func TestCreatBookmarkAndHierarchy(t *testing.T) {
 	}
 	assert.NotEmpty(t, bm.ID)
 
-	_, err = repo.GetBookmarkById(bm.ID, userName)
+	_, err = repo.GetBookmarkByID(bm.ID, userName)
 	if err != nil {
 		t.Errorf("Could not read bookmarks: %v", err)
 	}
@@ -163,7 +163,7 @@ func TestCreatBookmarkAndHierarchy(t *testing.T) {
 	}
 	assert.NotEmpty(t, bm.ID)
 
-	n, err := repo.GetBookmarkById(bm.ID, userName)
+	n, err := repo.GetBookmarkByID(bm.ID, userName)
 	if err != nil {
 		t.Errorf("Could not read bookmarks: %v", err)
 	}
@@ -204,7 +204,7 @@ func TestCreateBookmarkInUnitOfWork(t *testing.T) {
 		}
 		assert.NotEmpty(t, bm.ID)
 		id = bm.ID
-		folder, err := r.GetBookmarkById(bm.ID, bm.UserName)
+		folder, err := r.GetBookmarkByID(bm.ID, bm.UserName)
 		if err != nil {
 			return err
 		}
@@ -216,7 +216,7 @@ func TestCreateBookmarkInUnitOfWork(t *testing.T) {
 	}
 
 	// get the created entry "out-of" the transaction
-	folder, err = repo.GetBookmarkById(id, userName)
+	folder, err = repo.GetBookmarkByID(id, userName)
 	if err != nil {
 		t.Errorf("could not get the created folder by id: %v", err)
 	}
@@ -237,7 +237,7 @@ func TestCreateBookmarkInUnitOfWork(t *testing.T) {
 		}
 		assert.NotEmpty(t, bm.ID)
 		id = bm.ID
-		folder, err := r.GetBookmarkById(bm.ID, bm.UserName)
+		folder, err := r.GetBookmarkByID(bm.ID, bm.UserName)
 		if err != nil {
 			return err
 		}
@@ -249,7 +249,7 @@ func TestCreateBookmarkInUnitOfWork(t *testing.T) {
 	}
 
 	// get the created entry "out-of" the transaction
-	folder, err = repo.GetBookmarkById(id, userName)
+	folder, err = repo.GetBookmarkByID(id, userName)
 	if err == nil {
 		t.Errorf("expected an error because item not availabel!")
 	}
@@ -337,7 +337,7 @@ func TestDeleteBookmark(t *testing.T) {
 	}
 	assert.NotEmpty(t, node.ID)
 
-	folder, err = repo.GetBookmarkById(folder.ID, folder.UserName)
+	folder, err = repo.GetBookmarkByID(folder.ID, folder.UserName)
 	if err != nil {
 		t.Errorf("Could not read bookmark folder: %v", err)
 	}
@@ -350,7 +350,7 @@ func TestDeleteBookmark(t *testing.T) {
 	}
 
 	// child-count has to be 0 again
-	folder, err = repo.GetBookmarkById(folder.ID, folder.UserName)
+	folder, err = repo.GetBookmarkByID(folder.ID, folder.UserName)
 	if err != nil {
 		t.Errorf("Could not read bookmark folder: %v", err)
 	}
@@ -571,7 +571,7 @@ func TestDeletePath2(t *testing.T) {
 	assert.Equal(t, 4, len(all))
 
 	// get the child-count of folder
-	bm, err := repo.GetBookmarkById(folder.ID, folder.UserName)
+	bm, err := repo.GetBookmarkByID(folder.ID, folder.UserName)
 	if err != nil {
 		t.Errorf("could not get bookmark by id %s: %v", folder.ID, err)
 	}
@@ -583,7 +583,7 @@ func TestDeletePath2(t *testing.T) {
 		t.Errorf("could not delete folder path /Folder1: %v", err)
 	}
 
-	bm, err = repo.GetBookmarkById(folder.ID, folder.UserName)
+	bm, err = repo.GetBookmarkByID(folder.ID, folder.UserName)
 	if err != nil {
 		t.Errorf("could not get bookmark by id %s: %v", folder.ID, err)
 	}

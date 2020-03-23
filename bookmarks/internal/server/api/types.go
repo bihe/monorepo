@@ -15,12 +15,14 @@ import (
 // Models
 // --------------------------------------------------------------------------
 
-// available node-types
+// NodeType specifies available node-types
 // swagger:enum NodeType
 type NodeType string
 
 const (
-	Node   NodeType = "Node"
+	// Node is the standard item
+	Node NodeType = "Node"
+	// Folder is ised to group nodes
 	Folder NodeType = "Folder"
 )
 
@@ -112,12 +114,14 @@ func entityEnumToModel(t store.NodeType) NodeType {
 // Swagger specific definitions
 // --------------------------------------------------------------------------
 
+// BookMarkRequestSwagger is used for swagger docu
 // swagger:parameters CreateBookmark UpdateBookmark
 type BookMarkRequestSwagger struct {
 	// In: body
 	Body Bookmark
 }
 
+// BookmarksSortOrderRequestSwagger is used for swagger docu
 // swagger:parameters UpdateSortOrder
 type BookmarksSortOrderRequestSwagger struct {
 	// In: body

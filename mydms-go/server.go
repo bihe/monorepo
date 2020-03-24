@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path"
 	"time"
 
 	"github.com/bihe/mydms/internal"
@@ -16,6 +17,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 
 	_ "github.com/bihe/mydms/docs"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -67,32 +70,44 @@ func main() {
 	}
 }
 
-func parseFlags() *ServerArgs {
-	c := new(ServerArgs)
-	flag.StringVar(&c.HostName, "hostname", "localhost", "the server hostname")
-	flag.IntVar(&c.Port, "port", 3000, "network port to listen")
-	flag.StringVar(&c.ConfigFile, "c", "application.json", "path to the application c file")
-	flag.Parse()
-	return c
-}
+// --------------------------------------------------------------------------
+// internal logic / helpers
+// --------------------------------------------------------------------------
 
-func configFromFile(configFileName string) config.AppConfig {
-	f, err := os.Open(configFileName)
-	if err != nil {
-		panic(fmt.Sprintf("Could not open specific config file '%s': %v", configFileName, err))
-	}
-	defer f.Close()
+func readConfig() (hostname string, port int, basePath string, conf config.AppConfig) {
+	flag.String("hostname", "localhost", "the server hostname")
+	flag.Int("port", 3000, "network port to listen")
+	flag.String("basepath", "./", "the base path of the application")
 
-	c, err := config.GetSettings(f)
-	if err != nil {
-		panic(fmt.Sprintf("Could not get server config values from file '%s': %v", configFileName, err))
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.Parse()
+	if err := viper.BindPFlags(pflag.CommandLine); err != nil {
+		panic(fmt.Sprintf("Could not bind to command line: %v", err))
 	}
-	return *c
+
+	basePath = viper.GetString("basepath")
+	hostname = viper.GetString("hostname")
+	port = viper.GetInt("port")
+
+	viper.SetConfigName("application")                  // name of config file (without extension)
+	viper.SetConfigType("yaml")                         // type of the config-file
+	viper.AddConfigPath(path.Join(basePath, "./_etc/")) // path to look for the config file in
+	viper.AddConfigPath(path.Join(basePath, "./etc/"))  // path to look for the config file in
+	viper.AddConfigPath(path.Join(basePath, "."))       // optionally look for config in the working directory
+	viper.SetEnvPrefix("my")                            // use this prefix for environment variabls to overwrite
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err != nil {
+		panic(fmt.Sprintf("Could not get server configuration values: %v", err))
+	}
+	if err := viper.Unmarshal(&conf); err != nil {
+		panic(fmt.Sprintf("Could not unmarshall server configuration values: %v", err))
+	}
+	return
 }
 
 func setupAPIServer() (*echo.Echo, string) {
-	args := parseFlags()
-	c := configFromFile(args.ConfigFile)
+	hostName, port, _, c := readConfig()
 
 	e := echo.New()
 	e.HideBanner = true
@@ -100,32 +115,32 @@ func setupAPIServer() (*echo.Echo, string) {
 	e.Use(middleware.Recover())
 	e.Use(middleware.RequestID())
 
-	InitLogger(c.Log, e)
+	InitLogger(c.Logging, e)
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     c.Cors.AllowedOrigins,
-		AllowHeaders:     c.Cors.AllowedHeaders,
-		AllowMethods:     c.Cors.AllowedMethods,
-		AllowCredentials: c.Cors.AllowCredentials,
+		AllowOrigins:     c.Cors.Origins,
+		AllowHeaders:     c.Cors.Headers,
+		AllowMethods:     c.Cors.Methods,
+		AllowCredentials: c.Cors.Credentials,
 		MaxAge:           c.Cors.MaxAge,
 	}))
 
 	e.Use(middleware.Secure())
 	e.Use(security.JwtWithConfig(security.JwtOptions{
-		JwtSecret:  c.Sec.JwtSecret,
-		JwtIssuer:  c.Sec.JwtIssuer,
-		CookieName: c.Sec.CookieName,
+		JwtSecret:  c.Security.JwtSecret,
+		JwtIssuer:  c.Security.JwtIssuer,
+		CookieName: c.Security.CookieName,
 		RequiredClaim: sec.Claim{
-			Name:  c.Sec.Claim.Name,
-			URL:   c.Sec.Claim.URL,
-			Roles: c.Sec.Claim.Roles,
+			Name:  c.Security.Claim.Name,
+			URL:   c.Security.Claim.URL,
+			Roles: c.Security.Claim.Roles,
 		},
-		RedirectURL:   c.Sec.LoginRedirect,
-		CacheDuration: c.Sec.CacheDuration,
+		RedirectURL:   c.Security.LoginRedirect,
+		CacheDuration: c.Security.CacheDuration,
 	}))
 
 	// persistence store && application version
-	con := persistence.NewConn(c.DB.ConnStr)
+	con := persistence.NewConn(c.Database.ConnectionString)
 	version := internal.VersionInfo{
 		Version: Version,
 		Build:   Build,
@@ -137,5 +152,5 @@ func setupAPIServer() (*echo.Echo, string) {
 	// enable swagger for API endpoints
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
-	return e, fmt.Sprintf("%s:%d", args.HostName, args.Port)
+	return e, fmt.Sprintf("%s:%d", hostName, port)
 }

@@ -12,8 +12,6 @@
 *.out
 
 .env
-_etc/application.json
-_etc/application.yaml
 
 uploads/
 logs/

@@ -45,7 +45,7 @@ steps:
 - script: |
     go version
     go get -v -t -d ./...
-  workingDirectory: '$(modulePath)'
+  workingDirectory: '$(modulePath)/login-go'
   continueOnError: false
   displayName: 'Get dependencies'
 
@@ -57,60 +57,11 @@ steps:
       bash <(curl -s https://codecov.io/bash)
     fi
   continueOnError: false
-  workingDirectory: '$(modulePath)'
+  workingDirectory: '$(modulePath)/login-go'
   displayName: 'Run unit tests'
 
 - script: |
     go build -v cmd/server/*.go
-  workingDirectory: '$(modulePath)'
+  workingDirectory: '$(modulePath)/login-go'
   continueOnError: false
   displayName: 'Build App: login-go'
-
-- task: Docker@2
-  displayName: 'Login to Docker-Hub (hub.docker.com)'
-  inputs:
-    command: login
-    containerRegistry: dockerhub
-
-#- task: Docker@2
-#  displayName: 'Login to GitHug-Docker (docker.pkg.github.com)'
-#  inputs:
-#    command: login
-#    containerRegistry: github_docker
-
-- task: Docker@2
-  displayName: 'Build Docker image: login'
-  inputs:
-    command: build
-    Dockerfile: '$(modulePath)/Dockerfile'
-    repository: $(imageName)
-    tags: |
-      latest
-      $(buildtime_variable_commit)
-      $(Build.SourceBranchName)
-    arguments: |
-      --build-arg buildtime_variable_version=$(buildtime_variable_version)
-      --build-arg buildtime_variable_timestamp=$(TSTAMP)
-      --build-arg buildtime_variable_commit=$(githash)
-
-- task: Docker@2
-  displayName: 'Push to Docker-Hub (hub.docker.com)'
-  inputs:
-    containerRegistry: dockerhub
-    command: push
-    repository: $(imageName)
-    tags: |
-      latest
-      $(buildtime_variable_commit)
-      $(Build.SourceBranchName)
-
-#- task: Docker@2
-#  displayName: 'Push to GitHug-Docker (docker.pkg.github.com)'
-#  inputs:
-#    containerRegistry: github_docker
-#    command: push
-#    repository: $(githubTag)
-#    tags: |
-#      $(githubTag):latest
-#      $(githubTag):$(buildtime_variable_commit)
-#      $(githubTag):$(Build.SourceBranchName)

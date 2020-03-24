@@ -1,0 +1,58 @@
+---
+# configuration for JWT authentication
+security:
+    jwtIssuer: issuer
+    jwtSecret: secret
+    cookieName: login_token
+    loginRedirect: "http://localhost:3001/auth/flow?~site=mydms&~url=http%3A%2F%2Flocalhost%3A3002%3Fvalid%3Dtrue"
+    claim:
+        name: mydms
+        url: http://localhost:3002
+        roles:
+        - User
+        - Admin
+    cacheDuration: 10m
+
+database:
+    connectionString: "root:mariadb@tcp(localhost:3306)/mydms?parseTime=true"
+
+cors:
+    origins:
+    - "http://localhost:3000"
+    - "http://localhost:4200"
+    methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "OPTIONS"
+    headers:
+    - "cache-control"
+    - "content-type"
+    - "pragma"
+    - "accept"
+    - "authorization"
+    credentials: true
+    maxAge: 500
+
+logging:
+    filePath: "./logs/mydms-api.log"
+    logLevel: info
+
+upload:
+    allowedFileTypes:
+    - "pdf"
+    - "jpg"
+    - "jpeg"
+    - "png"
+    - "gif"
+    maxUploadSize: 500000
+    uploadPath: "/tmp/"
+
+filestore:
+    region: "region"
+    bucket: "bucket"
+    key: "key"
+    secret: "secret"
+
+

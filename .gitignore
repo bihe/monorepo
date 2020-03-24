@@ -2,3 +2,5 @@ devserver
 devserver.sh
 live.devserver.sh
 __devserver
+login-go/.env
+mydms-go/.env

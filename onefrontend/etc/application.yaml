@@ -1,0 +1,53 @@
+---
+# configuration for JWT authentication
+jwt:
+    jwtIssuer: issuer
+    jwtSecret: secret
+    cookieName: login_token
+    loginRedirect: "http://localhost:3001/auth/flow?~site=onefrontend&~url=http%3A%2F%2Flocalhost%3A3000%3Fvalid%3Dtrue"
+    claim:
+        name: onefrontend
+        url: http://localhost:3000
+        roles:
+        - User
+    cacheDuration: 10m
+
+logging:
+    filePath: "./logs/onefrontend-api.log"
+    requestPath: "./logs/requests.log"
+    logLevel: debug
+
+cookies:
+    path: /
+    domain: localhost
+
+cors:
+    origins:
+    - "http://localhost:3000"
+    - "http://localhost:4200"
+    methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "OPTIONS"
+    headers:
+    - "cache-control"
+    - "content-type"
+    - "pragma"
+    - "accept"
+    - "authorization"
+    credentials: true
+    maxAge: 500
+
+## static assets
+assetDir: "./web/assets"
+assetPrefix: "/assets"
+
+## dynamic frontend application
+frontendDir: "./web/ui"
+frontendPrefix: "/ui"
+
+errorPath: /error
+startUrl: /ui
+environment: Development

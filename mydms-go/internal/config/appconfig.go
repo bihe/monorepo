@@ -1,57 +1,51 @@
 package config
 
-import (
-	"encoding/json"
-	"io"
-	"io/ioutil"
-)
-
 // AppConfig holds the application configuration
 type AppConfig struct {
-	Sec   Security     `json:"security"`
-	DB    Database     `json:"database"`
-	Log   LogConfig    `json:"logging"`
-	UP    UploadConfig `json:"upload"`
-	Store FileStore    `json:"filestore"`
-	Cors  CorsSettings `json:"cors"`
+	Security  Security
+	Database  Database
+	Logging   LogConfig
+	Upload    UploadConfig
+	Filestore FileStore
+	Cors      CorsSettings
 }
 
 // Security settings for the application
 type Security struct {
-	JwtIssuer     string `json:"jwtIssuer"`
-	JwtSecret     string `json:"jwtSecret"`
-	CookieName    string `json:"cookieName"`
-	LoginRedirect string `json:"loginRedirect"`
-	Claim         Claim  `json:"claim"`
-	CacheDuration string `json:"cacheDuration"`
+	JwtIssuer     string
+	JwtSecret     string
+	CookieName    string
+	LoginRedirect string
+	Claim         Claim
+	CacheDuration string
 }
 
 // Database defines the connection string
 type Database struct {
-	ConnStr string `json:"connectionString"`
+	ConnectionString string
 }
 
 // Claim defines the required claims
 type Claim struct {
-	Name  string   `json:"name"`
-	URL   string   `json:"url"`
-	Roles []string `json:"roles"`
+	Name  string
+	URL   string
+	Roles []string
 }
 
 // LogConfig is used to define settings for the logging process
 type LogConfig struct {
-	FilePath string `json:"filePath"`
-	LogLevel string `json:"logLevel"`
+	FilePath string
+	LogLevel string
 }
 
 // UploadConfig defines relevant values for the upload logic
 type UploadConfig struct {
 	// AllowedFileTypes is a list of mime-types allowed to be uploaded
-	AllowedFileTypes []string `json:"allowedFileTypes"`
+	AllowedFileTypes []string
 	// MaxUploadSize defines the maximum permissible fiile-size
-	MaxUploadSize int64 `json:"maxUploadSize"`
+	MaxUploadSize int64
 	// UploadPath defines a directory where uploaded files are stored
-	UploadPath string `json:"uploadPath"`
+	UploadPath string
 }
 
 // FileStore holds configuration settings for the backend file store
@@ -64,26 +58,9 @@ type FileStore struct {
 
 // CorsSettings specifies the used settings
 type CorsSettings struct {
-	AllowedOrigins   []string `json:"origins"`
-	AllowedMethods   []string `json:"methods"`
-	AllowedHeaders   []string `json:"headers"`
-	AllowCredentials bool     `json:"credentials"`
-	MaxAge           int      `json:"maxAge"`
-}
-
-// GetSettings returns application configuration values
-func GetSettings(r io.Reader) (*AppConfig, error) {
-	var (
-		c    AppConfig
-		cont []byte
-		err  error
-	)
-	if cont, err = ioutil.ReadAll(r); err != nil {
-		return nil, err
-	}
-	if err := json.Unmarshal(cont, &c); err != nil {
-		return nil, err
-	}
-
-	return &c, nil
+	Origins     []string
+	Methods     []string
+	Headers     []string
+	Credentials bool
+	MaxAge      int
 }

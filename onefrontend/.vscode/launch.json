@@ -12,30 +12,13 @@
             "mode": "auto",
             "program": "${workspaceFolder}/cmd/server/main.go",
             "args": [
-                "-c",
-                "../../etc/application.yaml",
-                "-b",
+                "--basepath",
                 "../.."
             ],
+            "envFile": "${workspaceFolder}/.env",
             "internalConsoleOptions": "openOnSessionStart",
             "showLog": true,
             "output": "debug"
-        },
-        {
-            "name": "Frontend::Debug (chrome)",
-            "type": "chrome",
-            "request": "attach",
-            "preLaunchTask": "dev-integration",
-            "urlFilter": "http://localhost:4200/*",
-            "port": 9222,
-            "webRoot": "${workspaceFolder}/web/angular.frontend",
-            "sourceMapPathOverrides": {
-              "webpack:/*": "${webRoot}/*",
-              "/./*": "${webRoot}/*",
-              "/src/*": "${webRoot}/*",
-              "/*": "*",
-              "/./~/*": "${webRoot}/node_modules/*"
-            }
         }
     ]
 }

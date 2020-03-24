@@ -13,11 +13,10 @@
             "args": [
                 "--port",
                 "3001",
-                "-c",
-                "../../application.json",
-                "-b",
+                "--basepath",
                 "../.."
             ],
+            "envFile": "${workspaceFolder}/.env",
             "internalConsoleOptions": "openOnSessionStart",
             "showLog": true,
             "output": "debug"

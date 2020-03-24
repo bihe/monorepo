@@ -103,10 +103,10 @@ func (s *Server) MapRoutes() {
 
 	// setup cors for single frontend
 	cors := cors.New(cors.Options{
-		AllowedOrigins:   s.Cors.AllowedOrigins,
-		AllowedMethods:   s.Cors.AllowedMethods,
-		AllowedHeaders:   s.Cors.AllowedHeaders,
-		AllowCredentials: s.Cors.AllowCredentials,
+		AllowedOrigins:   s.Cors.Origins,
+		AllowedMethods:   s.Cors.Methods,
+		AllowedHeaders:   s.Cors.Headers,
+		AllowCredentials: s.Cors.Credentials,
 		MaxAge:           s.Cors.MaxAge,
 	})
 	r.Use(cors.Handler)

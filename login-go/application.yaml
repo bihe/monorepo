@@ -1,0 +1,60 @@
+---
+# configuration for JWT authentication
+security:
+    jwtIssuer: issuer
+    jwtSecret: secret
+    cookieName: login_token
+    exiry: 7
+    cookieDomain: localhost
+    cookiePath: /
+    cookieSecure: false
+    claim:
+        name: login
+        url: http://localhost:3001
+        roles:
+        - Admin
+    cacheDuration: 10m
+    loginRedirect: /
+
+oidc:
+  clientID: clientID
+  clientSecret: clientSecret
+  redirectURL: "http://localhost:3001/signin-oidc"
+  provider: "https://accounts.google.com"
+
+database:
+    connectionString: "root:mariadb@tcp(localhost:3306)/login?parseTime=true"
+
+logging:
+    filePath: "./logs/login-api.log"
+    requestPath: "./logs/requests.log"
+    logLevel: debug
+
+# cookies are needed for user-facing sites and messaging
+appCookies:
+    domain: localhost
+    path: "/"
+    secure: false
+    prefix: bookmarks
+
+cors:
+    origins:
+    - "http://localhost:3001"
+    - "http://localhost:4200"
+    methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "OPTIONS"
+    headers:
+    - "cache-control"
+    - "content-type"
+    - "pragma"
+    - "accept"
+    - "authorization"
+    credentials: true
+    maxAge: 500
+
+# common application settings
+environment: Development

@@ -38,19 +38,19 @@ func registerRoutes(e *echo.Echo, con persistence.Connection, config config.AppC
 	// upload
 	u := api.Group("/upload")
 	uploadConfig := upload.Config{
-		AllowedFileTypes: config.UP.AllowedFileTypes,
-		MaxUploadSize:    config.UP.MaxUploadSize,
-		UploadPath:       config.UP.UploadPath,
+		AllowedFileTypes: config.Upload.AllowedFileTypes,
+		MaxUploadSize:    config.Upload.MaxUploadSize,
+		UploadPath:       config.Upload.UploadPath,
 	}
 	uh := upload.NewHandler(ur, uploadConfig)
 	u.POST("/file", uh.UploadFile)
 
 	// file
 	storeSvc := filestore.NewService(filestore.S3Config{
-		Region: config.Store.Region,
-		Bucket: config.Store.Bucket,
-		Key:    config.Store.Key,
-		Secret: config.Store.Secret,
+		Region: config.Filestore.Region,
+		Bucket: config.Filestore.Bucket,
+		Key:    config.Filestore.Key,
+		Secret: config.Filestore.Secret,
 	})
 	f := api.Group("/file")
 	fh := filestore.NewHandler(storeSvc)

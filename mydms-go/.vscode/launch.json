@@ -12,9 +12,12 @@
             "program": "${workspaceFolder}/server.go",
             "env": {},
 			"args": [
-                "-port",
-                "3002"
+                "--port",
+                "3002",
+                "--basepath",
+                "."
             ],
+            "envFile": "${workspaceFolder}/.env",
             "internalConsoleOptions": "openOnSessionStart",
             "showLog": true
         }

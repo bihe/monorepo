@@ -12,8 +12,6 @@
 *.out
 
 .env
-etc/application.json
-etc/application.yaml
 
 web/ui/*
 web/angular.frontend/dist

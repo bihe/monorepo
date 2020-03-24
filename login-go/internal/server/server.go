@@ -12,13 +12,13 @@ import (
 	"github.com/go-chi/chi/middleware"
 	_ "github.com/go-sql-driver/mysql" // import the mysql driver
 
+	"github.com/bihe/login-go/internal"
+	"github.com/bihe/login-go/internal/config"
+	"github.com/bihe/login-go/internal/persistence"
 	"golang.binggl.net/commons/cookies"
 	"golang.binggl.net/commons/errors"
 	"golang.binggl.net/commons/handler"
 	"golang.binggl.net/commons/security"
-	"github.com/bihe/login-go/internal"
-	"github.com/bihe/login-go/internal/config"
-	"github.com/bihe/login-go/internal/persistence"
 
 	"github.com/bihe/login-go/internal/api"
 
@@ -43,33 +43,28 @@ type Server struct {
 }
 
 // Create instantiates a new Server instance
-func Create(basePath string, config config.AppConfig, version internal.VersionInfo, environment string) *Server {
+func Create(basePath string, config config.AppConfig, version internal.VersionInfo) *Server {
 	base, err := filepath.Abs(basePath)
 	if err != nil {
 		panic(fmt.Sprintf("cannot resolve basepath '%s', %v", basePath, err))
 	}
-	con := per.NewConn(config.DB.ConnStr)
+	con := per.NewConn(config.Database.ConnectionString)
 	repo, err := persistence.NewRepository(con)
 	if err != nil {
 		panic(fmt.Sprintf("could not create a repository: %v", err))
 	}
 
-	env := config.Environment
-	if environment != "" {
-		env = environment
-	}
-
 	jwtOpts := security.JwtOptions{
-		JwtSecret:  config.Sec.JwtSecret,
-		JwtIssuer:  config.Sec.JwtIssuer,
-		CookieName: config.Sec.CookieName,
+		JwtSecret:  config.Security.JwtSecret,
+		JwtIssuer:  config.Security.JwtIssuer,
+		CookieName: config.Security.CookieName,
 		RequiredClaim: security.Claim{
-			Name:  config.Sec.Claim.Name,
-			URL:   config.Sec.Claim.URL,
-			Roles: config.Sec.Claim.Roles,
+			Name:  config.Security.Claim.Name,
+			URL:   config.Security.Claim.URL,
+			Roles: config.Security.Claim.Roles,
 		},
-		RedirectURL:   config.Sec.LoginRedirect,
-		CacheDuration: config.Sec.CacheDuration,
+		RedirectURL:   config.Security.LoginRedirect,
+		CacheDuration: config.Security.CacheDuration,
 	}
 	cookieSettings := cookies.Settings{
 		Path:   config.AppCookies.Path,
@@ -96,10 +91,10 @@ func Create(basePath string, config config.AppConfig, version internal.VersionIn
 		cookieSettings: cookieSettings,
 		jwtOpts:        jwtOpts,
 
-		environment: env,
-		logConfig:   config.Log,
+		environment: config.Environment,
+		logConfig:   config.Logging,
 		cors:        config.Cors,
-		api:         api.New(base, baseHandler, cookieSettings, version, config.OIDC, config.Sec, repo),
+		api:         api.New(base, baseHandler, cookieSettings, version, config.OIDC, config.Security, repo),
 		appInfoAPI:  appInfo,
 	}
 	srv.routes()

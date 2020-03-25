@@ -52,7 +52,7 @@ steps:
     echo "go test result is - $ec"
     if [ $ec == 0 ]; then
       echo "do codecov upload"
-      bash <(curl -s https://codecov.io/bash)
+      bash <(curl -s https://codecov.io/bash) -F bookmarks
     fi
   continueOnError: false
   workingDirectory: '$(modulePath)/bookmarks'

@@ -43,7 +43,7 @@ steps:
 - script: |
     go version
     go get -v -t -d ./...
-  workingDirectory: '$(modulePath)'
+  workingDirectory: '$(modulePath)/mydms-go'
   continueOnError: false
   displayName: 'Get dependencies'
 
@@ -52,44 +52,14 @@ steps:
     echo "go test result is - $ec"
     if [ $ec == 0 ]; then
       echo "do codecov upload"
-      bash <(curl -s https://codecov.io/bash)
+      bash <(curl -s https://codecov.io/bash) -F mydms
     fi
   continueOnError: false
-  workingDirectory: '$(modulePath)'
+  workingDirectory: '$(modulePath)/mydms-go'
   displayName: 'Run unit tests'
 
 - script: |
     go build -v
-  workingDirectory: '$(modulePath)'
+  workingDirectory: '$(modulePath)/mydms-go'
   continueOnError: false
   displayName: 'Build App: mydms-go'
-
-- task: Docker@2
-  displayName: Login to Docker Hub
-  inputs:
-    command: login
-    containerRegistry: dockerhub
-
-- task: Docker@2
-  displayName: 'Build Docker image: mydms'
-  inputs:
-    command: build
-    Dockerfile: '$(modulePath)/Dockerfile'
-    repository: bihe/mydms-go
-    tags: |
-      latest
-      $(buildtime_variable_commit)
-    arguments: |
-      --build-arg buildtime_variable_version=$(buildtime_variable_version)
-      --build-arg buildtime_variable_timestamp=$(TSTAMP)
-      --build-arg buildtime_variable_commit=$(githash)
-
-- task: Docker@2
-  displayName: 'Build Docker image to dockerhub'
-  inputs:
-    command: push
-    repository: bihe/mydms-go
-    tags: |
-      latest
-      $(buildtime_variable_commit)
-

@@ -35,4 +35,4 @@ RUN addgroup -g 1000 -S mydms && \
 RUN chown -R mydms:mydms /opt/mydms
 USER mydms
 
-CMD ["/opt/mydms/mydms.api","--c=/opt/mydms/etc/application.json","--port=3000", "--hostname=0.0.0.0"]
+CMD ["/opt/mydms/mydms.api","--basepath=/opt/mydms","--port=3000", "--hostname=0.0.0.0"]

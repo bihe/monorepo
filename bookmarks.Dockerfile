@@ -38,4 +38,4 @@ RUN addgroup -g 1000 -S bookmarks && \
 RUN chown -R bookmarks:bookmarks /opt/bookmarks
 USER bookmarks
 
-CMD ["/opt/bookmarks/bookmarks.api","--c=/opt/bookmarks/etc/application.yaml","--port=3000", "--hostname=0.0.0.0", "--e=Production"]
+CMD ["/opt/bookmarks/bookmarks.api","--basepath=/opt/bookmarks","--port=3000", "--hostname=0.0.0.0"]

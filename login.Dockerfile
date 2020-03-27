@@ -41,4 +41,4 @@ RUN addgroup -g 1000 -S loginapp && \
 RUN chown -R loginapp:loginapp /opt/login
 USER loginapp
 
-CMD ["/opt/login/login.api","--c=/opt/login/etc/application.json","--port=3000", "--hostname=0.0.0.0", "--e=Production"]
+CMD ["/opt/login/login.api","--basepath=/opt/login","--port=3000", "--hostname=0.0.0.0"]

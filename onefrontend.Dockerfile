@@ -54,4 +54,4 @@ RUN addgroup -g 1000 -S onefrontend && \
 RUN chown -R onefrontend:onefrontend /opt/onefrontend
 USER onefrontend
 
-CMD ["/opt/onefrontend/onefrontend","--c=/opt/onefrontend/etc/application.yaml","--port=3000", "--hostname=0.0.0.0", "--e=Production"]
+CMD ["/opt/onefrontend/onefrontend","--basepath=/opt/onefrontend","--port=3000", "--hostname=0.0.0.0"]

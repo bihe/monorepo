@@ -10,10 +10,7 @@ import (
 
 func setupLog(config config.AppConfig) {
 	if config.Environment != "Development" {
-		log.SetFormatter(&log.TextFormatter{
-			DisableColors: true,
-			FullTimestamp: true,
-		})
+		log.SetFormatter(&log.JSONFormatter{})
 
 		var file *os.File
 		file, err := os.OpenFile(config.Logging.FilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)

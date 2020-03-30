@@ -458,11 +458,11 @@ func (b *BookmarksAPI) Create(user security.User, w http.ResponseWriter, r *http
 	// if no specific favicon was supplied, immediately fetch one
 	if savedItem.Favicon == "" && savedItem.Type == store.Node {
 		// fire&forget, run this in background and do not wait for the result
-		go b.fetchFavicon(savedItem, user)
+		go b.FetchFavicon(savedItem, user)
 	}
 	if payload.CustomFavicon != "" {
 		// fire&forget, run this in background and do not wait for the result
-		go b.fetchFaviconURL(payload.CustomFavicon, savedItem, user)
+		go b.FetchFaviconURL(payload.CustomFavicon, savedItem, user)
 	}
 
 	id := savedItem.ID
@@ -587,11 +587,11 @@ func (b *BookmarksAPI) Update(user security.User, w http.ResponseWriter, r *http
 		// also update the favicon if not available
 		if item.Favicon == "" {
 			// fire&forget, run this in background and do not wait for the result
-			go b.fetchFavicon(item, user)
+			go b.FetchFavicon(item, user)
 		}
 		if payload.CustomFavicon != "" {
 			// fire&forget, run this in background and do not wait for the result
-			go b.fetchFaviconURL(payload.CustomFavicon, item, user)
+			go b.FetchFaviconURL(payload.CustomFavicon, item, user)
 		}
 
 		if existing.Type == store.Folder && (existingDisplayName != payload.DisplayName || existingPath != payload.Path) {
@@ -911,7 +911,7 @@ func (b *BookmarksAPI) FetchAndForward(user security.User, w http.ResponseWriter
 
 		if existing.Favicon == "" {
 			// fire&forget, run this in background and do not wait for the result
-			go b.fetchFavicon(existing, user)
+			go b.FetchFavicon(existing, user)
 		}
 		return nil
 	}); err != nil {
@@ -983,7 +983,8 @@ func (b *BookmarksAPI) GetFavicon(user security.User, w http.ResponseWriter, r *
 	return nil
 }
 
-func (b *BookmarksAPI) fetchFaviconURL(url string, bm store.Bookmark, user security.User) {
+// FetchFaviconURL retrieves the favicon from the given URL
+func (b *BookmarksAPI) FetchFaviconURL(url string, bm store.Bookmark, user security.User) {
 	payload, err := favicon.FetchURL(url)
 	if err != nil {
 		commons.LogWith(b.Log, "api.fetchFaviconURL").Errorf("cannot fetch favicon from URL '%s': %v", url, err)
@@ -999,6 +1000,7 @@ func (b *BookmarksAPI) fetchFaviconURL(url string, bm store.Bookmark, user secur
 	}
 
 	if len(payload) > 0 {
+		commons.LogWith(b.Log, "api.fetchFaviconURL").Warnf("got favicon payload length of '%d' for URL '%s'", len(payload), url)
 		hashPayload, err := hashInput(payload)
 		if err != nil {
 			commons.LogWith(b.Log, "api.fetchFaviconURL").Errorf("could not hash payload: '%v'", err)
@@ -1014,8 +1016,6 @@ func (b *BookmarksAPI) fetchFaviconURL(url string, bm store.Bookmark, user secur
 		fullPath := path.Join(b.BasePath, b.FaviconPath, filename)
 
 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-			commons.LogWith(b.Log, "api.fetchFaviconURL").Warnf("got favicon payload length of '%d' for URL '%s'", len(payload), url)
-
 			if err := ioutil.WriteFile(fullPath, payload, 0644); err != nil {
 				commons.LogWith(b.Log, "api.fetchFaviconURL").Errorf("could not write favicon to file '%s': %v", fullPath, err)
 				return
@@ -1036,7 +1036,8 @@ func (b *BookmarksAPI) fetchFaviconURL(url string, bm store.Bookmark, user secur
 	}
 }
 
-func (b *BookmarksAPI) fetchFavicon(bm store.Bookmark, user security.User) {
+// FetchFavicon retrieves the Favion from the bookmarks URL
+func (b *BookmarksAPI) FetchFavicon(bm store.Bookmark, user security.User) {
 	favicon, payload, err := favicon.GetFaviconFromURL(bm.URL)
 	if err != nil {
 		commons.LogWith(b.Log, "api.fetchFavicon").Errorf("cannot fetch favicon from URL '%s': %v", bm.URL, err)
@@ -1044,7 +1045,7 @@ func (b *BookmarksAPI) fetchFavicon(bm store.Bookmark, user security.User) {
 	}
 
 	if len(payload) > 0 {
-
+		commons.LogWith(b.Log, "api.fetchFavicon").Warnf("got favicon payload length of '%d' for URL '%s'", len(payload), bm.URL)
 		hashPayload, err := hashInput(payload)
 		if err != nil {
 			commons.LogWith(b.Log, "api.fetchFavicon").Errorf("could not hash payload: '%v'", err)
@@ -1060,9 +1061,6 @@ func (b *BookmarksAPI) fetchFavicon(bm store.Bookmark, user security.User) {
 		fullPath := path.Join(b.BasePath, b.FaviconPath, filename)
 
 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-			// TODO: wrong log statement
-			commons.LogWith(b.Log, "api.fetchFavicon").Warnf("got favicon payload length of '%d' for URL '%s'", len(payload), bm.URL)
-
 			if err := ioutil.WriteFile(fullPath, payload, 0644); err != nil {
 				commons.LogWith(b.Log, "api.fetchFavicon").Errorf("could not write favicon to file '%s': %v", fullPath, err)
 				return
@@ -1079,7 +1077,7 @@ func (b *BookmarksAPI) fetchFavicon(bm store.Bookmark, user security.User) {
 		}
 
 	} else {
-		commons.LogWith(b.Log, "api.fetchFavicon").Warnf("not payload for favicon from URL '%s'", bm.URL)
+		commons.LogWith(b.Log, "api.fetchFavicon").Warnf("no payload for favicon from URL '%s'", bm.URL)
 	}
 }
 

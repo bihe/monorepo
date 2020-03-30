@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -1522,6 +1523,108 @@ func TestMoveBookmarks(t *testing.T) {
 	r.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
+func TestGetBookmarkFavicon(t *testing.T) {
+	// arrange test-environment
+	// ------------------------------------------------------------------
+	mockAPI := &BookmarksAPI{
+		Handler:        baseHandler,
+		Repository:     &MockRepository{fail: false},
+		BasePath:       "../../../",
+		FaviconPath:    "./assets",
+		DefaultFavicon: "./assets/favicon.ico",
+	}
+
+	user := security.User{
+		Username:    userName,
+		Email:       "a.b@c.de",
+		DisplayName: "displayname",
+		Roles:       []string{"role"},
+		UserID:      "12345",
+	}
+
+	bm := store.Bookmark{
+		DisplayName: "favicon",
+		ID:          "ID",
+		Type:        store.Node,
+	}
+
+	favicon, _ := ioutil.ReadFile("../../../assets/favicon.ico")
+
+	// setup a test-server
+	mux := http.NewServeMux()
+	mux.HandleFunc("/img/favicon.png", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(favicon)))
+		if _, err := w.Write(favicon); err != nil {
+			t.Fatalf("%v", err)
+		}
+	})
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("content-type", "text/html")
+		html := ` <html>
+                <head>
+                    <meta charset="utf-8">
+                    <link rel="shortcut icon" href="/img/favicon.png">
+                </head>
+                <body>html</body>
+            </html>`
+		if _, err := w.Write([]byte(html)); err != nil {
+			t.Fatalf("%v", err)
+		}
+	})
+	ts := httptest.NewServer(mux)
+	defer ts.Close()
+	bm.URL = ts.URL
+	mockAPI.FetchFavicon(bm, user)
+
+	bm.URL = "http://localhost"
+	mockAPI.FetchFavicon(bm, user)
+
+}
+
+func TestGetFaviconURL(t *testing.T) {
+	// arrange test-environment
+	// ------------------------------------------------------------------
+	mockAPI := &BookmarksAPI{
+		Handler:        baseHandler,
+		Repository:     &MockRepository{fail: false},
+		BasePath:       "../../../",
+		FaviconPath:    "./assets",
+		DefaultFavicon: "./assets/favicon.ico",
+	}
+
+	user := security.User{
+		Username:    userName,
+		Email:       "a.b@c.de",
+		DisplayName: "displayname",
+		Roles:       []string{"role"},
+		UserID:      "12345",
+	}
+
+	bm := store.Bookmark{
+		DisplayName: "favicon",
+		ID:          "ID",
+		Type:        store.Node,
+	}
+
+	favicon, _ := ioutil.ReadFile("../../../assets/favicon.ico")
+
+	// setup a test-server
+	mux := http.NewServeMux()
+	mux.HandleFunc("/img/favicon.png", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(favicon)))
+		if _, err := w.Write(favicon); err != nil {
+			t.Fatalf("%v", err)
+		}
+	})
+	ts := httptest.NewServer(mux)
+	defer ts.Close()
+	bm.URL = ts.URL
+	mockAPI.FetchFaviconURL(ts.URL+"/img/favicon.png", bm, user)
+
+	// no success
+	mockAPI.FetchFaviconURL("http://locahost", bm, user)
 }
 
 // --------------------------------------------------------------------------

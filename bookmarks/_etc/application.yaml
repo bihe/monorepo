@@ -48,6 +48,9 @@ cors:
     maxAge: 500
 
 # common application settings
+appName: bookmarks-go
+hostID: bookmarks
+
 errorPath: /error
 environment: Development
 # place to store the downloaded favicons

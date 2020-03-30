@@ -2,10 +2,7 @@
 package onefrontend
 
 import (
-	"fmt"
-	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -19,6 +16,8 @@ import (
 	"golang.binggl.net/commons/errors"
 	"golang.binggl.net/commons/handler"
 	"golang.binggl.net/commons/security"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Server configures a HTTP server
@@ -34,10 +33,10 @@ type Server struct {
 	FrontendPrefix string
 	ErrorPath      string
 	StartURL       string
-	Environment    string
+	Environment    config.Environment
 	Version        types.VersionInfo
-
-	router chi.Router
+	Log            *log.Entry
+	router         chi.Router
 }
 
 // MapRoutes defines and configures the application routes
@@ -96,7 +95,7 @@ func (s *Server) MapRoutes() {
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
+	r.Use(handler.NewLoggerMiddleware(s.Log).LoggerContext)
 	r.Use(middleware.DefaultCompress)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
@@ -110,9 +109,6 @@ func (s *Server) MapRoutes() {
 		MaxAge:           s.Cors.MaxAge,
 	})
 	r.Use(cors.Handler)
-
-	s.setupRequestLogging()
-
 	r.Get("/error", errHandler.Call(errHandler.HandleError))
 
 	// serving static content
@@ -122,7 +118,7 @@ func (s *Server) MapRoutes() {
 	// this group "indicates" that all routes within this group use the JWT authentication
 	r.Group(func(r chi.Router) {
 		// authenticate and authorize users via JWT
-		r.Use(security.NewJwtMiddleware(jwtOptions, cookieSettings).JwtContext)
+		r.Use(security.NewJwtMiddleware(jwtOptions, cookieSettings, s.Log).JwtContext)
 
 		r.Get("/appinfo", appInfo.Secure(appInfo.HandleAppInfo))
 
@@ -158,20 +154,4 @@ func (s *Server) MapRoutes() {
 // ServeHTTP turns the server into a http.Handler
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
-}
-
-// use the go-chi logger middleware and redirect request logging to a file
-func (s *Server) setupRequestLogging() {
-
-	if s.Environment != "Development" {
-		var file *os.File
-		file, err := os.OpenFile(s.LogConfig.RequestPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-		if err != nil {
-			panic(fmt.Sprintf("cannot use filepath '%s' as a logfile: %v", s.LogConfig.RequestPath, err))
-		}
-		middleware.DefaultLogger = middleware.RequestLogger(&middleware.DefaultLogFormatter{
-			Logger:  log.New(file, "", log.LstdFlags),
-			NoColor: true,
-		})
-	}
 }

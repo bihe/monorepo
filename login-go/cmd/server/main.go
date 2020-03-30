@@ -43,8 +43,8 @@ func run() (err error) {
 	}
 
 	hostName, port, basePath, appConfig := readConfig()
-	apiSrv := server.Create(basePath, appConfig, version)
-	setupLog(appConfig)
+	l := setupLog(appConfig)
+	apiSrv := server.Create(basePath, appConfig, version, l)
 	addr := fmt.Sprintf("%s:%d", hostName, port)
 	httpSrv := &http.Server{Addr: addr, Handler: apiSrv}
 

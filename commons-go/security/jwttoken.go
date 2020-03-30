@@ -30,6 +30,10 @@ type jwtClaims struct {
 
 // CreateToken uses the configuration and supplied parameter to create a new token
 func CreateToken(issuer string, key []byte, expiry int, c Claims) (string, error) {
+	defaultExp := 7
+	if expiry == 0 {
+		expiry = defaultExp
+	}
 	now := time.Now().UTC()
 	exp := now.Add(time.Duration(expiry*24) * time.Hour)
 	id := uuid.New()

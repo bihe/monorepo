@@ -3,9 +3,7 @@ package server
 
 import (
 	"fmt"
-	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 
 	"github.com/jinzhu/gorm"
@@ -19,7 +17,8 @@ import (
 	"github.com/bihe/bookmarks/internal/server/api"
 	"github.com/bihe/bookmarks/internal/store"
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+
+	log "github.com/sirupsen/logrus"
 
 	_ "github.com/jinzhu/gorm/dialects/mysql" // use mysql
 )
@@ -32,14 +31,15 @@ type Server struct {
 	cookieSettings cookies.Settings
 	logConfig      config.LogConfig
 	cors           config.CorsSettings
-	environment    string
+	environment    config.Environment
 	errorHandler   *handler.TemplateHandler
 	appInfoAPI     *handler.AppInfoHandler
 	bookmarkAPI    *api.BookmarksAPI
+	log            *log.Entry
 }
 
 // Create instantiates a new Server instance
-func Create(basePath string, config config.AppConfig, version internal.VersionInfo) *Server {
+func Create(basePath string, config config.AppConfig, version internal.VersionInfo, logger *log.Entry) *Server {
 	base, err := filepath.Abs(basePath)
 	if err != nil {
 		panic(fmt.Sprintf("cannot resolve basepath '%s', %v", basePath, err))
@@ -67,6 +67,7 @@ func Create(basePath string, config config.AppConfig, version internal.VersionIn
 	}
 	baseHandler := handler.Handler{
 		ErrRep: errorReporter,
+		Log:    logger,
 	}
 
 	appInfo := &handler.AppInfoHandler{
@@ -81,7 +82,7 @@ func Create(basePath string, config config.AppConfig, version internal.VersionIn
 		Version:        version.Version,
 		Build:          version.Build,
 		CookieSettings: cookieSettings,
-		AppName:        "bookmarks.binggl.net",
+		AppName:        config.AppName,
 		TemplateDir:    templatePath,
 	}
 	bookmarkAPI := &api.BookmarksAPI{
@@ -119,6 +120,7 @@ func Create(basePath string, config config.AppConfig, version internal.VersionIn
 		appInfoAPI:     appInfo,
 		errorHandler:   errHandler,
 		bookmarkAPI:    bookmarkAPI,
+		log:            logger,
 	}
 	srv.routes()
 	return &srv
@@ -127,20 +129,4 @@ func Create(basePath string, config config.AppConfig, version internal.VersionIn
 // ServeHTTP turns the server into a http.Handler
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
-}
-
-// use the go-chi logger middleware and redirect request logging to a file
-func (s *Server) setupRequestLogging() {
-
-	if s.environment != "Development" {
-		var file *os.File
-		file, err := os.OpenFile(s.logConfig.RequestPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-		if err != nil {
-			panic(fmt.Sprintf("cannot use filepath '%s' as a logfile: %v", s.logConfig.RequestPath, err))
-		}
-		middleware.DefaultLogger = middleware.RequestLogger(&middleware.DefaultLogFormatter{
-			Logger:  log.New(file, "", log.LstdFlags),
-			NoColor: true,
-		})
-	}
 }

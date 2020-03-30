@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"golang.binggl.net/commons/errors"
-	"golang.binggl.net/commons/security"
 	"github.com/bihe/login-go/internal/persistence"
 	"github.com/go-chi/chi"
+	"golang.binggl.net/commons"
+	"golang.binggl.net/commons/errors"
+	"golang.binggl.net/commons/security"
 
 	per "golang.binggl.net/commons/persistence"
-	log "github.com/sirupsen/logrus"
 )
 
 // swagger:operation GET /sites sites HandleGetSites
@@ -44,7 +44,7 @@ import (
 func (a *loginAPI) HandleGetSites(user security.User, w http.ResponseWriter, r *http.Request) error {
 	sites, err := a.repo.GetSitesByUser(user.Email)
 	if err != nil {
-		log.Warnf("cannot get sites of current user '%s', %v", user.Email, err)
+		commons.LogWithReq(r, a.logEntry, "api.HandleGetSites").Warnf("cannot get sites of current user '%s', %v", user.Email, err)
 		return errors.NotFoundError{Err: fmt.Errorf("no sites for given user '%s'", user.Email), Request: r}
 	}
 
@@ -92,7 +92,7 @@ func (a *loginAPI) HandleGetSites(user security.User, w http.ResponseWriter, r *
 //       "$ref": "#/definitions/ProblemDetail"
 func (a *loginAPI) HandleSaveSites(user security.User, w http.ResponseWriter, r *http.Request) error {
 	if !a.hasRole(user, a.editRole) {
-		log.Warnf("user '%s' tried to save but does not have required permissions", user.Email)
+		commons.LogWithReq(r, a.logEntry, "api.HandleSaveSites").Warnf("user '%s' tried to save but does not have required permissions", user.Email)
 		return errors.SecurityError{Err: fmt.Errorf("user '%s' is not allowed to perform this action", user.Email), Request: r}
 	}
 
@@ -117,7 +117,7 @@ func (a *loginAPI) HandleSaveSites(user security.User, w http.ResponseWriter, r 
 	}
 	err = a.repo.StoreSiteForUser(user.Email, sites, per.Atomic{})
 	if err != nil {
-		log.Errorf("could not save sites of user '%s': %v", user.Email, err)
+		commons.LogWithReq(r, a.logEntry, "api.HandleSaveSites").Errorf("could not save sites of user '%s': %v", user.Email, err)
 		return errors.ServerError{Err: fmt.Errorf("could not save payload: %v", err), Request: r}
 	}
 	w.WriteHeader(http.StatusCreated)
@@ -160,7 +160,7 @@ func (a *loginAPI) HandleGetUsersForSite(user security.User, w http.ResponseWrit
 	siteName := chi.URLParam(r, "siteName")
 	users, err := a.repo.GetUsersForSite(siteName)
 	if err != nil {
-		log.Warnf("cannot get users for site '%s', %v", siteName, err)
+		commons.LogWithReq(r, a.logEntry, "api.HandleGetUsersForSite").Warnf("cannot get users for site '%s', %v", siteName, err)
 		return errors.NotFoundError{Err: fmt.Errorf("no users available for given site '%s'", siteName), Request: r}
 	}
 	a.respond(w, r, http.StatusOK, UserList{

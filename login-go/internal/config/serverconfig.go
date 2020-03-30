@@ -1,5 +1,15 @@
 package config
 
+// Environment specifies operation modes
+type Environment string
+
+const (
+	// Development is used in development
+	Development Environment = "Development"
+	// Production is used for deployments
+	Production Environment = "Production"
+)
+
 // AppConfig holds the application configuration
 type AppConfig struct {
 	Security    Security
@@ -7,8 +17,10 @@ type AppConfig struct {
 	Logging     LogConfig
 	OIDC        OAuthConfig
 	AppCookies  ApplicationCookies
-	Environment string
+	Environment Environment
 	Cors        CorsSettings
+	AppName     string
+	HostID      string
 }
 
 // Security settings for the application
@@ -47,9 +59,8 @@ type Database struct {
 
 // LogConfig is used to define settings for the logging process
 type LogConfig struct {
-	FilePath    string
-	RequestPath string
-	LogLevel    string
+	FilePath string
+	LogLevel string
 }
 
 // CorsSettings specifies the used settings

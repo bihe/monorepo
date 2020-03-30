@@ -36,6 +36,7 @@ import (
 	"github.com/bihe/bookmarks/internal/store"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+	"golang.binggl.net/commons"
 	"golang.binggl.net/commons/errors"
 	"golang.binggl.net/commons/handler"
 	"golang.binggl.net/commons/security"
@@ -90,12 +91,11 @@ func (b *BookmarksAPI) GetBookmarkByID(user security.User, w http.ResponseWriter
 	if id == "" {
 		return errors.BadRequestError{Err: fmt.Errorf("missing id parameter"), Request: r}
 	}
-
-	handler.LogFunction("api.GetBookmarkByID").Debugf("try to get bookmark by ID: '%s' for user: '%s'", id, user.Username)
+	commons.LogWithReq(r, b.Log, "api.GetBookmarkByID").Debugf("try to get bookmark by ID: '%s' for user: '%s'", id, user.Username)
 
 	bookmark, err := b.Repository.GetBookmarkByID(id, user.Username)
 	if err != nil {
-		handler.LogFunction("api.GetBookmarkByID").Warnf("cannot get bookmark by ID: '%s', %v", id, err)
+		commons.LogWithReq(r, b.Log, "api.GetBookmarkByID").Warnf("cannot get bookmark by ID: '%s', %v", id, err)
 		return errors.NotFoundError{Err: fmt.Errorf("no bookmark with ID '%s' avaliable", id), Request: r}
 	}
 
@@ -139,12 +139,12 @@ func (b *BookmarksAPI) GetBookmarksByPath(user security.User, w http.ResponseWri
 		return errors.BadRequestError{Err: fmt.Errorf("missing path parameter"), Request: r}
 	}
 
-	handler.LogFunction("api.GetBookmarksByPath").Debugf("get bookmarks by path: '%s' for user: '%s'", path, user.Username)
+	commons.LogWithReq(r, b.Log, "api.GetBookmarksByPath").Debugf("get bookmarks by path: '%s' for user: '%s'", path, user.Username)
 
 	bms, err := b.Repository.GetBookmarksByPath(path, user.Username)
 	var bookmarks []Bookmark
 	if err != nil {
-		handler.LogFunction("api.GetBookmarksByPath").Warnf("cannot get bookmark by path: '%s', %v", path, err)
+		commons.LogWithReq(r, b.Log, "api.GetBookmarksByPath").Warnf("cannot get bookmark by path: '%s', %v", path, err)
 	}
 	bookmarks = entityListToModel(bms)
 	count := len(bookmarks)
@@ -199,7 +199,7 @@ func (b *BookmarksAPI) GetBookmarksFolderByPath(user security.User, w http.Respo
 		return errors.BadRequestError{Err: fmt.Errorf("missing path parameter"), Request: r}
 	}
 
-	handler.LogFunction("api.GetBookmarksFolderByPath").Debugf("get bookmarks-folder by path: '%s' for user: '%s'", path, user.Username)
+	commons.LogWithReq(r, b.Log, "api.GetBookmarksFolderByPath").Debugf("get bookmarks-folder by path: '%s' for user: '%s'", path, user.Username)
 
 	if path == "/" {
 		// special treatment for the root path. This path is ALWAYS available
@@ -218,7 +218,7 @@ func (b *BookmarksAPI) GetBookmarksFolderByPath(user security.User, w http.Respo
 
 	bm, err := b.Repository.GetFolderByPath(path, user.Username)
 	if err != nil {
-		handler.LogFunction("api.GetBookmarksFolderByPath").Warnf("cannot get bookmark folder by path: '%s', %v", path, err)
+		commons.LogWithReq(r, b.Log, "api.GetBookmarksFolderByPath").Warnf("cannot get bookmark folder by path: '%s', %v", path, err)
 		return errors.NotFoundError{Err: fmt.Errorf("no folder for path '%s' found", path), Request: r}
 	}
 
@@ -263,7 +263,7 @@ func (b *BookmarksAPI) GetBookmarksFolderByPath(user security.User, w http.Respo
 func (b *BookmarksAPI) GetAllPaths(user security.User, w http.ResponseWriter, r *http.Request) error {
 	paths, err := b.Repository.GetAllPaths(user.Username)
 	if err != nil {
-		handler.LogFunction("api.GetAllPaths").Warnf("cannot get all bookmark paths: %v", err)
+		commons.LogWithReq(r, b.Log, "api.GetAllPaths").Warnf("cannot get all bookmark paths: %v", err)
 		return errors.ServerError{Err: fmt.Errorf("cannot get all bookmark paths"), Request: r}
 	}
 
@@ -310,12 +310,12 @@ func (b *BookmarksAPI) GetBookmarksByName(user security.User, w http.ResponseWri
 		return errors.BadRequestError{Err: fmt.Errorf("missing name parameter"), Request: r}
 	}
 
-	handler.LogFunction("api.GetBookmarksByName").Debugf("get bookmarks by name: '%s' for user: '%s'", name, user.Username)
+	commons.LogWithReq(r, b.Log, "api.GetBookmarksByName").Debugf("get bookmarks by name: '%s' for user: '%s'", name, user.Username)
 
 	bms, err := b.Repository.GetBookmarksByName(name, user.Username)
 	var bookmarks []Bookmark
 	if err != nil {
-		handler.LogFunction("api.GetBookmarksByName").Warnf("cannot get bookmark by name: '%s', %v", name, err)
+		commons.LogWithReq(r, b.Log, "api.GetBookmarksByName").Warnf("cannot get bookmark by name: '%s', %v", name, err)
 	}
 	bookmarks = entityListToModel(bms)
 	count := len(bookmarks)
@@ -362,12 +362,12 @@ func (b *BookmarksAPI) GetMostVisited(user security.User, w http.ResponseWriter,
 		num = 100
 	}
 
-	handler.LogFunction("api.GetMostVisited").Debugf("get the most recent, most often visited bookmarks for user: '%s'", user.Username)
+	commons.LogWithReq(r, b.Log, "api.GetMostVisited").Debugf("get the most recent, most often visited bookmarks for user: '%s'", user.Username)
 
 	bms, err := b.Repository.GetMostRecentBookmarks(user.Username, num)
 	var bookmarks []Bookmark
 	if err != nil {
-		handler.LogFunction("api.GetMostVisited").Warnf("cannot get most visited bookmarks: '%v'", err)
+		commons.LogWithReq(r, b.Log, "api.GetMostVisited").Warnf("cannot get most visited bookmarks: '%v'", err)
 	}
 	bookmarks = entityListToModel(bms)
 	count := len(bookmarks)
@@ -419,16 +419,16 @@ func (b *BookmarksAPI) Create(user security.User, w http.ResponseWriter, r *http
 
 	payload = &BookmarkRequest{}
 	if err := render.Bind(r, payload); err != nil {
-		handler.LogFunction("api.Create").Warnf("cannot bind payload: '%v'", err)
+		commons.LogWithReq(r, b.Log, "api.Create").Warnf("cannot bind payload: '%v'", err)
 		return errors.BadRequestError{Err: fmt.Errorf("invalid request data supplied"), Request: r}
 	}
 
 	if payload.Path == "" || payload.DisplayName == "" {
-		handler.LogFunction("api.Create").Warnf("required fields of bookmarks missing")
+		commons.LogWithReq(r, b.Log, "api.Create").Warnf("required fields of bookmarks missing")
 		return errors.BadRequestError{Err: fmt.Errorf("invalid request data supplied, missing Path or DisplayName"), Request: r}
 	}
 
-	handler.LogFunction("api.Create").Debugf("will try to create a new bookmark entry: '%s'", payload)
+	commons.LogWithReq(r, b.Log, "api.Create").Debugf("will try to create a new bookmark entry: '%s'", payload)
 
 	t = store.Node
 	if payload.Type == Folder {
@@ -451,7 +451,7 @@ func (b *BookmarksAPI) Create(user security.User, w http.ResponseWriter, r *http
 		savedItem = item
 		return nil
 	}); err != nil {
-		handler.LogFunction("api.Create").Errorf("could not create a new bookmark: %v", err)
+		commons.LogWithReq(r, b.Log, "api.Create").Errorf("could not create a new bookmark: %v", err)
 		return errors.ServerError{Err: fmt.Errorf("error creating a new bookmark: %v", err), Request: r}
 	}
 
@@ -466,7 +466,7 @@ func (b *BookmarksAPI) Create(user security.User, w http.ResponseWriter, r *http
 	}
 
 	id := savedItem.ID
-	handler.LogFunction("api.Create").Infof("bookmark created with ID: %s", id)
+	commons.LogWithReq(r, b.Log, "api.Create").Infof("bookmark created with ID: %s", id)
 	return render.Render(w, r, ResultResponse{
 		Result: &Result{
 			Success: true,
@@ -514,23 +514,23 @@ func (b *BookmarksAPI) Update(user security.User, w http.ResponseWriter, r *http
 
 	payload = &BookmarkRequest{}
 	if err := render.Bind(r, payload); err != nil {
-		handler.LogFunction("api.Update").Warnf("cannot bind payload: '%v'", err)
+		commons.LogWithReq(r, b.Log, "api.Update").Warnf("cannot bind payload: '%v'", err)
 		return errors.BadRequestError{Err: fmt.Errorf("invalid request data supplied"), Request: r}
 	}
 
 	if payload.Path == "" || payload.DisplayName == "" || payload.ID == "" {
-		handler.LogFunction("api.Update").Warnf("required fields of bookmarks missing")
+		commons.LogWithReq(r, b.Log, "api.Update").Warnf("required fields of bookmarks missing")
 		return errors.BadRequestError{Err: fmt.Errorf("invalid request data supplied, missing ID, Path or DisplayName"), Request: r}
 
 	}
 
-	handler.LogFunction("api.Update").Debugf("will try to update existing bookmark entry: '%s'", payload)
+	commons.LogWithReq(r, b.Log, "api.Update").Debugf("will try to update existing bookmark entry: '%s'", payload)
 
 	if err := b.Repository.InUnitOfWork(func(repo store.Repository) error {
 		// 1) fetch the existing bookmark by id
 		existing, err := repo.GetBookmarkByID(payload.ID, user.Username)
 		if err != nil {
-			handler.LogFunction("api.Update").Warnf("could not find bookmark by id '%s': %v", payload.ID, err)
+			commons.LogWithReq(r, b.Log, "api.Update").Warnf("could not find bookmark by id '%s': %v", payload.ID, err)
 			return err
 		}
 		childCount := existing.ChildCount
@@ -538,7 +538,7 @@ func (b *BookmarksAPI) Update(user security.User, w http.ResponseWriter, r *http
 			// 2) ensure that the existing folder is not moved to itself
 			folderPath := ensureFolderPath(existing.Path, existing.DisplayName)
 			if payload.Path == folderPath {
-				handler.LogFunction("api.Update").Warnf("a folder cannot be moved into itself: folder-path: '%s', destination: '%s'", folderPath, payload.Path)
+				commons.LogWithReq(r, b.Log, "api.Update").Warnf("a folder cannot be moved into itself: folder-path: '%s', destination: '%s'", folderPath, payload.Path)
 				return errors.BadRequestError{Err: fmt.Errorf("cannot move folder into itself"), Request: r}
 			}
 
@@ -548,7 +548,7 @@ func (b *BookmarksAPI) Update(user security.User, w http.ResponseWriter, r *http
 			path := ensureFolderPath(parentPath, existing.DisplayName)
 			nodeCount, err := repo.GetPathChildCount(path, user.Username)
 			if err != nil {
-				handler.LogFunction("api.Update").Warnf("could not get child-count of path '%s': %v", path, err)
+				commons.LogWithReq(r, b.Log, "api.Update").Warnf("could not get child-count of path '%s': %v", path, err)
 				return err
 			}
 			if len(nodeCount) > 0 {
@@ -579,7 +579,7 @@ func (b *BookmarksAPI) Update(user security.User, w http.ResponseWriter, r *http
 			AccessCount: payload.AccessCount,
 		})
 		if err != nil {
-			handler.LogFunction("api.Update").Warnf("could not update bookmark: %v", err)
+			commons.LogWithReq(r, b.Log, "api.Update").Warnf("could not update bookmark: %v", err)
 			return err
 		}
 		id = item.ID
@@ -600,11 +600,11 @@ func (b *BookmarksAPI) Update(user security.User, w http.ResponseWriter, r *http
 			newPath := ensureFolderPath(payload.Path, payload.DisplayName)
 			oldPath := ensureFolderPath(existingPath, existingDisplayName)
 
-			handler.LogFunction("api.Update").Warnf("will update all old paths '%s' to new path '%s'", oldPath, newPath)
+			commons.LogWithReq(r, b.Log, "api.Update").Warnf("will update all old paths '%s' to new path '%s'", oldPath, newPath)
 
 			bookmarks, err := repo.GetBookmarksByPathStart(oldPath, user.Username)
 			if err != nil {
-				handler.LogFunction("api.Update").Warnf("could not get bookmarks by path '%s': %v", oldPath, err)
+				commons.LogWithReq(r, b.Log, "api.Update").Warnf("could not get bookmarks by path '%s': %v", oldPath, err)
 				return err
 			}
 
@@ -623,7 +623,7 @@ func (b *BookmarksAPI) Update(user security.User, w http.ResponseWriter, r *http
 					AccessCount: bm.AccessCount,
 					Favicon:     bm.Favicon,
 				}); err != nil {
-					handler.LogFunction("api.Update").Warnf("cannot update bookmark path: %v", err)
+					commons.LogWithReq(r, b.Log, "api.Update").Warnf("cannot update bookmark path: %v", err)
 					return err
 				}
 			}
@@ -632,20 +632,20 @@ func (b *BookmarksAPI) Update(user security.User, w http.ResponseWriter, r *http
 		// if the path has changed - update the childcount of affected paths
 		if existingPath != payload.Path {
 			// the affected paths are the origin-path and the destination-path
-			if err := updateChildCountOfPath(existingPath, user.Username, repo); err != nil {
-				handler.LogFunction("api.Update").Errorf("could not update child-count of path '%s': %v", existingPath, err)
+			if err := b.updateChildCountOfPath(r, existingPath, user.Username, repo); err != nil {
+				commons.LogWithReq(r, b.Log, "api.Update").Errorf("could not update child-count of path '%s': %v", existingPath, err)
 				return err
 			}
 			// and the destination-path
-			if err := updateChildCountOfPath(payload.Path, user.Username, repo); err != nil {
-				handler.LogFunction("api.Update").Errorf("could not update child-count of path '%s': %v", payload.Path, err)
+			if err := b.updateChildCountOfPath(r, payload.Path, user.Username, repo); err != nil {
+				commons.LogWithReq(r, b.Log, "api.Update").Errorf("could not update child-count of path '%s': %v", payload.Path, err)
 				return err
 			}
 		}
 
 		return nil
 	}); err != nil {
-		handler.LogFunction("api.Update").Errorf("could not update bookmark because of error: %v", err)
+		commons.LogWithReq(r, b.Log, "api.Update").Errorf("could not update bookmark because of error: %v", err)
 
 		var badRequest errors.BadRequestError
 		if er.As(err, &badRequest) {
@@ -654,7 +654,7 @@ func (b *BookmarksAPI) Update(user security.User, w http.ResponseWriter, r *http
 		return errors.ServerError{Err: fmt.Errorf("error updating bookmark: %v", err), Request: r}
 	}
 
-	handler.LogFunction("api.Update").Infof("updated bookmark with ID '%s'", id)
+	commons.LogWithReq(r, b.Log, "api.Update").Infof("updated bookmark with ID '%s'", id)
 
 	return render.Render(w, r, ResultResponse{
 		Result: &Result{
@@ -665,21 +665,21 @@ func (b *BookmarksAPI) Update(user security.User, w http.ResponseWriter, r *http
 	})
 }
 
-func updateChildCountOfPath(path, username string, repo store.Repository) error {
+func (b *BookmarksAPI) updateChildCountOfPath(r *http.Request, path, username string, repo store.Repository) error {
 	if path == "/" {
-		handler.LogFunction("api.updateChildCountOfPath").Debugf("skip the ROOT path '/'")
+		commons.LogWithReq(r, b.Log, "api.updateChildCountOfPath").Debugf("skip the ROOT path '/'")
 		return nil
 	}
 
 	folder, err := repo.GetFolderByPath(path, username)
 	if err != nil {
-		handler.LogFunction("api.updateChildCountOfPath").Errorf("cannot get the folder for path '%s': %v", path, err)
+		commons.LogWithReq(r, b.Log, "api.updateChildCountOfPath").Errorf("cannot get the folder for path '%s': %v", path, err)
 		return err
 	}
 
 	nodeCount, err := repo.GetPathChildCount(path, username)
 	if err != nil {
-		handler.LogFunction("api.updateChildCountOfPath").Errorf("could not get the child-count of the path '%s': %v", path, err)
+		commons.LogWithReq(r, b.Log, "api.updateChildCountOfPath").Errorf("could not get the child-count of the path '%s': %v", path, err)
 		return err
 	}
 
@@ -692,7 +692,7 @@ func updateChildCountOfPath(path, username string, repo store.Repository) error 
 	folder.ChildCount = childCount
 
 	if _, err := repo.Update(folder); err != nil {
-		handler.LogFunction("api.updateChildCountOfPath").Errorf("could not update the child-count of folder '%s': %v", path, err)
+		commons.LogWithReq(r, b.Log, "api.updateChildCountOfPath").Errorf("could not update the child-count of folder '%s': %v", path, err)
 		return err
 	}
 	return nil
@@ -735,13 +735,13 @@ func (b *BookmarksAPI) Delete(user security.User, w http.ResponseWriter, r *http
 		return errors.BadRequestError{Err: fmt.Errorf("missing id parameter"), Request: r}
 	}
 
-	handler.LogFunction("api.Delete").Debugf("will try to delete bookmark with ID '%s'", id)
+	commons.LogWithReq(r, b.Log, "api.Delete").Debugf("will try to delete bookmark with ID '%s'", id)
 
 	if err := b.Repository.InUnitOfWork(func(repo store.Repository) error {
 		// 1) fetch the existing bookmark by id
 		existing, err := repo.GetBookmarkByID(id, user.Username)
 		if err != nil {
-			handler.LogFunction("api.Update").Warnf("could not find bookmark by id '%s': %v", id, err)
+			commons.LogWithReq(r, b.Log, "api.Update").Warnf("could not find bookmark by id '%s': %v", id, err)
 			return err
 		}
 
@@ -759,7 +759,7 @@ func (b *BookmarksAPI) Delete(user security.User, w http.ResponseWriter, r *http
 
 		return nil
 	}); err != nil {
-		handler.LogFunction("api.Delete").Errorf("could not delete bookmark because of error: %v", err)
+		commons.LogWithReq(r, b.Log, "api.Delete").Errorf("could not delete bookmark because of error: %v", err)
 		return errors.ServerError{Err: fmt.Errorf("error deleting bookmark: %v", err), Request: r}
 	}
 
@@ -804,12 +804,12 @@ func (b *BookmarksAPI) Delete(user security.User, w http.ResponseWriter, r *http
 func (b *BookmarksAPI) UpdateSortOrder(user security.User, w http.ResponseWriter, r *http.Request) error {
 	payload := &BookmarksSortOrderRequest{}
 	if err := render.Bind(r, payload); err != nil {
-		handler.LogFunction("api.UpdateSortOrder").Errorf("cannot bind payload: '%v'", err)
+		commons.LogWithReq(r, b.Log, "api.UpdateSortOrder").Errorf("cannot bind payload: '%v'", err)
 		return errors.BadRequestError{Err: fmt.Errorf("invalid request data supplied"), Request: r}
 	}
 
 	if len(payload.IDs) != len(payload.SortOrder) {
-		handler.LogFunction("api.UpdateSortOrder").Errorf("ids and sortorders do not match!")
+		commons.LogWithReq(r, b.Log, "api.UpdateSortOrder").Errorf("ids and sortorders do not match!")
 		return errors.BadRequestError{Err: fmt.Errorf("invalid request data supplied, IDs and SortOrder do not match"), Request: r}
 	}
 
@@ -818,22 +818,22 @@ func (b *BookmarksAPI) UpdateSortOrder(user security.User, w http.ResponseWriter
 		for i, item := range payload.IDs {
 			bm, err := repo.GetBookmarkByID(item, user.Username)
 			if err != nil {
-				handler.LogFunction("api.UpdateSortOrder").Errorf("could not get bookmark by id '%s', %v", item, err)
+				commons.LogWithReq(r, b.Log, "api.UpdateSortOrder").Errorf("could not get bookmark by id '%s', %v", item, err)
 				return err
 			}
 
-			handler.LogFunction("api.UpdateSortOrder").Debugf("will update sortOrder of bookmark '%s' with value %d", bm.DisplayName, payload.SortOrder[i])
+			commons.LogWithReq(r, b.Log, "api.UpdateSortOrder").Debugf("will update sortOrder of bookmark '%s' with value %d", bm.DisplayName, payload.SortOrder[i])
 			bm.SortOrder = payload.SortOrder[i]
 			_, err = repo.Update(bm)
 			if err != nil {
-				handler.LogFunction("api.UpdateSortOrder").Errorf("could not update bookmark: %v", err)
+				commons.LogWithReq(r, b.Log, "api.UpdateSortOrder").Errorf("could not update bookmark: %v", err)
 				return err
 			}
 			updates++
 		}
 		return nil
 	}); err != nil {
-		handler.LogFunction("api.UpdateSortOrder").Errorf("could not update the sortorder for bookmark: %v", err)
+		commons.LogWithReq(r, b.Log, "api.UpdateSortOrder").Errorf("could not update the sortorder for bookmark: %v", err)
 		return errors.ServerError{Err: fmt.Errorf("error updating sortorder of bookmark: %v", err), Request: r}
 	}
 
@@ -885,25 +885,25 @@ func (b *BookmarksAPI) FetchAndForward(user security.User, w http.ResponseWriter
 		return errors.BadRequestError{Err: fmt.Errorf("missing id parameter"), Request: r}
 	}
 
-	handler.LogFunction("api.FetchAndForward").Debugf("try to fetch bookmark with ID '%s'", id)
+	commons.LogWithReq(r, b.Log, "api.FetchAndForward").Debugf("try to fetch bookmark with ID '%s'", id)
 
 	redirectURL := ""
 	if err := b.Repository.InUnitOfWork(func(repo store.Repository) error {
 		existing, err := repo.GetBookmarkByID(id, user.Username)
 		if err != nil {
-			handler.LogFunction("api.FetchAndForward").Warnf("could not find bookmark by id '%s': %v", id, err)
+			commons.LogWithReq(r, b.Log, "api.FetchAndForward").Warnf("could not find bookmark by id '%s': %v", id, err)
 			return err
 		}
 
 		if existing.Type == store.Folder {
-			handler.LogFunction("api.FetchAndForward").Warnf("accessCount and redirect only valid for Nodes: ID '%s'", id)
+			commons.LogWithReq(r, b.Log, "api.FetchAndForward").Warnf("accessCount and redirect only valid for Nodes: ID '%s'", id)
 			return errors.BadRequestError{Err: fmt.Errorf("cannot fetch and forward folder - ID '%s'", id), Request: r}
 		}
 
 		// update the access-count of nodes
 		existing.AccessCount++
 		if _, err := repo.Update(existing); err != nil {
-			handler.LogFunction("api.FetchAndForward").Warnf("could not update bookmark '%s': %v", id, err)
+			commons.LogWithReq(r, b.Log, "api.FetchAndForward").Warnf("could not update bookmark '%s': %v", id, err)
 			return err
 		}
 
@@ -916,14 +916,14 @@ func (b *BookmarksAPI) FetchAndForward(user security.User, w http.ResponseWriter
 		return nil
 	}); err != nil {
 		var badRequest errors.BadRequestError
-		handler.LogFunction("api.FetchAndForward").Errorf("could not fetch and update bookmark by ID '%s': %v", id, err)
+		commons.LogWithReq(r, b.Log, "api.FetchAndForward").Errorf("could not fetch and update bookmark by ID '%s': %v", id, err)
 
 		if er.As(err, &badRequest) {
 			return badRequest
 		}
 		return errors.ServerError{Err: fmt.Errorf("error fetching and updating bookmark: %v", err), Request: r}
 	}
-	handler.LogFunction("api.FetchAndForward").Debugf("will redirect to bookmark URL '%s'", redirectURL)
+	commons.LogWithReq(r, b.Log, "api.FetchAndForward").Debugf("will redirect to bookmark URL '%s'", redirectURL)
 
 	http.Redirect(w, r, redirectURL, http.StatusFound)
 	return nil
@@ -964,17 +964,17 @@ func (b *BookmarksAPI) GetFavicon(user security.User, w http.ResponseWriter, r *
 		return errors.BadRequestError{Err: fmt.Errorf("missing id parameter"), Request: r}
 	}
 
-	handler.LogFunction("api.GetFavicon").Debugf("try to fetch bookmark with ID '%s'", id)
+	commons.LogWithReq(r, b.Log, "api.GetFavicon").Debugf("try to fetch bookmark with ID '%s'", id)
 
 	existing, err := b.Repository.GetBookmarkByID(id, user.Username)
 	if err != nil {
-		handler.LogFunction("api.GetFavicon").Errorf("could not find bookmark by id '%s': %v", id, err)
+		commons.LogWithReq(r, b.Log, "api.GetFavicon").Errorf("could not find bookmark by id '%s': %v", id, err)
 		return errors.NotFoundError{Err: fmt.Errorf("could not find bookmark with ID '%s'", id), Request: r}
 	}
 
 	fullPath := path.Join(b.BasePath, b.FaviconPath, existing.Favicon)
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-		handler.LogFunction("api.GetFavicon").Errorf("the specified favicon '%s' is not available", fullPath)
+		commons.LogWithReq(r, b.Log, "api.GetFavicon").Errorf("the specified favicon '%s' is not available", fullPath)
 		// not found - use default
 		fullPath = path.Join(b.BasePath, b.DefaultFavicon)
 	}
@@ -986,7 +986,7 @@ func (b *BookmarksAPI) GetFavicon(user security.User, w http.ResponseWriter, r *
 func (b *BookmarksAPI) fetchFaviconURL(url string, bm store.Bookmark, user security.User) {
 	payload, err := favicon.FetchURL(url)
 	if err != nil {
-		handler.LogFunction("api.fetchFaviconURL").Errorf("cannot fetch favicon from URL '%s': %v", url, err)
+		commons.LogWith(b.Log, "api.fetchFaviconURL").Errorf("cannot fetch favicon from URL '%s': %v", url, err)
 		return
 	}
 	favicon := ""
@@ -994,19 +994,19 @@ func (b *BookmarksAPI) fetchFaviconURL(url string, bm store.Bookmark, user secur
 	if len(parts) > 0 {
 		favicon = parts[len(parts)-1] // last element
 	} else {
-		handler.LogFunction("api.fetchFaviconURL").Errorf("cannot get favicon-filname from URL '%s': %v", url, err)
+		commons.LogWith(b.Log, "api.fetchFaviconURL").Errorf("cannot get favicon-filname from URL '%s': %v", url, err)
 		return
 	}
 
 	if len(payload) > 0 {
 		hashPayload, err := hashInput(payload)
 		if err != nil {
-			handler.LogFunction("api.fetchFaviconURL").Errorf("could not hash payload: '%v'", err)
+			commons.LogWith(b.Log, "api.fetchFaviconURL").Errorf("could not hash payload: '%v'", err)
 			return
 		}
 		hashFilename, err := hashInput([]byte(favicon))
 		if err != nil {
-			handler.LogFunction("api.fetchFaviconURL").Errorf("could not hash filename: '%v'", err)
+			commons.LogWith(b.Log, "api.fetchFaviconURL").Errorf("could not hash filename: '%v'", err)
 			return
 		}
 		ext := filepath.Ext(favicon)
@@ -1014,10 +1014,10 @@ func (b *BookmarksAPI) fetchFaviconURL(url string, bm store.Bookmark, user secur
 		fullPath := path.Join(b.BasePath, b.FaviconPath, filename)
 
 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-			handler.LogFunction("api.fetchFaviconURL").Warnf("got favicon payload length of '%d' for URL '%s'", len(payload), url)
+			commons.LogWith(b.Log, "api.fetchFaviconURL").Warnf("got favicon payload length of '%d' for URL '%s'", len(payload), url)
 
 			if err := ioutil.WriteFile(fullPath, payload, 0644); err != nil {
-				handler.LogFunction("api.fetchFaviconURL").Errorf("could not write favicon to file '%s': %v", fullPath, err)
+				commons.LogWith(b.Log, "api.fetchFaviconURL").Errorf("could not write favicon to file '%s': %v", fullPath, err)
 				return
 			}
 		}
@@ -1028,18 +1028,18 @@ func (b *BookmarksAPI) fetchFaviconURL(url string, bm store.Bookmark, user secur
 			_, err := repo.Update(bm)
 			return err
 		}); err != nil {
-			handler.LogFunction("api.fetchFaviconURL").Errorf("could not update bookmark with favicon '%s': %v", filename, err)
+			commons.LogWith(b.Log, "api.fetchFaviconURL").Errorf("could not update bookmark with favicon '%s': %v", filename, err)
 		}
 
 	} else {
-		handler.LogFunction("api.fetchFaviconURL").Warnf("not payload for favicon from URL '%s'", url)
+		commons.LogWith(b.Log, "api.fetchFaviconURL").Warnf("not payload for favicon from URL '%s'", url)
 	}
 }
 
 func (b *BookmarksAPI) fetchFavicon(bm store.Bookmark, user security.User) {
 	favicon, payload, err := favicon.GetFaviconFromURL(bm.URL)
 	if err != nil {
-		handler.LogFunction("api.fetchFavicon").Errorf("cannot fetch favicon from URL '%s': %v", bm.URL, err)
+		commons.LogWith(b.Log, "api.fetchFavicon").Errorf("cannot fetch favicon from URL '%s': %v", bm.URL, err)
 		return
 	}
 
@@ -1047,12 +1047,12 @@ func (b *BookmarksAPI) fetchFavicon(bm store.Bookmark, user security.User) {
 
 		hashPayload, err := hashInput(payload)
 		if err != nil {
-			handler.LogFunction("api.fetchFavicon").Errorf("could not hash payload: '%v'", err)
+			commons.LogWith(b.Log, "api.fetchFavicon").Errorf("could not hash payload: '%v'", err)
 			return
 		}
 		hashFilename, err := hashInput([]byte(favicon))
 		if err != nil {
-			handler.LogFunction("api.fetchFavicon").Errorf("could not hash filename: '%v'", err)
+			commons.LogWith(b.Log, "api.fetchFavicon").Errorf("could not hash filename: '%v'", err)
 			return
 		}
 		ext := filepath.Ext(favicon)
@@ -1060,10 +1060,11 @@ func (b *BookmarksAPI) fetchFavicon(bm store.Bookmark, user security.User) {
 		fullPath := path.Join(b.BasePath, b.FaviconPath, filename)
 
 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-			handler.LogFunction("api.fetchFavicon").Warnf("got favicon payload length of '%d' for URL '%s'", len(payload), bm.URL)
+			// TODO: wrong log statement
+			commons.LogWith(b.Log, "api.fetchFavicon").Warnf("got favicon payload length of '%d' for URL '%s'", len(payload), bm.URL)
 
 			if err := ioutil.WriteFile(fullPath, payload, 0644); err != nil {
-				handler.LogFunction("api.fetchFavicon").Errorf("could not write favicon to file '%s': %v", fullPath, err)
+				commons.LogWith(b.Log, "api.fetchFavicon").Errorf("could not write favicon to file '%s': %v", fullPath, err)
 				return
 			}
 		}
@@ -1074,11 +1075,11 @@ func (b *BookmarksAPI) fetchFavicon(bm store.Bookmark, user security.User) {
 			_, err := repo.Update(bm)
 			return err
 		}); err != nil {
-			handler.LogFunction("api.fetchFavicon").Errorf("could not update bookmark with favicon '%s': %v", filename, err)
+			commons.LogWith(b.Log, "api.fetchFavicon").Errorf("could not update bookmark with favicon '%s': %v", filename, err)
 		}
 
 	} else {
-		handler.LogFunction("api.fetchFavicon").Warnf("not payload for favicon from URL '%s'", bm.URL)
+		commons.LogWith(b.Log, "api.fetchFavicon").Warnf("not payload for favicon from URL '%s'", bm.URL)
 	}
 }
 

@@ -1,16 +1,17 @@
 package handler // import "golang.binggl.net/commons/handler"
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"golang.binggl.net/commons/cookies"
-	"golang.binggl.net/commons/errors"
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
+	"golang.binggl.net/commons/cookies"
+	"golang.binggl.net/commons/errors"
+
+	log "github.com/sirupsen/logrus"
 
 	"golang.binggl.net/commons/security"
 )
@@ -27,6 +28,7 @@ var handler = &AppInfoHandler{
 				Prefix: "test",
 			},
 		},
+		Log: log.New().WithField("mode", "test"),
 	},
 	Version: version,
 	Build:   build,
@@ -37,7 +39,7 @@ func TestGetAppInfo(t *testing.T) {
 
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), security.UserKey, &security.User{
+			ctx := security.NewContext(r.Context(), &security.User{
 				Username:    "username",
 				Email:       "a.b@c.de",
 				DisplayName: "displayname",
@@ -70,7 +72,7 @@ func TestGetAppInfoNilUser(t *testing.T) {
 
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), security.UserKey, nil)
+			ctx := security.NewContext(r.Context(), nil)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	})

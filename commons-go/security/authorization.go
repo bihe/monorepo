@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // Authorize validates the given claims and verifies if
@@ -14,10 +12,7 @@ import (
 func Authorize(required Claim, claims []string) (roles []string, err error) {
 	for _, claim := range claims {
 		c := split(claim)
-		ok, err := compareURL(required.URL, c.URL)
-		if err != nil {
-			log.Errorf("error comparing URLs: %v", err)
-		}
+		ok, _ := compareURL(required.URL, c.URL)
 		if required.Name == c.Name && matchRole(c.Roles, required.Roles) && ok {
 			return c.Roles, nil
 		}

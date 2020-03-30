@@ -24,13 +24,14 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/bihe/login-go/internal"
+	"github.com/bihe/login-go/internal/config"
+	"github.com/bihe/login-go/internal/persistence"
+	"golang.binggl.net/commons"
 	"golang.binggl.net/commons/cookies"
 	"golang.binggl.net/commons/errors"
 	"golang.binggl.net/commons/handler"
 	"golang.binggl.net/commons/security"
-	"github.com/bihe/login-go/internal"
-	"github.com/bihe/login-go/internal/config"
-	"github.com/bihe/login-go/internal/persistence"
 	"golang.org/x/oauth2"
 
 	log "github.com/sirupsen/logrus"
@@ -67,6 +68,7 @@ type UserList struct {
 // Swagger specific definitions
 // --------------------------------------------------------------------------
 
+// SiteInfoRequestSwagger is used for swagger documentation
 // swagger:parameters HandleSaveSites
 type SiteInfoRequestSwagger struct {
 	// In: body
@@ -110,21 +112,16 @@ type loginAPI struct {
 	cookieSettings cookies.Settings
 	appCookie      *cookies.AppCookie
 	basePath       string
-
-	// oidc objects
-	oauthConfig   *oauth2.Config
-	oauthVerifier OIDCVerifier
-
-	// store
-	repo persistence.Repository
-	// jwt logic
-	jwt config.Security
-	// user having this role are allowed to edit
-	editRole string
+	oauthConfig    *oauth2.Config
+	oauthVerifier  OIDCVerifier
+	repo           persistence.Repository
+	jwt            config.Security
+	editRole       string
+	logEntry       *log.Entry
 }
 
 // New creates a new instance of the API type
-func New(basePath string, baseHandler handler.Handler, cs cookies.Settings, version internal.VersionInfo, oauth config.OAuthConfig, jwt config.Security, repo persistence.Repository) Login {
+func New(basePath string, baseHandler handler.Handler, cs cookies.Settings, version internal.VersionInfo, oauth config.OAuthConfig, jwt config.Security, repo persistence.Repository, logEntry *log.Entry) Login {
 	c, v := NewOIDC(oauth)
 	api := loginAPI{
 		Handler:        baseHandler,
@@ -141,6 +138,7 @@ func New(basePath string, baseHandler handler.Handler, cs cookies.Settings, vers
 		repo:          repo,
 		jwt:           jwt,
 		editRole:      jwt.Claim.Roles[0], // use the first role of the defined claims as the edit role
+		logEntry:      logEntry,
 	}
 
 	return &api
@@ -158,7 +156,7 @@ func (a *loginAPI) respond(w http.ResponseWriter, r *http.Request, code int, dat
 	if data != nil {
 		err := json.NewEncoder(w).Encode(data)
 		if err != nil {
-			log.WithField("func", "server.respond").Errorf("could not marshal json %v\n", err)
+			commons.LogWithReq(r, a.logEntry, "server.respond").Errorf("could not marshal json %v\n", err)
 			a.errRep.Negotiate(w, r, errors.ServerError{
 				Err:     fmt.Errorf("could not marshal json %v", err),
 				Request: r,
@@ -186,11 +184,11 @@ func (a *loginAPI) hasRole(user security.User, role string) bool {
 	return false
 }
 
-func query(r *http.Request, name string) string {
+func (a *loginAPI) query(r *http.Request, name string) string {
 	keys, ok := r.URL.Query()[name]
 
 	if !ok || len(keys[0]) < 1 {
-		log.WithField("func", "server.getQuery").Debugf("Url Param '%s' is missing", name)
+		commons.LogWithReq(r, a.logEntry, "server.getQuery").Debugf("Url Param '%s' is missing", name)
 		return ""
 	}
 

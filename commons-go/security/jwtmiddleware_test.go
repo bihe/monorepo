@@ -6,11 +6,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi"
 	"golang.binggl.net/commons/cookies"
 	"golang.binggl.net/commons/errors"
-	"github.com/go-chi/chi"
 
 	"github.com/stretchr/testify/assert"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const cookie = "cookie"
@@ -36,6 +38,11 @@ var cookieSettings = cookies.Settings{
 	Path:   "/",
 	Secure: false,
 }
+var logger = log.New().WithField("mode", "test")
+
+func getJWTMiddleware() *JwtMiddleware {
+	return NewJwtMiddleware(jwtOpts, cookieSettings, logger)
+}
 
 func TestJWTMiddlewareWrongJWTOptions(t *testing.T) {
 	rec := httptest.NewRecorder()
@@ -43,7 +50,7 @@ func TestJWTMiddlewareWrongJWTOptions(t *testing.T) {
 	r := chi.NewRouter()
 	wrongOpts := jwtOpts
 	wrongOpts.CacheDuration = "wrong"
-	jwt := NewJwtMiddleware(wrongOpts, cookieSettings)
+	jwt := NewJwtMiddleware(wrongOpts, cookieSettings, logger)
 
 	req.AddCookie(&http.Cookie{Name: cookie, Value: token})
 
@@ -59,7 +66,7 @@ func TestJWTMiddlewareCookie(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, path, nil)
 	r := chi.NewRouter()
-	jwt := NewJwtMiddleware(jwtOpts, cookieSettings)
+	jwt := getJWTMiddleware()
 
 	req.AddCookie(&http.Cookie{Name: cookie, Value: token})
 	r.Use(jwt.JwtContext)
@@ -74,7 +81,7 @@ func TestJWTMiddlewareCookieAndCache(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, path, nil)
 	r := chi.NewRouter()
-	jwt := NewJwtMiddleware(jwtOpts, cookieSettings)
+	jwt := getJWTMiddleware()
 
 	req.AddCookie(&http.Cookie{Name: cookie, Value: token})
 	r.Use(jwt.JwtContext)
@@ -90,7 +97,7 @@ func TestJWTMiddlewareBearer(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, path, nil)
 	r := chi.NewRouter()
-	jwt := NewJwtMiddleware(jwtOpts, cookieSettings)
+	jwt := getJWTMiddleware()
 
 	req.Header.Add("Authorization", "Bearer "+token)
 	r.Use(jwt.JwtContext)
@@ -105,7 +112,7 @@ func TestJWTMiddlewareNoToken(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, path, nil)
 	r := chi.NewRouter()
-	jwt := NewJwtMiddleware(jwtOpts, cookieSettings)
+	jwt := getJWTMiddleware()
 
 	r.Use(jwt.JwtContext)
 	r.Get(path, func(w http.ResponseWriter, r *http.Request) {
@@ -126,7 +133,7 @@ func TestJWTMiddlewareWrongToken(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, path, nil)
 	r := chi.NewRouter()
-	jwt := NewJwtMiddleware(jwtOpts, cookieSettings)
+	jwt := getJWTMiddleware()
 
 	req.Header.Add("Authorization", "Bearer "+"token")
 	r.Use(jwt.JwtContext)

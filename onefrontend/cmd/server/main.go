@@ -39,7 +39,7 @@ func main() {
 func run() (err error) {
 
 	hostName, port, basePath, appConfig := readConfig()
-	setupLog(appConfig)
+	l := setupLog(appConfig)
 
 	srv := &onefrontend.Server{
 		Version: types.VersionInfo{
@@ -58,6 +58,7 @@ func run() (err error) {
 		Environment:    appConfig.Environment,
 		LogConfig:      appConfig.Logging,
 		Cors:           appConfig.Cors,
+		Log:            l,
 	}
 	// the server needs routes to work
 	srv.MapRoutes()

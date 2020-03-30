@@ -1,6 +1,16 @@
 // Package config defines the customization/configuration of the application
 package config
 
+// Environment specifies operation modes
+type Environment string
+
+const (
+	// Development is used in development
+	Development Environment = "Development"
+	// Production is used for deployments
+	Production Environment = "Production"
+)
+
 // AppConfig holds the application configuration
 type AppConfig struct {
 	JWT            JwtSettings
@@ -13,7 +23,9 @@ type AppConfig struct {
 	FrontendPrefix string
 	ErrorPath      string
 	StartURL       string
-	Environment    string
+	Environment    Environment
+	AppName        string
+	HostID         string
 }
 
 // JwtSettings settings for the application

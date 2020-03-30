@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/bihe/login-go/internal"
 	"github.com/bihe/login-go/internal/config"
 	"github.com/bihe/login-go/internal/persistence"
@@ -9,6 +11,7 @@ import (
 	"golang.binggl.net/commons/handler"
 	"golang.binggl.net/commons/security"
 
+	log "github.com/sirupsen/logrus"
 	per "golang.binggl.net/commons/persistence"
 )
 
@@ -21,6 +24,9 @@ const signInURL = "/signin?%s=%s"
 
 var stateCookieName = cookieSettings.Prefix + "_" + stateParam
 var authFlowCookieName = cookieSettings.Prefix + "_" + authFlowCookie
+
+var Err = fmt.Errorf("error")
+var logEntry = log.New().WithField("mode", "test")
 
 var oauthConfig = config.OAuthConfig{
 	ClientID:     "CLIENTID",
@@ -80,6 +86,7 @@ var baseHandler = handler.Handler{
 		},
 		ErrorPath: "error",
 	},
+	Log: logEntry,
 }
 
 // --------------------------------------------------------------------------

@@ -19,7 +19,7 @@ func (s *Server) routes() {
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
+	r.Use(handler.NewLoggerMiddleware(s.log).LoggerContext)
 	r.Use(middleware.DefaultCompress)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
@@ -32,8 +32,6 @@ func (s *Server) routes() {
 		MaxAge:           s.cors.MaxAge,
 	})
 	r.Use(cors.Handler)
-
-	s.setupRequestLogging()
 
 	// serving static content
 	handler.ServeStaticFile(r, "/favicon.ico", filepath.Join(s.basePath, "./web/assets/favicon.ico"))
@@ -48,7 +46,7 @@ func (s *Server) routes() {
 	// this group "indicates" that all routes within this group use the JWT authentication
 	r.Group(func(r chi.Router) {
 		// authenticate and authorize users via JWT
-		r.Use(security.NewJwtMiddleware(s.jwtOpts, s.cookieSettings).JwtContext)
+		r.Use(security.NewJwtMiddleware(s.jwtOpts, s.cookieSettings, s.log).JwtContext)
 
 		r.Get("/logout", s.api.Secure(s.api.HandleLogout))
 

@@ -4,7 +4,7 @@ security:
     jwtIssuer: issuer
     jwtSecret: secret
     cookieName: login_token
-    exiry: 7
+    expiry: 7
     cookieDomain: localhost
     cookiePath: /
     cookieSecure: false
@@ -27,7 +27,6 @@ database:
 
 logging:
     filePath: "./logs/login-api.log"
-    requestPath: "./logs/requests.log"
     logLevel: debug
 
 # cookies are needed for user-facing sites and messaging
@@ -58,3 +57,6 @@ cors:
 
 # common application settings
 environment: Development
+
+appName: login-go
+hostID: login

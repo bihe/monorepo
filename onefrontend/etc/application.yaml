@@ -51,3 +51,6 @@ frontendPrefix: "/ui"
 errorPath: /error
 startUrl: /ui
 environment: Development
+
+appName: onefrontend-go
+hostID: onefrontend

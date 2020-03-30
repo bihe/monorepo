@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bihe/bookmarks/internal"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
+	"golang.binggl.net/commons"
 )
 
 // Repository defines methods to interact with a store
@@ -190,7 +190,7 @@ func (r *dbRepository) Create(item Bookmark) (Bookmark, error) {
 	}
 	item.Created = time.Now().UTC()
 
-	internal.LogFunction("store.Create").Debugf("create new bookmark item: %+v", item)
+	commons.Log("store.Create").Debugf("create new bookmark item: %+v", item)
 
 	// if we create a new bookmark item using a specific path we need to ensure that
 	// the parent-path is available. as this is a hierarchical structure this is quite tedious
@@ -209,7 +209,7 @@ func (r *dbRepository) Create(item Bookmark) (Bookmark, error) {
 			}
 		}
 		if !found {
-			internal.LogFunction("store.Create").Warnf("cannot create the bookmark '%+v' because the parent path '%s' is not available!", item, item.Path)
+			commons.Log("store.Create").Warnf("cannot create the bookmark '%+v' because the parent path '%s' is not available!", item, item.Path)
 			return Bookmark{}, fmt.Errorf("cannot create item because of missing path hierarchy '%s'", item.Path)
 		}
 	}
@@ -250,7 +250,7 @@ func (r *dbRepository) Update(item Bookmark) (Bookmark, error) {
 		return Bookmark{}, fmt.Errorf("cannot get bookmark by id '%s': %v", item.ID, h.Error)
 	}
 
-	internal.LogFunction("store.Update").Debugf("update bookmark item: %+v", item)
+	commons.Log("store.Update").Debugf("update bookmark item: %+v", item)
 
 	// if we create a new bookmark item using a specific path we need to ensure that
 	// the parent-path is available. as this is a hierarchical structure this is quite tedious
@@ -269,7 +269,7 @@ func (r *dbRepository) Update(item Bookmark) (Bookmark, error) {
 			}
 		}
 		if !found {
-			internal.LogFunction("store.Update").Warnf("cannot update the bookmark '%+v' because the parent path '%s' is not available!", item, item.Path)
+			commons.Log("store.Update").Warnf("cannot update the bookmark '%+v' because the parent path '%s' is not available!", item, item.Path)
 			return Bookmark{}, fmt.Errorf("cannot update item because of missing path hierarchy '%s'", item.Path)
 		}
 	}
@@ -303,7 +303,7 @@ func (r *dbRepository) Delete(item Bookmark) error {
 		return fmt.Errorf("cannot get bookmark by id '%s': %v", item.ID, h.Error)
 	}
 
-	internal.LogFunction("store.Delete").Debugf("delete bookmark item: %+v", item)
+	commons.Log("store.Delete").Debugf("delete bookmark item: %+v", item)
 
 	// one item is removed from a given path, decrement the child-count for
 	// the folder / path this item is located in

@@ -2,7 +2,6 @@ package api
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -20,6 +19,8 @@ import (
 	"golang.binggl.net/commons/errors"
 	"golang.binggl.net/commons/handler"
 	"golang.binggl.net/commons/security"
+
+	log "github.com/sirupsen/logrus"
 
 	_ "github.com/jinzhu/gorm/dialects/sqlite" // use sqlite for testing
 )
@@ -41,11 +42,12 @@ var baseHandler = handler.Handler{
 		},
 		ErrorPath: "error",
 	},
+	Log: log.New().WithField("mode", "test"),
 }
 
 func jwtUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), security.UserKey, &security.User{
+		ctx := security.NewContext(r.Context(), &security.User{
 			Username:    userName,
 			Email:       "a.b@c.de",
 			DisplayName: "displayname",

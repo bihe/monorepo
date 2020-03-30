@@ -3,13 +3,10 @@ package server
 
 import (
 	"fmt"
-	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
 	_ "github.com/go-sql-driver/mysql" // import the mysql driver
 
 	"github.com/bihe/login-go/internal"
@@ -22,6 +19,7 @@ import (
 
 	"github.com/bihe/login-go/internal/api"
 
+	log "github.com/sirupsen/logrus"
 	per "golang.binggl.net/commons/persistence"
 )
 
@@ -37,13 +35,14 @@ type Server struct {
 	router         chi.Router
 	api            api.Login
 	appInfoAPI     *handler.AppInfoHandler
-	environment    string
+	environment    config.Environment
 	logConfig      config.LogConfig
 	cors           config.CorsSettings
+	log            *log.Entry
 }
 
 // Create instantiates a new Server instance
-func Create(basePath string, config config.AppConfig, version internal.VersionInfo) *Server {
+func Create(basePath string, config config.AppConfig, version internal.VersionInfo, logEntry *log.Entry) *Server {
 	base, err := filepath.Abs(basePath)
 	if err != nil {
 		panic(fmt.Sprintf("cannot resolve basepath '%s', %v", basePath, err))
@@ -78,6 +77,7 @@ func Create(basePath string, config config.AppConfig, version internal.VersionIn
 	}
 	baseHandler := handler.Handler{
 		ErrRep: errorReporter,
+		Log:    logEntry,
 	}
 
 	appInfo := &handler.AppInfoHandler{
@@ -94,8 +94,9 @@ func Create(basePath string, config config.AppConfig, version internal.VersionIn
 		environment: config.Environment,
 		logConfig:   config.Logging,
 		cors:        config.Cors,
-		api:         api.New(base, baseHandler, cookieSettings, version, config.OIDC, config.Security, repo),
+		api:         api.New(base, baseHandler, cookieSettings, version, config.OIDC, config.Security, repo, logEntry),
 		appInfoAPI:  appInfo,
+		log:         logEntry,
 	}
 	srv.routes()
 	return &srv
@@ -104,20 +105,4 @@ func Create(basePath string, config config.AppConfig, version internal.VersionIn
 // ServeHTTP turns the server into a http.Handler
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
-}
-
-// use the go-chi logger middleware and redirect request logging to a file
-func (s *Server) setupRequestLogging() {
-
-	if s.environment != "Development" {
-		var file *os.File
-		file, err := os.OpenFile(s.logConfig.RequestPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-		if err != nil {
-			panic(fmt.Sprintf("cannot use filepath '%s' as a logfile: %v", s.logConfig.RequestPath, err))
-		}
-		middleware.DefaultLogger = middleware.RequestLogger(&middleware.DefaultLogFormatter{
-			Logger:  log.New(file, "", log.LstdFlags),
-			NoColor: true,
-		})
-	}
 }

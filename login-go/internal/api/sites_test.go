@@ -2,29 +2,25 @@ package api
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/commons/errors"
 	"golang.binggl.net/commons/security"
-	"github.com/go-chi/chi"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestGetSites(t *testing.T) {
-	r := chi.NewRouter()
-	a := New("templatepath", baseHandler, cookieSettings, version, oauthConfig, jwtConfig, &mockRepository{})
-	api := a.(*loginAPI)
+	r, api := newAPIRouter()
 
 	api.repo = &mockRepository{}
 	api.editRole = "role"
 
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), security.UserKey, &security.User{
+			ctx := security.NewContext(r.Context(), &security.User{
 				Username:    "username",
 				Email:       "a.b@c.de",
 				DisplayName: "displayname",
@@ -54,16 +50,14 @@ func TestGetSites(t *testing.T) {
 }
 
 func TestFailSites(t *testing.T) {
-	r := chi.NewRouter()
-	a := New("templatepath", baseHandler, cookieSettings, version, oauthConfig, jwtConfig, &mockRepository{})
-	api := a.(*loginAPI)
+	r, api := newAPIRouter()
 
 	api.repo = &mockRepository{fail: true}
 	api.editRole = "role"
 
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), security.UserKey, &security.User{
+			ctx := security.NewContext(r.Context(), &security.User{
 				Username:    "username",
 				Email:       "a.b@c.de",
 				DisplayName: "displayname",
@@ -89,16 +83,14 @@ func TestFailSites(t *testing.T) {
 }
 
 func TestSaveSites(t *testing.T) {
-	r := chi.NewRouter()
-	a := New("templatepath", baseHandler, cookieSettings, version, oauthConfig, jwtConfig, &mockRepository{})
-	api := a.(*loginAPI)
+	r, api := newAPIRouter()
 
 	api.repo = &mockRepository{fail: false}
 	api.editRole = "role"
 
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), security.UserKey, &security.User{
+			ctx := security.NewContext(r.Context(), &security.User{
 				Username:    "username",
 				Email:       "a.b@c.de",
 				DisplayName: "displayname",
@@ -126,16 +118,14 @@ func TestSaveSites(t *testing.T) {
 }
 
 func TestSaveSitesFail(t *testing.T) {
-	r := chi.NewRouter()
-	a := New("templatepath", baseHandler, cookieSettings, version, oauthConfig, jwtConfig, &mockRepository{})
-	api := a.(*loginAPI)
+	r, api := newAPIRouter()
 
 	api.repo = &mockRepository{fail: true}
 	api.editRole = "role"
 
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), security.UserKey, &security.User{
+			ctx := security.NewContext(r.Context(), &security.User{
 				Username:    "username",
 				Email:       "a.b@c.de",
 				DisplayName: "displayname",
@@ -168,16 +158,14 @@ func TestSaveSitesFail(t *testing.T) {
 }
 
 func TestSaveSitesNoPayload(t *testing.T) {
-	r := chi.NewRouter()
-	a := New("templatepath", baseHandler, cookieSettings, version, oauthConfig, jwtConfig, &mockRepository{})
-	api := a.(*loginAPI)
+	r, api := newAPIRouter()
 
 	api.repo = &mockRepository{fail: true}
 	api.editRole = "role"
 
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), security.UserKey, &security.User{
+			ctx := security.NewContext(r.Context(), &security.User{
 				Username:    "username",
 				Email:       "a.b@c.de",
 				DisplayName: "displayname",
@@ -203,16 +191,14 @@ func TestSaveSitesNoPayload(t *testing.T) {
 }
 
 func TestSaveSitesNotAllowed(t *testing.T) {
-	r := chi.NewRouter()
-	a := New("templatepath", baseHandler, cookieSettings, version, oauthConfig, jwtConfig, &mockRepository{})
-	api := a.(*loginAPI)
+	r, api := newAPIRouter()
 
 	api.repo = &mockRepository{fail: true}
 	api.editRole = "missing-role"
 
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), security.UserKey, &security.User{
+			ctx := security.NewContext(r.Context(), &security.User{
 				Username:    "username",
 				Email:       "a.b@c.de",
 				DisplayName: "displayname",
@@ -238,16 +224,14 @@ func TestSaveSitesNotAllowed(t *testing.T) {
 }
 
 func TestGetUsersForSite(t *testing.T) {
-	r := chi.NewRouter()
-	a := New("templatepath", baseHandler, cookieSettings, version, oauthConfig, jwtConfig, &mockRepository{})
-	api := a.(*loginAPI)
+	r, api := newAPIRouter()
 
 	api.repo = &mockRepository{}
 	api.editRole = "role"
 
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), security.UserKey, &security.User{
+			ctx := security.NewContext(r.Context(), &security.User{
 				Username:    "username",
 				Email:       "a.b@c.de",
 				DisplayName: "displayname",

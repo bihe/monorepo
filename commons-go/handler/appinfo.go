@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
+	"golang.binggl.net/commons"
 	"golang.binggl.net/commons/security"
 )
 
@@ -39,7 +40,7 @@ type VersionInfo struct {
 // Request and Response objects using go-chi render
 // --------------------------------------------------------------------------
 
-// Response wraps the data struct into a framework response
+// AppInfoResponse wraps the data struct into a framework response
 type AppInfoResponse struct {
 	*Meta
 }
@@ -63,6 +64,7 @@ type AppInfoHandler struct {
 	Build string
 }
 
+// HandleAppInfo provides information about the application
 // swagger:operation GET /appinfo appinfo HandleAppInfo
 //
 // provides information about the application
@@ -86,7 +88,7 @@ type AppInfoHandler struct {
 //     schema:
 //       "$ref": "#/definitions/ProblemDetail"
 func (a *AppInfoHandler) HandleAppInfo(user security.User, w http.ResponseWriter, r *http.Request) error {
-	LogFunction("handler.HandleAppInfo").Debugf("return the application metadata info")
+	commons.LogWithReq(r, a.Handler.Log, "handler.HandleAppInfo").Debugf("return the application metadata info")
 	info := Meta{
 		Version: VersionInfo{
 			Version: a.Version,

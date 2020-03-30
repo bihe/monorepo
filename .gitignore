@@ -4,3 +4,5 @@ live.devserver.sh
 __devserver
 login-go/.env
 mydms-go/.env
+.env
+_logs/

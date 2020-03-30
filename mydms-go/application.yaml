@@ -14,7 +14,7 @@ security:
     cacheDuration: 10m
 
 database:
-    connectionString: "root:mariadb@tcp(localhost:3306)/mydms?parseTime=true"
+    connectionString: "root:mariadb@tcp(db:3306)/mydms?parseTime=true"
 
 cors:
     origins:

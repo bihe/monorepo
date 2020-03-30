@@ -54,6 +54,7 @@ func (s *Server) MapRoutes() {
 	}
 	baseHandler := handler.Handler{
 		ErrRep: errorReporter,
+		Log:    s.Log,
 	}
 
 	// handler responsible returning application information

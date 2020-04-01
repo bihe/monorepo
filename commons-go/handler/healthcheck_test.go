@@ -62,7 +62,7 @@ func TestHealthCheck(t *testing.T) {
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	})
-	r.Mount("/", hc.GetRouter())
+	r.Mount("/hc", hc.GetHandler())
 
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/hc", nil)
@@ -91,7 +91,7 @@ func TestHealthCheckNoUser(t *testing.T) {
 		})
 	})
 	hc.Checker = simpleChecker{fail: true}
-	r.Mount("/", hc.GetRouter())
+	r.Mount("/hc", hc.GetHandler())
 
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/hc", nil)
@@ -110,7 +110,7 @@ func TestHealthCheckNoUser(t *testing.T) {
 func TestHealthCheckFail(t *testing.T) {
 	r := chi.NewRouter()
 
-	r.Mount("/", hc.GetRouter())
+	r.Mount("/hc", hc.GetHandler())
 
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/hc", nil)

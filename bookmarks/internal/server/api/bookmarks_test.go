@@ -1637,6 +1637,10 @@ type mockRepository struct{}
 
 var _ store.Repository = (*mockRepository)(nil)
 
+func (m *mockRepository) CheckStoreConnectivity(timeOut uint) (err error) {
+	return nil
+}
+
 func (m *mockRepository) InUnitOfWork(fn func(repo store.Repository) error) error {
 	return nil
 }

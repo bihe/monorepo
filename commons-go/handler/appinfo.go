@@ -3,6 +3,7 @@ package handler // import "golang.binggl.net/commons/handler"
 import (
 	"net/http"
 
+	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"golang.binggl.net/commons"
 	"golang.binggl.net/commons/security"
@@ -64,6 +65,13 @@ type AppInfoHandler struct {
 	Build string
 }
 
+// GetHandler returns the appinfo handler
+func (h *AppInfoHandler) GetHandler() http.Handler {
+	r := chi.NewRouter()
+	r.Get("/", h.Secure(h.HandleAppInfo))
+	return r
+}
+
 // HandleAppInfo provides information about the application
 // swagger:operation GET /appinfo appinfo HandleAppInfo
 //
@@ -87,12 +95,12 @@ type AppInfoHandler struct {
 //     description: ProblemDetail
 //     schema:
 //       "$ref": "#/definitions/ProblemDetail"
-func (a *AppInfoHandler) HandleAppInfo(user security.User, w http.ResponseWriter, r *http.Request) error {
-	commons.LogWithReq(r, a.Handler.Log, "handler.HandleAppInfo").Debugf("return the application metadata info")
+func (h *AppInfoHandler) HandleAppInfo(user security.User, w http.ResponseWriter, r *http.Request) error {
+	commons.LogWithReq(r, h.Handler.Log, "handler.HandleAppInfo").Debugf("return the application metadata info")
 	info := Meta{
 		Version: VersionInfo{
-			Version: a.Version,
-			Build:   a.Build,
+			Version: h.Version,
+			Build:   h.Build,
 		},
 		UserInfo: UserInfo{
 			UserID:      user.UserID,

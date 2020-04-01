@@ -77,6 +77,14 @@ func Test_Mock_GetAllBookmarks(t *testing.T) {
 	}
 }
 
+func Test_Store_Availability(t *testing.T) {
+	repo, db := repository(t)
+	defer db.Close()
+
+	err := repo.CheckStoreConnectivity(1000)
+	assert.Nil(t, err, "store is not available")
+}
+
 func TestGetAllBookmarks(t *testing.T) {
 	repo, db := repository(t)
 	defer db.Close()

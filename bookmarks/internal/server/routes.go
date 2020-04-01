@@ -44,7 +44,8 @@ func (s *Server) routes() {
 		// authenticate and authorize users via JWT
 		r.Use(security.NewJwtMiddleware(s.jwtOpts, s.cookieSettings, s.log).JwtContext)
 
-		r.Get("/appinfo", s.appInfoAPI.Secure(s.appInfoAPI.HandleAppInfo))
+		r.Mount("/hc", s.healthCheck.GetHandler())
+		r.Mount("/appinfo", s.appInfoAPI.GetHandler())
 
 		// group API methods together
 		r.Route("/api/v1/bookmarks", func(r chi.Router) {

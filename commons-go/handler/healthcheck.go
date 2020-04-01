@@ -72,10 +72,10 @@ type HealthCheckHandler struct {
 	Checker HealthChecker
 }
 
-// GetRouter returns the health-check handler mounted to /hc
-func (h *HealthCheckHandler) GetRouter() http.Handler {
+// GetHandler returns the health-check handler
+func (h *HealthCheckHandler) GetHandler() http.Handler {
 	r := chi.NewRouter()
-	r.Get("/hc", h.check())
+	r.Get("/", h.check())
 	return r
 }
 
@@ -83,32 +83,35 @@ func (h *HealthCheckHandler) GetRouter() http.Handler {
 // internal handler methods
 // --------------------------------------------------------------------------
 
-// Check wraps handlers to have a common signature
+// check wraps the getHealth handler to have a common signature
 func (h *HealthCheckHandler) check() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user, ok := security.UserFromContext(r.Context())
 		if !ok || user == nil {
-			commons.LogWithReq(r, h.Log, "handler.Check").Errorf("user is not available in context!")
+			commons.LogWithReq(r, h.Log, "handler.check").Errorf("user is not available in context!")
 			h.ErrRep.Negotiate(w, r, errors.SecurityError{Err: fmt.Errorf("user is not available in context"), Request: r})
 			return
 		}
 
 		if err := h.getHealth(*user, w, r, h.Checker); err != nil {
-			commons.LogWithReq(r, h.Log, "handler.Check").Errorf("error during health-check call %v\n", err)
-			h.ErrRep.Negotiate(w, r, errors.ServerError{Err: err, Request: r})
+			commons.LogWithReq(r, h.Log, "handler.check").Errorf("error during health-check call %v\n", err)
+			h.ErrRep.Negotiate(w, r, err)
 			return
 		}
 	})
 }
 
 // getHealth returns health-check info about the service
-func (h *HealthCheckHandler) getHealth(user security.User, w http.ResponseWriter, r *http.Request, check HealthChecker) error {
-	commons.LogWithReq(r, h.Log, "handler.GetHealth").Debugf("check for health")
-	health, err := check.Check(user)
+func (h *HealthCheckHandler) getHealth(user security.User, w http.ResponseWriter, r *http.Request, checker HealthChecker) error {
+	commons.LogWithReq(r, h.Log, "handler.getHealth").Debugf("check for health")
+	health, err := checker.Check(user)
 	if err != nil {
-		commons.LogWithReq(r, h.Log, "handler.GetHealth").Errorf("error during health-check call %v\n", err)
-		return fmt.Errorf("error during health-check: %v", err)
+		commons.LogWithReq(r, h.Log, "handler.getHealth").Errorf("error during health-check call %v\n", err)
+		return err
 	}
-	commons.LogWithReq(r, h.Log, "handler.GetHealth").Infof("health: %s", health)
+	commons.LogWithReq(r, h.Log, "handler.getHealth").Infof("health: %s", health)
+	if health.Status != OK {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}
 	return render.Render(w, r, HealthCheckResponse{HealthCheck: &health})
 }

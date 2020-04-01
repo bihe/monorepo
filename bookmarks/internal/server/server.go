@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	"golang.binggl.net/commons/cookies"
@@ -34,8 +35,38 @@ type Server struct {
 	environment    config.Environment
 	errorHandler   *handler.TemplateHandler
 	appInfoAPI     *handler.AppInfoHandler
+	healthCheck    *handler.HealthCheckHandler
 	bookmarkAPI    *api.BookmarksAPI
 	log            *log.Entry
+}
+
+type healthCheck struct {
+	timeout        uint
+	repository     store.Repository
+	version, build string
+}
+
+func (h *healthCheck) Check(user security.User) (handler.HealthCheck, error) {
+	var (
+		status handler.Status
+		msg    string
+		err    error
+	)
+
+	status = handler.OK
+	msg = "service is healthy"
+
+	if err = h.repository.CheckStoreConnectivity(h.timeout); err != nil {
+		status = handler.Error
+		msg = err.Error()
+	}
+
+	return handler.HealthCheck{
+		Status:    status,
+		Message:   msg,
+		TimeStamp: time.Now().UTC(),
+		Version:   fmt.Sprintf("%s-%s", h.version, h.build),
+	}, nil
 }
 
 // Create instantiates a new Server instance
@@ -70,12 +101,14 @@ func Create(basePath string, config config.AppConfig, version internal.VersionIn
 		Log:    logger,
 	}
 
+	// std. application information
 	appInfo := &handler.AppInfoHandler{
 		Handler: baseHandler,
 		Version: version.Version,
 		Build:   version.Build,
 	}
 
+	// a dynamic html template
 	templatePath := filepath.Join(basePath, "templates")
 	errHandler := &handler.TemplateHandler{
 		Handler:        baseHandler,
@@ -85,6 +118,19 @@ func Create(basePath string, config config.AppConfig, version internal.VersionIn
 		AppName:        config.AppName,
 		TemplateDir:    templatePath,
 	}
+
+	// a /hc
+	hc := &handler.HealthCheckHandler{
+		Handler: baseHandler,
+		Checker: &healthCheck{
+			repository: repository,
+			build:      version.Build,
+			version:    version.Version,
+			timeout:    30, // timeout of 30seconds
+		},
+	}
+
+	// the API itself
 	bookmarkAPI := &api.BookmarksAPI{
 		Handler:        baseHandler,
 		Repository:     repository,
@@ -94,8 +140,6 @@ func Create(basePath string, config config.AppConfig, version internal.VersionIn
 	}
 
 	// server combines setting and handlers to form the backend
-	// ------------------------------------------------------------------
-
 	jwtOptions := security.JwtOptions{
 		JwtSecret:  config.Security.JwtSecret,
 		JwtIssuer:  config.Security.JwtIssuer,
@@ -110,6 +154,7 @@ func Create(basePath string, config config.AppConfig, version internal.VersionIn
 		ErrorPath:     config.ErrorPath,
 	}
 
+	// finally all ingredients for the server-struct
 	srv := Server{
 		basePath:       base,
 		jwtOpts:        jwtOptions,
@@ -118,6 +163,7 @@ func Create(basePath string, config config.AppConfig, version internal.VersionIn
 		cors:           config.Cors,
 		environment:    config.Environment,
 		appInfoAPI:     appInfo,
+		healthCheck:    hc,
 		errorHandler:   errHandler,
 		bookmarkAPI:    bookmarkAPI,
 		log:            logger,

@@ -3,6 +3,7 @@
 package store
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -31,6 +32,8 @@ type Repository interface {
 
 	GetBookmarkByID(id, username string) (Bookmark, error)
 	GetFolderByPath(path, username string) (Bookmark, error)
+
+	CheckStoreConnectivity(timeOut uint) (err error)
 }
 
 // Create a new repository
@@ -48,6 +51,15 @@ func Create(db *gorm.DB) Repository {
 type dbRepository struct {
 	transient *gorm.DB
 	shared    *gorm.DB
+}
+
+// CheckStoreConnectivity performs a basic test if the store is accessible
+// the timeOut is supplied (seconds)
+func (r *dbRepository) CheckStoreConnectivity(timeOut uint) (err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeOut)*time.Second)
+	defer cancel()
+	err = r.con().DB().PingContext(ctx)
+	return
 }
 
 // InUnitOfWork uses a transaction to execute the supplied function

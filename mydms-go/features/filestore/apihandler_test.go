@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -37,7 +39,7 @@ func TestNewHandler(t *testing.T) {
 		Bucket: "bucket",
 		Key:    "key",
 		Secret: "secret",
-	}))
+	}), log.New().WithField("mode", "test"))
 	if h == nil {
 		t.Errorf("could not create a new handler")
 	}
@@ -77,7 +79,7 @@ func TestGetFiles(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 
-			h := &Handler{fs: new(mockService)}
+			h := &Handler{fs: new(mockService), log: log.New().WithField("mode", "test")}
 
 			err := h.GetFile(c)
 			isErr := err != nil

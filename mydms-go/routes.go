@@ -9,10 +9,11 @@ import (
 	"github.com/bihe/mydms/internal/config"
 	"github.com/bihe/mydms/internal/persistence"
 	"github.com/labstack/echo/v4"
+	log "github.com/sirupsen/logrus"
 )
 
 // registerRoutes defines the routes of the available handlers
-func registerRoutes(e *echo.Echo, con persistence.Connection, config config.AppConfig, version internal.VersionInfo) (err error) {
+func registerRoutes(e *echo.Echo, con persistence.Connection, config config.AppConfig, version internal.VersionInfo, logger *log.Entry) (err error) {
 	var (
 		ur upload.Repository
 		dr documents.Repository
@@ -32,7 +33,7 @@ func registerRoutes(e *echo.Echo, con persistence.Connection, config config.AppC
 
 	// appinfo
 	ai := api.Group("/appinfo")
-	aih := &appinfo.Handler{VersionInfo: version}
+	aih := &appinfo.Handler{VersionInfo: version, Log: logger}
 	ai.GET("", aih.GetAppInfo)
 
 	// upload
@@ -42,7 +43,7 @@ func registerRoutes(e *echo.Echo, con persistence.Connection, config config.AppC
 		MaxUploadSize:    config.Upload.MaxUploadSize,
 		UploadPath:       config.Upload.UploadPath,
 	}
-	uh := upload.NewHandler(ur, uploadConfig)
+	uh := upload.NewHandler(ur, uploadConfig, logger)
 	u.POST("/file", uh.UploadFile)
 
 	// file
@@ -53,7 +54,7 @@ func registerRoutes(e *echo.Echo, con persistence.Connection, config config.AppC
 		Secret: config.Filestore.Secret,
 	})
 	f := api.Group("/file")
-	fh := filestore.NewHandler(storeSvc)
+	fh := filestore.NewHandler(storeSvc, logger)
 	f.GET("", fh.GetFile)
 	f.GET("/", fh.GetFile)
 
@@ -62,7 +63,7 @@ func registerRoutes(e *echo.Echo, con persistence.Connection, config config.AppC
 	dh := documents.NewHandler(documents.Repositories{
 		DocRepo:    dr,
 		UploadRepo: ur,
-	}, storeSvc, uploadConfig)
+	}, storeSvc, uploadConfig, logger)
 
 	d.GET("/:type/search", dh.SearchList)
 	d.GET("/:id", dh.GetDocumentByID)

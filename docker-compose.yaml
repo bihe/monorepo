@@ -61,12 +61,14 @@ services:
         restart:
             always
         environment: 
+            MY_ENVIRONMENT: Production
             MY_SECURITY.JWTISSUER: $JWTISSUER
             MY_SECURITY.JWTSECRET: $JWTSECRET
             MY_FILESTORE.REGION: $FILESTORE_REGION
             MY_FILESTORE.BUCKET: $FILESTORE_BUCKET
             MY_FILESTORE.KEY: $FILESTORE_KEY
             MY_FILESTORE.SECRET: $FILESTORE_SECRET
+            MY_LOGGING.FILEPATH: /opt/mydms/logs/mydms-api.log
 
     bookmarks-3003:
         build: 

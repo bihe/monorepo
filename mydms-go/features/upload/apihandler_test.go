@@ -11,6 +11,8 @@ import (
 	"os"
 	"testing"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/bihe/mydms/internal/persistence"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -91,7 +93,7 @@ func setup(t *testing.T, config Config, formfield, file string) (echo.Context, *
 		AllowedFileTypes: config.AllowedFileTypes,
 		MaxUploadSize:    config.MaxUploadSize,
 		UploadPath:       tmp,
-	}), rec
+	}, log.New().WithField("mode", "test")), rec
 }
 
 func TestUpload(t *testing.T) {

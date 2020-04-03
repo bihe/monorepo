@@ -115,7 +115,7 @@ func setupAPIServer() (*echo.Echo, string) {
 	e.Use(middleware.Recover())
 	e.Use(middleware.RequestID())
 
-	InitLogger(c.Logging, e)
+	l := setupLog(c, e)
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     c.Cors.Origins,
@@ -145,7 +145,7 @@ func setupAPIServer() (*echo.Echo, string) {
 		Version: Version,
 		Build:   Build,
 	}
-	if err := registerRoutes(e, con, c, version); err != nil {
+	if err := registerRoutes(e, con, c, version, l); err != nil {
 		panic(fmt.Sprintf("error: %v", err))
 	}
 

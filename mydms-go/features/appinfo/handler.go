@@ -6,6 +6,7 @@ import (
 	"github.com/bihe/mydms/internal"
 	"github.com/bihe/mydms/internal/security"
 	log "github.com/sirupsen/logrus"
+	"golang.binggl.net/commons"
 
 	"github.com/labstack/echo/v4"
 )
@@ -51,6 +52,7 @@ type VersionInfo struct {
 // Handler provides methos for applicatin metadata
 type Handler struct {
 	internal.VersionInfo
+	Log *log.Entry
 }
 
 // GetAppInfo godoc
@@ -65,7 +67,7 @@ type Handler struct {
 func (h *Handler) GetAppInfo(c echo.Context) error {
 	sc := c.(*security.ServerContext)
 	id := sc.Identity
-	log.Infof("Got user: %s", id.Username)
+	commons.LogWithReq(c.Request(), h.Log, "appinfo.GetAppInfo").Infof("Got user: %s", id.Username)
 
 	a := AppInfo{
 		UserInfo: UserInfo{

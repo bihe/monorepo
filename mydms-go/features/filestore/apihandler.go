@@ -7,16 +7,20 @@ import (
 
 	"github.com/bihe/mydms/internal/errors"
 	"github.com/labstack/echo/v4"
+	"golang.binggl.net/commons"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Handler defines the filestore API
 type Handler struct {
-	fs FileService
+	fs  FileService
+	log *log.Entry
 }
 
 // NewHandler returns a pointer to a new handler instance
-func NewHandler(fs FileService) *Handler {
-	return &Handler{fs}
+func NewHandler(fs FileService, logger *log.Entry) *Handler {
+	return &Handler{fs: fs, log: logger}
 }
 
 // GetFile godoc
@@ -39,6 +43,8 @@ func (h *Handler) GetFile(c echo.Context) error {
 			Err:     fmt.Errorf("the supplied path param cannot be decoded. %v", err),
 			Request: c.Request()}
 	}
+
+	commons.LogWithReq(c.Request(), h.log, "filestore.GetFile").Infof("Get file from backend store: '%s'", decodedPath)
 
 	file, err := h.fs.GetFile(string(decodedPath))
 	if err != nil {

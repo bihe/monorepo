@@ -19,6 +19,8 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const invalidJSON = "could not get valid json: %v"
@@ -31,6 +33,7 @@ const noDelete = "!delete"
 const noResult = "!result"
 const noFileDelete = "!fileDelete"
 
+var logger = log.New().WithField("mode", "test")
 var errRaise = fmt.Errorf("error")
 
 // rather small PDF payload
@@ -124,7 +127,7 @@ func TestGetDocumentByID(t *testing.T) {
 	repos := Repositories{
 		DocRepo: mdr,
 	}
-	h := NewHandler(repos, svc, uploadConfig)
+	h := NewHandler(repos, svc, uploadConfig, logger)
 
 	e.GET("/:id", h.GetDocumentByID) // this is necessary to supply parameters
 	c := e.NewContext(req, rec)
@@ -150,7 +153,7 @@ func TestGetDocumentByID(t *testing.T) {
 	repos = Repositories{
 		DocRepo: mdr,
 	}
-	h = NewHandler(repos, svc, uploadConfig)
+	h = NewHandler(repos, svc, uploadConfig, logger)
 
 	err = h.GetDocumentByID(c)
 	if err == nil {
@@ -179,7 +182,7 @@ func TestDeleteDocumentByID(t *testing.T) {
 		DocRepo: mdr,
 	}
 
-	h := NewHandler(repos, svc, uploadConfig)
+	h := NewHandler(repos, svc, uploadConfig, logger)
 
 	e.GET("/:id", h.DeleteDocumentByID) // this is necessary to supply parameters
 	c := e.NewContext(req, rec)
@@ -202,7 +205,7 @@ func TestDeleteDocumentByID(t *testing.T) {
 	faileRepo := Repositories{
 		DocRepo: failmdr,
 	}
-	failH := NewHandler(faileRepo, svc, uploadConfig)
+	failH := NewHandler(faileRepo, svc, uploadConfig, logger)
 	err = failH.DeleteDocumentByID(c)
 	if err == nil {
 		t.Errorf(errExp)
@@ -237,7 +240,7 @@ func TestDeleteDocumentByID(t *testing.T) {
 	mock.ExpectRollback()
 	svc.callCount = 0
 	svc.errMap[1] = errRaise
-	h = NewHandler(repos, svc, uploadConfig)
+	h = NewHandler(repos, svc, uploadConfig, logger)
 
 	c = e.NewContext(req, rec)
 	c.SetParamNames(ID)
@@ -272,7 +275,7 @@ func TestSearchDocuments(t *testing.T) {
 	repos := Repositories{
 		DocRepo: mdr,
 	}
-	h := NewHandler(repos, svc, uploadConfig)
+	h := NewHandler(repos, svc, uploadConfig, logger)
 
 	// success
 	err := h.SearchDocuments(c)
@@ -348,7 +351,7 @@ func TestSaveUpdateDocument(t *testing.T) {
 		DocRepo:    docRepo,
 		UploadRepo: uploadRepo,
 	}
-	h := NewHandler(repos, svc, uploadConfig)
+	h := NewHandler(repos, svc, uploadConfig, logger)
 
 	// update success
 	mock.ExpectBegin()
@@ -370,7 +373,7 @@ func TestSaveUpdateDocument(t *testing.T) {
 
 	docRepo.callCount = 0
 	docRepo.errMap[2] = errRaise
-	h = NewHandler(repos, svc, uploadConfig)
+	h = NewHandler(repos, svc, uploadConfig, logger)
 	mock.ExpectBegin()
 	mock.ExpectCommit()
 	err = h.SaveDocument(c)
@@ -384,7 +387,7 @@ func TestSaveUpdateDocument(t *testing.T) {
 
 	docRepo.callCount = 0
 	docRepo.errMap[3] = errRaise
-	h = NewHandler(repos, svc, uploadConfig)
+	h = NewHandler(repos, svc, uploadConfig, logger)
 	mock.ExpectBegin()
 	mock.ExpectRollback()
 	err = h.SaveDocument(c)
@@ -453,7 +456,7 @@ func TestSaveNewDocument(t *testing.T) {
 	}()
 	// ------------------------------------------------------------------
 
-	h := NewHandler(repos, svc, uploadConfig)
+	h := NewHandler(repos, svc, uploadConfig, logger)
 
 	// insert success
 	mock.ExpectBegin()
@@ -478,7 +481,7 @@ func TestSaveNewDocument(t *testing.T) {
 	mock.ExpectRollback()
 	uploadRepo.callCount = 0
 	uploadRepo.errMap[1] = doError
-	h = NewHandler(repos, svc, uploadConfig)
+	h = NewHandler(repos, svc, uploadConfig, logger)
 	err = h.SaveDocument(c)
 	if err == nil {
 		t.Errorf(errExp)
@@ -491,7 +494,7 @@ func TestSaveNewDocument(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectRollback()
 	uploadConfig.UploadPath = "--"
-	h = NewHandler(repos, svc, uploadConfig)
+	h = NewHandler(repos, svc, uploadConfig, logger)
 	err = h.SaveDocument(c)
 	if err == nil {
 		t.Errorf(errExp)
@@ -506,7 +509,7 @@ func TestSaveNewDocument(t *testing.T) {
 	uploadConfig.UploadPath = tempPath
 	svc.callCount = 0
 	svc.errMap[1] = doError
-	h = NewHandler(repos, svc, uploadConfig)
+	h = NewHandler(repos, svc, uploadConfig, logger)
 	err = h.SaveDocument(c)
 	if err == nil {
 		t.Errorf(errExp)
@@ -522,7 +525,7 @@ func TestSaveNewDocument(t *testing.T) {
 	uploadRepo.callCount = 0
 	delete(uploadRepo.errMap, 1)
 	uploadRepo.errMap[2] = doError
-	h = NewHandler(repos, svc, uploadConfig)
+	h = NewHandler(repos, svc, uploadConfig, logger)
 	err = h.SaveDocument(c)
 	if err != nil {
 		t.Errorf(couldNotSave, err)
@@ -563,7 +566,7 @@ func TestSearchList(t *testing.T) {
 	repos := Repositories{
 		DocRepo: mdr,
 	}
-	h := NewHandler(repos, svc, uploadConfig)
+	h := NewHandler(repos, svc, uploadConfig, logger)
 	_, rec, c = newReq("type", "tags", h.SearchList)
 
 	var result SearchResult
@@ -609,7 +612,7 @@ func TestSearchList(t *testing.T) {
 	repos = Repositories{
 		DocRepo: mdr,
 	}
-	h = NewHandler(repos, svc, uploadConfig)
+	h = NewHandler(repos, svc, uploadConfig, logger)
 	_, rec, c = newReq("type", "tags", h.SearchList)
 
 	err = h.SearchList(c)

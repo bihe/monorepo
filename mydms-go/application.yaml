@@ -55,4 +55,7 @@ filestore:
     key: "key"
     secret: "secret"
 
-
+## common application properties
+appName: mydms-go
+hostID: mydms
+environment: Development

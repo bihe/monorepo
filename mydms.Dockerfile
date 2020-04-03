@@ -14,7 +14,7 @@ WORKDIR /backend-build
 COPY ./mydms-go ./mydms-go
 COPY ./commons-go ./commons-go
 WORKDIR /backend-build/mydms-go
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -tags prod -o mydms.api
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -o mydms.api
 ## --------------------------------------------------------------------------
 
 ## runtime

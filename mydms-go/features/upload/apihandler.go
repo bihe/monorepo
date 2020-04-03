@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	log "github.com/sirupsen/logrus"
+	"golang.binggl.net/commons"
 )
 
 // Result represents status of the upload opeation
@@ -27,11 +28,12 @@ type Result struct {
 type Handler struct {
 	r      Repository
 	config Config
+	log    *log.Entry
 }
 
 // NewHandler returns a pointer to a new handler instance
-func NewHandler(r Repository, config Config) *Handler {
-	return &Handler{r: r, config: config}
+func NewHandler(r Repository, config Config, logger *log.Entry) *Handler {
+	return &Handler{r: r, config: config, log: logger}
 }
 
 // UploadFile godoc
@@ -58,6 +60,8 @@ func (h *Handler) UploadFile(c echo.Context) error {
 			Err:     fmt.Errorf("the upload exceeds the maximum size of %d - filesize is: %d", h.config.MaxUploadSize, file.Size),
 			Request: c.Request()}
 	}
+
+	commons.LogWithReq(c.Request(), h.log, "upload.UploadFile").Debugf("trying to upload file: '%s'", file.Filename)
 
 	ext := filepath.Ext(file.Filename)
 	ext = strings.Replace(ext, ".", "", 1)
@@ -106,7 +110,7 @@ func (h *Handler) UploadFile(c echo.Context) error {
 	if err != nil {
 		ioerr := os.Remove(uploadPath)
 		if ioerr != nil {
-			log.Warnf("Clean-Up file-upload. Could not delete temp file: '%s': %v", uploadPath, ioerr)
+			commons.LogWithReq(c.Request(), h.log, "upload.UploadFile").Warnf("Clean-Up file-upload. Could not delete temp file: '%s': %v", uploadPath, ioerr)
 		}
 		return errors.ServerError{Err: fmt.Errorf("could not save upload item in store: %v", err), Request: c.Request()}
 	}

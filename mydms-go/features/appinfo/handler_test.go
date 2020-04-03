@@ -9,9 +9,10 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
-	sec "golang.binggl.net/commons/security"
 	"github.com/bihe/mydms/internal"
 	"github.com/bihe/mydms/internal/security"
+	log "github.com/sirupsen/logrus"
+	sec "golang.binggl.net/commons/security"
 )
 
 func TestGetAppInfo(t *testing.T) {
@@ -33,7 +34,7 @@ func TestGetAppInfo(t *testing.T) {
 		Build:   "1",
 		Version: "2",
 	}
-	h := Handler{VersionInfo: v}
+	h := Handler{VersionInfo: v, Log: log.New().WithField("mode", "test")}
 
 	// Assertions
 	if assert.NoError(t, h.GetAppInfo(sc)) {

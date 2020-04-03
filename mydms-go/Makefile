@@ -58,7 +58,7 @@ go-build:
 
 go-build-release:
 	@echo "  >  Building binary..."
-	GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${VERSION}${COMMIT} -X main.Build=${BUILD}" -tags prod -o mydms.api
+	GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${VERSION}${COMMIT} -X main.Build=${BUILD}" -o mydms.api
 
 go-clean:
 	@echo "  >  Cleaning build cache"

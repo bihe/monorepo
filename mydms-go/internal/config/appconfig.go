@@ -1,13 +1,26 @@
 package config
 
+// Environment specifies operation modes
+type Environment string
+
+const (
+	// Development is used in development
+	Development Environment = "Development"
+	// Production is used for deployments
+	Production Environment = "Production"
+)
+
 // AppConfig holds the application configuration
 type AppConfig struct {
-	Security  Security
-	Database  Database
-	Logging   LogConfig
-	Upload    UploadConfig
-	Filestore FileStore
-	Cors      CorsSettings
+	Security    Security
+	Database    Database
+	Logging     LogConfig
+	Upload      UploadConfig
+	Filestore   FileStore
+	Cors        CorsSettings
+	Environment Environment
+	AppName     string
+	HostID      string
 }
 
 // Security settings for the application

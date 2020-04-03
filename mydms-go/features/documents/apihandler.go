@@ -21,6 +21,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/microcosm-cc/bluemonday"
 	log "github.com/sirupsen/logrus"
+	"golang.binggl.net/commons"
 )
 
 const jsonTimeLayout = "2006-01-02T15:04:05+07:00"
@@ -139,6 +140,7 @@ type Handler struct {
 	fs         filestore.FileService
 	uc         upload.Config
 	policy     *bluemonday.Policy
+	log        *log.Entry
 }
 
 // Repositories combines necessary repositories for the document handler
@@ -148,13 +150,14 @@ type Repositories struct {
 }
 
 // NewHandler returns a pointer to a new handler instance
-func NewHandler(repos Repositories, fs filestore.FileService, config upload.Config) *Handler {
+func NewHandler(repos Repositories, fs filestore.FileService, config upload.Config, logger *log.Entry) *Handler {
 	return &Handler{
 		docRepo:    repos.DocRepo,
 		uploadRepo: repos.UploadRepo,
 		fs:         fs,
 		uc:         config,
 		policy:     bluemonday.UGCPolicy(),
+		log:        logger,
 	}
 }
 
@@ -207,14 +210,14 @@ func (h *Handler) DeleteDocumentByID(c echo.Context) (err error) {
 
 	fileName, err := h.docRepo.Exists(id, atomic)
 	if err != nil {
-		log.Warnf("the document '%s' is not available, %v", id, err)
+		commons.LogWithReq(c.Request(), h.log, "documents.DeleteDocumentByID").Warnf("the document '%s' is not available, %v", id, err)
 		err = fmt.Errorf("document '%s' not available", id)
 		return errors.NotFoundError{Err: err, Request: c.Request()}
 	}
 
 	err = h.docRepo.Delete(id, atomic)
 	if err != nil {
-		log.Warnf("error during delete operation of '%s', %v", id, err)
+		commons.LogWithReq(c.Request(), h.log, "documents.DeleteDocumentByID").Warnf("error during delete operation of '%s', %v", id, err)
 		err = fmt.Errorf("could not delete '%s', %v", id, err)
 		return errors.ServerError{Err: err, Request: c.Request()}
 	}
@@ -222,7 +225,7 @@ func (h *Handler) DeleteDocumentByID(c echo.Context) (err error) {
 	// also remove the file payload stored in the backend store
 	err = h.fs.DeleteFile(fileName)
 	if err != nil {
-		log.Errorf("could not delete file in backend store '%s', %v", fileName, err)
+		commons.LogWithReq(c.Request(), h.log, "documents.DeleteDocumentByID").Errorf("could not delete file in backend store '%s', %v", fileName, err)
 		err = fmt.Errorf("could not delete '%s', %v", id, err)
 		return errors.ServerError{Err: err, Request: c.Request()}
 	}
@@ -284,7 +287,7 @@ func (h *Handler) SearchDocuments(c echo.Context) (err error) {
 	}, append(order, orderByCreated, orderByTitle))
 
 	if err != nil {
-		log.Warnf("could not search for documents, %v", err)
+		commons.LogWithReq(c.Request(), h.log, "documents.SearchDocuments").Warnf("could not search for documents, %v", err)
 		err = fmt.Errorf("error searching documents, %v", err)
 		return errors.ServerError{Err: err, Request: c.Request()}
 	}
@@ -322,16 +325,16 @@ func (h *Handler) SaveDocument(c echo.Context) (err error) {
 
 	d := new(Document)
 	if err = c.Bind(d); err != nil {
-		log.Warnf("could not bind supplied payload, %v", err)
+		commons.LogWithReq(c.Request(), h.log, "documents.SaveDocument").Warnf("could not bind supplied payload, %v", err)
 		err = fmt.Errorf("could not bind supplied data: %v", err)
 		return errors.BadRequestError{Err: err, Request: c.Request()}
 	}
 
 	d = sanitize(h.policy, d)
 
-	d.FileName, err = h.procssUploadFile(d.UploadToken, d.FileName, atomic)
+	d.FileName, err = h.procssUploadFile(c, d.UploadToken, d.FileName, atomic)
 	if err != nil {
-		log.Warnf("could not process the uploaded file, %v", err)
+		commons.LogWithReq(c.Request(), h.log, "documents.SaveDocument").Warnf("could not process the uploaded file, %v", err)
 		err = fmt.Errorf("upload-file error: %v", err)
 		return errors.ServerError{Err: err, Request: c.Request()}
 	}
@@ -347,11 +350,11 @@ func (h *Handler) SaveDocument(c echo.Context) (err error) {
 		// supplied ID needs to be checked if exists
 		doc, err = h.docRepo.Get(d.ID)
 		if err != nil {
-			log.Warnf("cannot find document by ID '%s' - create a new entry, %v", d.ID, err)
+			commons.LogWithReq(c.Request(), h.log, "documents.SaveDocument").Warnf("cannot find document by ID '%s' - create a new entry, %v", d.ID, err)
 			doc = initDocument(d, senderList, tagList)
 		} else {
 			newDoc = false
-			log.Infof("will update existing document ID '%s'", d.ID)
+			commons.LogWithReq(c.Request(), h.log, "documents.SaveDocument").Infof("will update existing document ID '%s'", d.ID)
 			doc.Title = d.Title
 			doc.FileName = d.FileName
 			doc.PreviewLink = sql.NullString{String: base64.StdEncoding.EncodeToString([]byte(d.FileName)), Valid: true}
@@ -364,7 +367,7 @@ func (h *Handler) SaveDocument(c echo.Context) (err error) {
 
 	doc, err = h.docRepo.Save(doc, atomic)
 	if err != nil {
-		log.Errorf("could not save document: %v", err)
+		commons.LogWithReq(c.Request(), h.log, "documents.SaveDocument").Errorf("could not save document: %v", err)
 		err = fmt.Errorf("error while saving document: %v", err)
 		return errors.ServerError{Err: err, Request: c.Request()}
 	}
@@ -418,7 +421,7 @@ func (h *Handler) SearchList(c echo.Context) (err error) {
 
 	result, err := h.docRepo.SearchLists(name, st)
 	if err != nil {
-		log.Warnf("could not search for tags, %v", err)
+		commons.LogWithReq(c.Request(), h.log, "documents.SearchList").Warnf("could not search for tags, %v", err)
 		err = fmt.Errorf("error search for tags: %v", err)
 		return errors.ServerError{Err: err, Request: c.Request()}
 	}
@@ -435,7 +438,7 @@ func (h *Handler) SearchList(c echo.Context) (err error) {
 // helpers and internal functions
 // --------------------------------------------------------------------------
 
-func (h *Handler) procssUploadFile(token, fileName string, atomic persistence.Atomic) (string, error) {
+func (h *Handler) procssUploadFile(c echo.Context, token, fileName string, atomic persistence.Atomic) (string, error) {
 	if token == "" || token == "-" {
 		return fileName, nil
 	}
@@ -446,7 +449,7 @@ func (h *Handler) procssUploadFile(token, fileName string, atomic persistence.At
 		return "", fmt.Errorf("upload token error: %v", err)
 	}
 
-	log.Infof("use uploaded file identified by token '%s'", token)
+	commons.LogWithReq(c.Request(), h.log, "documents.procssUploadFile").Infof("use uploaded file identified by token '%s'", token)
 
 	now := time.Now().UTC()
 	folder := now.Format("2006_01_02")
@@ -455,11 +458,11 @@ func (h *Handler) procssUploadFile(token, fileName string, atomic persistence.At
 	uploadFile := filepath.Join(h.uc.UploadPath, token+ext)
 	payload, err := ioutil.ReadFile(uploadFile)
 	if err != nil {
-		log.Errorf("could not read upload file '%s', %v", uploadFile, err)
+		commons.LogWithReq(c.Request(), h.log, "documents.procssUploadFile").Errorf("could not read upload file '%s', %v", uploadFile, err)
 		return "", fmt.Errorf("error reading upload-file: %v", err)
 	}
 
-	log.Debugf("got upload file '%s' with payload size '%d'!", uploadFile, len(payload))
+	commons.LogWithReq(c.Request(), h.log, "documents.procssUploadFile").Debugf("got upload file '%s' with payload size '%d'!", uploadFile, len(payload))
 
 	item := filestore.FileItem{
 		FileName:   fileName,
@@ -469,19 +472,19 @@ func (h *Handler) procssUploadFile(token, fileName string, atomic persistence.At
 	}
 	err = h.fs.SaveFile(item)
 	if err != nil {
-		log.Errorf("could not save file '%s', %v", uploadFile, err)
+		commons.LogWithReq(c.Request(), h.log, "documents.procssUploadFile").Errorf("could not save file '%s', %v", uploadFile, err)
 		return "", fmt.Errorf("error while saving file: %v", err)
 	}
 
 	err = os.Remove(uploadFile)
 	if err != nil {
 		// this error is ignored, does not invalidate the overall operation
-		log.Warnf("could not delete upload-file '%s', %v", uploadFile, err)
+		commons.LogWithReq(c.Request(), h.log, "documents.procssUploadFile").Warnf("could not delete upload-file '%s', %v", uploadFile, err)
 	}
 	err = h.uploadRepo.Delete(token, atomic)
 	if err != nil {
 		// this error is ignored, does not invalidate the overall operation
-		log.Errorf("could not delete the upload-item by id '%s', %v", token, err)
+		commons.LogWithReq(c.Request(), h.log, "documents.procssUploadFile").Errorf("could not delete the upload-item by id '%s', %v", token, err)
 	}
 
 	return fmt.Sprintf("/%s/%s", folder, fileName), nil
@@ -490,7 +493,7 @@ func (h *Handler) procssUploadFile(token, fileName string, atomic persistence.At
 func (h *Handler) startAtomic(c echo.Context) (persistence.Atomic, error) {
 	atomic, err := h.docRepo.CreateAtomic()
 	if err != nil {
-		log.Errorf("failed to start transaction: %v", err)
+		commons.LogWithReq(c.Request(), h.log, "documents.startAtomic").Errorf("failed to start transaction: %v", err)
 		err = fmt.Errorf("could not start atomic operation: %v", err)
 		return persistence.Atomic{}, errors.ServerError{Err: err, Request: c.Request()}
 	}

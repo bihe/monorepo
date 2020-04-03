@@ -15,6 +15,19 @@
   background-color: #5DADE2  !important;
 }
 
+.mat-snack-bar-container {
+  border-radius: 4px;
+  box-sizing: border-box;
+  display: block;
+  margin: 5px !important;
+  max-width: 100vw !important;
+  min-width: 85vw !important;
+  padding: 14px 16px;
+  min-height: 48px;
+  transform-origin: center;
+  color: white;
+}
+
 .mat-card-header-text {
   width: 100%;
 }

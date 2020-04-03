@@ -72,7 +72,9 @@
 
           <span class="badge badge-dark bookmark_path_info" *ngIf="searchMode" (click)="gotoPath(item.path)">{{ item.path }}</span>&nbsp;
           <a href="{{baseApiURL}}/api/v1/bookmarks/fetch/{{ item.id}}" target="_blank" class="bookmark_name">{{ item.displayName | ellipsis:40 }}</a>
-          <span class="d-none d-sm-inline">&nbsp;[URL: <a href="{{baseApiURL}}/api/v1/bookmarks/fetch/{{ item.id}}" target="_blank" class="bookmark_url">{{ item.url | ellipsis:30 }}</a>]</span>
+          <span class="d-none d-sm-inline">
+            <!--<a href="{{baseApiURL}}/api/v1/bookmarks/fetch/{{ item.id}}" target="_blank" class="bookmark_url">{{ item.url | ellipsis:30 }}</a>]-->
+          </span>
         </span>
 
         <span *ngIf="item.type === 'Folder'">
@@ -95,6 +97,11 @@
 
 
         <div class="bookmark_actions">
+
+          <span class="copy_url" *ngIf="item.type === 'Node'" (click)="copyUrlToClipboard(item.url)">
+            <i class="fa fa-clipboard" aria-hidden="true"></i>
+          </span>
+
           <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="edit bookmark items">
             <mat-icon>more_vert</mat-icon>
           </button>

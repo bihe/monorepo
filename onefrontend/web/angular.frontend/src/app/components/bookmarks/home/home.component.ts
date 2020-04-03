@@ -422,8 +422,8 @@ export class BookmarkHomeComponent implements OnInit {
     }
 
     console.log(`move items in list from ${event.previousIndex} to ${event.currentIndex}.`);
-    let selectedItem = this.bookmarks[event.previousIndex];
-    let targetItem = this.bookmarks[event.currentIndex];
+    const selectedItem = this.bookmarks[event.previousIndex];
+    const targetItem = this.bookmarks[event.currentIndex];
 
     // get the sortOrder of the target-element
     let sortOrder = targetItem.sortOrder;
@@ -442,7 +442,7 @@ export class BookmarkHomeComponent implements OnInit {
     // update the sort-order of the item in the backend
 
     // swap in UI (faster)
-    let oldBookmarkList = [...this.bookmarks]; // clone the array
+    const oldBookmarkList = [...this.bookmarks]; // clone the array
     moveItemInArray(this.bookmarks, event.previousIndex, event.currentIndex);
 
     const sortOrderModel = new BoomarkSortOrderModel();
@@ -503,6 +503,15 @@ export class BookmarkHomeComponent implements OnInit {
       }
       this.addBookmark(url);
     }
+  }
+
+  copyUrlToClipboard(url: string) {
+    console.log('copy URL to clipboard: ' + url);
+    navigator.clipboard.writeText(url).then(() => {
+      new MessageUtils().showMessage(this.snackBar, `URL: '${url}' was copied to clipboard.`, 'success', 750, '');
+    }, (err) => {
+      new MessageUtils().showError(this.snackBar, 'Could not copy ULR: ' + err);
+    });
   }
 
   private splitPathElements(path: string): string[] {

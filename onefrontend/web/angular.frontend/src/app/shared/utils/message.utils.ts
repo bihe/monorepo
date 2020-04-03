@@ -11,11 +11,11 @@ export class MessageUtils {
         }
     }
 
-    public showSuccess(snackBar: MatSnackBar, message) {
+    public showSuccess(snackBar: MatSnackBar, message: string) {
         this.showMessage(snackBar, message, 'success', 1500, '');
     }
 
-    public showMessage(snackBar: MatSnackBar, message, type: string, duration: number, closeMessage: string) {
+    public showMessage(snackBar: MatSnackBar, message: string, type: string, duration: number, closeMessage: string) {
         if (duration > 0) {
             const snackBarRef = snackBar.open(message, closeMessage,
                 {

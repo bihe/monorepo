@@ -176,8 +176,10 @@ a.bookmark_actions {
 .add {
   cursor: pointer;
   position: fixed;
-  bottom: 50px;
-  right: 30px;
+  top: 2px;
+  right: 10px;
+  height: 40px;
+  z-index: 99;
 }
 
 @media (max-width: 575.98px) {
@@ -213,6 +215,10 @@ a.bookmark_actions {
   width: 16px;
   height: 16px;
   vertical-align: text-top;
+}
+
+.copy_url {
+  cursor: pointer;
 }
 
 

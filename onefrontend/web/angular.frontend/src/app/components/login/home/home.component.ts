@@ -35,18 +35,20 @@ export class SiteHomeComponent implements OnInit {
 
   ngOnInit() {
     this.titleService.setTitle('Available Apps');
+    this.state.setProgress(true);
     this.userService.getUserInfo()
       .subscribe(
         data => {
           this.userInfo = data;
+          this.state.setProgress(false);
         },
         error => {
+          this.state.setProgress(false);
           if (Errors.CheckAuth(error) === ErrorMode.RedirectAuthFlow) {
             window.location.reload();
             return;
           }
           const errorDetail: ProblemDetail = error;
-          this.state.setProgress(false);
           console.log(errorDetail);
           new MessageUtils().showError(this.snackBar, errorDetail.title);
         }

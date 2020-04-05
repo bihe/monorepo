@@ -27,12 +27,12 @@ import { CreateBookmarksDialog } from './components/bookmarks/home/create.dialog
 import { BookmarkHomeComponent } from './components/bookmarks/home/home.component';
 import { ConfirmDeleteDialogComponent } from './components/confirm-delete-dialog/confirmation.component';
 import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
-import { FooterComponent } from './components/footer/footer.component';
 import { HeaderComponent } from './components/header/header.component';
 import { EditSitesComponent } from './components/login/edit/edit.component';
 import { SiteHomeComponent } from './components/login/home/home.component';
 import { MyDmsDocumentComponent } from './components/mydms/document/document.component';
 import { MyDmsHomeComponent } from './components/mydms/home/home.component';
+import { NavbarComponent } from './components/navbar/navbar.component';
 import { ModuleIndex } from './shared/moduleIndex';
 import { DateFormatPipe } from './shared/pipes/dataformat';
 import { EllipsisPipe } from './shared/pipes/ellipsis';
@@ -53,8 +53,8 @@ export const sharedConfig: NgModule = {
     declarations: [
       AppComponent,
       BookmarkHomeComponent,
-      FooterComponent,
       HeaderComponent,
+      NavbarComponent,
       EllipsisPipe,
       DateFormatPipe,
       CreateBookmarksDialog,

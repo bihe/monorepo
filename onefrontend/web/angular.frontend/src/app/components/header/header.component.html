@@ -1,23 +1,5 @@
 <div class="navmenu">
     <div class="navcontent">
-        <!-- LOGO -->
-        <div class="navlogo">
-            <mat-progress-spinner
-                *ngIf="showProgress"
-                mode="indeterminate"
-                class="progress"
-                color="accent"
-                [strokeWidth]="7"
-                [diameter]="40">
-            </mat-progress-spinner>
-
-            <span class="header__icon" (click)="toggleMenu(true)">
-                <svg class="" width="24px" height="24px" viewBox="0 0 48 48" fill="#ffffff">
-                <path d="M6 36h36v-4H6v4zm0-10h36v-4H6v4zm0-14v4h36v-4H6z"></path>
-                </svg>
-            </span>
-        </div>
-
         <!-- INFO -->
         <div class="navinfo">
           <i class="{{modInfo?.classValue}}" aria-hidden="true"></i>&nbsp;{{modInfo?.displayName}}
@@ -33,45 +15,3 @@
         </div>
     </div>
 </div>
-
-<div class="menu"
-  [ngClass]="{'menu--show': menuVisible }"
-  [style.transform]="menuTransform()">
-  <div class="menu__header">
-    <div class="user_info">
-      <i class="fa fa-sign-out" aria-hidden="true"></i> <a class="link" href="https://login.binggl.net/logout" matTooltip="{{ appInfo?.userInfo?.email }}">Logout: {{ appInfo?.userInfo?.displayName }}</a>
-    </div>
-  </div>
-  <ul class="menu__list">
-    <li><i class="fa fa-home" aria-hidden="true"></i> <a routerLink="/bookmarks" routerLinkActive="active">Bookmarks</a></li>
-    <li><i class="fa fa-clock-o" aria-hidden="true"></i> <a routerLink="/bookmarks/dashboard" routerLinkActive="active">Dashboard</a></li>
-    <li><i class="fa fa-file" aria-hidden="true"></i> <a routerLink="/mydms" routerLinkActive="active">Documents</a></li>
-
-
-    <li>
-      <mat-slide-toggle
-          class="amount_toggle"
-          [checked]="showAmount"
-          (change)="showAmountToggle($event)">
-          <span class="amount_toggle_text"><i class="fa fa-eur" aria-hidden="true"></i>&nbsp;show amount</span>
-      </mat-slide-toggle>
-    </li>
-
-    <li><i class="fa fa-shield" aria-hidden="true"></i> <a routerLink="/sites" routerLinkActive="active">Sites</a></li>
-
-  </ul>
-
-  <div class="menu_bottom">
-    <i class="fa fa-copyright" aria-hidden="true"></i> {{ year }} Henrik.Binggl
-    <br/><strong>binggl.net</strong>
-    <br/><span class="fa fa-code-fork"></span>&nbsp;<span style="color:indigo">{{ appInfo?.versionInfo?.version + "-" + appInfo?.versionInfo?.buildNumber | ellipsis:25}}</span>
-    <br/>ui: <span style="color:darkviolet">{{ appInfo?.uiRuntime }}</span>
-
-  </div>
-</div>
-
-<div class="menu__overlay"
-  (click)="toggleMenu(false)"
-  [ngClass]="{'menu__overlay--show': menuVisible }"
-
-></div>

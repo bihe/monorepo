@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
@@ -18,13 +17,9 @@ import { MessageUtils } from '../../shared/utils/message.utils';
   styleUrls: ['./header.component.css']
 })
 export class HeaderComponent implements OnInit {
-
-  menuVisible = false;
-  showProgress = false;
   appInfo: AppInfo;
   year: number = new Date().getFullYear();
   modInfo: ModuleInfo
-  showAmount = false;
   searchText = '';
 
   constructor(
@@ -38,15 +33,7 @@ export class HeaderComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.state.getProgress()
-      .subscribe(
-        data => {
-          this.showProgress = data;
-        },
-        error => {
-          new MessageUtils().showError(this.snackBar, error);
-        }
-      );
+    
 
     this.state.getModInfo()
       .subscribe(
@@ -55,13 +42,6 @@ export class HeaderComponent implements OnInit {
         },
         error => {
           new MessageUtils().showError(this.snackBar, error);
-        }
-      );
-
-    this.state.getShowAmount()
-      .subscribe(
-        x => {
-          this.showAmount = x;
         }
       );
 
@@ -95,24 +75,6 @@ export class HeaderComponent implements OnInit {
         this.state.setMyDmsVersion(result);
       }
     );
-  }
-
-  toggleMenu(visible: boolean) {
-    this.menuVisible = visible;
-  }
-
-  menuTransform() {
-    if (this.menuVisible) {
-      return this.sanitizer.bypassSecurityTrustStyle('translateX(0)');
-    } else {
-      return this.sanitizer.bypassSecurityTrustStyle('translateX(-110%)');
-    }
-  }
-
-  showAmountToggle(event: MatSlideToggleChange) {
-    console.log('Change showAmount to ' + event.checked);
-    this.state.setShowAmount(event.checked);
-    this.state.setRequestReload(true);
   }
 
   onSearch(searchText: string) {

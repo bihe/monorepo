@@ -1,22 +1,47 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { Component, OnInit, VERSION } from '@angular/core';
 import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { AppInfo } from 'src/app/shared/models/app.info.model';
+import { ApiAppInfoService } from 'src/app/shared/service/api.appinfo.service';
 import { ApplicationState } from 'src/app/shared/service/application.state';
 import { MessageUtils } from 'src/app/shared/utils/message.utils';
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  selector: 'app-navbar',
+  templateUrl: './navbar.component.html',
+  styleUrls: ['./navbar.component.css']
 })
-export class AppComponent implements OnInit, AfterViewInit {
+export class NavbarComponent implements OnInit {
   title = 'app';
   currentRoute = '';
   navExpanded = false;
   showAmount = false;
   showProgress = false;
+  appData: AppInfo;
+  year: number = new Date().getFullYear();
 
-  constructor(private state: ApplicationState,private snackBar: MatSnackBar) {}
+  constructor(private state: ApplicationState,
+    private appInfoService: ApiAppInfoService,
+    private snackBar: MatSnackBar) { 
+
+      this.appInfoService.getApplicationInfo()
+      .subscribe(
+        data => {
+          this.appData = data;
+          this.appData.uiRuntime = 'angular=' + VERSION.full;
+          const adminRole = this.appData.userInfo.roles.find(x => x === 'Admin');
+          if (adminRole) {
+            this.state.setAdmin(true);
+          }
+          this.state.setAppInfo(data);
+        },
+        error => {
+          console.log('Error: ' + error);
+          new MessageUtils().showError(this.snackBar, error);
+        }
+      );
+
+    }
 
   ngOnInit() {
     this.state.getRoute().subscribe(
@@ -30,9 +55,6 @@ export class AppComponent implements OnInit, AfterViewInit {
           this.showAmount = x;
         }
       );
-  }
-
-  ngAfterViewInit() {
     // get rid of Error: ExpressionChangedAfterItHasBeenCheckedError
     setTimeout(() => {
       this.state.getProgress()
@@ -44,7 +66,9 @@ export class AppComponent implements OnInit, AfterViewInit {
             new MessageUtils().showError(this.snackBar, error);
           }
         );
-    },2000);
+    });
+
+    
   }
 
   isCurrentRout(route: string): boolean {

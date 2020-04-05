@@ -1,47 +1,14 @@
-<app-header></app-header>
-
 <div class="appcontent container-fluid" style="height:100%">
     <div class="row contentArea">
 
-        <!-- global navigation-->
-        <div class="col-nav nav-section" [class.col-nav-expand]="navExpanded" [class.col-nav-small]="!navExpanded">
-            <div class="nav-item">
-                <a class="headerLink" routerLink="/" title="Home"><i class="fa fa-home" aria-hidden="true"></i></a>
-            </div>
-
-            <div class="nav-item" [class.selected]="isCurrentRout('/bookmarks')">
-                <a class="headerLink" routerLink="/bookmarks" title="Bookmarks"><i class="fa fa-bookmark"
-                        aria-hidden="true"></i></a>
-            </div>
-
-            <div class="nav-item" [class.selected]="isCurrentRout('/mydms')">
-                <a class="headerLink" routerLink="/mydms" title="Documents"><i class="fa fa-file"
-                        aria-hidden="true"></i></a>
-            </div>
-
-            <div class="nav-item" [class.selected]="isCurrentRout('/sites')">
-                <a class="headerLink" routerLink="/sites" title="Sites"><i class="fa fa-shield"
-                        aria-hidden="true"></i></a>
-            </div>
-
-            <div class="navbar" (click)="toggleNavbar()">
-                <div class="expand-navbar" *ngIf="!navExpanded">
-                    <i class="fa fa-2x fa-angle-double-right" aria-hidden="true"></i>
-                </div>
-                <div class="expand-navbar" *ngIf="navExpanded">
-                    <i class="fa fa-2x fa-angle-double-left" aria-hidden="true"></i>
-                </div>
-            </div>
-
-        </div>
+        <app-navbar></app-navbar>
 
         <div class='col-main body-content'>
+
+            <app-header></app-header>
+
             <router-outlet></router-outlet>
         </div>
 
     </div>
 </div>
-
-<!--
-<app-footer></app-footer>
--->

@@ -30,6 +30,7 @@ export class SiteHomeComponent implements OnInit {
     private titleService: Title
   ) {
     this.state.setModInfo(this.moduleIndex.getModuleInfo(ModuleName.Sites));
+    this.state.setRoute(this.router.url);
   }
 
   ngOnInit() {

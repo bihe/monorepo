@@ -74,6 +74,8 @@ export class MyDmsHomeComponent implements OnInit {
         this.appInfo = x;
       }
     );
+
+    this.state.setRoute(this.router.url);
   }
 
   ngOnInit() {

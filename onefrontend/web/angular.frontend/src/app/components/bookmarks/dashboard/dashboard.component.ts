@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Title } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { debounceTime } from 'rxjs/operators';
 import { AppInfo } from 'src/app/shared/models/app.info.model';
 import { BookmarkModel } from 'src/app/shared/models/bookmarks.model';
@@ -30,6 +31,7 @@ export class BookmarkDashBoardComponent implements OnInit {
     private snackBar: MatSnackBar,
     private state: ApplicationState,
     private titleService: Title,
+    private router: Router,
     private moduleIndex: ModuleIndex
   ) {
     this.state.setModInfo(this.moduleIndex.getModuleInfo(ModuleName.Bookmarks));
@@ -84,6 +86,8 @@ export class BookmarkDashBoardComponent implements OnInit {
           this.filtered = [];
         }
       });
+
+    this.state.setRoute(this.router.url);
   }
 
   get dashboardBookmarks(): BookmarkModel[] {

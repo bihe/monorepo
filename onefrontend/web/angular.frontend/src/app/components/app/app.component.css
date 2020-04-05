@@ -1,22 +1,80 @@
-.appcontent
-{
-    padding-top: 45px;
-    background-color: #e5e7e9;
+.appcontent {
+  padding-top: 46px;
 }
 
 .contentArea {
   height:100%;
-  overflow:auto;
+  overflow:hidden;
   padding-bottom:35px;
-}
-
-.body-content {
-  height: 100%;
-  padding-left:0px;
-  padding-right:0px;
 }
 
 .container-fluid .text-muted {
     margin: 7px 0;
     font-size: 0.92em;
+}
+
+.col-main {
+  flex: 1;
+}
+
+.col-nav-small {
+  flex: 0 0 50px;
+}
+
+.col-nav-expand {
+  flex: 0 0 250px;
+}
+
+.col-nav {
+  order: -1;
+}
+
+.body-content {
+  overflow: auto;
+  height: 95vh;
+  background-color: #ffffff;
+  padding-left:0px;
+  padding-right:0px;
+}
+
+
+
+.nav-item {
+  padding: 10px;
+  text-align: center;
+  line-height: 1.5;
+  font-size: 1.8em;
+  margin-bottom: 5px;
+}
+
+.selected {
+  border-left: #C62828 3px solid;
+  background-color: #dadada;
+}
+
+div.selected > a.headerLink {
+  color: #C62828;
+}
+
+a.headerLink {
+  color: #424242;
+}
+
+.nav-section {
+  padding-top: 20px;
+  background-color: #f5f5f5;
+  height: 100vh;
+}
+
+.navbar {
+  position: absolute;
+  bottom: 0px;
+  padding: 10px;
+  line-height: 1.5;
+  font-size: 1.2em;
+  cursor: pointer;
+}
+
+.expand-navbar {
+  text-align: center;
 }

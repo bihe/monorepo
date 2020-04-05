@@ -64,6 +64,7 @@ export class BookmarkHomeComponent implements OnInit {
     private moduleIndex: ModuleIndex
   ) {
     this.state.setModInfo(this.moduleIndex.getModuleInfo(ModuleName.Bookmarks));
+    this.state.setRoute(this.router.url);
   }
 
   ngOnInit() {

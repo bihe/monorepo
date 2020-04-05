@@ -76,6 +76,8 @@ export class MyDmsDocumentComponent implements OnInit {
       }
     );
 
+    this.state.setRoute(this.router.url);
+
     const id = this.route.snapshot.params['id'] || -1;
     console.log('Got route id: ' + id);
     if (id === -1 || id === '-1') {

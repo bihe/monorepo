@@ -12,6 +12,7 @@ export class ApplicationState {
   private showAmount: ReplaySubject<boolean> = new ReplaySubject();
   private requestReload: ReplaySubject<boolean> = new ReplaySubject();
   private searchInput: ReplaySubject<string> = new ReplaySubject();
+  private appRoute: ReplaySubject<string> = new ReplaySubject();
 
   private mydmsVersion: ReplaySubject<AppInfo> = new ReplaySubject();
   private bookmarksVersion: ReplaySubject<AppInfo> = new ReplaySubject();
@@ -85,7 +86,13 @@ export class ApplicationState {
     return this.requestReload;
   }
 
+  public setRoute(data: string) {
+    this.appRoute.next(data);
+  }
 
+  public getRoute(): ReplaySubject<string> {
+    return this.appRoute;
+  }
 
   getMyDmsVersion(): ReplaySubject<AppInfo> {
     return this.mydmsVersion;

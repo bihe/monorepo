@@ -20,7 +20,9 @@ export class EditSitesComponent implements OnInit {
     private state: ApplicationState,
     private snackBar: MatSnackBar,
     private router: Router,
-  ) {}
+  ) {
+    this.state.setRoute(this.router.url);
+  }
 
   ngOnInit() {
 

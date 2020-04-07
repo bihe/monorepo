@@ -9,6 +9,29 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// CookieSameSite specifies the cookie SameSite mode
+type CookieSameSite int
+
+const (
+	// CookieSameSiteDefault is the default mode
+	CookieSameSiteDefault CookieSameSite = 1
+	// CookieSameSiteLax is SameSiteLaxMode
+	CookieSameSiteLax CookieSameSite = 2
+	// CookieSameSiteStrict is SameSiteStrictMode
+	CookieSameSiteStrict CookieSameSite = 3
+	// CookieSameSiteNone is SameSiteNoneMode
+	CookieSameSiteNone CookieSameSite = 4
+)
+
+// Settings defines parameters for cookies used for HTML-based errors
+type Settings struct {
+	Path         string
+	Domain       string
+	Secure       bool
+	Prefix       string
+	SameSiteMode CookieSameSite
+}
+
 // AppCookie is responsible for writing, reading cookies
 type AppCookie struct {
 	Settings Settings
@@ -24,11 +47,12 @@ func (a *AppCookie) Set(name, value string, expirySec int, w http.ResponseWriter
 	cookie := http.Cookie{
 		Name:     a.cookieName(name),
 		Value:    value,
+		MaxAge:   expirySec,
+		HttpOnly: true, // only let the api access those cookies
+		SameSite: http.SameSite(a.Settings.SameSiteMode),
 		Domain:   a.Settings.Domain,
 		Path:     a.Settings.Path,
-		MaxAge:   expirySec,
 		Secure:   a.Settings.Secure,
-		HttpOnly: true, // only let the api access those cookies
 	}
 	http.SetCookie(w, &cookie)
 }
@@ -38,11 +62,12 @@ func (a *AppCookie) Del(name string, w http.ResponseWriter) {
 	cookie := http.Cookie{
 		Name:     a.cookieName(name),
 		Value:    "",
+		MaxAge:   -1,
+		HttpOnly: true, // only let the api access those cookies
+		SameSite: http.SameSite(a.Settings.SameSiteMode),
 		Domain:   a.Settings.Domain,
 		Path:     a.Settings.Path,
-		MaxAge:   -1,
 		Secure:   a.Settings.Secure,
-		HttpOnly: true, // only let the api access those cookies
 	}
 	http.SetCookie(w, &cookie)
 }

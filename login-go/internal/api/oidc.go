@@ -353,11 +353,11 @@ func (a *loginAPI) setJWTCookie(name, value string, exp int, w http.ResponseWrit
 	cookie := http.Cookie{
 		Name:     name,
 		Value:    value,
+		MaxAge:   exp,  /* exp in seconds */
+		HttpOnly: true, // only let the api access those cookies
 		Domain:   a.jwt.CookieDomain,
 		Path:     a.jwt.CookiePath,
-		MaxAge:   exp, /* exp in seconds */
 		Secure:   a.jwt.CookieSecure,
-		HttpOnly: true, // only let the api access those cookies
 	}
 	http.SetCookie(w, &cookie)
 }

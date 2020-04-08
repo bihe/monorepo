@@ -69,6 +69,7 @@ line-height: 1.5;
 font-size: 1.1em;
 margin-bottom: 5px;
 cursor: pointer;
+margin-left: 3px;
 }
 
 .expand-navbar {
@@ -76,7 +77,7 @@ text-align: center;
 }
 
 .amount_toggle_text {
-font-size: 0.8em; 
+font-size: 0.8em;
 }
 
 .progress {
@@ -84,7 +85,7 @@ font-size: 0.8em;
     top: 8px;
     left: 5px;
     background-color: transparent;
-  
+
   }
 
 .profile {
@@ -92,7 +93,7 @@ font-size: 0.8em;
     bottom: 40px;
     line-height: 1.2;
 }
-    
+
 .userProfile {
     font-size: 1.3em;
     font-weight: bold;

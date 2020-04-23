@@ -8,6 +8,7 @@ type User struct {
 	UserID        string
 	DisplayName   string
 	Authenticated bool
+	Token         string
 }
 
 // JwtOptions defines presets for the Authentication handler

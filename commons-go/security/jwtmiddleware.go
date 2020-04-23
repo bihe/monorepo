@@ -139,6 +139,7 @@ func handleJWT(next http.Handler, options JwtOptions, errRep *errors.ErrorReport
 			UserID:        payload.UserID,
 			Username:      payload.UserName,
 			Authenticated: true,
+			Token:         token, // add the token to call other services which need auth!
 		}
 		cache.Set(token, &user)
 

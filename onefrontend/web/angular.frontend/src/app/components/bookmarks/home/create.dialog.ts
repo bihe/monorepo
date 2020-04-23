@@ -25,6 +25,7 @@ export class CreateBookmarksDialog implements OnInit {
     if (this.data.existingBookmark) {
       this.bookmark = this.data.existingBookmark;
       this.type = this.bookmark.type.toString();
+      this.selectedPath = this.bookmark.path;
     } else {
       this.bookmark = new BookmarkModel();
       this.bookmark.id = '';
@@ -42,8 +43,8 @@ export class CreateBookmarksDialog implements OnInit {
         }
       }
       this.type = ItemType.Node.toString();
+      this.selectedPath = this.data.currentPath;
     }
-    this.selectedPath = this.data.currentPath;
   }
 
   onSave(): void {

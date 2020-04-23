@@ -455,14 +455,15 @@ func (b *BookmarksAPI) Create(user security.User, w http.ResponseWriter, r *http
 		return errors.ServerError{Err: fmt.Errorf("error creating a new bookmark: %v", err), Request: r}
 	}
 
-	// if no specific favicon was supplied, immediately fetch one
-	if savedItem.Favicon == "" && savedItem.Type == store.Node {
-		// fire&forget, run this in background and do not wait for the result
-		go b.FetchFavicon(savedItem, user)
-	}
 	if payload.CustomFavicon != "" {
 		// fire&forget, run this in background and do not wait for the result
 		go b.FetchFaviconURL(payload.CustomFavicon, savedItem, user)
+	} else {
+		// if no specific favicon was supplied, immediately fetch one
+		if savedItem.Favicon == "" && savedItem.Type == store.Node {
+			// fire&forget, run this in background and do not wait for the result
+			go b.FetchFavicon(savedItem, user)
+		}
 	}
 
 	id := savedItem.ID

@@ -20,7 +20,8 @@ func (s *Server) routes() {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(handler.NewLoggerMiddleware(s.log).LoggerContext)
-	r.Use(middleware.DefaultCompress)
+	// use the default list of "compressable" content-type
+	r.Use(middleware.NewCompressor(5).Handler)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
 

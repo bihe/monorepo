@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	"golang.binggl.net/commons"
@@ -61,12 +60,13 @@ func NewContext(ctx context.Context, u *User) context.Context {
 }
 
 func handleJWT(next http.Handler, options JwtOptions, errRep *errors.ErrorReporter, logger *log.Entry) http.Handler {
-	cache := NewMemCache(parseDuration(options.CacheDuration))
+	jwtAuth := NewJWTAuthorization(options, true)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
 			err   error
 			token string
+			user  *User
 		)
 
 		authHeader := r.Header.Get("Authorization")
@@ -88,7 +88,7 @@ func handleJWT(next http.Handler, options JwtOptions, errRep *errors.ErrorReport
 				// neither the header nor the cookie supplied a jwt token
 				errRep.Negotiate(w, r, errors.RedirectError{
 					Status:  http.StatusUnauthorized,
-					Err:     fmt.Errorf("invalid authentication, no JWT token present"),
+					Err:     fmt.Errorf("security error because of missing JWT token"),
 					Request: r,
 					URL:     redirectURL,
 				})
@@ -98,60 +98,16 @@ func handleJWT(next http.Handler, options JwtOptions, errRep *errors.ErrorReport
 			token = cookie.Value
 		}
 
-		// to speed up processing use the cache for token lookups
-		var user User
-		u := cache.Get(token)
-		if u != nil {
-			// cache hit, put the user in the context
-			ctx := context.WithValue(r.Context(), userKey, u)
-			next.ServeHTTP(w, r.WithContext(ctx))
-			return
-		}
-
-		var payload JwtTokenPayload
-		if payload, err = ParseJwtToken(token, options.JwtSecret, options.JwtIssuer); err != nil {
-			commons.LogWithReq(r, logger, "security.handleJWT").Warnf("Could not decode the JWT token payload: %s", err)
-			errRep.Negotiate(w, r, errors.RedirectError{
-				Status:  http.StatusUnauthorized,
-				Err:     fmt.Errorf("invalid authentication, could not parse the JWT token: %v", err),
+		user, err = jwtAuth.EvaluateToken(token)
+		if err != nil {
+			commons.LogWithReq(r, logger, "security.handleJWT").Warnf("error during JWT token evaluation: %v", err)
+			errRep.Negotiate(w, r, errors.SecurityError{
+				Err:     fmt.Errorf("error during token evaluation: %v", err),
 				Request: r,
-				URL:     redirectURL,
 			})
 			return
 		}
-		var roles []string
-		claim := options.RequiredClaim
-		if roles, err = Authorize(Claim{Name: claim.Name, URL: claim.URL, Roles: claim.Roles}, payload.Claims); err != nil {
-			commons.LogWithReq(r, logger, "security.handleJWT").Warnf("Insufficient permissions to access the resource: %s", err)
-			errRep.Negotiate(w, r, errors.RedirectError{
-				Status:  http.StatusForbidden,
-				Err:     fmt.Errorf("Invalid authorization: %v", err),
-				Request: r,
-				URL:     redirectURL,
-			})
-			return
-		}
-
-		user = User{
-			DisplayName:   payload.DisplayName,
-			Email:         payload.Email,
-			Roles:         roles,
-			UserID:        payload.UserID,
-			Username:      payload.UserName,
-			Authenticated: true,
-			Token:         token, // add the token to call other services which need auth!
-		}
-		cache.Set(token, &user)
-
-		ctx := context.WithValue(r.Context(), userKey, &user)
+		ctx := NewContext(r.Context(), user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-}
-
-func parseDuration(duration string) time.Duration {
-	d, err := time.ParseDuration(duration)
-	if err != nil {
-		panic(fmt.Sprintf("wrong value, cannot parse duration: %v", err))
-	}
-	return d
 }

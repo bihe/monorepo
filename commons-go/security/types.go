@@ -1,5 +1,7 @@
 package security // import "golang.binggl.net/commons/security"
 
+import "github.com/dgrijalva/jwt-go"
+
 // User is the authenticated principal extracted from the JWT token
 type User struct {
 	Username      string
@@ -9,6 +11,31 @@ type User struct {
 	DisplayName   string
 	Authenticated bool
 	Token         string
+}
+
+// JwtTokenPayload is the parsed contents of the given token
+type JwtTokenPayload struct {
+	Type        string
+	UserName    string
+	Email       string
+	Claims      []string
+	UserID      string `json:"UserId"`
+	DisplayName string
+	Surname     string
+	GivenName   string
+	jwt.StandardClaims
+}
+
+// Claims defines custom JWT claims for the token
+type Claims struct {
+	Type        string   `json:"Type"`
+	DisplayName string   `json:"DisplayName"`
+	Email       string   `json:"Email"`
+	UserID      string   `json:"UserId"`
+	UserName    string   `json:"UserName"`
+	GivenName   string   `json:"GivenName"`
+	Surname     string   `json:"Surname"`
+	Claims      []string `json:"Claims"`
 }
 
 // JwtOptions defines presets for the Authentication handler

@@ -1,0 +1,21 @@
+## config-file setup for unit-testing
+---
+    tokenSecurity:
+        jwtIssuer: issuer
+        jwtSecret: secret
+        claim:
+            name: bookmarks
+            url: http://localhost:3003
+            roles:
+            - User
+        cacheDuration: 10m
+
+    logging:
+        filePath: "./test.log"
+        logLevel: debug
+
+
+    # common application settings
+    serviceName: testService
+    hostID: localhost
+    environment: Development

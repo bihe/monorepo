@@ -1,0 +1,32 @@
+syntax = "proto3";
+option go_package = ".;proto";
+
+// Crypter is a simple RPC service which receives a request (containing authToken, Payload, Passwords)
+// and encrypts the payload according to the possibilites of the supplied PayloadType
+service Crypter {
+	rpc Encrypt(CrypterRequest) returns (CrypterResponse) {}
+}
+
+// CrypterRequest contains the binary payload, the initial password and the new password
+// a authToken needs to be supplied which is evaluated to check if the usage of the service is allowed
+message CrypterRequest {
+	string authToken = 1;
+	bytes payload = 2;
+	enum PayloadType {
+		PDF = 0;
+	}
+	PayloadType type = 3;
+	string initPassword = 4;
+	string newPassword = 5;
+}
+
+// CrypterResponse returns the encrypted payload, and an operation result and optional message
+message CrypterResponse {
+	bytes payload = 1;
+	enum OperationResult {
+		SUCCESS = 0;
+		ERROR = 1;
+	  }
+	OperationResult result = 2;
+	string message = 3;
+}

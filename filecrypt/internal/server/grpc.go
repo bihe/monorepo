@@ -33,11 +33,7 @@ func Run(version, build string) error {
 		return err
 	}
 	srv := grpc.NewServer()
-	svc := &FileCrypter{
-		Logger:        l,
-		BasePath:      basePath,
-		TokenSettings: appConfig.TokenSecurity,
-	}
+	svc := NewFileCrypter(basePath, l, appConfig.TokenSecurity)
 	proto.RegisterCrypterServer(srv, svc)
 
 	go func() {

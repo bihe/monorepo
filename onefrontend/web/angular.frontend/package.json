@@ -26,7 +26,7 @@
     "bootstrap": "^4.4.1",
     "font-awesome": "^4.7.0",
     "moment": "^2.24.0",
-    "ng-lazyload-image": "^7.0.1",
+    "ng-lazyload-image": "^8.0.1",
     "ngx-chips": "^2.1.0",
     "ngx-uploader": "^8.0.0",
     "rxjs": "~6.5.4",

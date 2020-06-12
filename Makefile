@@ -8,6 +8,80 @@ COMMIT=`git rev-parse HEAD | cut -c 1-8`
 BUILD=`date -u +%Y%m%d.%H%M%S`
 
 # ---------------------------------------------------------------------------
+# application tasks
+# ---------------------------------------------------------------------------
+
+## common
+## --------------------------------------------------------------------------
+clean:
+	@-$(MAKE) -s go-clean
+
+mod-update:
+	@-$(MAKE) -s go-update
+
+proto:
+	@-$(MAKE) -s go-protogen
+
+swagger:
+	@-$(MAKE) -s go-swagger
+
+test:
+	@-$(MAKE) -s go-test
+
+coverage:
+	@-$(MAKE) -s go-coverage
+
+
+## onefrontend
+## --------------------------------------------------------------------------
+onefrontend-build:
+	@-$(MAKE) -s onefrontend_go_build
+
+onefrontend-release:
+	@-$(MAKE) -s onefrontend_go_build-release
+
+onefrontend-ui:
+	@-$(MAKE) -s onefrontend_do_angular_build
+
+## filecrypt
+## --------------------------------------------------------------------------
+filecrypt-build:
+	@-$(MAKE) -s filecrypt_go_build
+
+filecrypt-release:
+	@-$(MAKE) -s filecrypt_go_build-release
+
+## login
+## --------------------------------------------------------------------------
+login-build:
+	@-$(MAKE) -s login_go_build
+
+login-release:
+	@-$(MAKE) -s login_go_build-release
+
+## bookmarks
+## --------------------------------------------------------------------------
+bookmarks-build:
+	@-$(MAKE) -s bookmarks_go_build
+
+bookmarks-release:
+	@-$(MAKE) -s bookmarks_go_build-release
+
+## mydms
+## --------------------------------------------------------------------------
+mydms-build:
+	@-$(MAKE) -s mydms_go_build
+
+mydms-release:
+	@-$(MAKE) -s mydms_go_build-release
+
+mydms-swagger:
+	@-$(MAKE) -s mydms_generate_swagger
+
+
+# ---------------------------------------------------------------------------
+# docker tasks
+# ---------------------------------------------------------------------------
 
 docker-build-login:
 	@-$(MAKE) -s __docker-build-login
@@ -33,9 +107,57 @@ docker-build-onefrontend:
 docker-run-onefrontend:
 	@-$(MAKE) -s __docker-run-onefrontend
 
+
+## --------------------------------------------------------------------------
+## common tasks
+## --------------------------------------------------------------------------
+go-clean:
+	@echo "  >  Cleaning build cache"
+	go clean ./...
+	rm -f ./dist/onefrontend.api
+	rm -f ./dist/filecrypt.api
+	rm -f ./dist/login.api
+	rm -f ./dist/mydms.api
+	rm -f ./dist/bookmarks.api
+
+go-update:
+	@echo "  >  Go update dependencies ..."
+	go get -u ./...
+	go mod tidy
+
+go-protogen:
+	@echo "  >  Compiline protobuf files ..."
+	rm -f ./proto/*pb*.go
+	# https://developers.google.com/protocol-buffers/docs/gotutorial
+	# https://grpc.io/docs/quickstart/go/
+	# go get github.com/golang/protobuf/protoc-gen-go
+	protoc --proto_path=./proto --go_out=plugins=grpc:./proto filecrypt.proto
+
+go-swagger:
+	# https://github.com/go-swagger/go-swagger
+	./tools/swagger_linux_amd64 generate spec -o login/web/assets/swagger/swagger.json -m -w ./login/api
+	./tools/swagger_linux_amd64 generate spec -o bookmarks/assets/swagger/swagger.json -m -w ./bookmarks/server/api
+
+go-test:
+	@echo "  >  Testing the monorepo ..."
+	go test -race -count=1 ./...
+
+go-coverage:
+	@echo "  >  Testing the monorepo (coverage) ..."
+	go test -race -coverprofile="coverage.txt" -covermode atomic -count=1 ./...
+
 # ---------------------------------------------------------------------------
 # login
 # ---------------------------------------------------------------------------
+
+login_go_build:
+	@echo "  >  Building login ..."
+	go build -o ./dist/login.api ./cmd/login/server/*.go
+
+login_go_build-release:
+	@echo "  >  Building login ..."
+	GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w -X main.Version=${VERSION}${COMMIT} -X main.Build=${BUILD}" -o ./dist/login.api ./cmd/login/server/*.go
+
 __docker-build-login:
 	@echo " ... building 'login' docker image"
 	docker build -t login -f ./login.Dockerfile .
@@ -47,6 +169,20 @@ __docker-run-login:
 # ---------------------------------------------------------------------------
 # mydms
 # ---------------------------------------------------------------------------
+
+mydms_go_build:
+	@echo "  >  Building mydms ..."
+	go build -o ./dist/mydms.api ./cmd/mydms/server/*.go
+
+mydms_go_build-release:
+	@echo "  >  Building mydms ..."
+	GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w -X main.Version=${VERSION}${COMMIT} -X main.Build=${BUILD}" -o ./dist/mydms.api ./cmd/mydms/server/*.go
+
+mydms_generate_swagger:
+	# go get -u github.com/swaggo/swag/cmd/swag
+	@echo "  >  Create/Update the mydms swagger files"
+	swag init --generalInfo ./mydms/server/server.go --output ./mydms/docs
+
 __docker-build-mydms:
 	@echo " ... building 'mydms' docker image"
 	docker build -t mydms -f ./mydms.Dockerfile .
@@ -58,6 +194,16 @@ __docker-run-mydms:
 # ---------------------------------------------------------------------------
 # bookmarks
 # ---------------------------------------------------------------------------
+
+bookmarks_go_build:
+	@echo "  >  Building bookmarks ..."
+	go build -o ./dist/bookmarks.api ./cmd/bookmarks/server/*.go
+
+bookmarks_go_build-release:
+	@echo "  >  Building bookmarks ..."
+	GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w -X main.Version=${VERSION}${COMMIT} -X main.Build=${BUILD}" -o ./dist/bookmarks.api ./cmd/bookmarks/server/*.go
+
+
 __docker-build-bookmarks:
 	@echo " ... building 'bookmarks' docker image"
 	docker build -t bookmarks -f ./bookmarks.Dockerfile .
@@ -69,6 +215,19 @@ __docker-run-bookmarks:
 # ---------------------------------------------------------------------------
 # onefrontend
 # ---------------------------------------------------------------------------
+
+onefrontend_go_build:
+	@echo "  >  Building onefrontend ..."
+	go build -o ./dist/onefrontend.api ./cmd/onefrontend/server/*.go
+
+onefrontend_go_build-release:
+	@echo "  >  Building onefrontend ..."
+	GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w -X main.Version=${VERSION}${COMMIT} -X main.Build=${BUILD}" -o ./dist/onefrontend.api ./cmd/onefrontend/server/*.go
+
+onefrontend_do_angular_build:
+	@echo "  >  Building angular frontend ..."
+	cd ./onefrontend/web/angular.frontend;	npm install && npm run build -- --prod --base-href /ui/
+
 __docker-build-onefrontend:
 	@echo " ... building 'onefrontend' docker image"
 	docker build -t onefrontend -f ./onefrontend.Dockerfile .
@@ -76,6 +235,21 @@ __docker-build-onefrontend:
 __docker-run-onefrontend:
 	@echo " ... running 'onefrontend' docker image"
 	docker run -it -p 127.0.0.1:3000:3000 -v "$(PWD)/onefrontend/etc":/opt/onefrontend/etc onefrontend
+
+# ---------------------------------------------------------------------------
+# filecrypt
+# ---------------------------------------------------------------------------
+
+filecrypt_go_build:
+	@echo "  >  Building filecrypt ..."
+	go build -o ./dist/filecrypt.api ./cmd/filecrypt/server/*.go
+
+filecrypt_go_build-release:
+	@echo "  >  Building filecrypt ..."
+	GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w -X main.Version=${VERSION}${COMMIT} -X main.Build=${BUILD}" -o ./dist/filecrypt.api ./cmd/filecrypt/server/*.go
+
+
+
 
 # ---------------------------------------------------------------------------
 

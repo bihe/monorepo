@@ -1,0 +1,60 @@
+# Go
+# Build and test your Go application.
+# Add steps that save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/go
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  GOBIN:  '$(GOPATH)/bin' # Go binaries path
+  GOROOT: '/usr/local/go1.14' # Go installation path
+  GOPATH: '$(system.defaultWorkingDirectory)/gopath' # Go workspace path
+  modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)' # Path to the module's code
+  GO111MODULE: 'on'
+  DOCKER_BUILDKIT: 1
+  TSTAMP: $[format('{0:yyyyMMdd}', pipeline.startTime)]
+
+steps:
+
+# Go tool installer
+# Find in cache or download a specific version of Go and add it to the PATH
+- task: GoTool@0
+  inputs:
+    version: '1.14'
+
+- bash: |
+    echo "##vso[task.setvariable variable=githash]${BUILDTIME_VARIABLE_COMMIT:0:7}"
+
+- bash: |
+    echo "using Git Hash $GITHASH"
+
+- script: |
+    mkdir -p '$(GOBIN)'
+    mkdir -p '$(GOPATH)/pkg'
+    mkdir -p '$(modulePath)'
+    shopt -s extglob
+    mv !(gopath) '$(modulePath)'
+    echo '##vso[task.prependpath]$(GOBIN)'
+    echo '##vso[task.prependpath]$(GOROOT)/bin'
+  displayName: 'Set up the Go workspace'
+  continueOnError: false
+
+- script: |
+    go version
+    go get -v -t -d ./...
+  workingDirectory: '$(modulePath)'
+  continueOnError: false
+  displayName: 'Get dependencies'
+
+- script: |
+    go test -v -race -coverprofile=coverage.txt -covermode atomic 2>&1 ./...; ec=$?
+    echo "go test result is - $ec"
+    if [ $ec == 0 ]; then
+      echo "do codecov upload"
+      bash <(curl -s https://codecov.io/bash) -F monorepo
+    fi
+  continueOnError: false
+  workingDirectory: '$(modulePath)'
+  displayName: 'Run unit tests'
+

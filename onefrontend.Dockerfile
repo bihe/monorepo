@@ -2,7 +2,7 @@
 ## --------------------------------------------------------------------------
 FROM node:lts-alpine AS FRONTEND-BUILD
 
-ARG FRONTEND_MODE=prod
+ARG FRONTEND_MODE=build
 ENV FRONTEND_MODE=${FRONTEND_MODE}
 
 WORKDIR /frontend-build
@@ -24,10 +24,11 @@ ENV BUILD=${buildtime_variable_timestamp}
 ENV COMMIT=${buildtime_variable_commit}
 
 WORKDIR /backend-build
-COPY ./onefrontend ./onefrontend
-COPY ./commons-go ./commons-go
-WORKDIR /backend-build/onefrontend
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -tags prod -o onefrontend ./cmd/server/*.go
+COPY ./cmd ./cmd
+COPY ./go.mod ./
+COPY ./onefrontend  ./onefrontend
+COPY ./pkg ./pkg
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -o onefrontend.api ./cmd/onefrontend/server/*.go
 ## --------------------------------------------------------------------------
 
 ## runtime
@@ -40,7 +41,7 @@ RUN mkdir -p /opt/onefrontend/etc && mkdir -p /opt/onefrontend/logs && mkdir -p 
 COPY --from=BACKEND-BUILD /backend-build/onefrontend/web/assets /opt/onefrontend/web/assets
 COPY --from=BACKEND-BUILD /backend-build/onefrontend/templates /opt/onefrontend/templates
 ## the executable
-COPY --from=BACKEND-BUILD /backend-build/onefrontend/onefrontend /opt/onefrontend
+COPY --from=BACKEND-BUILD /backend-build/onefrontend.api /opt/onefrontend
 ## the SPA frontend
 COPY --from=FRONTEND-BUILD /frontend-build/dist/onefrontend-ui /opt/onefrontend/web/ui
 
@@ -54,4 +55,4 @@ RUN addgroup -g 1000 -S onefrontend && \
 RUN chown -R onefrontend:onefrontend /opt/onefrontend
 USER onefrontend
 
-CMD ["/opt/onefrontend/onefrontend","--basepath=/opt/onefrontend","--port=3000", "--hostname=0.0.0.0"]
+CMD ["/opt/onefrontend/onefrontend.api","--basepath=/opt/onefrontend","--port=3000", "--hostname=0.0.0.0"]

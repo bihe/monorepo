@@ -19,9 +19,9 @@ services:
             retries: 6
         environment:
             MYSQL_ROOT_PASSWORD: "mariadb"
-    
+
     login-3001:
-        build: 
+        build:
             context: .
             dockerfile: ./login.Dockerfile
         image: login
@@ -32,7 +32,7 @@ services:
         ports:
             - "3001:3000"
         volumes:
-            - ./login-go:/opt/login/etc
+            - ./login:/opt/login/etc
             - ./_logs:/opt/login/logs
         restart:
             always
@@ -45,7 +45,7 @@ services:
             LO_LOGGING.FILEPATH: /opt/login/logs/login-api.log
 
     mydms-3002:
-        build: 
+        build:
             context: .
             dockerfile: ./mydms.Dockerfile
         image: mydms
@@ -56,11 +56,11 @@ services:
         ports:
             - "3002:3000"
         volumes:
-            - ./mydms-go:/opt/mydms/etc
+            - ./mydms/etc:/opt/mydms/etc
             - ./_logs:/opt/mydms/logs
         restart:
             always
-        environment: 
+        environment:
             MY_ENVIRONMENT: Production
             MY_SECURITY.JWTISSUER: $JWTISSUER
             MY_SECURITY.JWTSECRET: $JWTSECRET
@@ -71,7 +71,7 @@ services:
             MY_LOGGING.FILEPATH: /opt/mydms/logs/mydms-api.log
 
     bookmarks-3003:
-        build: 
+        build:
             context: .
             dockerfile: ./bookmarks.Dockerfile
         image: bookmarks
@@ -82,20 +82,21 @@ services:
         ports:
             - "3003:3000"
         volumes:
-            - ./bookmarks/_etc:/opt/bookmarks/etc
+            - ./bookmarks/etc:/opt/bookmarks/etc
             - ./_logs:/opt/bookmarks/logs
         restart:
             always
         environment:
+            FRONTEND_MODE: integration
             BM_ENVIRONMENT: Production
             BM_SECURITY.JWTISSUER: $JWTISSUER
             BM_SECURITY.JWTSECRET: $JWTSECRET
             BM_LOGGING.FILEPATH: /opt/bookmarks/logs/bookmarks-api.log
 
     onefrontend-3000:
-        build: 
+        build:
             context: .
-            args: 
+            args:
                 FRONTEND_MODE: integration
             dockerfile: ./onefrontend.Dockerfile
         image: onefrontend

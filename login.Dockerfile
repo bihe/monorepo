@@ -13,10 +13,11 @@ ENV RUNTIME=${buildtime_variable_runtime}
 ENV COMMIT=${buildtime_variable_commit}
 
 WORKDIR /backend-build
-COPY ./login-go ./login-go
-COPY ./commons-go ./commons-go
-WORKDIR /backend-build/login-go
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -tags prod -o login.api ./cmd/server/*.go
+COPY ./cmd ./cmd
+COPY ./go.mod ./
+COPY ./login  ./login
+COPY ./pkg ./pkg
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -o login.api ./cmd/login/server/*.go
 ## --------------------------------------------------------------------------
 
 ## runtime
@@ -26,10 +27,10 @@ LABEL author="henrik@binggl.net"
 WORKDIR /opt/login
 RUN mkdir -p /opt/login/etc && mkdir -p /opt/login/logs && mkdir -p /opt/login/templates && mkdir -p /opt/login/web
 ## required folders assets && templates
-COPY --from=BACKEND-BUILD /backend-build/login-go/web /opt/login/web
-COPY --from=BACKEND-BUILD /backend-build/login-go/templates /opt/login/templates
+COPY --from=BACKEND-BUILD /backend-build/login/web /opt/login/web
+COPY --from=BACKEND-BUILD /backend-build/login/templates /opt/login/templates
 ## the executable
-COPY --from=BACKEND-BUILD /backend-build/login-go/login.api /opt/login
+COPY --from=BACKEND-BUILD /backend-build/login.api /opt/login
 
 EXPOSE 3000
 

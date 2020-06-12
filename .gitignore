@@ -1,8 +1,29 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+
+dist/
+
+
 devserver
 devserver.sh
 live.devserver.sh
 __devserver
-login-go/.env
-mydms-go/.env
+
+login/.env
+mydms/.env
+filecrypt/.env
+bookmarks/.env
+
 .env
 _logs/

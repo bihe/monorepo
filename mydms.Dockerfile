@@ -11,10 +11,11 @@ ENV BUILD=${buildtime_variable_timestamp}
 ENV COMMIT=${buildtime_variable_commit}
 
 WORKDIR /backend-build
-COPY ./mydms-go ./mydms-go
-COPY ./commons-go ./commons-go
-WORKDIR /backend-build/mydms-go
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -o mydms.api
+COPY ./cmd ./cmd
+COPY ./go.mod ./
+COPY ./mydms  ./mydms
+COPY ./pkg ./pkg
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -o mydms.api ./cmd/mydms/server/*.go
 ## --------------------------------------------------------------------------
 
 ## runtime
@@ -23,7 +24,7 @@ FROM alpine:latest
 LABEL author="henrik@binggl.net"
 WORKDIR /opt/mydms
 RUN mkdir -p /opt/mydms/uploads && mkdir -p /opt/mydms/etc && mkdir -p /opt/mydms/logs
-COPY --from=BACKEND-BUILD /backend-build/mydms-go/mydms.api /opt/mydms
+COPY --from=BACKEND-BUILD /backend-build/mydms.api /opt/mydms
 
 EXPOSE 3000
 

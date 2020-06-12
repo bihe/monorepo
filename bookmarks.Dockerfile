@@ -11,10 +11,11 @@ ENV BUILD=${buildtime_variable_timestamp}
 ENV COMMIT=${buildtime_variable_commit}
 
 WORKDIR /backend-build
-COPY ./bookmarks ./bookmarks
-COPY ./commons-go ./commons-go
-WORKDIR /backend-build/bookmarks
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -tags prod -o bookmarks.api ./cmd/server/*.go
+COPY ./cmd ./cmd
+COPY ./go.mod ./
+COPY ./bookmarks  ./bookmarks
+COPY ./pkg ./pkg
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -o bookmarks.api ./cmd/bookmarks/server/*.go
 ## --------------------------------------------------------------------------
 
 ## runtime
@@ -27,7 +28,7 @@ RUN mkdir -p /opt/bookmarks/etc && mkdir -p /opt/bookmarks/logs && mkdir -p /opt
 COPY --from=BACKEND-BUILD /backend-build/bookmarks/assets /opt/bookmarks/assets
 COPY --from=BACKEND-BUILD /backend-build/bookmarks/templates /opt/bookmarks/templates
 ## the executable
-COPY --from=BACKEND-BUILD /backend-build/bookmarks/bookmarks.api /opt/bookmarks
+COPY --from=BACKEND-BUILD /backend-build/bookmarks.api /opt/bookmarks
 EXPOSE 3000
 
 # Do not run as root user

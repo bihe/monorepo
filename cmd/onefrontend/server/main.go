@@ -16,6 +16,7 @@ import (
 	"golang.binggl.net/monorepo/onefrontend"
 	"golang.binggl.net/monorepo/onefrontend/config"
 	"golang.binggl.net/monorepo/onefrontend/types"
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/server"
 
 	log "github.com/sirupsen/logrus"
@@ -39,7 +40,14 @@ func main() {
 func run() (err error) {
 
 	hostName, port, basePath, appConfig := readConfig()
-	l := setupLog(appConfig)
+	l := logging.Setup(logging.LogConfig{
+		FilePath: appConfig.Logging.FilePath,
+		LogLevel: appConfig.Logging.LogLevel,
+		Trace: logging.TraceConfig{
+			AppName: appConfig.AppName,
+			HostID:  appConfig.HostID,
+		},
+	}, string(appConfig.Environment))
 
 	srv := &onefrontend.Server{
 		Version: types.VersionInfo{

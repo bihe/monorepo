@@ -18,6 +18,7 @@ import (
 	"golang.binggl.net/monorepo/bookmarks/server"
 
 	log "github.com/sirupsen/logrus"
+	"golang.binggl.net/monorepo/pkg/logging"
 	srv "golang.binggl.net/monorepo/pkg/server"
 )
 
@@ -43,7 +44,16 @@ func run() (err error) {
 	}
 
 	hostName, port, basePath, appConfig := readConfig()
-	l := setupLog(appConfig)
+
+	l := logging.Setup(logging.LogConfig{
+		FilePath: appConfig.Logging.FilePath,
+		LogLevel: appConfig.Logging.LogLevel,
+		Trace: logging.TraceConfig{
+			AppName: appConfig.AppName,
+			HostID:  appConfig.HostID,
+		},
+	}, string(appConfig.Environment))
+
 	apiSrv := server.Create(basePath, appConfig, version, l)
 	addr := fmt.Sprintf("%s:%d", hostName, port)
 	httpSrv := &http.Server{Addr: addr, Handler: apiSrv}

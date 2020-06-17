@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -66,6 +67,29 @@ func (s *Server) routes() {
 
 		// swagger
 		handler.ServeStaticDir(r, "/swagger", http.Dir(filepath.Join(s.basePath, "./assets/swagger")))
+
+		// auth-redirect sometimes creates routes with the
+		// syntax https:/.../?valid=true&ref=/api/v1/...
+		// redirect to the /api path
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			// determine if well-known parameters are supplied
+			valid := r.URL.Query().Get("valid")
+			ref := r.URL.Query().Get("ref")
+			if valid == "" || ref == "" {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			}
+
+			// the ref path needs to be known, valid know paths are
+			// /api, /api/v1/bookmarks/ ...
+			if valid == "true" && (strings.HasPrefix(ref, "/api/v1/bookmarks") || strings.HasPrefix(ref, "/api")) {
+				http.Redirect(w, r, ref, http.StatusFound)
+				return
+			}
+
+			// default to the frontend
+			w.WriteHeader(http.StatusNotFound)
+		})
 	})
 
 	s.router = r

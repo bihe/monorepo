@@ -1,9 +1,11 @@
 import { ReplaySubject } from 'rxjs';
 import { AppInfo } from '../models/app.info.model';
 import { ModuleInfo } from '../models/module.model';
+import { Injectable } from "@angular/core";
 
 const ShowAmountKey = 'mydms.amount.show';
 
+@Injectable()
 export class ApplicationState {
   private progress: ReplaySubject<boolean> = new ReplaySubject();
   private appInfo: ReplaySubject<AppInfo> = new ReplaySubject();

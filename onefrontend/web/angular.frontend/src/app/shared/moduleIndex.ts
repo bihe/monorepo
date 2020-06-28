@@ -1,4 +1,5 @@
 import { ModuleInfo } from './models/module.model';
+import { Injectable } from "@angular/core";
 
 export enum ModuleName {
   Bookmarks,
@@ -6,6 +7,7 @@ export enum ModuleName {
   MyDMS
 }
 
+@Injectable()
 export class ModuleIndex {
   private modules: Map<ModuleName, ModuleInfo>
 

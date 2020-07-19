@@ -21,11 +21,11 @@
             "output": "debug"
         },
         {
-            "name": "Run :: filecrypt (grpc)",
+            "name": "Run :: crypter (grpc)",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/cmd/filecrypt/server/",
+            "program": "${workspaceFolder}/cmd/crypter/server/",
             "env": {},
             "args": [
                 "--hostname",
@@ -33,9 +33,9 @@
                 "--port",
                 "3000",
                 "--basepath",
-                "../../../filecrypt"
+                "../../../crypter"
             ],
-            "envFile": "${workspaceFolder}/filecrypt/.env",
+            "envFile": "${workspaceFolder}/crypter/.env",
             "internalConsoleOptions": "openOnSessionStart",
             "showLog": true,
             "output": "debug"

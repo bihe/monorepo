@@ -1,0 +1,20 @@
+---
+tokenSecurity:
+    jwtIssuer: issuer
+    jwtSecret: secret
+    claim:
+        name: bookmarks
+        url: http://localhost:3003
+        roles:
+        - User
+    cacheDuration: 10m
+
+logging:
+    filePath: "./logs/crypter-grpc-api.log"
+    logLevel: debug
+
+
+# common application settings
+serviceName: crypter
+hostID: localhost
+environment: Development

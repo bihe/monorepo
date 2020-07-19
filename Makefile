@@ -19,7 +19,7 @@ clean:
 mod-update:
 	@-$(MAKE) -s go-update
 
-proto:
+protogen:
 	@-$(MAKE) -s go-protogen
 
 swagger:

@@ -58,8 +58,8 @@ func NewGRPCClient(conn *grpc.ClientConn, logger log.Logger) EncryptionService {
 
 	}
 
-	// Returning the endpoint.Set as a service.Service relies on the
-	// endpoint.Set implementing the Service methods. That's just a simple bit
+	// Returning the Endpoints as an EncryptionService relies on the
+	// Endpoints implementing the EncryptionService methods. That's just a simple bit
 	// of glue code.
 	return Endpoints{
 		CrypterEndpoint: crypterEndpoint,

@@ -121,7 +121,7 @@ go-clean:
 	@echo "  >  Cleaning build cache"
 	go clean ./...
 	rm -f ./dist/onefrontend.api
-	rm -f ./dist/filecrypt.api
+	rm -f ./dist/crypter.api
 	rm -f ./dist/login.api
 	rm -f ./dist/mydms.api
 	rm -f ./dist/bookmarks.api

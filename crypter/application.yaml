@@ -11,8 +11,6 @@ tokenSecurity:
 
 logging:
     filePath: "./logs/crypter-grpc-api.log"
-    logLevel: debug
-
 
 # common application settings
 serviceName: crypter

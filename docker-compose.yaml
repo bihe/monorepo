@@ -93,6 +93,29 @@ services:
             BM_SECURITY.JWTSECRET: $JWTSECRET
             BM_LOGGING.FILEPATH: /opt/bookmarks/logs/bookmarks-api.log
 
+    crypter-3004:
+        build:
+            context: .
+            dockerfile: ./crypter.Dockerfile
+        image: crypter
+        depends_on:
+            - db
+        networks:
+            - app-network
+        ports:
+            - "3004:3000"
+        volumes:
+            - ./crypter/:/opt/crypter/etc
+            - ./_logs:/opt/crypter/logs
+        restart:
+            always
+        environment:
+            CR_ENVIRONMENT: Production
+            CR_SECURITY.JWTISSUER: $JWTISSUER
+            CR_SECURITY.JWTSECRET: $JWTSECRET
+            CR_LOGGING.FILEPATH: /opt/crypter/logs/crypter-grpc-api.log
+
+
     onefrontend-3000:
         build:
             context: .

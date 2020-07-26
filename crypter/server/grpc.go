@@ -3,6 +3,7 @@ package server
 import (
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -25,17 +26,16 @@ import (
 // Run is the entry-point for the cryper service
 // where initialization, setup and execution is done
 func Run(version, build string) error {
-
 	hostname, port, _, config := readConfig()
 	addr := fmt.Sprintf("%s:%d", hostname, port)
+	logger, logFile := SetupLog(config)
 
-	// Create a single logger, which we'll use and give to other components.
-	var logger log.Logger
-	{
-		logger = log.NewLogfmtLogger(os.Stderr)
-		logger = log.With(logger, "ts", log.DefaultTimestampUTC)
-		logger = log.With(logger, "caller", log.DefaultCaller)
-	}
+	// ensure closing of logfile on exit
+	defer func(file io.WriteCloser) {
+		if file != nil {
+			file.Close()
+		}
+	}(logFile)
 
 	// Build the layers of the service "onion" from the inside out. First, the
 	// business logic service; then, the set of endpoints that wrap the service;

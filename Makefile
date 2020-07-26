@@ -43,13 +43,13 @@ onefrontend-release:
 onefrontend-ui:
 	@-$(MAKE) -s onefrontend_do_angular_build
 
-## filecrypt
+## crypter
 ## --------------------------------------------------------------------------
-filecrypt-build:
-	@-$(MAKE) -s filecrypt_go_build
+crypter-build:
+	@-$(MAKE) -s crypter_go_build
 
-filecrypt-release:
-	@-$(MAKE) -s filecrypt_go_build-release
+crypter-release:
+	@-$(MAKE) -s crypter_go_build-release
 
 ## login
 ## --------------------------------------------------------------------------
@@ -106,6 +106,12 @@ docker-build-onefrontend:
 
 docker-run-onefrontend:
 	@-$(MAKE) -s __docker-run-onefrontend
+
+docker-build-crypter:
+	@-$(MAKE) -s __docker-build-crypter
+
+docker-run-crypter:
+	@-$(MAKE) -s __docker-run-crypter
 
 
 ## --------------------------------------------------------------------------
@@ -237,18 +243,24 @@ __docker-run-onefrontend:
 	docker run -it -p 127.0.0.1:3000:3000 -v "$(PWD)/onefrontend/etc":/opt/onefrontend/etc onefrontend
 
 # ---------------------------------------------------------------------------
-# filecrypt
+# crypter
 # ---------------------------------------------------------------------------
 
-filecrypt_go_build:
-	@echo "  >  Building filecrypt ..."
-	go build -o ./dist/filecrypt.api ./cmd/filecrypt/server/*.go
+crypter_go_build:
+	@echo "  >  Building crypter ..."
+	go build -o ./dist/crypter.api ./cmd/crypter/server/*.go
 
-filecrypt_go_build-release:
-	@echo "  >  Building filecrypt ..."
-	GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w -X main.Version=${VERSION}${COMMIT} -X main.Build=${BUILD}" -o ./dist/filecrypt.api ./cmd/filecrypt/server/*.go
+crypter_go_build-release:
+	@echo "  >  Building crypter ..."
+	GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w -X main.Version=${VERSION}${COMMIT} -X main.Build=${BUILD}" -o ./dist/crypter.api ./cmd/crypter/server/*.go
 
+__docker-build-crypter:
+	@echo " ... building 'crypter' docker image"
+	docker build -t crypter -f ./crypter.Dockerfile .
 
+__docker-run-crypter:
+	@echo " ... running 'crypter' docker image"
+	docker run -it -p 127.0.0.1:3001:3000 -v "$(PWD)/crypter/":/opt/crypter/etc crypter
 
 
 # ---------------------------------------------------------------------------

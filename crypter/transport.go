@@ -50,7 +50,7 @@ func NewGRPCClient(conn *grpc.ClientConn, logger log.Logger) EncryptionService {
 			conn,
 			"proto.Crypter",
 			"Encrypt",
-			encodeGRPCEnctyprRequest,
+			encodeGRPCEncrytpRequest,
 			decodeGRPCEncryptResponse,
 			proto.CrypterResponse{},
 			options...,
@@ -102,9 +102,9 @@ func decodeGRPCEncryptResponse(_ context.Context, grpcReply interface{}) (interf
 	}, nil
 }
 
-// encodeGRPCEnctyprRequest is a transport/grpc.EncodeRequestFunc that converts a
+// encodeGRPCEncrytpRequest is a transport/grpc.EncodeRequestFunc that converts a
 // user-domain encrypt request to a gRPC encrypt request. Primarily useful in a client.
-func encodeGRPCEnctyprRequest(_ context.Context, request interface{}) (interface{}, error) {
+func encodeGRPCEncrytpRequest(_ context.Context, request interface{}) (interface{}, error) {
 	req := request.(Request)
 	return &proto.CrypterRequest{
 		AuthToken:    req.AuthToken,

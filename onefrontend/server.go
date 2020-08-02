@@ -10,12 +10,13 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
+	"golang.binggl.net/monorepo/onefrontend/config"
+	"golang.binggl.net/monorepo/onefrontend/types"
+	"golang.binggl.net/monorepo/onefrontend/upload"
 	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/security"
-	"golang.binggl.net/monorepo/onefrontend/config"
-	"golang.binggl.net/monorepo/onefrontend/types"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -26,6 +27,7 @@ type Server struct {
 	LogConfig      config.LogConfig
 	JWTSecurity    config.JwtSettings
 	Cors           config.CorsSettings
+	Upload         config.UploadSettings
 	BasePath       string
 	AssetDir       string
 	AssetPrefix    string
@@ -89,6 +91,13 @@ func (s *Server) MapRoutes() {
 		ErrorPath:     s.ErrorPath,
 	}
 
+	// upload handler
+	uh := &upload.Handler{
+		Handler: baseHandler,
+		Store:   upload.NewStore(s.Upload.UploadPath),
+		Config:  s.Upload,
+	}
+
 	// the routing
 	// ------------------------------------------------------------------
 	r := chi.NewRouter()
@@ -123,6 +132,7 @@ func (s *Server) MapRoutes() {
 		r.Use(security.NewJwtMiddleware(jwtOptions, cookieSettings, s.Log).JwtContext)
 
 		r.Get("/appinfo", appInfo.Secure(appInfo.HandleAppInfo))
+		r.Mount("/upload", uh.GetHandlers())
 
 		// the SPA
 		handler.ServeStaticDir(r, s.FrontendPrefix, http.Dir(filepath.Join(s.BasePath, s.FrontendDir)))

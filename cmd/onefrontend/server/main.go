@@ -67,6 +67,7 @@ func run() (err error) {
 		LogConfig:      appConfig.Logging,
 		Cors:           appConfig.Cors,
 		Log:            l,
+		Upload:         appConfig.Upload,
 	}
 	// the server needs routes to work
 	srv.MapRoutes()

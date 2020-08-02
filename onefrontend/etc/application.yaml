@@ -39,6 +39,17 @@ cors:
     credentials: true
     maxAge: 500
 
+upload:
+    allowedFileTypes:
+    - "pdf"
+    - "jpg"
+    - "jpeg"
+    - "png"
+    - "gif"
+    maxUploadSize: 500000
+    uploadPath: "/tmp/"
+
+
 ## static assets
 assetDir: "./web/assets"
 assetPrefix: "/assets"

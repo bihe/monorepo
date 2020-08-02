@@ -19,6 +19,7 @@ import (
 	"golang.binggl.net/monorepo/pkg/server"
 	"golang.binggl.net/monorepo/proto"
 	"google.golang.org/grpc"
+	"gopkg.in/Graylog2/go-gelf.v2/gelf"
 
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 )
@@ -29,6 +30,12 @@ var (
 	// Build provides information about the application build
 	Build = "localbuild"
 )
+
+// ApplicationNameKey identifies the application in structured logging
+const ApplicationNameKey = "appName"
+
+// HostIDKey identifies the host in structured logging
+const HostIDKey = "hostID"
 
 func main() {
 	if err := run(Version, Build); err != nil {
@@ -42,14 +49,17 @@ func main() {
 func run(version, build string) error {
 	hostname, port, _, config := readConfig()
 	addr := fmt.Sprintf("%s:%d", hostname, port)
-	logger, logFile := setupLog(config)
+	logger, logFile, gelfWriter := setupLog(config)
 
 	// ensure closing of logfile on exit
-	defer func(file io.WriteCloser) {
+	defer func(file io.WriteCloser, gw gelf.Writer) {
 		if file != nil {
 			file.Close()
 		}
-	}(logFile)
+		if gw != nil {
+			gw.Close()
+		}
+	}(logFile, gelfWriter)
 
 	// Build the layers of the service "onion" from the inside out. First, the
 	// business logic service; then, the set of endpoints that wrap the service;
@@ -71,6 +81,8 @@ func run(version, build string) error {
 	}
 	srv := grpc.NewServer(grpc.UnaryInterceptor(kitgrpc.Interceptor))
 	proto.RegisterCrypterServer(srv, grpcServer)
+
+	logger.Log("function", "main.run", "msg", "start up grpc server")
 
 	go func() {
 		server.PrintServerBanner("crypter", version, build, string(config.Environment), addr)
@@ -94,22 +106,37 @@ func graceful(s *grpc.Server, logger log.Logger, timeout time.Duration) error {
 	return nil
 }
 
-func setupLog(config crypter.AppConfig) (log.Logger, io.WriteCloser) {
+func setupLog(config crypter.AppConfig) (log.Logger, io.WriteCloser, gelf.Writer) {
 	var (
-		file   *os.File
-		logger log.Logger
+		file       *os.File
+		logger     log.Logger
+		writer     io.Writer
+		gelfWriter gelf.Writer
 	)
-	logger = log.NewLogfmtLogger(os.Stderr)
+
+	logger = log.NewJSONLogger(os.Stderr)
 	if config.Environment != crypter.Development {
 		file, err := os.OpenFile(config.Logging.FilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		if err != nil {
 			panic(fmt.Sprintf("cannot use filepath '%s' as a logfile: %v", config.Logging.FilePath, err))
 		}
-		logger = log.NewLogfmtLogger(file)
+		writer = file
+		if config.Logging.GrayLogServer != "" {
+			gelfWriter, err := gelf.NewUDPWriter(config.Logging.GrayLogServer)
+			if err != nil {
+				panic(fmt.Sprintf("could not create a new gelf UDP writer: %s", err))
+			}
+			// log to both file and graylog2
+			writer = io.MultiWriter(file, gelfWriter)
+		}
+		logger = log.NewJSONLogger(writer)
 	}
+
+	logger = log.With(logger, ApplicationNameKey, config.ServiceName)
+	logger = log.With(logger, HostIDKey, config.HostID)
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 	logger = log.With(logger, "caller", log.DefaultCaller)
-	return logger, file
+	return logger, file, gelfWriter
 }
 
 func readConfig() (hostname string, port int, basePath string, conf crypter.AppConfig) {

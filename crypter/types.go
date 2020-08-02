@@ -82,4 +82,6 @@ type Claim struct {
 type LogConfig struct {
 	FilePath string
 	LogLevel string
+	// GrayLogServer defines the address of a log-aggregator using Graylog
+	GrayLogServer string
 }

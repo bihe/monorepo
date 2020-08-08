@@ -94,8 +94,14 @@ func (s *Server) MapRoutes() {
 	// upload handler
 	uh := &upload.Handler{
 		Handler: baseHandler,
-		Store:   upload.NewStore(s.Upload.UploadPath),
-		Config:  s.Upload,
+		Service: upload.NewService(
+			upload.ServiceOptions{
+				Logger:           s.Log,
+				Store:            upload.NewStore(s.Upload.UploadPath),
+				MaxUploadSize:    s.Upload.MaxUploadSize,
+				AllowedFileTypes: s.Upload.AllowedFileTypes,
+			},
+		),
 	}
 
 	// the routing

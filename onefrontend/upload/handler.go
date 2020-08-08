@@ -1,21 +1,14 @@
 package upload
 
 import (
-	"bytes"
+	"errors"
 	"fmt"
-	"io"
 	"net/http"
-	"path/filepath"
-	"strings"
-	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	"github.com/google/uuid"
-	"golang.binggl.net/monorepo/onefrontend/config"
-	"golang.binggl.net/monorepo/pkg/errors"
+	apperr "golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/handler"
-	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
 
@@ -66,8 +59,7 @@ func (b ItemResponse) Render(w http.ResponseWriter, r *http.Request) error {
 // Handler defines the api logic for the upload-service
 type Handler struct {
 	handler.Handler
-	Store  Store
-	Config config.UploadSettings
+	Service Service
 }
 
 // GetHandlers returns the upload handler routes
@@ -84,49 +76,27 @@ func (h *Handler) Upload(user security.User, w http.ResponseWriter, r *http.Requ
 	// Source
 	file, fileHeader, err := r.FormFile("file")
 	if err != nil {
-		return errors.BadRequestError{Err: fmt.Errorf("no file provided: %v", err), Request: r}
+		return apperr.BadRequestError{Err: fmt.Errorf("no file provided: %v", err), Request: r}
 	}
 	defer file.Close()
 
-	if fileHeader.Size > h.Config.MaxUploadSize {
-		return errors.BadRequestError{
-			Err:     fmt.Errorf("the upload exceeds the maximum size of %d - filesize is: %d", h.Config.MaxUploadSize, fileHeader.Size),
-			Request: r}
-	}
+	a := r.FormValue("name1")
+	fmt.Print(a)
 
-	logging.LogWithReq(r, h.Log, "upload.UploadFile").Debugf("trying to upload file: '%s'", fileHeader.Filename)
-
-	ext := filepath.Ext(fileHeader.Filename)
-	ext = strings.Replace(ext, ".", "", 1)
-	var typeAllowed = false
-	for _, t := range h.Config.AllowedFileTypes {
-		if t == ext {
-			typeAllowed = true
-			break
+	id, err := h.Service.Save(File{
+		Name:     fileHeader.Filename,
+		Size:     fileHeader.Size,
+		MimeType: fileHeader.Header.Get("Content-Type"),
+		File:     file,
+	})
+	if err != nil {
+		if errors.Is(err, ErrValidation) {
+			return apperr.BadRequestError{
+				Err:     err,
+				Request: r,
+			}
 		}
-	}
-	if !typeAllowed {
-		return errors.BadRequestError{
-			Err:     fmt.Errorf("the uploaded file-type '%s' is not allowed, only use: '%s'", ext, strings.Join(h.Config.AllowedFileTypes, ",")),
-			Request: r}
-	}
-	mimeType := fileHeader.Header.Get("Content-Type")
-
-	// Copy
-	b := &bytes.Buffer{}
-	if _, err := io.Copy(b, file); err != nil {
-		return errors.ServerError{Err: fmt.Errorf("could not copy file: %v", err), Request: r}
-	}
-	id := uuid.New().String()
-	u := Upload{
-		ID:       id,
-		FileName: fileHeader.Filename,
-		MimeType: mimeType,
-		Payload:  b.Bytes(),
-		Created:  time.Now().UTC(),
-	}
-	if err = h.Store.Write(u); err != nil {
-		return errors.ServerError{Err: fmt.Errorf("could not save upload file: %v", err), Request: r}
+		return apperr.ServerError{Err: fmt.Errorf("could not save upload file: %v", err), Request: r}
 	}
 
 	return render.Render(w, r, ResultResponse{
@@ -142,9 +112,16 @@ func (h *Handler) Upload(user security.User, w http.ResponseWriter, r *http.Requ
 func (h *Handler) GetItemByID(user security.User, w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
 
-	item, err := h.Store.Read(id)
+	item, err := h.Service.Read(id)
 	if err != nil {
-		return errors.NotFoundError{
+
+		if errors.Is(err, ErrInvalidParameters) {
+			return apperr.BadRequestError{
+				Err:     err,
+				Request: r,
+			}
+		}
+		return apperr.NotFoundError{
 			Err:     fmt.Errorf("cannot get item by id '%s': %v", id, err),
 			Request: r,
 		}
@@ -159,9 +136,16 @@ func (h *Handler) GetItemByID(user security.User, w http.ResponseWriter, r *http
 func (h *Handler) DeleteItemByID(user security.User, w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
 
-	err := h.Store.Delete(id)
+	err := h.Service.Delete(id)
 	if err != nil {
-		return errors.NotFoundError{
+
+		if errors.Is(err, ErrInvalidParameters) {
+			return apperr.BadRequestError{
+				Err:     err,
+				Request: r,
+			}
+		}
+		return apperr.NotFoundError{
 			Err:     fmt.Errorf("cannot get item by id '%s': %v", id, err),
 			Request: r,
 		}

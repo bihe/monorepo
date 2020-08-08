@@ -36,7 +36,7 @@ func NewGRPCServer(endpoints Endpoints, logger log.Logger) proto.CrypterServer {
 // of the conn. The caller is responsible for constructing the conn, and
 // eventually closing the underlying transport. We bake-in certain middlewares,
 // implementing the client library pattern.
-func NewGRPCClient(conn *grpc.ClientConn, logger log.Logger) EncryptionService {
+func NewGRPCClient(conn *grpc.ClientConn) EncryptionService {
 	// global client middlewares
 	var options []grpctransport.ClientOption
 

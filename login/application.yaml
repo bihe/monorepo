@@ -12,7 +12,7 @@ security:
         name: login
         url: http://localhost:3001
         roles:
-        - Admin
+        - User
     cacheDuration: 10m
     loginRedirect: /
 

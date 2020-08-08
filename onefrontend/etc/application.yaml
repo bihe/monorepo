@@ -48,6 +48,7 @@ upload:
     - "gif"
     maxUploadSize: 500000
     uploadPath: "/tmp/"
+    encGrpcConn: "localhost:3001"
 
 
 ## static assets

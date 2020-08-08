@@ -28,6 +28,8 @@ COPY ./cmd ./cmd
 COPY ./go.mod ./
 COPY ./onefrontend  ./onefrontend
 COPY ./pkg ./pkg
+COPY ./proto ./proto
+COPY ./crypter ./crypter
 RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -o onefrontend.api ./cmd/onefrontend/server/*.go
 ## --------------------------------------------------------------------------
 

@@ -2,10 +2,12 @@ package upload_test
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"testing"
 
+	"golang.binggl.net/monorepo/crypter"
 	"golang.binggl.net/monorepo/onefrontend/upload"
 
 	log "github.com/sirupsen/logrus"
@@ -13,6 +15,8 @@ import (
 )
 
 var logger = log.New().WithField("mode", "test")
+
+// --------------------------------------------------------------------------
 
 type mockStore struct {
 	fail   bool
@@ -46,6 +50,23 @@ func (m *mockStore) Delete(id string) (err error) {
 }
 
 var _ upload.Store = &mockStore{}
+
+// --------------------------------------------------------------------------
+
+type mockEncService struct {
+	fail bool
+}
+
+func (m *mockEncService) Encrypt(ctx context.Context, req crypter.Request) ([]byte, error) {
+	if m.fail {
+		return nil, fmt.Errorf("error")
+	}
+	return nil, nil
+}
+
+var _ crypter.EncryptionService = &mockEncService{}
+
+// --------------------------------------------------------------------------
 
 func TestService_Write_Read_Delete(t *testing.T) {
 	svc := upload.NewService(upload.ServiceOptions{
@@ -128,6 +149,95 @@ func TestService_Write_Read_Delete(t *testing.T) {
 		Size:     100,
 	})
 	if err == nil {
+		t.Error("error expected")
+	}
+}
+
+func TestService_Write_Encrypt(t *testing.T) {
+	svc := upload.NewService(upload.ServiceOptions{
+		Logger:           logger,
+		Store:            &mockStore{},
+		MaxUploadSize:    10000,
+		AllowedFileTypes: []string{"pdf", "png"},
+		Crypter:          &mockEncService{},
+		TimeOut:          "10s",
+	})
+
+	payload, err := ioutil.ReadFile("../../testdata/unencrypted.pdf")
+	if err != nil {
+		t.Fatalf("could not read testfile: %v", err)
+	}
+	var b bytes.Buffer // A Buffer needs no initialization.
+	if _, err := b.Write(payload); err != nil {
+		t.Fatalf("could not write payload to buffer: %v", err)
+	}
+
+	// encrypted Save
+	var id string
+	if id, err = svc.Save(upload.File{
+		File:     &b,
+		MimeType: "application/pdf",
+		Name:     "unencrypted.pdf",
+		Size:     int64(len(payload)),
+		Enc: upload.EncryptionRequest{
+			Password: "12345",
+			Token:    "token",
+		},
+	}); err != nil {
+		t.Errorf("could not write file: %v", err)
+	}
+	assert.True(t, id != "")
+
+	// encrypted validation
+	if _, err = svc.Save(upload.File{
+		File:     &b,
+		MimeType: "application/pdf",
+		Name:     "unencrypted.pdf",
+		Size:     int64(len(payload)),
+		Enc: upload.EncryptionRequest{
+			Password: "",
+			Token:    "token",
+		},
+	}); err == nil {
+		t.Error("error expected")
+	}
+
+	// encrypted validation
+	if _, err = svc.Save(upload.File{
+		File:     &b,
+		MimeType: "application/pdf",
+		Name:     "unencrypted.pdf",
+		Size:     int64(len(payload)),
+		Enc: upload.EncryptionRequest{
+			Password: "12345",
+			Token:    "",
+		},
+	}); err == nil {
+		t.Error("error expected")
+	}
+
+	// application-error
+	svc = upload.NewService(upload.ServiceOptions{
+		Logger:           logger,
+		Store:            &mockStore{},
+		MaxUploadSize:    10000,
+		AllowedFileTypes: []string{"pdf", "png"},
+		Crypter: &mockEncService{
+			fail: true,
+		},
+		TimeOut: "10s",
+	})
+
+	if _, err = svc.Save(upload.File{
+		File:     &b,
+		MimeType: "application/pdf",
+		Name:     "unencrypted.pdf",
+		Size:     int64(len(payload)),
+		Enc: upload.EncryptionRequest{
+			Password: "12345",
+			Token:    "token",
+		},
+	}); err == nil {
 		t.Error("error expected")
 	}
 }

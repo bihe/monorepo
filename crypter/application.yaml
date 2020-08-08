@@ -3,15 +3,15 @@ tokenSecurity:
     jwtIssuer: issuer
     jwtSecret: secret
     claim:
-        name: bookmarks
-        url: http://localhost:3003
+        name: crypter
+        url: http://localhost:3004
         roles:
         - User
     cacheDuration: 10m
 
 logging:
     filePath: "./logs/crypter-grpc-api.log"
-    grayLogServer: "seq-input-gelf:12201"
+    #grayLogServer: "seq-input-gelf:12201"
 
 # common application settings
 serviceName: crypter

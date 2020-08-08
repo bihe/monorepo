@@ -80,14 +80,16 @@ func (h *Handler) Upload(user security.User, w http.ResponseWriter, r *http.Requ
 	}
 	defer file.Close()
 
-	a := r.FormValue("name1")
-	fmt.Print(a)
-
 	id, err := h.Service.Save(File{
 		Name:     fileHeader.Filename,
 		Size:     fileHeader.Size,
 		MimeType: fileHeader.Header.Get("Content-Type"),
 		File:     file,
+		Enc: EncryptionRequest{
+			InitPassword: r.FormValue("initPass"),
+			Password:     r.FormValue("pass"),
+			Token:        user.Token,
+		},
 	})
 	if err != nil {
 		if errors.Is(err, ErrValidation) {

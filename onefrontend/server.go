@@ -2,6 +2,7 @@
 package onefrontend
 
 import (
+	"fmt"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
+	"golang.binggl.net/monorepo/crypter"
 	"golang.binggl.net/monorepo/onefrontend/config"
 	"golang.binggl.net/monorepo/onefrontend/types"
 	"golang.binggl.net/monorepo/onefrontend/upload"
@@ -17,6 +19,7 @@ import (
 	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/security"
+	"google.golang.org/grpc"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -92,6 +95,25 @@ func (s *Server) MapRoutes() {
 	}
 
 	// upload handler
+	// grpc connection
+	var (
+		encService crypter.EncryptionService
+		client     *grpc.ClientConn
+		err        error
+	)
+	if s.Upload.EncGrpcConn != "" {
+		client, err = grpc.Dial(s.Upload.EncGrpcConn, grpc.WithInsecure())
+		if err != nil {
+			panic(fmt.Sprintf("could not connect: %v", err))
+		}
+		encService = crypter.NewGRPCClient(client)
+	}
+	// defer func(c *grpc.ClientConn) {
+	// 	if c != nil {
+	// 		c.Close()
+	// 	}
+	// }(client)
+
 	uh := &upload.Handler{
 		Handler: baseHandler,
 		Service: upload.NewService(
@@ -100,6 +122,8 @@ func (s *Server) MapRoutes() {
 				Store:            upload.NewStore(s.Upload.UploadPath),
 				MaxUploadSize:    s.Upload.MaxUploadSize,
 				AllowedFileTypes: s.Upload.AllowedFileTypes,
+				Crypter:          encService,
+				TimeOut:          "30s",
 			},
 		),
 	}

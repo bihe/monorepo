@@ -77,4 +77,6 @@ type UploadSettings struct {
 	MaxUploadSize int64
 	// UploadPath defines a directory where uploaded files are stored
 	UploadPath string
+	// EncGrpcConn defines a connection to a encryption GRPC service
+	EncGrpcConn string
 }

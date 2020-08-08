@@ -48,7 +48,7 @@ func NewGRPCClient(conn *grpc.ClientConn) EncryptionService {
 	{
 		crypterEndpoint = grpctransport.NewClient(
 			conn,
-			"proto.Crypter",
+			"Crypter",
 			"Encrypt",
 			encodeGRPCEncrytpRequest,
 			decodeGRPCEncryptResponse,

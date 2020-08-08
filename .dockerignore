@@ -5,17 +5,15 @@ onefrontend/logs
 onefrontend/web/angular.frontend/node_modules
 onefrontend/web/angular.frontend/dist
 
-mydms-go/.git
-mydms-go/.build
-mydms-go/.vscode
-mydms-go/logs
+mydms/.git
+mydms/.build
+mydms/.vscode
+mydms/logs
 
-login-go/.git
-login-go/.build
-login-go/.vscode
-login-go/logs
-
-commons-go/.git
+login/.git
+login/.build
+login/.vscode
+login/logs
 
 bookmarks/.git
 bookmarks/.build
@@ -23,3 +21,11 @@ bookmarks/.vscode
 bookmarks/_logs
 bookmarks/postman
 bookmarks/uploads
+
+_logs/
+.build/
+.vscode/
+db/
+dist/
+testdata/
+tools/

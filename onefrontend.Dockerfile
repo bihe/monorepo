@@ -38,7 +38,7 @@ RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.Version=${VERSION}-
 FROM alpine:latest
 LABEL author="henrik@binggl.net"
 WORKDIR /opt/onefrontend
-RUN mkdir -p /opt/onefrontend/etc && mkdir -p /opt/onefrontend/logs && mkdir -p /opt/onefrontend/templates && mkdir -p /opt/onefrontend/web/assets/ui
+RUN mkdir -p /opt/onefrontend/etc && mkdir -p /opt/onefrontend/logs && mkdir -p /opt/onefrontend/uploads && mkdir -p /opt/onefrontend/templates && mkdir -p /opt/onefrontend/web/assets/ui
 ## required folders assets && templates
 COPY --from=BACKEND-BUILD /backend-build/onefrontend/web/assets /opt/onefrontend/web/assets
 COPY --from=BACKEND-BUILD /backend-build/onefrontend/templates /opt/onefrontend/templates

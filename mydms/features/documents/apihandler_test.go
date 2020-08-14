@@ -7,20 +7,19 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"golang.binggl.net/monorepo/mydms/features/upload"
-	"golang.binggl.net/monorepo/mydms/persistence"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"golang.binggl.net/monorepo/mydms/persistence"
+	"golang.binggl.net/monorepo/mydms/security"
 
 	log "github.com/sirupsen/logrus"
+	sec "golang.binggl.net/monorepo/pkg/security"
 )
 
 const invalidJSON = "could not get valid json: %v"
@@ -52,11 +51,7 @@ startxref
 %EOF
 `
 
-var uploadConfig = upload.Config{
-	AllowedFileTypes: []string{"png", "pdf"},
-	MaxUploadSize:    1,
-	UploadPath:       "/tmp/",
-}
+var uploadClient = &mockUploadClient{}
 
 func TestActionResults(t *testing.T) {
 	if None.mapToString() != "None" {
@@ -127,7 +122,7 @@ func TestGetDocumentByID(t *testing.T) {
 	repos := Repositories{
 		DocRepo: mdr,
 	}
-	h := NewHandler(repos, svc, uploadConfig, logger)
+	h := NewHandler(repos, svc, uploadClient, logger)
 
 	e.GET("/:id", h.GetDocumentByID) // this is necessary to supply parameters
 	c := e.NewContext(req, rec)
@@ -153,7 +148,7 @@ func TestGetDocumentByID(t *testing.T) {
 	repos = Repositories{
 		DocRepo: mdr,
 	}
-	h = NewHandler(repos, svc, uploadConfig, logger)
+	h = NewHandler(repos, svc, uploadClient, logger)
 
 	err = h.GetDocumentByID(c)
 	if err == nil {
@@ -182,7 +177,7 @@ func TestDeleteDocumentByID(t *testing.T) {
 		DocRepo: mdr,
 	}
 
-	h := NewHandler(repos, svc, uploadConfig, logger)
+	h := NewHandler(repos, svc, uploadClient, logger)
 
 	e.GET("/:id", h.DeleteDocumentByID) // this is necessary to supply parameters
 	c := e.NewContext(req, rec)
@@ -205,7 +200,7 @@ func TestDeleteDocumentByID(t *testing.T) {
 	faileRepo := Repositories{
 		DocRepo: failmdr,
 	}
-	failH := NewHandler(faileRepo, svc, uploadConfig, logger)
+	failH := NewHandler(faileRepo, svc, uploadClient, logger)
 	err = failH.DeleteDocumentByID(c)
 	if err == nil {
 		t.Errorf(errExp)
@@ -240,7 +235,7 @@ func TestDeleteDocumentByID(t *testing.T) {
 	mock.ExpectRollback()
 	svc.callCount = 0
 	svc.errMap[1] = errRaise
-	h = NewHandler(repos, svc, uploadConfig, logger)
+	h = NewHandler(repos, svc, uploadClient, logger)
 
 	c = e.NewContext(req, rec)
 	c.SetParamNames(ID)
@@ -275,7 +270,7 @@ func TestSearchDocuments(t *testing.T) {
 	repos := Repositories{
 		DocRepo: mdr,
 	}
-	h := NewHandler(repos, svc, uploadConfig, logger)
+	h := NewHandler(repos, svc, uploadClient, logger)
 
 	// success
 	err := h.SearchDocuments(c)
@@ -345,13 +340,11 @@ func TestSaveUpdateDocument(t *testing.T) {
 
 	_, rec, c := newReq(strings.NewReader(updateJSON))
 	docRepo := newDocRepo(con)
-	uploadRepo := newUploadRepo()
 	svc := newFileService()
 	repos := Repositories{
-		DocRepo:    docRepo,
-		UploadRepo: uploadRepo,
+		DocRepo: docRepo,
 	}
-	h := NewHandler(repos, svc, uploadConfig, logger)
+	h := NewHandler(repos, svc, uploadClient, logger)
 
 	// update success
 	mock.ExpectBegin()
@@ -373,7 +366,7 @@ func TestSaveUpdateDocument(t *testing.T) {
 
 	docRepo.callCount = 0
 	docRepo.errMap[2] = errRaise
-	h = NewHandler(repos, svc, uploadConfig, logger)
+	h = NewHandler(repos, svc, uploadClient, logger)
 	mock.ExpectBegin()
 	mock.ExpectCommit()
 	err = h.SaveDocument(c)
@@ -387,7 +380,7 @@ func TestSaveUpdateDocument(t *testing.T) {
 
 	docRepo.callCount = 0
 	docRepo.errMap[3] = errRaise
-	h = NewHandler(repos, svc, uploadConfig, logger)
+	h = NewHandler(repos, svc, uploadClient, logger)
 	mock.ExpectBegin()
 	mock.ExpectRollback()
 	err = h.SaveDocument(c)
@@ -425,38 +418,34 @@ func TestSaveNewDocument(t *testing.T) {
   "uploadFileToken":"ABC",
   "invoicenumber": "12345"
 }`
-	doError := fmt.Errorf("error")
+	// doError := fmt.Errorf("error")
 
 	newReq := func() (request *http.Request, recorder *httptest.ResponseRecorder, context echo.Context) {
 		request = httptest.NewRequest(http.MethodPost, "/", strings.NewReader(initialJSON))
 		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		recorder = httptest.NewRecorder()
-		context = e.NewContext(request, recorder)
+		c := e.NewContext(request, recorder)
+
+		u := sec.User{
+			Username:      "test",
+			Roles:         []string{"roleA"},
+			Email:         "a.b@c.de",
+			UserID:        "1",
+			DisplayName:   "User B",
+			Authenticated: true,
+		}
+		context = &security.ServerContext{Context: c, Identity: u}
 		return
 	}
 
 	_, rec, c := newReq()
 	docRepo := newDocRepo(con)
-	uploadRepo := newUploadRepo()
 	svc := newFileService()
 	repos := Repositories{
-		DocRepo:    docRepo,
-		UploadRepo: uploadRepo,
+		DocRepo: docRepo,
 	}
 
-	// ------------------------------------------------------------------
-	// save a random file for the upload-logic!
-	tempPath := getTempPath()
-	uploadFile := "ABC.pdf"
-	uploadConfig.UploadPath = tempPath
-	uploadFile = filepath.Join(uploadConfig.UploadPath, uploadFile)
-	ioutil.WriteFile(uploadFile, []byte(pdfPayload), 0644)
-	defer func() {
-		os.Remove(uploadFile)
-	}()
-	// ------------------------------------------------------------------
-
-	h := NewHandler(repos, svc, uploadConfig, logger)
+	h := NewHandler(repos, svc, uploadClient, logger)
 
 	// insert success
 	mock.ExpectBegin()
@@ -473,62 +462,28 @@ func TestSaveNewDocument(t *testing.T) {
 	}
 	assert.Equal(t, Created, result.Result)
 
-	// error processUploadFile
-	ioutil.WriteFile(uploadFile, []byte(pdfPayload), 0644)
+	// error processUploadFile: get upload
 	_, rec, c = newReq()
-
 	mock.ExpectBegin()
 	mock.ExpectRollback()
-	uploadRepo.callCount = 0
-	uploadRepo.errMap[1] = doError
-	h = NewHandler(repos, svc, uploadConfig, logger)
+
+	uc := &mockUploadClient{getFail: true}
+	h = NewHandler(repos, svc, uc, logger)
 	err = h.SaveDocument(c)
 	if err == nil {
 		t.Errorf(errExp)
 	}
 
-	// error uploadfile
-	ioutil.WriteFile(uploadFile, []byte(pdfPayload), 0644)
+	// error processUploadFile: delete upload - this does not result in an error
 	_, rec, c = newReq()
-
-	mock.ExpectBegin()
-	mock.ExpectRollback()
-	uploadConfig.UploadPath = "--"
-	h = NewHandler(repos, svc, uploadConfig, logger)
-	err = h.SaveDocument(c)
-	if err == nil {
-		t.Errorf(errExp)
-	}
-
-	// error save backend
-	ioutil.WriteFile(uploadFile, []byte(pdfPayload), 0644)
-	_, rec, c = newReq()
-
-	mock.ExpectBegin()
-	mock.ExpectRollback()
-	uploadConfig.UploadPath = tempPath
-	svc.callCount = 0
-	svc.errMap[1] = doError
-	h = NewHandler(repos, svc, uploadConfig, logger)
-	err = h.SaveDocument(c)
-	if err == nil {
-		t.Errorf(errExp)
-	}
-
-	// error uploadrepo delete - no rollback herer
-	ioutil.WriteFile(uploadFile, []byte(pdfPayload), 0644)
-	_, rec, c = newReq()
-
 	mock.ExpectBegin()
 	mock.ExpectCommit()
-	uploadConfig.UploadPath = tempPath
-	uploadRepo.callCount = 0
-	delete(uploadRepo.errMap, 1)
-	uploadRepo.errMap[2] = doError
-	h = NewHandler(repos, svc, uploadConfig, logger)
+
+	uc = &mockUploadClient{deleteFail: true}
+	h = NewHandler(repos, svc, uc, logger)
 	err = h.SaveDocument(c)
 	if err != nil {
-		t.Errorf(couldNotSave, err)
+		t.Errorf("got an error: %v", err)
 	}
 
 	// we make sure that all expectations were met
@@ -566,7 +521,7 @@ func TestSearchList(t *testing.T) {
 	repos := Repositories{
 		DocRepo: mdr,
 	}
-	h := NewHandler(repos, svc, uploadConfig, logger)
+	h := NewHandler(repos, svc, uploadClient, logger)
 	_, rec, c = newReq("type", "tags", h.SearchList)
 
 	var result SearchResult
@@ -612,7 +567,7 @@ func TestSearchList(t *testing.T) {
 	repos = Repositories{
 		DocRepo: mdr,
 	}
-	h = NewHandler(repos, svc, uploadConfig, logger)
+	h = NewHandler(repos, svc, uploadClient, logger)
 	_, rec, c = newReq("type", "tags", h.SearchList)
 
 	err = h.SearchList(c)

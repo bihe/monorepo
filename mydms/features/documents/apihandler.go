@@ -6,10 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -21,6 +18,7 @@ import (
 	"golang.binggl.net/monorepo/mydms/features/filestore"
 	"golang.binggl.net/monorepo/mydms/features/upload"
 	"golang.binggl.net/monorepo/mydms/persistence"
+	"golang.binggl.net/monorepo/mydms/security"
 	"golang.binggl.net/monorepo/pkg/logging"
 )
 
@@ -134,30 +132,27 @@ type Result struct {
 
 // Handler provides handler methods for documents
 type Handler struct {
-	docRepo    Repository
-	uploadRepo upload.Repository
-	r          Repositories
-	fs         filestore.FileService
-	uc         upload.Config
-	policy     *bluemonday.Policy
-	log        *log.Entry
+	docRepo Repository
+	r       Repositories
+	fs      filestore.FileService
+	uClient upload.Client
+	policy  *bluemonday.Policy
+	log     *log.Entry
 }
 
 // Repositories combines necessary repositories for the document handler
 type Repositories struct {
-	DocRepo    Repository
-	UploadRepo upload.Repository
+	DocRepo Repository
 }
 
 // NewHandler returns a pointer to a new handler instance
-func NewHandler(repos Repositories, fs filestore.FileService, config upload.Config, logger *log.Entry) *Handler {
+func NewHandler(repos Repositories, fs filestore.FileService, uc upload.Client, logger *log.Entry) *Handler {
 	return &Handler{
-		docRepo:    repos.DocRepo,
-		uploadRepo: repos.UploadRepo,
-		fs:         fs,
-		uc:         config,
-		policy:     bluemonday.UGCPolicy(),
-		log:        logger,
+		docRepo: repos.DocRepo,
+		fs:      fs,
+		uClient: uc,
+		policy:  bluemonday.UGCPolicy(),
+		log:     logger,
 	}
 }
 
@@ -442,46 +437,31 @@ func (h *Handler) procssUploadFile(c echo.Context, token, fileName string, atomi
 	if token == "" || token == "-" {
 		return fileName, nil
 	}
-
-	u, err := h.uploadRepo.Read(token)
+	sc := c.(*security.ServerContext)
+	u, err := h.uClient.Get(token, sc.Identity.Token)
 	if err != nil {
 		log.Errorf("could not read upload-file for token '%s', %v", token, err)
 		return "", fmt.Errorf("upload token error: %v", err)
 	}
-
 	logging.LogWithReq(c.Request(), h.log, "documents.procssUploadFile").Infof("use uploaded file identified by token '%s'", token)
 
 	now := time.Now().UTC()
 	folder := now.Format("2006_01_02")
-
-	ext := filepath.Ext(fileName)
-	uploadFile := filepath.Join(h.uc.UploadPath, token+ext)
-	payload, err := ioutil.ReadFile(uploadFile)
-	if err != nil {
-		logging.LogWithReq(c.Request(), h.log, "documents.procssUploadFile").Errorf("could not read upload file '%s', %v", uploadFile, err)
-		return "", fmt.Errorf("error reading upload-file: %v", err)
-	}
-
-	logging.LogWithReq(c.Request(), h.log, "documents.procssUploadFile").Debugf("got upload file '%s' with payload size '%d'!", uploadFile, len(payload))
+	logging.LogWithReq(c.Request(), h.log, "documents.procssUploadFile").Debugf("got upload file '%s' with payload size '%d'!", u.FileName, len(u.Payload))
 
 	item := filestore.FileItem{
 		FileName:   fileName,
 		FolderName: folder,
 		MimeType:   u.MimeType,
-		Payload:    payload,
+		Payload:    u.Payload,
 	}
 	err = h.fs.SaveFile(item)
 	if err != nil {
-		logging.LogWithReq(c.Request(), h.log, "documents.procssUploadFile").Errorf("could not save file '%s', %v", uploadFile, err)
+		logging.LogWithReq(c.Request(), h.log, "documents.procssUploadFile").Errorf("could not save file '%s', %v", u.FileName, err)
 		return "", fmt.Errorf("error while saving file: %v", err)
 	}
 
-	err = os.Remove(uploadFile)
-	if err != nil {
-		// this error is ignored, does not invalidate the overall operation
-		logging.LogWithReq(c.Request(), h.log, "documents.procssUploadFile").Warnf("could not delete upload-file '%s', %v", uploadFile, err)
-	}
-	err = h.uploadRepo.Delete(token, atomic)
+	err = h.uClient.Delete(token, sc.Identity.Token)
 	if err != nil {
 		// this error is ignored, does not invalidate the overall operation
 		logging.LogWithReq(c.Request(), h.log, "documents.procssUploadFile").Errorf("could not delete the upload-item by id '%s', %v", token, err)

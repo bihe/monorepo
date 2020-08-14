@@ -53,12 +53,8 @@ type LogConfig struct {
 
 // UploadConfig defines relevant values for the upload logic
 type UploadConfig struct {
-	// AllowedFileTypes is a list of mime-types allowed to be uploaded
-	AllowedFileTypes []string
-	// MaxUploadSize defines the maximum permissible fiile-size
-	MaxUploadSize int64
-	// UploadPath defines a directory where uploaded files are stored
-	UploadPath string
+	// EndpointURL defines the upload endpoint api URL
+	EndpointURL string
 }
 
 // FileStore holds configuration settings for the backend file store

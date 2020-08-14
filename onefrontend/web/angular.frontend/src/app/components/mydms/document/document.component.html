@@ -22,6 +22,37 @@
 
     </mat-card-header>
 
+
+    <mat-accordion *ngIf="uploadFileName === ''">
+        <mat-expansion-panel hideToggle>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Encrypt the uploaded payload?
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+        </mat-expansion-panel>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Encryption settings:
+            </mat-panel-title>
+            <mat-panel-description>
+              <span *ngIf="encPassword === ''" >Currently no password set</span>
+              <span *ngIf="encPassword !== ''" class="encpass_set">Encryption password set</span>
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+            <mat-form-field color="warn" hintLabel="Encryption payload with password" class="document_password">
+                <input matInput placeholder="Password" [(ngModel)]="encPassword">
+            </mat-form-field>
+            &nbsp;&nbsp;
+            <mat-form-field color="warn" hintLabel="Payload is already encrypted" class="document_initpassword">
+                <input matInput placeholder="Initial Password" [(ngModel)]="initPassword">
+            </mat-form-field>
+
+        </mat-expansion-panel>
+      </mat-accordion>
+
     <div class="upload__zone upload_section">
             <div class="drop-container" [hidden]="uploadFileName != ''"
                 ngFileDrop
@@ -33,9 +64,12 @@
 
                 <div class="upload__file">
                     <input type="file" #fileUpload
+                        (click)="fileUpload.value = ''"
                         ngFileSelect (uploadOutput)="onUploadOutput($event)"
                         [uploadInput]="uploadInput" style="display: none;">
-                    <span (click)="fileUpload.click()" >or <span style="text-decoration:underline">choose</span> a file</span>
+
+                    <button mat-raised-button class="upload" (click)="fileUpload.click()">Select file</button>
+
                 </div>
 
             </div>

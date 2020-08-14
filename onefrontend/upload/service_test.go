@@ -188,34 +188,6 @@ func TestService_Write_Encrypt(t *testing.T) {
 	}
 	assert.True(t, id != "")
 
-	// encrypted validation
-	if _, err = svc.Save(upload.File{
-		File:     &b,
-		MimeType: "application/pdf",
-		Name:     "unencrypted.pdf",
-		Size:     int64(len(payload)),
-		Enc: upload.EncryptionRequest{
-			Password: "",
-			Token:    "token",
-		},
-	}); err == nil {
-		t.Error("error expected")
-	}
-
-	// encrypted validation
-	if _, err = svc.Save(upload.File{
-		File:     &b,
-		MimeType: "application/pdf",
-		Name:     "unencrypted.pdf",
-		Size:     int64(len(payload)),
-		Enc: upload.EncryptionRequest{
-			Password: "12345",
-			Token:    "",
-		},
-	}); err == nil {
-		t.Error("error expected")
-	}
-
 	// application-error
 	svc = upload.NewService(upload.ServiceOptions{
 		Logger:           logger,

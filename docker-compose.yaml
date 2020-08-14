@@ -91,6 +91,7 @@ services:
             MY_FILESTORE.KEY: $FILESTORE_KEY
             MY_FILESTORE.SECRET: $FILESTORE_SECRET
             MY_LOGGING.FILEPATH: /opt/mydms/logs/mydms-api.log
+            MY_UPLOAD.ENDPOINTURL: http://onefrontend-3000:3000
 
     bookmarks-3003:
         build:

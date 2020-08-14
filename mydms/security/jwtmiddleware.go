@@ -78,6 +78,7 @@ func JwtWithConfig(options JwtOptions) echo.MiddlewareFunc {
 				UserID:        payload.UserID,
 				Username:      payload.UserName,
 				Authenticated: true,
+				Token:         token,
 			}
 			cache.Set(token, &user)
 			sc := &ServerContext{Context: c, Identity: user}

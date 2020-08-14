@@ -2,7 +2,6 @@ package upload_test
 
 import (
 	"io/ioutil"
-	"os"
 	"testing"
 	"time"
 
@@ -12,14 +11,7 @@ import (
 )
 
 func TestStore_Write_Read_Delete(t *testing.T) {
-	dir, err := ioutil.TempDir("", "storetest")
-	if err != nil {
-		t.Fatalf("could not create a temp-dir: %v", err)
-	}
-	defer func(d string) {
-		os.RemoveAll(d)
-	}(dir)
-	store := upload.NewStore(dir)
+	store := upload.NewStore(t.TempDir())
 	payload, err := ioutil.ReadFile("../../testdata/unencrypted.pdf")
 	if err != nil {
 		t.Fatalf("could not read testdata: %v", err)
@@ -54,16 +46,9 @@ func TestStore_Write_Read_Delete(t *testing.T) {
 }
 
 func Test_Store_Validation(t *testing.T) {
-	dir, err := ioutil.TempDir("", "storetest")
-	if err != nil {
-		t.Fatalf("could not create a temp-dir: %v", err)
-	}
-	defer func(d string) {
-		os.RemoveAll(d)
-	}(dir)
-	store := upload.NewStore(dir)
+	store := upload.NewStore(t.TempDir())
 
-	err = store.Write(upload.Upload{})
+	err := store.Write(upload.Upload{})
 	if err == nil {
 		t.Error("error expected")
 	}

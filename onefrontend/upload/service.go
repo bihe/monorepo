@@ -139,13 +139,8 @@ func (s *uploadService) Save(file File) (string, error) {
 	payload = b.Bytes()
 
 	// optional encryption
-	if s.crypter != nil {
-		if file.Enc.Password == "" {
-			return id, fmt.Errorf("cannot encrypt with empty password, %w", ErrValidation)
-		}
-		if file.Enc.Token == "" {
-			return id, fmt.Errorf("cannot encrypt with empty token, %w", ErrValidation)
-		}
+	// we only try to encrypt something, if the crypter is initialized and a password is supplied
+	if s.crypter != nil && file.Enc.Password != "" {
 		ctxt, cancel := context.WithTimeout(context.Background(), s.timeOut)
 		defer cancel()
 

@@ -37,17 +37,10 @@ cors:
 
 logging:
     filePath: "./logs/mydms-api.log"
-    logLevel: info
+    logLevel: debug
 
 upload:
-    allowedFileTypes:
-    - "pdf"
-    - "jpg"
-    - "jpeg"
-    - "png"
-    - "gif"
-    maxUploadSize: 500000
-    uploadPath: "/tmp/"
+   endpointURL: http://localhost:3000/
 
 filestore:
     region: "region"

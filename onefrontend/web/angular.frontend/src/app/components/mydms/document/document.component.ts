@@ -45,6 +45,12 @@ export class MyDmsDocumentComponent implements OnInit {
 
   encodedUploadFileName = '';
   showAmount = false;
+
+  // settings for encryption
+  encPassword = '';
+  initPassword = '';
+
+
   private uploadToken = '';
 
   constructor(
@@ -178,7 +184,7 @@ export class MyDmsDocumentComponent implements OnInit {
           },
           error => {
             this.state.setProgress(false);
-            new MessageUtils().showError(this.snackBar, error);
+            new MessageUtils().showError(this.snackBar, error.message);
           }
         );
     } else {
@@ -219,11 +225,16 @@ export class MyDmsDocumentComponent implements OnInit {
   public onUploadOutput(output: UploadOutput): void {
     if (output.type === 'allAddedToQueue') { // when all files added in queue
       this.state.setProgress(true);
+      // console.log(`passwords: '${this.encPassword}'; initialPassword: '${this.initPassword}'`);
       const event: UploadInput = {
         type: 'uploadAll',
-        url: environment.apiUrlMydms + '/api/v1/upload/file',
+        url: environment.apiUrlOne + '/upload/file',
         method: 'POST',
-        withCredentials: true
+        withCredentials: true,
+        data: {
+          pass: this.encPassword,
+          initPass: this.initPassword,
+        }
       };
       this.uploadInput.emit(event);
     } else if (output.type === 'addedToQueue' && typeof output.file !== 'undefined') { // add file to array when added
@@ -235,6 +246,10 @@ export class MyDmsDocumentComponent implements OnInit {
     } else if (output.type === 'removed') {
       // remove file from array when removed
       this.files = this.files.filter((file: UploadFile) => file !== output.file);
+    } else if (output.type === 'removedAll') {
+      this.files = [];
+      this.uploadToken = '';
+      this.uploadFileName = '';
     } else if (output.type === 'dragOver') {
       this.dragOver = true;
     } else if (output.type === 'dragOut') {
@@ -249,10 +264,9 @@ export class MyDmsDocumentComponent implements OnInit {
       if (output.file.responseStatus === 201) {
         // done!
         this.files = [];
-        this.uploadToken = response.token;
+        this.uploadToken = response.id;
         this.uploadFileName = output.file.name;
-
-
+        console.log(`token: '${this.uploadToken}'; fileName: '${this.uploadFileName}'`);
         new MessageUtils().showSuccess(this.snackBar, response.message);
       } else {
         console.log(response);
@@ -277,9 +291,8 @@ export class MyDmsDocumentComponent implements OnInit {
   }
 
   public onClearUploadedFile() {
-    this.files = [];
-    this.uploadToken = '';
-    this.uploadFileName = '';
+
+    this.uploadInput.emit({ type: 'removeAll' });
   }
 
   public isFormValid() {

@@ -144,6 +144,7 @@ func encryptPdfPayload(payload []byte, initPass, newPass string) ([]byte, error)
 	conf.Cmd = pdf.CHANGEUPW
 	conf.UserPW = initPass
 	conf.UserPWNew = &newPass
+	conf.OwnerPWNew = &newPass
 
 	// if no initial password is supplied the api does not change the
 	// password but sets a password via the ENCRYPT command

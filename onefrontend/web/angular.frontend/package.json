@@ -28,7 +28,7 @@
     "moment": "^2.27.0",
     "ng-lazyload-image": "^8.0.1",
     "ngx-chips": "^2.1.0",
-    "ngx-uploader": "^8.0.0",
+    "ngx-uploader": "^10.0.0",
     "rxjs": "~6.6.2",
     "tslib": "^2.0.0",
     "zone.js": "~0.10.2"

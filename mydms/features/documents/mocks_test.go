@@ -151,44 +151,27 @@ func (m *mockFileService) DeleteFile(filePath string) error {
 }
 
 // --------------------------------------------------------------------------
-// MOCK: upload.Repository
+// MOCK: upload.Client
 // --------------------------------------------------------------------------
 
-type mockUploadRepository struct {
-	c         persistence.Connection
-	errMap    map[int]error
-	resultMap map[int]upload.Upload
-	callCount int
+type mockUploadClient struct {
+	getFail    bool
+	deleteFail bool
 }
 
-func newUploadRepo() *mockUploadRepository {
-	return &mockUploadRepository{
-		errMap:    make(map[int]error),
-		resultMap: make(map[int]upload.Upload),
+func (m *mockUploadClient) Get(id, authToken string) (upload.Upload, error) {
+	if m.getFail {
+		return upload.Upload{}, fmt.Errorf("error")
 	}
+	return upload.Upload{}, nil
 }
 
-// persistence.BaseRepository
-// Write(item Upload, a persistence.Atomic) (err error)
-// Read(id string) (Upload, error)
-// Delete(id string, a persistence.Atomic) (err error)
-
-func (m *mockUploadRepository) Write(item upload.Upload, a persistence.Atomic) (err error) {
-	m.callCount++
-	return m.errMap[m.callCount]
-}
-func (m *mockUploadRepository) Read(id string) (upload.Upload, error) {
-	m.callCount++
-	return m.resultMap[m.callCount], m.errMap[m.callCount]
-}
-func (m *mockUploadRepository) Delete(id string, a persistence.Atomic) (err error) {
-	m.callCount++
-	return m.errMap[m.callCount]
-}
-func (m *mockUploadRepository) CreateAtomic() (persistence.Atomic, error) {
-	m.callCount++
-	if err := m.errMap[m.callCount]; err != nil {
-		return persistence.Atomic{}, errTx
+// Delete removes the upload-object specified by the given ID
+func (m *mockUploadClient) Delete(id, authToken string) error {
+	if m.deleteFail {
+		return fmt.Errorf("error")
 	}
-	return m.c.CreateAtomic()
+	return nil
 }
+
+var _ upload.Client = &mockUploadClient{}

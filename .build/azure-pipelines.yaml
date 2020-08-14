@@ -73,6 +73,20 @@ steps:
       --build-arg buildtime_variable_commit=$(githash)
 
 - task: Docker@2
+  displayName: 'Build crypter'
+  inputs:
+    command: build
+    Dockerfile: 'crypter.Dockerfile'
+    repository: bihe/monorepo/crypter
+    tags: |
+      latest
+      $(githash)
+    arguments: |
+      --build-arg buildtime_variable_version=2.0.$(Build.BuildId)
+      --build-arg buildtime_variable_timestamp=$(TSTAMP)
+      --build-arg buildtime_variable_commit=$(githash)
+
+- task: Docker@2
   displayName: 'Build onefrontend-go'
   inputs:
     command: build
@@ -118,6 +132,16 @@ steps:
     containerRegistry: github_docker_images
     command: push
     repository: bihe/monorepo/login-go
+    tags: |
+      latest
+      $(githash)
+
+- task: Docker@2
+  displayName: 'Push crypter'
+  inputs:
+    containerRegistry: github_docker_images
+    command: push
+    repository: bihe/monorepo/crypter
     tags: |
       latest
       $(githash)

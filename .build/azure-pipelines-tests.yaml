@@ -8,7 +8,7 @@ pool:
 
 variables:
   GOBIN:  '$(GOPATH)/bin' # Go binaries path
-  GOROOT: '/usr/local/go1.14' # Go installation path
+  GOROOT: '/usr/local/go1.15' # Go installation path
   GOPATH: '$(system.defaultWorkingDirectory)/gopath' # Go workspace path
   modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)' # Path to the module's code
   GO111MODULE: 'on'
@@ -21,7 +21,7 @@ steps:
 # Find in cache or download a specific version of Go and add it to the PATH
 - task: GoTool@0
   inputs:
-    version: '1.14'
+    version: '1.15'
 
 - bash: |
     echo "##vso[task.setvariable variable=githash]${BUILDTIME_VARIABLE_COMMIT:0:7}"

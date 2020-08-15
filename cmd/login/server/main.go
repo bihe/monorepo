@@ -51,6 +51,7 @@ func run() (err error) {
 			AppName: appConfig.AppName,
 			HostID:  appConfig.HostID,
 		},
+		GrayLogServer: appConfig.Logging.GrayLogServer,
 	}, string(appConfig.Environment))
 	apiSrv := server.Create(basePath, appConfig, version, l)
 	addr := fmt.Sprintf("%s:%d", hostName, port)

@@ -2,10 +2,12 @@ package logging
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/Graylog2/go-gelf.v2/gelf"
 )
 
 // LogConfig specifies logging settings for
@@ -13,6 +15,8 @@ type LogConfig struct {
 	FilePath string
 	LogLevel string
 	Trace    TraceConfig
+	// GrayLogServer defines the address of a log-aggregator using Graylog
+	GrayLogServer string
 }
 
 // TraceConfig is used to correlate logging-entries
@@ -23,16 +27,30 @@ type TraceConfig struct {
 
 // Setup usesd the supplied configuration to setup application-logging
 func Setup(conf LogConfig, env string) *log.Entry {
+	var (
+		file       *os.File
+		writer     io.Writer
+		gelfWriter gelf.Writer
+		err        error
+	)
+
 	logger := log.New()
 	if strings.ToLower(env) != "development" {
 		logger.SetFormatter(&log.JSONFormatter{})
-
-		var file *os.File
-		file, err := os.OpenFile(conf.FilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		file, err = os.OpenFile(conf.FilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		if err != nil {
 			panic(fmt.Sprintf("cannot use filepath '%s' as a logfile: %v", conf.FilePath, err))
 		}
-		logger.SetOutput(file)
+		writer = file
+		if conf.GrayLogServer != "" {
+			gelfWriter, err = gelf.NewUDPWriter(conf.GrayLogServer)
+			if err != nil {
+				panic(fmt.Sprintf("could not create a new gelf UDP writer: %s", err))
+			}
+			// log to both file and graylog2
+			writer = io.MultiWriter(file, gelfWriter)
+		}
+		logger.SetOutput(writer)
 	}
 	level, err := log.ParseLevel(conf.LogLevel)
 	if err != nil {

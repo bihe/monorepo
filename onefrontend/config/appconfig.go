@@ -58,6 +58,8 @@ type LogConfig struct {
 	FilePath    string
 	RequestPath string
 	LogLevel    string
+	// GrayLogServer defines the address of a log-aggregator using Graylog
+	GrayLogServer string
 }
 
 // CorsSettings specifies the used settings

@@ -47,6 +47,7 @@ func run() (err error) {
 			AppName: appConfig.AppName,
 			HostID:  appConfig.HostID,
 		},
+		GrayLogServer: appConfig.Logging.GrayLogServer,
 	}, string(appConfig.Environment))
 
 	srv := &onefrontend.Server{

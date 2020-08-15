@@ -1,0 +1,59 @@
+name: Build and Test
+
+# This workflow will run on main branch and on any pull requests targeting main
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.15
+
+      - name: Check out code
+        uses: actions/checkout@v1
+
+      - name: Run Unit tests.
+        run: make coverage
+
+      - name: Upload Coverage report to CodeCov
+      - run: |
+          go test -v -race -coverprofile=coverage.txt -covermode atomic 2>&1 ./...; ec=$?
+          echo "go test result is - $ec"
+          if [ $ec == 0 ]; then
+            echo "do codecov upload"
+            bash <(curl -s https://codecov.io/bash) -F monorepo
+          fi
+      - continue-on-error: false
+        # uses: codecov/codecov-action@v1.0.0
+        # with:
+        #   token: ${{secrets.CODECOV_TOKEN}}
+        #   file: ./coverage.txt
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.15
+
+      - name: Check out code
+        uses: actions/checkout@v1
+
+      - name: Build
+      - run: |
+          go version
+          go get -v -t -d ./...
+          go build ./...
+      - continue-on-error: false

@@ -45,7 +45,8 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Run Unit tests.
-        run: make coverage
+        run: |
+          make coverage
 
       - name: Upload Coverage report to CodeCov
       - run: |

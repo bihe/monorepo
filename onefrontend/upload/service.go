@@ -111,23 +111,10 @@ func (s *uploadService) Save(file File) (string, error) {
 		payload []byte
 		err     error
 	)
-	if file.Size > s.maxUploadSize {
-		return id, fmt.Errorf("the upload exceeds the maximum size of %d - filesize is: %d; %w", s.maxUploadSize, file.Size, ErrValidation)
-	}
-
 	logging.LogWith(s.logger, "upload.Save").Debugf("trying to upload file: '%s'", file.Name)
 
-	ext := filepath.Ext(file.Name)
-	ext = strings.Replace(ext, ".", "", 1)
-	var typeAllowed = false
-	for _, t := range s.allowedFileTypes {
-		if t == ext {
-			typeAllowed = true
-			break
-		}
-	}
-	if !typeAllowed {
-		return id, fmt.Errorf("the uploaded file-type '%s' is not allowed, only use: '%s'; %w", ext, strings.Join(s.allowedFileTypes, ","), ErrValidation)
+	if err = s.validateFile(file); err != nil {
+		return id, err
 	}
 
 	// Copy
@@ -170,6 +157,26 @@ func (s *uploadService) Save(file File) (string, error) {
 		return id, ErrService
 	}
 	return id, nil
+}
+
+func (s *uploadService) validateFile(file File) error {
+	if file.Size > s.maxUploadSize {
+		return fmt.Errorf("the upload exceeds the maximum size of %d - filesize is: %d; %w", s.maxUploadSize, file.Size, ErrValidation)
+	}
+
+	ext := filepath.Ext(file.Name)
+	ext = strings.Replace(ext, ".", "", 1)
+	var typeAllowed = false
+	for _, t := range s.allowedFileTypes {
+		if strings.ToLower(t) == strings.ToLower(ext) {
+			typeAllowed = true
+			break
+		}
+	}
+	if !typeAllowed {
+		return fmt.Errorf("the uploaded file-type '%s' is not allowed, only use: '%s'; %w", ext, strings.Join(s.allowedFileTypes, ","), ErrValidation)
+	}
+	return nil
 }
 
 func (s *uploadService) Read(id string) (Upload, error) {

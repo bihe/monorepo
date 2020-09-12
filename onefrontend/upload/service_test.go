@@ -68,6 +68,35 @@ var _ crypter.EncryptionService = &mockEncService{}
 
 // --------------------------------------------------------------------------
 
+func TestService_FileType_CaseInsensitive(t *testing.T) {
+	svc := upload.NewService(upload.ServiceOptions{
+		Logger:           logger,
+		Store:            &mockStore{},
+		MaxUploadSize:    10000,
+		AllowedFileTypes: []string{"pdf"},
+	})
+	payload, err := ioutil.ReadFile("../../testdata/unencrypted.pdf")
+	if err != nil {
+		t.Fatalf("could not read testfile: %v", err)
+	}
+	var b bytes.Buffer // A Buffer needs no initialization.
+	if _, err := b.Write(payload); err != nil {
+		t.Fatalf("could not write payload to buffer: %v", err)
+	}
+
+	// check that the supported file-types is case insensitive
+	var id string
+	if id, err = svc.Save(upload.File{
+		File:     &b,
+		MimeType: "application/pdf",
+		Name:     "unencrypted.PDF",
+		Size:     int64(len(payload)),
+	}); err != nil {
+		t.Fatalf("could not write file: %v", err)
+	}
+	assert.True(t, id != "")
+}
+
 func TestService_Write_Read_Delete(t *testing.T) {
 	svc := upload.NewService(upload.ServiceOptions{
 		Logger:           logger,

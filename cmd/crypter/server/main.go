@@ -15,7 +15,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"golang.binggl.net/monorepo/crypter"
+	"golang.binggl.net/monorepo/internal/crypter"
 	"golang.binggl.net/monorepo/pkg/server"
 	"golang.binggl.net/monorepo/proto"
 	"google.golang.org/grpc"

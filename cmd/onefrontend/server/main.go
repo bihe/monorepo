@@ -13,9 +13,9 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"golang.binggl.net/monorepo/onefrontend"
-	"golang.binggl.net/monorepo/onefrontend/config"
-	"golang.binggl.net/monorepo/onefrontend/types"
+	"golang.binggl.net/monorepo/internal/onefrontend"
+	"golang.binggl.net/monorepo/internal/onefrontend/config"
+	"golang.binggl.net/monorepo/internal/onefrontend/types"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/server"
 

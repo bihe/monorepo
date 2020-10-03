@@ -13,9 +13,9 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"golang.binggl.net/monorepo/bookmarks"
-	"golang.binggl.net/monorepo/bookmarks/config"
-	"golang.binggl.net/monorepo/bookmarks/server"
+	"golang.binggl.net/monorepo/internal/bookmarks"
+	"golang.binggl.net/monorepo/internal/bookmarks/config"
+	"golang.binggl.net/monorepo/internal/bookmarks/server"
 
 	log "github.com/sirupsen/logrus"
 	"golang.binggl.net/monorepo/pkg/logging"

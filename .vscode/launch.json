@@ -13,9 +13,9 @@
             "program": "${workspaceFolder}/cmd/onefrontend/server/",
             "args": [
                 "--basepath",
-                "../../../onefrontend"
+                "../../../internal/onefrontend"
             ],
-            "envFile": "${workspaceFolder}/onefrontend/.env",
+            "envFile": "${workspaceFolder}/internal/onefrontend/.env",
             "internalConsoleOptions": "openOnSessionStart",
             "showLog": true,
             "output": "debug"
@@ -33,9 +33,9 @@
                 "--port",
                 "3000",
                 "--basepath",
-                "../../../crypter"
+                "../../../internal/crypter"
             ],
-            "envFile": "${workspaceFolder}/crypter/.env",
+            "envFile": "${workspaceFolder}/internal/crypter/.env",
             "internalConsoleOptions": "openOnSessionStart",
             "showLog": true,
             "output": "debug"
@@ -50,9 +50,9 @@
                 "--port",
                 "3001",
                 "--basepath",
-                "../../../login"
+                "../../../internal/login"
             ],
-            "envFile": "${workspaceFolder}/login/.env",
+            "envFile": "${workspaceFolder}/internal/login/.env",
             "internalConsoleOptions": "openOnSessionStart",
             "showLog": true,
             "output": "debug"
@@ -75,6 +75,23 @@
             "showLog": true
         },
         {
+            "name": "Run :: mydms-go (solid)",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/mydms/solid",
+            "env": {},
+			"args": [
+                "--port",
+                "8080",
+                "--basepath",
+                "../../../internal/mydms"
+            ],
+            "envFile": "${workspaceFolder}/internal/mydms/.env",
+            "internalConsoleOptions": "openOnSessionStart",
+            "showLog": true
+        },
+        {
             "name": "Run :: bookmarks (go-chi)",
             "type": "go",
             "request": "launch",
@@ -84,9 +101,9 @@
                 "--port",
                 "3003",
                 "--basepath",
-                "../../../bookmarks"
+                "../../../internal/bookmarks"
             ],
-            "envFile": "${workspaceFolder}/bookmarks/.env",
+            "envFile": "${workspaceFolder}/internal/bookmarks/.env",
             "internalConsoleOptions": "openOnSessionStart",
             "showLog": true,
             "output": "debug"

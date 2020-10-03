@@ -1,8 +1,9 @@
-package document
+package appinfo
 
 import (
 	"github.com/go-kit/kit/log"
 	"golang.binggl.net/monorepo/internal/mydms/app/shared"
+	"golang.binggl.net/monorepo/pkg/security"
 )
 
 // ServiceMiddleware describes a service (as opposed to endpoint) middleware.
@@ -18,19 +19,14 @@ func ServiceLoggingMiddleware(logger log.Logger) ServiceMiddleware {
 	}
 }
 
-// compile guard for Service implementation
-var (
-	_ Service = &loggingMiddleware{}
-)
-
 type loggingMiddleware struct {
 	logger log.Logger
 	next   Service
 }
 
-// GetDocumentByID implements the Service so that it can be used transparently
+// GetAppInfo implements the Service so that it can be used transparently
 // the provided parameters are logged and the execution is passed on to the underlying/next service
-func (mw loggingMiddleware) GetDocumentByID(id string) (d Document, err error) {
-	defer shared.Log(mw.logger, "GetDocumentByID", err, "param:ID", id)
-	return mw.next.GetDocumentByID(id)
+func (mw loggingMiddleware) GetAppInfo(user *security.User) (ai AppInfo, err error) {
+	defer shared.Log(mw.logger, "GetAppInfo", err)
+	return mw.next.GetAppInfo(user)
 }

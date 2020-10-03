@@ -4,10 +4,9 @@ package persistence
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/jmoiron/sqlx"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // Connection defines a storage/database/... connection
@@ -20,6 +19,13 @@ type Connection struct {
 func NewConn(connstr string) Connection {
 	// dialect is specifically set to "mysql"
 	db := sqlx.MustConnect("mysql", connstr)
+	return Connection{DB: db, Active: true}
+}
+
+// NewConnForDb creates a connection to a store/repository
+func NewConnForDb(dbType, connstr string) Connection {
+	// dialect is specifically set to "mysql"
+	db := sqlx.MustConnect(dbType, connstr)
 	return Connection{DB: db, Active: true}
 }
 
@@ -51,16 +57,15 @@ func HandleTX(complete bool, atomic *Atomic, err error) error {
 		case nil:
 			return atomic.Commit()
 		default:
-			log.Errorf("could not complete the tx: %v", err)
+			log.Printf("could not complete the tx: %v", err)
 			if atomic != nil {
-				log.Debugf("will try to rollback the tx")
+				log.Printf("will try to rollback the tx")
 				if e := atomic.Rollback(); e != nil {
 					return fmt.Errorf("%v; could not rollback tx: %v", err, e)
 				}
 			} else {
-				log.Warnf("cannot rollback the tx, no atomic object available")
+				log.Printf("cannot rollback the tx, no atomic object available")
 			}
-
 		}
 	}
 	return err

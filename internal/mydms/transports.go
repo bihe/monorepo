@@ -5,9 +5,13 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/go-chi/chi"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/transport"
 	"github.com/sirupsen/logrus"
+	"golang.binggl.net/monorepo/internal/mydms/app/appinfo"
+	"golang.binggl.net/monorepo/internal/mydms/app/document"
+	"golang.binggl.net/monorepo/internal/mydms/app/shared"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/security"
 	"golang.binggl.net/monorepo/pkg/server"
@@ -42,6 +46,13 @@ func MakeHTTPHandler(e Endpoints, logger log.Logger, lLogger *logrus.Entry, opts
 		options...,
 	))
 
+	apiRouter.Mount("/documents/{id}", httptransport.NewServer(
+		e.GetDocumentByIDEndpoint,
+		decodeGetDocumentByIDRequest,
+		encodeResponse,
+		options...,
+	))
+
 	// we are mounting all APIs under /api/v1 path
 	r.Mount("/api/v1", apiRouter)
 
@@ -54,7 +65,13 @@ func MakeHTTPHandler(e Endpoints, logger log.Logger, lLogger *logrus.Entry, opts
 
 func decodeGetAppInfoRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
 	user := ensureUser(r)
-	return getAppInfoRequest{User: user}, nil
+	return appinfo.GetAppInfoRequest{User: user}, nil
+}
+
+func decodeGetDocumentByIDRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
+	return document.GetDocumentByIDRequest{
+		ID: chi.URLParam(r, "id"),
+	}, nil
 }
 
 // encodeResponse is the common method to encode all response types to the
@@ -62,10 +79,10 @@ func decodeGetAppInfoRequest(_ context.Context, r *http.Request) (request interf
 // reason to provide anything more specific. It's certainly possible to
 // specialize on a per-response (per-method) basis.
 func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	if e, ok := response.(errorer); ok && e.error() != nil {
+	if e, ok := response.(shared.Errorer); ok && e.Error() != nil {
 		// Not a Go kit transport error, but a business-logic error.
 		// Provide those as HTTP errors.
-		encodeError(ctx, e.error(), w)
+		encodeError(ctx, e.Error(), w)
 		return nil
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")

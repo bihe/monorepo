@@ -9,11 +9,16 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.binggl.net/monorepo/internal/mydms"
 	"golang.binggl.net/monorepo/internal/mydms/app/appinfo"
+	"golang.binggl.net/monorepo/internal/mydms/app/document"
 	"golang.binggl.net/monorepo/pkg/logging"
+	"golang.binggl.net/monorepo/pkg/persistence"
 	"golang.binggl.net/monorepo/pkg/server"
 	"gopkg.in/Graylog2/go-gelf.v2/gelf"
 
 	logR "github.com/go-kit/kit/log/logrus"
+
+	// include the mysql driver for runtime
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var (
@@ -56,16 +61,24 @@ func run(version, build string) error {
 		}
 	}(logFile, gelfWriter)
 
-	// Build the layers of the service "onion" from the inside out. First, the
-	// business logic service; then, the set of endpoints that wrap the service;
+	// persistence store && application version
+	con := persistence.NewConnForDb("mysql", appCfg.Database.ConnectionString)
+	repo, err := document.NewRepository(con)
+	if err != nil {
+		panic(fmt.Sprintf("cannot establish database connection: %v", err))
+	}
+
+	// Build the layers of the appInfoSvc "onion" from the inside out. First, the
+	// business logic appInfoSvc; then, the set of endpoints that wrap the appInfoSvc;
 	// and finally, a series of concrete transport adapters. The adapters, like
 	// the HTTP handler or the gRPC server, are the bridge between Go kit and
 	// the interfaces that the transports expect. Note that we're not binding
 	// them to ports or anything yet; we'll do that next.
 	var (
-		service   = appinfo.NewService(gLogger, Version, Build)
-		endpoints = mydms.MakeServerEndpoints(service, gLogger)
-		apiSrv    = mydms.MakeHTTPHandler(endpoints, gLogger, lLogger, mydms.HTTPHandlerOptions{
+		appInfoSvc = appinfo.NewService(gLogger, Version, Build)
+		docSvc     = document.NewService(gLogger, repo)
+		endpoints  = mydms.MakeServerEndpoints(appInfoSvc, docSvc, gLogger)
+		apiSrv     = mydms.MakeHTTPHandler(endpoints, gLogger, lLogger, mydms.HTTPHandlerOptions{
 			BasePath:     basePath,
 			ErrorPath:    "/error",
 			AssetConfig:  appCfg.Assets,

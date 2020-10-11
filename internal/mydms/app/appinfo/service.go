@@ -33,7 +33,7 @@ func NewService(logger log.Logger, version, build string) Service {
 // Service implementation
 // --------------------------------------------------------------------------
 
-// compile time assertions for our response types implementing endpoint.Failer.
+// compile time assertions for our service
 var (
 	_ Service = &appInfoService{}
 )

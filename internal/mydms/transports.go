@@ -3,9 +3,14 @@ package mydms
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 
+	stdlog "log"
+
 	"github.com/go-chi/chi"
+	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/transport"
 	"github.com/sirupsen/logrus"
@@ -17,6 +22,7 @@ import (
 	"golang.binggl.net/monorepo/pkg/server"
 
 	httptransport "github.com/go-kit/kit/transport/http"
+	pkgerr "golang.binggl.net/monorepo/pkg/errors"
 )
 
 // HTTPHandlerOptions containts configuration settings relevant for the uses HTTP handler implementation
@@ -69,6 +75,10 @@ func decodeGetAppInfoRequest(_ context.Context, r *http.Request) (request interf
 }
 
 func decodeGetDocumentByIDRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		return nil, fmt.Errorf("missing parameter")
+	}
 	return document.GetDocumentByIDRequest{
 		ID: chi.URLParam(r, "id"),
 	}, nil
@@ -79,26 +89,43 @@ func decodeGetDocumentByIDRequest(_ context.Context, r *http.Request) (request i
 // reason to provide anything more specific. It's certainly possible to
 // specialize on a per-response (per-method) basis.
 func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	if e, ok := response.(shared.Errorer); ok && e.Error() != nil {
+	if e, ok := response.(endpoint.Failer); ok && e.Failed() != nil {
 		// Not a Go kit transport error, but a business-logic error.
 		// Provide those as HTTP errors.
-		encodeError(ctx, e.Error(), w)
+		encodeError(ctx, e.Failed(), w)
 		return nil
 	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	return json.NewEncoder(w).Encode(response)
+	return respondJSON(w, response)
 }
 
-// TODO: use existing ServerErrors here
+// --------------------------------------------------------------------------------------------------------------------
+
+const t = "about:blank"
+
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	if err == nil {
 		panic("encodeError with nil error")
 	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	//w.WriteHeader(codeFrom(err))
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"error": err.Error(),
-	})
+	var (
+		pd          *pkgerr.ProblemDetail
+		errNotFound *shared.NotFoundError
+	)
+	if errors.As(err, &errNotFound) {
+		pd = &pkgerr.ProblemDetail{
+			Type:   t,
+			Title:  "object cannot be found",
+			Status: http.StatusNotFound,
+			Detail: errNotFound.Error(),
+		}
+	} else {
+		pd = &pkgerr.ProblemDetail{
+			Type:   t,
+			Title:  "cannot service the request",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
+	}
+	writeProblemJSON(w, pd)
 }
 
 func ensureUser(r *http.Request) *security.User {
@@ -107,4 +134,22 @@ func ensureUser(r *http.Request) *security.User {
 		panic("the sucurity context user is not available!")
 	}
 	return user
+}
+
+func respondJSON(w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	return json.NewEncoder(w).Encode(response)
+}
+
+func writeProblemJSON(w http.ResponseWriter, pd *pkgerr.ProblemDetail) {
+	w.Header().Set("Content-Type", "application/problem+json; charset=utf-8")
+	w.WriteHeader(pd.Status)
+	b, err := json.Marshal(pd)
+	if err != nil {
+		stdlog.Printf("could not marshal json %v\n", err)
+	}
+	_, err = w.Write(b)
+	if err != nil {
+		stdlog.Printf("could not write bytes using http.ResponseWriter: %v\n", err)
+	}
 }

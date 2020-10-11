@@ -3,11 +3,14 @@ package document_test
 import (
 	"database/sql"
 	"fmt"
+	"testing"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/jmoiron/sqlx"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
-	"golang.binggl.net/monorepo/mydms/features/filestore"
-	"golang.binggl.net/monorepo/mydms/features/upload"
+	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
+	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	"golang.binggl.net/monorepo/pkg/persistence"
 )
 
@@ -80,13 +83,13 @@ func (m *mockRepository) Delete(id string, a persistence.Atomic) (err error) {
 	return m.errMap[m.callCount]
 }
 
-func (m *mockRepository) Search(s document.DocSearch, order []document.OrderBy) (document.PagedDocuments, error) {
+func (m *mockRepository) Search(s document.DocSearch, order []document.OrderBy) (document.PagedDocResult, error) {
 	m.callCount++
 	if s.Title == noResult {
-		return document.PagedDocuments{}, fmt.Errorf("search error")
+		return document.PagedDocResult{}, fmt.Errorf("search error")
 	}
 
-	return document.PagedDocuments{
+	return document.PagedDocResult{
 		Count: 2,
 		Documents: []document.DocEntity{
 			{
@@ -137,6 +140,18 @@ func (m *mockRepository) SearchLists(s string, st document.SearchType) ([]string
 	return []string{"one", "two"}, nil
 }
 
+func GetMockConn(t *testing.T) (persistence.Connection, *sql.DB, sqlmock.Sqlmock) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("could not create a new SQL mock; %v", err)
+	}
+
+	dbx := sqlx.NewDb(db, "mysql")
+	con := persistence.NewFromDB(dbx)
+
+	return con, db, mock
+}
+
 // --------------------------------------------------------------------------
 // MOCK: filestore.FileService
 // --------------------------------------------------------------------------
@@ -146,11 +161,16 @@ type mockFileService struct {
 	callCount int
 }
 
-func newFileService() *mockFileService {
+func newFileService() filestore.FileService {
 	return &mockFileService{
 		errMap: make(map[int]error),
 	}
 }
+
+// compile time assertions for our service
+var (
+	_ filestore.FileService = &mockFileService{}
+)
 
 // SaveFile(file FileItem) error
 // GetFile(filePath string) (FileItem, error)

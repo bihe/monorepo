@@ -15,3 +15,9 @@ type Document struct {
 	Senders       []string `json:"senders"`
 	InvoiceNumber string   `json:"invoiceNumber,omitempty"`
 }
+
+// PagedDcoument represents a paged result
+type PagedDcoument struct {
+	Documents    []Document `json:"documents"`
+	TotalEntries int        `json:"totalEntries"`
+}

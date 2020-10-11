@@ -31,4 +31,5 @@ type GetDocumentByIDResponse struct {
 	Err      error `json:"err,omitempty"`
 }
 
-func (r GetDocumentByIDResponse) Error() error { return r.Err }
+// Failed implements endpoint.Failer.
+func (r GetDocumentByIDResponse) Failed() error { return r.Err }

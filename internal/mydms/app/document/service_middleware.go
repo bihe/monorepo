@@ -1,6 +1,8 @@
 package document
 
 import (
+	"time"
+
 	"github.com/go-kit/kit/log"
 	"golang.binggl.net/monorepo/internal/mydms/app/shared"
 )
@@ -28,9 +30,17 @@ type loggingMiddleware struct {
 	next   Service
 }
 
-// GetDocumentByID implements the Service so that it can be used transparently
-// the provided parameters are logged and the execution is passed on to the underlying/next service
 func (mw loggingMiddleware) GetDocumentByID(id string) (d Document, err error) {
 	defer shared.Log(mw.logger, "GetDocumentByID", err, "param:ID", id)
 	return mw.next.GetDocumentByID(id)
+}
+
+func (mw loggingMiddleware) DeleteDocumentByID(id string) (err error) {
+	defer shared.Log(mw.logger, "DeleteDocumentByID", err, "param:ID", id)
+	return mw.next.DeleteDocumentByID(id)
+}
+
+func (mw loggingMiddleware) SearchDocuments(title, tag, sender string, from, until time.Time, limit, skip int) (p PagedDcoument, err error) {
+	defer shared.Log(mw.logger, "SearchDocuments", err, "param:title", title, "param:tag", tag, "param:sender", sender, "param:from", from, "param:until", until, "param:limit", limit, "param:skip", skip)
+	return mw.next.SearchDocuments(title, tag, sender, from, until, limit, skip)
 }

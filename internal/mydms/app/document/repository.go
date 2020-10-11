@@ -30,8 +30,8 @@ type DocEntity struct {
 	InvoiceNumber sql.NullString `db:"invoicenumber"`
 }
 
-// PagedDocuments wraps a list of documents and returns the total number of documents
-type PagedDocuments struct {
+// PagedDocResult wraps a list of documents and returns the total number of documents
+type PagedDocResult struct {
 	Documents []DocEntity
 	Count     int
 }
@@ -83,7 +83,7 @@ type Repository interface {
 	Exists(id string, a persistence.Atomic) (filePath string, err error)
 	Save(doc DocEntity, a persistence.Atomic) (d DocEntity, err error)
 	Delete(id string, a persistence.Atomic) (err error)
-	Search(s DocSearch, order []OrderBy) (PagedDocuments, error)
+	Search(s DocSearch, order []OrderBy) (PagedDocResult, error)
 	SearchLists(s string, st SearchType) ([]string, error)
 }
 
@@ -227,7 +227,7 @@ func (rw *dbRepository) Delete(id string, a persistence.Atomic) (err error) {
 
 // Search for documents based on the supplied search-object 'DocSearch'
 // the slice of order-bys is used to defined the query sort-order
-func (rw *dbRepository) Search(s DocSearch, order []OrderBy) (d PagedDocuments, err error) {
+func (rw *dbRepository) Search(s DocSearch, order []OrderBy) (d PagedDocResult, err error) {
 	var query string
 	q := "SELECT id,title,filename,alternativeid,previewlink,amount,taglist,senderlist,created,modified,invoicenumber FROM DOCUMENTS"
 	qc := "SELECT count(id) FROM DOCUMENTS"
@@ -289,7 +289,7 @@ func (rw *dbRepository) Search(s DocSearch, order []OrderBy) (d PagedDocuments, 
 		err = fmt.Errorf("could not get the documents: %v", err)
 		return
 	}
-	return PagedDocuments{Documents: docs, Count: c}, nil
+	return PagedDocResult{Documents: docs, Count: c}, nil
 }
 
 // SearchType is used to determine if the search is performend on tags or senders

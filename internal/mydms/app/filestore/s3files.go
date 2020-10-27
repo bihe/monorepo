@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
+	"github.com/go-kit/kit/log"
 )
 
 // --------------------------------------------------------------------------
@@ -24,11 +25,16 @@ type FileItem struct {
 	Payload    []byte
 }
 
+func (f FileItem) String() string {
+	return fmt.Sprintf("%s/%s", f.FolderName, f.FileName)
+}
+
 // FileService defines an interface for backend file services
 type FileService interface {
-	SaveFile(file FileItem) error
-	GetFile(filePath string) (FileItem, error)
-	DeleteFile(filePath string) error
+	InitClient() (err error)
+	SaveFile(file FileItem) (err error)
+	GetFile(filePath string) (item FileItem, err error)
+	DeleteFile(filePath string) (err error)
 }
 
 // --------------------------------------------------------------------------
@@ -44,8 +50,13 @@ type S3Config struct {
 }
 
 // NewService returns a new instance of the fileservice
-func NewService(config S3Config) FileService {
-	return &s3service{config: config}
+func NewService(logger log.Logger, config S3Config) FileService {
+	var svc FileService
+	{
+		svc = &s3service{config: config}
+		svc = ServiceLoggingMiddleware(logger)(svc)
+	}
+	return svc
 }
 
 type s3service struct {
@@ -55,7 +66,7 @@ type s3service struct {
 
 // InitClient determines if the backend store client was already initialized
 // if it is not initilized it creates a new client using the supplied config
-func (s *s3service) InitClient() error {
+func (s *s3service) InitClient() (err error) {
 	if s.client == nil {
 		sess, err := session.NewSession(&aws.Config{
 			Region:      aws.String(s.config.Region),
@@ -71,8 +82,8 @@ func (s *s3service) InitClient() error {
 }
 
 // GetFile retrieves a file defined by a given path from the backend store
-func (s *s3service) GetFile(filePath string) (FileItem, error) {
-	err := s.InitClient()
+func (s *s3service) GetFile(filePath string) (item FileItem, err error) {
+	err = s.InitClient()
 	if err != nil {
 		return FileItem{}, err
 	}
@@ -111,8 +122,8 @@ func (s *s3service) GetFile(filePath string) (FileItem, error) {
 }
 
 // SaveFile stores a file item using a given path to the backend store
-func (s *s3service) SaveFile(file FileItem) error {
-	err := s.InitClient()
+func (s *s3service) SaveFile(file FileItem) (err error) {
+	err = s.InitClient()
 	if err != nil {
 		return err
 	}
@@ -133,8 +144,8 @@ func (s *s3service) SaveFile(file FileItem) error {
 }
 
 // DeleteFile removes the item using the specified paht
-func (s *s3service) DeleteFile(filePath string) error {
-	err := s.InitClient()
+func (s *s3service) DeleteFile(filePath string) (err error) {
+	err = s.InitClient()
 	if err != nil {
 		return err
 	}

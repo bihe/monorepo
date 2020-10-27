@@ -13,6 +13,7 @@ import (
 	"golang.binggl.net/monorepo/internal/mydms/app/appinfo"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
 	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
+	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/persistence"
 	"golang.binggl.net/monorepo/pkg/server"
@@ -52,10 +53,10 @@ func run(version, build string) error {
 		return &mydms.AppConfig{} // use the correct object to deserialize the configuration
 	})
 	var appCfg = conf.(*mydms.AppConfig)
-	lLogger, gLogger, logFile, gelfWriter := setupLog(*appCfg)
+	logrusLog, kitLog, logFile, gelfWriter := setupLog(*appCfg)
 
 	// std-logging also via go-kit logging
-	stdlog.SetOutput(log.NewStdlibAdapter(gLogger))
+	stdlog.SetOutput(log.NewStdlibAdapter(kitLog))
 
 	// ensure closing of logfile on exit
 	defer func(file io.WriteCloser, gw gelf.Writer) {
@@ -81,16 +82,17 @@ func run(version, build string) error {
 	// the interfaces that the transports expect. Note that we're not binding
 	// them to ports or anything yet; we'll do that next.
 	var (
-		fileSvc = filestore.NewService(filestore.S3Config{
+		fileSvc = filestore.NewService(kitLog, filestore.S3Config{
 			Bucket: appCfg.Filestore.Bucket,
 			Region: appCfg.Filestore.Region,
 			Key:    appCfg.Filestore.Key,
 			Secret: appCfg.Filestore.Secret,
 		})
-		appInfoSvc = appinfo.NewService(gLogger, Version, Build)
-		docSvc     = document.NewService(gLogger, repo, fileSvc)
-		endpoints  = mydms.MakeServerEndpoints(appInfoSvc, docSvc, gLogger)
-		apiSrv     = mydms.MakeHTTPHandler(endpoints, gLogger, lLogger, mydms.HTTPHandlerOptions{
+		uploadClient = upload.NewClient(appCfg.Upload.EndpointURL)
+		appInfoSvc   = appinfo.NewService(kitLog, Version, Build)
+		docSvc       = document.NewService(kitLog, repo, fileSvc, uploadClient)
+		endpoints    = mydms.MakeServerEndpoints(appInfoSvc, docSvc, fileSvc, kitLog)
+		apiSrv       = mydms.MakeHTTPHandler(endpoints, kitLog, logrusLog, mydms.HTTPHandlerOptions{
 			BasePath:     basePath,
 			ErrorPath:    "/error",
 			AssetConfig:  appCfg.Assets,

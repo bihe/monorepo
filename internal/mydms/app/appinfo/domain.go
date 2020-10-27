@@ -1,6 +1,7 @@
 package appinfo
 
 // AppInfo provides information of the authenticated user and application meta-data
+// swagger:model
 type AppInfo struct {
 	UserInfo    UserInfo    `json:"userInfo"`
 	VersionInfo VersionInfo `json:"versionInfo"`

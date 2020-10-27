@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
+	"github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,6 +30,8 @@ startxref
 %EOF
 `
 const mimeType = "application/pdf"
+
+var logger = log.NewLogfmtLogger(os.Stderr)
 
 // Define a mock struct to be used in your unit tests of myFunc.
 // https://github.com/aws/aws-sdk-go/blob/master/service/s3/s3iface/interface.go
@@ -60,9 +64,8 @@ func (m *mockS3Client) DeleteObject(input *s3.DeleteObjectInput) (*s3.DeleteObje
 }
 
 func TestInitClient(t *testing.T) {
-	svc := NewService(S3Config{})
-	service := svc.(*s3service)
-	err := service.InitClient()
+	svc := NewService(logger, S3Config{})
+	err := svc.InitClient()
 	if err != nil {
 		t.Errorf("error initializing client")
 	}

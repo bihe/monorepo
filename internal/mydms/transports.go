@@ -1,21 +1,46 @@
+// Package mydms mydms-API
+//
+// The API of the mydms-application.
+//
+// Terms Of Service:
+//
+//     Schemes: https
+//     Host: mydms.binggl.net
+//     BasePath: /api/v1
+//     Version: 3.0.0
+//     License: Apache 2.0 https://opensource.org/licenses/Apache-2.0
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+// swagger:meta
+//go:generate ../../tools/swagger_linux_amd64 generate spec -o ./assets/swagger/swagger.json -m -w ./ -x handler
 package mydms
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
 	stdlog "log"
 
 	"github.com/go-chi/chi"
-	"github.com/go-kit/kit/endpoint"
+	"github.com/go-chi/render"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/transport"
 	"github.com/sirupsen/logrus"
 	"golang.binggl.net/monorepo/internal/mydms/app/appinfo"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
+	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
 	"golang.binggl.net/monorepo/internal/mydms/app/shared"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/security"
@@ -45,17 +70,292 @@ func MakeHTTPHandler(e Endpoints, logger log.Logger, lLogger *logrus.Entry, opts
 		httptransport.ServerErrorEncoder(encodeError),
 	}
 
+	// GetAppInfo retrieves meta information about the application
+	// swagger:operation GET /api/v1/apinfo appinfo GetAppInfo
+	//
+	// get metadata of the aplication
+	//
+	// ---
+	// produces:
+	// - application/json
+	// responses:
+	//   '200':
+	//     description: GetAppInfoResponse
+	//     schema:
+	//       "$ref": "#/definitions/AppInfo"
+	//   '401':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
+	//   '403':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
 	apiRouter.Mount("/appinfo", httptransport.NewServer(
 		e.GetAppInfoEndpoint,
 		decodeGetAppInfoRequest,
-		encodeResponse,
+		encodeAppInfoResponse,
 		options...,
 	))
 
-	apiRouter.Mount("/documents/{id}", httptransport.NewServer(
+	// GetDocumentByID returns a document by the specified ID
+	// swagger:operation GET /api/v1/documents/{id} documents GetDocumentByID
+	//
+	// use the supplied id to retrieve the document
+	//
+	// ---
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: id
+	//   type: string
+	//   in: path
+	//   required: true
+	//
+	// responses:
+	//   '200':
+	//     description: GetDocumentByIDResponse
+	//     schema:
+	//       "$ref": "#/definitions/Document"
+	//   '400':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
+	//   '401':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
+	//   '403':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
+	getDocByID := httptransport.NewServer(
 		e.GetDocumentByIDEndpoint,
 		decodeGetDocumentByIDRequest,
-		encodeResponse,
+		encodeGetDocumentByIDResponse,
+		options...,
+	)
+	apiRouter.Mount("/documents/{id}", getDocByID)
+	apiRouter.Mount("/documents/", getDocByID)
+
+	// DeleteDocumentByID deletes a document by the specified ID
+	// swagger:operation DELETE /api/v1/documents/{id} documents DeleteDocumentByID
+	//
+	// use the supplied id to delete the document from the store
+	//
+	// ---
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: id
+	//   type: string
+	//   in: path
+	//   required: true
+	//
+	// responses:
+	//   '200':
+	//     description: DeleteDocumentByResponse
+	//     schema:
+	//       "$ref": "#/definitions/Result"
+	//   '400':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
+	//   '401':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
+	//   '403':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
+	deleteDocumentByID := httptransport.NewServer(
+		e.DeleteDocumentByIDEndpoint,
+		decodeDeleteDocumentByIDRequest,
+		encodeDeleteDocumentByIDResponse,
+		options...,
+	)
+	apiRouter.Method("DELETE", "/documents/{id}", deleteDocumentByID)
+	apiRouter.Method("DELETE", "/documents/", deleteDocumentByID)
+
+	// SearchList search for tags/senders
+	// swagger:operation GET /api/v1/documents/{type}/search documents SearchList
+	//
+	// search either by tags or senders with the supplied search term
+	//
+	// ---
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: type
+	//   type: string
+	//   in: path
+	//   required: true
+	//   description: search type tags || senders
+	// - name: name
+	//   type: string
+	//   in: query
+	//   required: false
+	//   description: search term
+	//
+	// responses:
+	//   '200':
+	//     description: SearchListResponse
+	//     schema:
+	//       "$ref": "#/definitions/EntriesResult"
+	//   '400':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
+	//   '401':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
+	//   '403':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
+	apiRouter.Mount("/documents/{type}/search", httptransport.NewServer(
+		e.SearchListEndpoint,
+		decodeSearchListRequest,
+		encodeSearchListResponse,
+		options...,
+	))
+
+	// SearchDocuments search for documents
+	// swagger:operation GET /api/v1/documents/search documents SearchDocuments
+	//
+	// use filters to search for docments. the result is a paged set
+	//
+	// ---
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: title
+	//   type: string
+	//   in: query
+	//   description: title search
+	// - name: tag
+	//   type: string
+	//   in: query
+	//   description: tag search
+	// - name: sender
+	//   type: string
+	//   in: query
+	//   description: sender search
+	// - name: from
+	//   type: string
+	//   in: query
+	//   description: start date
+	// - name: to
+	//   type: string
+	//   in: query
+	//   description: end date
+	// - name: limit
+	//   type: integer
+	//   in: query
+	//   description: limit max results
+	// - name: skip
+	//   type: integer
+	//   in: query
+	//   description: skip N results (0-based)
+	//
+	// responses:
+	//   '200':
+	//     description: SearchDocumentsResponse
+	//     schema:
+	//       "$ref": "#/definitions/PagedDcoument"
+	//   '400':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
+	//   '401':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
+	//   '403':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
+	apiRouter.Mount("/documents/search", httptransport.NewServer(
+		e.SearchDocumentsEndpoint,
+		decodeSearchDocumentsRequest,
+		encodeSearchDocumentsResponse,
+		options...,
+	))
+
+	// Create a new bookmark
+	// swagger:operation POST /api/v1/documents documents SaveDocument
+	//
+	// create a document
+	//
+	// use the supplied document payload and store the data
+	//
+	// ---
+	// consumes:
+	// - application/json
+	// produces:
+	// - application/json
+	// responses:
+	//   '200':
+	//     description: SaveDocumentResponse
+	//     schema:
+	//       "$ref": "#/definitions/Document"
+	//   '400':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
+	//   '401':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
+	//   '403':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
+	apiRouter.Method("POST", "/api/v1/documents", httptransport.NewServer(
+		e.SaveDocumentEndpoint,
+		decodeSaveDocumentRequest,
+		encodeSaveDocumentResponse,
+		options...,
+	))
+
+	// GetFile retrieves the file by the given path
+	// swagger:operation GET /api/v1/file filestore GetFile
+	//
+	// get file by path
+	//
+	// returns the binary payload of the file
+	//
+	// ---
+	// produces:
+	// - application/octet-stream
+	// - application/json
+	// parameters:
+	// - type: string
+	//   name: path
+	//   in: query
+	//
+	// responses:
+	//   '200':
+	//     description: Binary file payload
+	//
+	//   '400':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
+	//   '401':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
+	//   '403':
+	//     description: ProblemDetail
+	//     schema:
+	//       "$ref": "#/definitions/ProblemDetail"
+	apiRouter.Mount("/file", httptransport.NewServer(
+		e.GetFileEndpoint,
+		decodeGetFileRequest,
+		encodeFilePathResponse,
 		options...,
 	))
 
@@ -69,33 +369,209 @@ func MakeHTTPHandler(e Endpoints, logger log.Logger, lLogger *logrus.Entry, opts
 // encode / decode requests and responses
 // --------------------------------------------------------------------------
 
+// AppInfoRequest
+// --------------------------------------------------------------------------
 func decodeGetAppInfoRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
 	user := ensureUser(r)
 	return appinfo.GetAppInfoRequest{User: user}, nil
 }
 
+func encodeAppInfoResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	e, ok := response.(appinfo.GetAppInfoResponse)
+	if ok && e.Failed() != nil {
+		encodeError(ctx, e.Failed(), w)
+		return nil
+	}
+	return respondJSON(w, appinfo.AppInfo{
+		UserInfo:    e.AppInfo.UserInfo,
+		VersionInfo: e.AppInfo.VersionInfo,
+	})
+}
+
+// DocumentByIDRequest
+// --------------------------------------------------------------------------
 func decodeGetDocumentByIDRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
 	id := chi.URLParam(r, "id")
 	if id == "" {
-		return nil, fmt.Errorf("missing parameter")
+		return nil, shared.ErrValidation("missing 'id' path-parameter")
 	}
 	return document.GetDocumentByIDRequest{
 		ID: chi.URLParam(r, "id"),
 	}, nil
 }
 
-// encodeResponse is the common method to encode all response types to the
-// client. I chose to do it this way because, since we're using JSON, there's no
-// reason to provide anything more specific. It's certainly possible to
-// specialize on a per-response (per-method) basis.
-func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	if e, ok := response.(endpoint.Failer); ok && e.Failed() != nil {
-		// Not a Go kit transport error, but a business-logic error.
-		// Provide those as HTTP errors.
+func encodeGetDocumentByIDResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	e, ok := response.(document.GetDocumentByIDResponse)
+	if ok && e.Failed() != nil {
 		encodeError(ctx, e.Failed(), w)
 		return nil
 	}
-	return respondJSON(w, response)
+	return respondJSON(w, e.Document)
+}
+
+// GetFileRequest
+// --------------------------------------------------------------------------
+func decodeGetFileRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
+	path := r.URL.Query().Get("path")
+	if path == "" {
+		return nil, shared.ErrValidation("missing 'path' query-parameter")
+	}
+	decodedPath, err := base64.StdEncoding.DecodeString(path)
+	if err != nil {
+		return nil, err
+	}
+	return filestore.GetFilePathRequest{Path: string(decodedPath)}, nil
+}
+
+func encodeFilePathResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	e, ok := response.(filestore.GetFilePathResponse)
+	if ok && e.Failed() != nil {
+		encodeError(ctx, e.Failed(), w)
+		return nil
+	}
+
+	w.Header().Set("Content-Type", e.MimeType)
+	_, err := w.Write(e.Payload)
+	return err
+}
+
+// DeleteDocumentByIDRequest
+// --------------------------------------------------------------------------
+func decodeDeleteDocumentByIDRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		return nil, shared.ErrValidation("missing 'id' path-parameter")
+	}
+	return document.DeleteDocumentByIDRequest{
+		ID: chi.URLParam(r, "id"),
+	}, nil
+}
+
+func encodeDeleteDocumentByIDResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	e, ok := response.(document.DeleteDocumentByIDResponse)
+	if ok && e.Failed() != nil {
+		encodeError(ctx, e.Failed(), w)
+		return nil
+	}
+	return respondJSON(w, document.Result{
+		Result:  document.Deleted,
+		Message: fmt.Sprintf("Document with id '%s' was deleted.", e.ID),
+	})
+}
+
+// SearchListRequest
+// --------------------------------------------------------------------------
+func decodeSearchListRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
+	t := chi.URLParam(r, "type")
+	if t == "" {
+		return nil, shared.ErrValidation("missing 'type' path-parameter")
+	}
+	name := r.URL.Query().Get("name")
+
+	var st document.ListType
+	switch strings.ToLower(t) {
+	case "tags":
+		st = document.Tags
+	case "senders":
+		st = document.Senders
+	default:
+		return nil, shared.ErrValidation("only {Tags, Senders} are allowed types")
+	}
+
+	return document.SearchListRequest{
+		Name:       name,
+		SearchType: st,
+	}, nil
+}
+
+func encodeSearchListResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	e, ok := response.(document.SearchListResponse)
+	if ok && e.Failed() != nil {
+		encodeError(ctx, e.Failed(), w)
+		return nil
+	}
+
+	return respondJSON(w, EntriesResult{
+		Lenght:  len(e.Entries),
+		Entries: e.Entries,
+	})
+}
+
+// SearchDocumentRequest
+// --------------------------------------------------------------------------
+func decodeSearchDocumentsRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
+	var (
+		title    string
+		tag      string
+		sender   string
+		fromDate string
+		toDate   string
+		limit    int
+		skip     int
+		from     time.Time
+		to       time.Time
+	)
+
+	title = r.URL.Query().Get("title")
+	tag = r.URL.Query().Get("tag")
+	sender = r.URL.Query().Get("sender")
+	fromDate = r.URL.Query().Get("from")
+	toDate = r.URL.Query().Get("to")
+
+	from = parseDateTime(fromDate)
+	to = parseDateTime(toDate)
+
+	// defaults
+	limit = parseIntVal(r.URL.Query().Get("limit"), 20)
+	skip = parseIntVal(r.URL.Query().Get("skip"), 0)
+
+	return document.SearchDocumentsRequest{
+		Title:  title,
+		Tag:    tag,
+		Sender: sender,
+		From:   from,
+		Until:  to,
+		Limit:  limit,
+		Skip:   skip,
+	}, nil
+}
+
+func encodeSearchDocumentsResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	e, ok := response.(document.SearchDocumentsResponse)
+	if ok && e.Failed() != nil {
+		encodeError(ctx, e.Failed(), w)
+		return nil
+	}
+
+	return respondJSON(w, document.PagedDcoument{
+		TotalEntries: e.Result.TotalEntries,
+		Documents:    e.Result.Documents,
+	})
+}
+
+// SaveDocumentRequest
+// --------------------------------------------------------------------------
+func decodeSaveDocumentRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
+	payload := &DocumentRequest{}
+	if err := render.Bind(r, payload); err != nil {
+		return nil, shared.ErrValidation("invalid Document data supplied")
+	}
+	user := ensureUser(r)
+
+	return document.SaveDocumentRequest{
+		Document: *payload.Document,
+		User:     *user,
+	}, nil
+}
+
+func encodeSaveDocumentResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	e, ok := response.(document.SaveDocumentResponse)
+	if ok && e.Failed() != nil {
+		encodeError(ctx, e.Failed(), w)
+		return nil
+	}
+
+	return respondJSON(w, e.Document)
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -107,8 +583,9 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		panic("encodeError with nil error")
 	}
 	var (
-		pd          *pkgerr.ProblemDetail
-		errNotFound *shared.NotFoundError
+		pd            *pkgerr.ProblemDetail
+		errNotFound   *shared.NotFoundError
+		errValidation *shared.ValidationError
 	)
 	if errors.As(err, &errNotFound) {
 		pd = &pkgerr.ProblemDetail{
@@ -116,6 +593,13 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 			Title:  "object cannot be found",
 			Status: http.StatusNotFound,
 			Detail: errNotFound.Error(),
+		}
+	} else if errors.As(err, &errValidation) {
+		pd = &pkgerr.ProblemDetail{
+			Type:   t,
+			Title:  "error in parameter-validaton",
+			Status: http.StatusBadRequest,
+			Detail: errValidation.Error(),
 		}
 	} else {
 		pd = &pkgerr.ProblemDetail{
@@ -152,4 +636,22 @@ func writeProblemJSON(w http.ResponseWriter, pd *pkgerr.ProblemDetail) {
 	if err != nil {
 		stdlog.Printf("could not write bytes using http.ResponseWriter: %v\n", err)
 	}
+}
+
+func parseIntVal(input string, def int) int {
+	v, err := strconv.Atoi(input)
+	if err != nil {
+		return def
+	}
+	return v
+}
+
+const jsonTimeLayout = "2006-01-02T15:04:05+07:00"
+
+func parseDateTime(input string) time.Time {
+	t, err := time.Parse(jsonTimeLayout, input)
+	if err != nil {
+		return time.Time{}
+	}
+	return t
 }

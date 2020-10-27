@@ -1,6 +1,10 @@
 package security
 
-import "github.com/dgrijalva/jwt-go"
+import (
+	"fmt"
+
+	"github.com/dgrijalva/jwt-go"
+)
 
 // User is the authenticated principal extracted from the JWT token
 type User struct {
@@ -11,6 +15,11 @@ type User struct {
 	DisplayName   string
 	Authenticated bool
 	Token         string
+}
+
+// String represents the User struct as a string
+func (u User) String() string {
+	return fmt.Sprintf("%s (%s)", u.DisplayName, u.Username)
 }
 
 // JwtTokenPayload is the parsed contents of the given token

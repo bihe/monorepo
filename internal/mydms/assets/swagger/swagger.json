@@ -1,0 +1,600 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "The API API of the mydms-application.",
+    "title": "mydms-API",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+    },
+    "version": "3.0.0"
+  },
+  "host": "mydms.binggl.net",
+  "basePath": "/api/v1",
+  "paths": {
+    "/api/v1/apinfo": {
+      "get": {
+        "description": "get metadata of the aplication",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "appinfo"
+        ],
+        "operationId": "GetAppInfo",
+        "responses": {
+          "200": {
+            "description": "GetAppInfoResponse",
+            "schema": {
+              "$ref": "#/definitions/AppInfo"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents": {
+      "post": {
+        "description": "use the supplied document payload and store the data",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "documents"
+        ],
+        "summary": "create a document",
+        "operationId": "SaveDocument",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Document"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SaveDocumentResponse",
+            "schema": {
+              "$ref": "#/definitions/Document"
+            }
+          },
+          "400": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/search": {
+      "get": {
+        "description": "use filters to search for docments. the result is a paged set",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "documents"
+        ],
+        "operationId": "SearchDocuments",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "title search",
+            "name": "title",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "tag search",
+            "name": "tag",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "sender search",
+            "name": "sender",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "start date",
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "end date",
+            "name": "to",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "limit max results",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "skip N results (0-based)",
+            "name": "skip",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SearchDocumentsResponse",
+            "schema": {
+              "$ref": "#/definitions/PagedDcoument"
+            }
+          },
+          "400": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{id}": {
+      "get": {
+        "description": "use the supplied id to retrieve the document",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "documents"
+        ],
+        "operationId": "GetDocumentByID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GetDocumentByIDResponse",
+            "schema": {
+              "$ref": "#/definitions/Document"
+            }
+          },
+          "400": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "use the supplied id to delete the document from the store",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "documents"
+        ],
+        "operationId": "DeleteDocumentByID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DeleteDocumentByResponse",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "400": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{type}/search": {
+      "get": {
+        "description": "search either by tags or senders with the supplied search term",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "documents"
+        ],
+        "operationId": "SearchList",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "search type tags || senders",
+            "name": "type",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "search term",
+            "name": "name",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SearchListResponse",
+            "schema": {
+              "$ref": "#/definitions/EntriesResult"
+            }
+          },
+          "400": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/file": {
+      "get": {
+        "description": "returns the binary payload of the file",
+        "produces": [
+          "application/octet-stream",
+          "application/json"
+        ],
+        "tags": [
+          "filestore"
+        ],
+        "summary": "get file by path",
+        "operationId": "GetFile",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "path",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Binary file payload"
+          },
+          "400": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "401": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          },
+          "403": {
+            "description": "ProblemDetail",
+            "schema": {
+              "$ref": "#/definitions/ProblemDetail"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "AppInfo": {
+      "description": "AppInfo provides information of the authenticated user and application meta-data",
+      "type": "object",
+      "properties": {
+        "userInfo": {
+          "$ref": "#/definitions/UserInfo"
+        },
+        "versionInfo": {
+          "$ref": "#/definitions/VersionInfo"
+        }
+      },
+      "x-go-package": "golang.binggl.net/monorepo/internal/mydms/app/appinfo"
+    },
+    "Document": {
+      "description": "Document represents a document entity",
+      "type": "object",
+      "properties": {
+        "alternativeId": {
+          "type": "string",
+          "x-go-name": "AltID"
+        },
+        "amount": {
+          "type": "number",
+          "format": "float",
+          "x-go-name": "Amount"
+        },
+        "created": {
+          "type": "string",
+          "x-go-name": "Created"
+        },
+        "fileName": {
+          "type": "string",
+          "x-go-name": "FileName"
+        },
+        "id": {
+          "type": "string",
+          "x-go-name": "ID"
+        },
+        "invoiceNumber": {
+          "type": "string",
+          "x-go-name": "InvoiceNumber"
+        },
+        "modified": {
+          "type": "string",
+          "x-go-name": "Modified"
+        },
+        "previewLink": {
+          "type": "string",
+          "x-go-name": "PreviewLink"
+        },
+        "senders": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Senders"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Tags"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
+        "uploadFileToken": {
+          "type": "string",
+          "x-go-name": "UploadToken"
+        }
+      },
+      "x-go-package": "golang.binggl.net/monorepo/internal/mydms/app/document"
+    },
+    "EntriesResult": {
+      "description": "EntriesResult holds a list of strings",
+      "type": "object",
+      "properties": {
+        "length": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Lenght"
+        },
+        "result": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Entries"
+        }
+      },
+      "x-go-package": "golang.binggl.net/monorepo/internal/mydms"
+    },
+    "PagedDcoument": {
+      "description": "PagedDcoument represents a paged result",
+      "type": "object",
+      "properties": {
+        "documents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Document"
+          },
+          "x-go-name": "Documents"
+        },
+        "totalEntries": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TotalEntries"
+        }
+      },
+      "x-go-package": "golang.binggl.net/monorepo/internal/mydms/app/document"
+    },
+    "ProblemDetail": {
+      "description": "\"Note that both \"type\" and \"instance\" accept relative URIs; this means\nthat they must be resolved relative to the document's base URI\"",
+      "type": "object",
+      "title": "ProblemDetail combines the fields defined in RFC7807",
+      "properties": {
+        "detail": {
+          "description": "Detail is a human-readable explanation specific to this occurrence of the problem",
+          "type": "string",
+          "x-go-name": "Detail"
+        },
+        "instance": {
+          "description": "Instance is a URI reference that identifies the specific occurrence of the problem",
+          "type": "string",
+          "x-go-name": "Instance"
+        },
+        "status": {
+          "description": "Status is the HTTP status code",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Status"
+        },
+        "title": {
+          "description": "Title is a short, human-readable summary of the problem type",
+          "type": "string",
+          "x-go-name": "Title"
+        },
+        "type": {
+          "description": "Type is a URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the problem",
+          "type": "string",
+          "x-go-name": "Type"
+        }
+      },
+      "x-go-package": "golang.binggl.net/monorepo/pkg/errors"
+    },
+    "Result": {
+      "description": "Result is a generic result object",
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "x-go-name": "Message"
+        },
+        "result": {
+          "type": "string",
+          "enum": [
+            "none",
+            "created",
+            "updated",
+            "deleted"
+          ],
+          "x-go-name": "Result"
+        }
+      },
+      "x-go-package": "golang.binggl.net/monorepo/internal/mydms/app/document"
+    },
+    "UserInfo": {
+      "description": "UserInfo provides information about authenticated user",
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "description": "DisplayName of authenticated user",
+          "type": "string",
+          "x-go-name": "DisplayName"
+        },
+        "email": {
+          "description": "Email of authenticated user",
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "roles": {
+          "description": "Roles the authenticated user possesses",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Roles"
+        },
+        "userId": {
+          "description": "UserID of authenticated user",
+          "type": "string",
+          "x-go-name": "UserID"
+        },
+        "userName": {
+          "description": "UserName of authenticated user",
+          "type": "string",
+          "x-go-name": "UserName"
+        }
+      },
+      "x-go-package": "golang.binggl.net/monorepo/internal/mydms/app/appinfo"
+    },
+    "VersionInfo": {
+      "description": "VersionInfo contains application meta-data",
+      "type": "object",
+      "properties": {
+        "buildNumber": {
+          "description": "BuildNumber defines the specific build",
+          "type": "string",
+          "x-go-name": "BuildNumber"
+        },
+        "version": {
+          "description": "Version of the application",
+          "type": "string",
+          "x-go-name": "Version"
+        }
+      },
+      "x-go-package": "golang.binggl.net/monorepo/internal/mydms/app/appinfo"
+    }
+  }
+}

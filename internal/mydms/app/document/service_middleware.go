@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"golang.binggl.net/monorepo/internal/mydms/app/shared"
+	"golang.binggl.net/monorepo/pkg/security"
 )
 
 // ServiceMiddleware describes a service (as opposed to endpoint) middleware.
@@ -31,16 +32,31 @@ type loggingMiddleware struct {
 }
 
 func (mw loggingMiddleware) GetDocumentByID(id string) (d Document, err error) {
-	defer shared.Log(mw.logger, "GetDocumentByID", err, "param:ID", id)
+	shared.Log(mw.logger, "GetDocumentByID", err, "param:ID", id)
+	defer shared.Log(mw.logger, "GetDocumentByID-End", err)
 	return mw.next.GetDocumentByID(id)
 }
 
 func (mw loggingMiddleware) DeleteDocumentByID(id string) (err error) {
-	defer shared.Log(mw.logger, "DeleteDocumentByID", err, "param:ID", id)
+	shared.Log(mw.logger, "DeleteDocumentByID", err, "param:ID", id)
+	defer shared.Log(mw.logger, "DeleteDocumentByID-End", err)
 	return mw.next.DeleteDocumentByID(id)
 }
 
 func (mw loggingMiddleware) SearchDocuments(title, tag, sender string, from, until time.Time, limit, skip int) (p PagedDcoument, err error) {
-	defer shared.Log(mw.logger, "SearchDocuments", err, "param:title", title, "param:tag", tag, "param:sender", sender, "param:from", from, "param:until", until, "param:limit", limit, "param:skip", skip)
+	shared.Log(mw.logger, "SearchDocuments", err, "param:title", title, "param:tag", tag, "param:sender", sender, "param:from", from, "param:until", until, "param:limit", limit, "param:skip", skip)
+	defer shared.Log(mw.logger, "SearchDocuments-End", err)
 	return mw.next.SearchDocuments(title, tag, sender, from, until, limit, skip)
+}
+
+func (mw loggingMiddleware) SearchList(name string, st SearchType) (l []string, err error) {
+	shared.Log(mw.logger, "SearchList", err, "param:name", name, "param:st", st)
+	defer shared.Log(mw.logger, "SearchList-End", err)
+	return mw.next.SearchList(name, st)
+}
+
+func (mw loggingMiddleware) SaveDocument(doc Document, user security.User) (d Document, err error) {
+	shared.Log(mw.logger, "SaveDocument", err, "param:doc", doc, "param:user", user, "param.doc.filename", doc.FileName, "param.doc.uploadtoken", doc.UploadToken)
+	defer shared.Log(mw.logger, "SaveDocument-Err", err)
+	return mw.next.SaveDocument(doc, user)
 }

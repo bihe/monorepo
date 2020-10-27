@@ -161,7 +161,7 @@ type mockFileService struct {
 	callCount int
 }
 
-func newFileService() filestore.FileService {
+func newFileService() *mockFileService {
 	return &mockFileService{
 		errMap: make(map[int]error),
 	}
@@ -172,14 +172,16 @@ var (
 	_ filestore.FileService = &mockFileService{}
 )
 
-// SaveFile(file FileItem) error
-// GetFile(filePath string) (FileItem, error)
-// DeleteFile(filePath string) error
+func (m *mockFileService) InitClient() (err error) {
+	m.callCount++
+	return m.errMap[m.callCount]
+}
 
 func (m *mockFileService) SaveFile(file filestore.FileItem) error {
 	m.callCount++
 	return m.errMap[m.callCount]
 }
+
 func (m *mockFileService) GetFile(filePath string) (filestore.FileItem, error) {
 	m.callCount++
 	return filestore.FileItem{
@@ -189,6 +191,7 @@ func (m *mockFileService) GetFile(filePath string) (filestore.FileItem, error) {
 		Payload:    []byte(pdfPayload),
 	}, m.errMap[m.callCount]
 }
+
 func (m *mockFileService) DeleteFile(filePath string) error {
 	m.callCount++
 	return m.errMap[m.callCount]

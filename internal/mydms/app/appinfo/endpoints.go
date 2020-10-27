@@ -32,4 +32,5 @@ type GetAppInfoResponse struct {
 	Err     error `json:"err,omitempty"`
 }
 
-func (r GetAppInfoResponse) Error() error { return r.Err }
+// Failed implements endpoint.Failer.
+func (r GetAppInfoResponse) Failed() error { return r.Err }

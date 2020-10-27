@@ -1,6 +1,7 @@
 package document
 
 import (
+	"database/sql"
 	"encoding/base64"
 	"fmt"
 	"strings"
@@ -10,7 +11,9 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
 	"golang.binggl.net/monorepo/internal/mydms/app/shared"
+	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	"golang.binggl.net/monorepo/pkg/persistence"
+	"golang.binggl.net/monorepo/pkg/security"
 )
 
 // --------------------------------------------------------------------------
@@ -25,17 +28,23 @@ type Service interface {
 	DeleteDocumentByID(id string) (err error)
 	// SearchDocuments performs a search and returns paginated results
 	SearchDocuments(title, tag, sender string, from, until time.Time, limit, skip int) (p PagedDcoument, err error)
+	// SearchList searches for senders or tags
+	SearchList(name string, st SearchType) (l []string, err error)
+	// SaveDocument receives a document and stores it
+	// either creation a new document or updating an existing
+	SaveDocument(doc Document, user security.User) (d Document, err error)
 }
 
 // NewService returns a Service with all of the expected middlewares wired in.
-func NewService(logger log.Logger, repo Repository, fileSvc filestore.FileService) Service {
+func NewService(logger log.Logger, repo Repository, fileSvc filestore.FileService, uploadClient upload.Client) Service {
 	var svc Service
 	{
 		svc = &documentService{
-			repo:    repo,
-			policy:  bluemonday.UGCPolicy(),
-			logger:  logger,
-			fileSvc: fileSvc,
+			repo:         repo,
+			policy:       bluemonday.UGCPolicy(),
+			logger:       logger,
+			fileSvc:      fileSvc,
+			uploadClient: uploadClient,
 		}
 		svc = ServiceLoggingMiddleware(logger)(svc)
 	}
@@ -54,10 +63,11 @@ var (
 )
 
 type documentService struct {
-	repo    Repository
-	policy  *bluemonday.Policy
-	fileSvc filestore.FileService
-	logger  log.Logger
+	repo         Repository
+	policy       *bluemonday.Policy
+	fileSvc      filestore.FileService
+	logger       log.Logger
+	uploadClient upload.Client
 }
 
 // GetDocumentByID returns a Document object for a specified id, or returns an error if the document is not found
@@ -133,6 +143,80 @@ func (s documentService) SearchDocuments(title, tag, sender string, from, until 
 	pd.TotalEntries = docs.Count
 
 	return pd, nil
+}
+
+// SearchList searches for senders or tags
+func (s documentService) SearchList(name string, st SearchType) (l []string, err error) {
+	result, err := s.repo.SearchLists(name, st)
+	if err != nil {
+		shared.Log(s.logger, "document.SearchList", fmt.Errorf("error searching for '%s'; %v", name, err))
+		return nil, fmt.Errorf("could not search for '%s': %v", name, err)
+	}
+	return result, nil
+}
+
+// SaveDocument receives a document and stores it
+// either creation a new document or updating an existing
+func (s documentService) SaveDocument(doc Document, user security.User) (d Document, err error) {
+	var (
+		docE DocEntity
+	)
+
+	atomic, err := s.repo.CreateAtomic()
+	if err != nil {
+		shared.Log(s.logger, "document.SaveDocument", fmt.Errorf("could not start tx; %v", err))
+		return
+	}
+
+	// complete the atomic method
+	defer func() {
+		err = persistence.HandleTX(true, &atomic, err)
+	}()
+
+	cleanDoc := s.sanitize(&doc)
+	d = *cleanDoc
+
+	filename, err := s.procssUploadFile(d.UploadToken, d.FileName, atomic, user)
+	if err != nil {
+		shared.Log(s.logger, "document.SaveDocument", fmt.Errorf("could not process the uploaded file, %v", err))
+		return
+	}
+	if filename == "" {
+		shared.Log(s.logger, "document.SaveDocument", fmt.Errorf("processUploadFile did not return an error, but the filename is empty"))
+		return d, fmt.Errorf("no filename is available for the documment")
+	}
+	d.FileName = filename
+
+	tagList := strings.Join(d.Tags, ";")
+	senderList := strings.Join(d.Senders, ";")
+
+	if d.ID == "" {
+		docE = initDocument(&d, senderList, tagList)
+	} else {
+		// supplied ID needs to be checked if exists
+		docE, err = s.repo.Get(d.ID)
+		if err != nil {
+			shared.Log(s.logger, "document.SaveDocument", fmt.Errorf("cannot find document by ID '%s' - create a new entry, %v", d.ID, err))
+			docE = initDocument(&d, senderList, tagList)
+		} else {
+			shared.Log(s.logger, "document.SaveDocument", nil, "info", fmt.Sprintf("will update existing document ID '%s'", d.ID))
+			docE.Title = d.Title
+			docE.FileName = d.FileName
+			docE.PreviewLink = sql.NullString{String: base64.StdEncoding.EncodeToString([]byte(d.FileName)), Valid: true}
+			docE.Amount = d.Amount
+			docE.SenderList = senderList
+			docE.TagList = tagList
+			docE.InvoiceNumber = sql.NullString{String: d.InvoiceNumber, Valid: true}
+		}
+	}
+
+	docE, err = s.repo.Save(docE, atomic)
+	if err != nil {
+		shared.Log(s.logger, "document.SaveDocument", fmt.Errorf("could not save document: %v", err))
+		return d, fmt.Errorf("error while saving document: %v", err)
+	}
+
+	return s.convertToDomain(docE), nil
 }
 
 // --------------------------------------------------------------------------
@@ -219,4 +303,51 @@ func (s documentService) sanitize(d *Document) *Document {
 		doc.Senders = append(doc.Senders, s.policy.Sanitize(sender))
 	}
 	return &doc
+}
+
+func (s documentService) procssUploadFile(token, fileName string, atomic persistence.Atomic, user security.User) (string, error) {
+	if token == "" || token == "-" {
+		return fileName, nil
+	}
+	u, err := s.uploadClient.Get(token, user.Token)
+	if err != nil {
+		shared.Log(s.logger, "document.procssUploadFile", fmt.Errorf("could not read upload-file for token '%s', %v", token, err))
+		return "", fmt.Errorf("upload token error: %v", err)
+	}
+	shared.Log(s.logger, "document.procssUploadFile", nil, "info", fmt.Sprintf("use uploaded file identified by token '%s'", token))
+
+	now := time.Now().UTC()
+	folder := now.Format("2006_01_02")
+	shared.Log(s.logger, "document.procssUploadFile", nil, "info", fmt.Sprintf("got upload file '%s' with payload size '%d'!", u.FileName, len(u.Payload)))
+
+	item := filestore.FileItem{
+		FileName:   fileName,
+		FolderName: folder,
+		MimeType:   u.MimeType,
+		Payload:    u.Payload,
+	}
+	err = s.fileSvc.SaveFile(item)
+	if err != nil {
+		shared.Log(s.logger, "document.procssUploadFile", fmt.Errorf("could not save file '%s', %v", u.FileName, err))
+		return "", fmt.Errorf("error while saving file: %v", err)
+	}
+
+	err = s.uploadClient.Delete(token, user.Token)
+	if err != nil {
+		// this error is ignored, does not invalidate the overall operation
+		shared.Log(s.logger, "document.procssUploadFile", fmt.Errorf("could not delete the upload-item by id '%s', %v", token, err))
+	}
+	return fmt.Sprintf("/%s/%s", folder, fileName), nil
+}
+
+func initDocument(d *Document, sList, tList string) DocEntity {
+	return DocEntity{
+		Title:         d.Title,
+		FileName:      d.FileName,
+		PreviewLink:   sql.NullString{String: base64.StdEncoding.EncodeToString([]byte(d.FileName)), Valid: true},
+		Amount:        d.Amount,
+		SenderList:    sList,
+		TagList:       tList,
+		InvoiceNumber: sql.NullString{String: d.InvoiceNumber, Valid: true},
+	}
 }

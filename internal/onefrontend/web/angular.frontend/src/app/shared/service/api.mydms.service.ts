@@ -15,7 +15,7 @@ import { BaseDataService } from './api.base.service';
 export class ApiMydmsService extends BaseDataService {
   private readonly SEARCH_DOCUMENTS: string = '/documents/search';
   private readonly APP_INFO_URL: string = '/appinfo';
-  private readonly SAVE_DOCUMENTS_URL: string = '/documents/';
+  private readonly SAVE_DOCUMENTS_URL: string = '/documents';
   private readonly LOAD_DOCUMENT_URL: string = '/documents/%ID%';
 
   private readonly SEARCH_SENDERS_URL: string = '/documents/senders/search';

@@ -6,7 +6,7 @@ ARG FRONTEND_MODE=build
 ENV FRONTEND_MODE=${FRONTEND_MODE}
 
 WORKDIR /frontend-build
-COPY ./onefrontend/web/angular.frontend .
+COPY ./internal/onefrontend/web/angular.frontend .
 RUN echo ${FRONTEND_MODE}
 RUN rm -f package-lock.json && yarn global add @angular/cli@latest && yarn install && yarn run ${FRONTEND_MODE} --base-href /ui/
 ## --------------------------------------------------------------------------
@@ -26,10 +26,10 @@ ENV COMMIT=${buildtime_variable_commit}
 WORKDIR /backend-build
 COPY ./cmd ./cmd
 COPY ./go.mod ./
-COPY ./onefrontend  ./onefrontend
+COPY ./internal/onefrontend  ./internal/onefrontend
 COPY ./pkg ./pkg
 COPY ./proto ./proto
-COPY ./crypter ./crypter
+COPY ./internal/crypter ./internal/crypter
 RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -o onefrontend.api ./cmd/onefrontend/server/*.go
 ## --------------------------------------------------------------------------
 
@@ -40,8 +40,8 @@ LABEL author="henrik@binggl.net"
 WORKDIR /opt/onefrontend
 RUN mkdir -p /opt/onefrontend/etc && mkdir -p /opt/onefrontend/logs && mkdir -p /opt/onefrontend/uploads && mkdir -p /opt/onefrontend/templates && mkdir -p /opt/onefrontend/web/assets/ui
 ## required folders assets && templates
-COPY --from=BACKEND-BUILD /backend-build/onefrontend/web/assets /opt/onefrontend/web/assets
-COPY --from=BACKEND-BUILD /backend-build/onefrontend/templates /opt/onefrontend/templates
+COPY --from=BACKEND-BUILD /backend-build/internal/onefrontend/web/assets /opt/onefrontend/web/assets
+COPY --from=BACKEND-BUILD /backend-build/internal/onefrontend/templates /opt/onefrontend/templates
 ## the executable
 COPY --from=BACKEND-BUILD /backend-build/onefrontend.api /opt/onefrontend
 ## the SPA frontend

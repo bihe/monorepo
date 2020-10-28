@@ -27,7 +27,7 @@ type Service interface {
 	// DeleteDocumentByID deletes a document specified by the given id
 	DeleteDocumentByID(id string) (err error)
 	// SearchDocuments performs a search and returns paginated results
-	SearchDocuments(title, tag, sender string, from, until time.Time, limit, skip int) (p PagedDcoument, err error)
+	SearchDocuments(title, tag, sender string, from, until time.Time, limit, skip int) (p PagedDocument, err error)
 	// SearchList searches for senders or tags
 	SearchList(name string, st SearchType) (l []string, err error)
 	// SaveDocument receives a document and stores it
@@ -112,10 +112,10 @@ func (s documentService) DeleteDocumentByID(id string) (err error) {
 }
 
 // SearchDocuments performs a search and returns paginated results
-func (s documentService) SearchDocuments(title, tag, sender string, from, until time.Time, limit, skip int) (p PagedDcoument, err error) {
+func (s documentService) SearchDocuments(title, tag, sender string, from, until time.Time, limit, skip int) (p PagedDocument, err error) {
 	var (
 		order []OrderBy
-		pd    PagedDcoument
+		pd    PagedDocument
 	)
 
 	// defaults

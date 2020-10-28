@@ -16,6 +16,8 @@ import (
 
 var logger = log.New().WithField("mode", "test")
 
+const unencryptedPDF = "../../../testdata/unencrypted.pdf"
+
 // --------------------------------------------------------------------------
 
 type mockStore struct {
@@ -75,7 +77,7 @@ func TestService_FileType_CaseInsensitive(t *testing.T) {
 		MaxUploadSize:    10000,
 		AllowedFileTypes: []string{"pdf"},
 	})
-	payload, err := ioutil.ReadFile("../../testdata/unencrypted.pdf")
+	payload, err := ioutil.ReadFile(unencryptedPDF)
 	if err != nil {
 		t.Fatalf("could not read testfile: %v", err)
 	}
@@ -105,7 +107,7 @@ func TestService_Write_Read_Delete(t *testing.T) {
 		AllowedFileTypes: []string{"pdf", "png"},
 	})
 
-	payload, err := ioutil.ReadFile("../../testdata/unencrypted.pdf")
+	payload, err := ioutil.ReadFile(unencryptedPDF)
 	if err != nil {
 		t.Fatalf("could not read testfile: %v", err)
 	}
@@ -192,7 +194,7 @@ func TestService_Write_Encrypt(t *testing.T) {
 		TimeOut:          "10s",
 	})
 
-	payload, err := ioutil.ReadFile("../../testdata/unencrypted.pdf")
+	payload, err := ioutil.ReadFile(unencryptedPDF)
 	if err != nil {
 		t.Fatalf("could not read testfile: %v", err)
 	}
@@ -251,7 +253,7 @@ func Test_Service_Errors_Store(t *testing.T) {
 		AllowedFileTypes: []string{"pdf", "png"},
 	})
 
-	payload, err := ioutil.ReadFile("../../testdata/unencrypted.pdf")
+	payload, err := ioutil.ReadFile(unencryptedPDF)
 	if err != nil {
 		t.Fatalf("could not read testfile: %v", err)
 	}

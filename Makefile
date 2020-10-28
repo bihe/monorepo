@@ -75,9 +75,6 @@ mydms-build:
 mydms-release:
 	@-$(MAKE) -s mydms_go_build-release
 
-mydms-swagger:
-	@-$(MAKE) -s mydms_generate_swagger
-
 
 # ---------------------------------------------------------------------------
 # docker tasks
@@ -182,12 +179,7 @@ mydms_go_build:
 
 mydms_go_build-release:
 	@echo "  >  Building mydms ..."
-	GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w -X main.Version=${VERSION}${COMMIT} -X main.Build=${BUILD}" -o ./dist/mydms.api ./cmd/mydms/server/*.go
-
-mydms_generate_swagger:
-	# go get -u github.com/swaggo/swag/cmd/swag
-	@echo "  >  Create/Update the mydms swagger files"
-	swag init --generalInfo ./mydms/server/server.go --output ./mydms/docs
+	GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w -X main.Version=${VERSION}${COMMIT} -X main.Build=${BUILD}" -o ./dist/mydms.api ./cmd/mydms/solid/*.go
 
 __docker-build-mydms:
 	@echo " ... building 'mydms' docker image"
@@ -195,7 +187,7 @@ __docker-build-mydms:
 
 __docker-run-mydms:
 	@echo " ... running 'mydms' docker image"
-	docker run -it -p 127.0.0.1:3000:3000 -v "$(PWD)/mydms-go":/opt/mydms/etc mydms
+	docker run -it -p 127.0.0.1:3000:3000 --env-file=$(PWD)/internal/mydms/.env -v "$(PWD)/internal/mydms":/opt/mydms/etc mydms
 
 # ---------------------------------------------------------------------------
 # bookmarks

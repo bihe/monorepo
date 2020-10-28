@@ -58,7 +58,7 @@ func MakeSaveDocumentEnpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(SaveDocumentRequest)
 		document, err := s.SaveDocument(req.Document, req.User)
-		return SaveDocumentResponse{Err: err, Document: document}, nil
+		return SaveDocumentResponse{Err: err, ID: document.ID}, nil
 	}
 }
 
@@ -155,7 +155,7 @@ type SearchDocumentsRequest struct {
 // SearchDocumentsResponse is the response of a search-request
 type SearchDocumentsResponse struct {
 	Err    error         `json:"err,omitempty"`
-	Result PagedDcoument `json:"result"`
+	Result PagedDocument `json:"result"`
 }
 
 // Failed implements endpoint.Failer.
@@ -172,8 +172,8 @@ type SaveDocumentRequest struct {
 
 // SaveDocumentResponse returns the document if the request was successfull
 type SaveDocumentResponse struct {
-	Err      error    `json:"err,omitempty"`
-	Document Document `json:"document,omitempty"`
+	Err error  `json:"err,omitempty"`
+	ID  string `json:"id,omitempty"`
 }
 
 // Failed implements endpoint.Failer.

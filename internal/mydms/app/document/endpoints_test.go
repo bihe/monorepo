@@ -31,11 +31,11 @@ func (s mockService) DeleteDocumentByID(id string) (err error) {
 	return nil
 }
 
-func (s mockService) SearchDocuments(title, tag, sender string, from, until time.Time, limit, skip int) (p document.PagedDcoument, err error) {
+func (s mockService) SearchDocuments(title, tag, sender string, from, until time.Time, limit, skip int) (p document.PagedDocument, err error) {
 	if s.fail {
-		return document.PagedDcoument{}, fmt.Errorf("error")
+		return document.PagedDocument{}, fmt.Errorf("error")
 	}
-	return document.PagedDcoument{
+	return document.PagedDocument{
 		Documents: []document.Document{
 			{
 				ID: "id",
@@ -280,7 +280,7 @@ func Test_Endpoint_SaveDocument(t *testing.T) {
 	if resp.Err != nil {
 		t.Errorf("the response returned error: %v", resp.Err)
 	}
-	assert.Equal(t, "id", resp.Document.ID)
+	assert.Equal(t, "id", resp.ID)
 }
 
 func Test_Endpoint_SaveDocument_Fail(t *testing.T) {

@@ -156,7 +156,7 @@ func MakeHTTPHandler(e Endpoints, logger log.Logger, lLogger *logrus.Entry, opts
 	//   '200':
 	//     description: DeleteDocumentByResponse
 	//     schema:
-	//       "$ref": "#/definitions/Result"
+	//       "$ref": "#/definitions/IDResult"
 	//   '400':
 	//     description: ProblemDetail
 	//     schema:
@@ -300,7 +300,7 @@ func MakeHTTPHandler(e Endpoints, logger log.Logger, lLogger *logrus.Entry, opts
 	//   '200':
 	//     description: SaveDocumentResponse
 	//     schema:
-	//       "$ref": "#/definitions/Document"
+	//       "$ref": "#/definitions/IDResult"
 	//   '400':
 	//     description: ProblemDetail
 	//     schema:
@@ -313,7 +313,7 @@ func MakeHTTPHandler(e Endpoints, logger log.Logger, lLogger *logrus.Entry, opts
 	//     description: ProblemDetail
 	//     schema:
 	//       "$ref": "#/definitions/ProblemDetail"
-	apiRouter.Method("POST", "/api/v1/documents", httptransport.NewServer(
+	apiRouter.Method("POST", "/documents", httptransport.NewServer(
 		e.SaveDocumentEndpoint,
 		decodeSaveDocumentRequest,
 		encodeSaveDocumentResponse,
@@ -418,7 +418,7 @@ func decodeGetFileRequest(_ context.Context, r *http.Request) (request interface
 	}
 	decodedPath, err := base64.StdEncoding.DecodeString(path)
 	if err != nil {
-		return nil, err
+		return nil, shared.ErrValidation("'path' is not in base64 format")
 	}
 	return filestore.GetFilePathRequest{Path: string(decodedPath)}, nil
 }
@@ -453,9 +453,12 @@ func encodeDeleteDocumentByIDResponse(ctx context.Context, w http.ResponseWriter
 		encodeError(ctx, e.Failed(), w)
 		return nil
 	}
-	return respondJSON(w, document.Result{
-		Result:  document.Deleted,
-		Message: fmt.Sprintf("Document with id '%s' was deleted.", e.ID),
+	return respondJSON(w, document.IDResult{
+		Result: document.Result{
+			ActionResult: document.Deleted,
+			Message:      fmt.Sprintf("Document with id '%s' was deleted.", e.ID),
+		},
+		ID: e.ID,
 	})
 }
 
@@ -543,7 +546,7 @@ func encodeSearchDocumentsResponse(ctx context.Context, w http.ResponseWriter, r
 		return nil
 	}
 
-	return respondJSON(w, document.PagedDcoument{
+	return respondJSON(w, document.PagedDocument{
 		TotalEntries: e.Result.TotalEntries,
 		Documents:    e.Result.Documents,
 	})
@@ -571,7 +574,13 @@ func encodeSaveDocumentResponse(ctx context.Context, w http.ResponseWriter, resp
 		return nil
 	}
 
-	return respondJSON(w, e.Document)
+	return respondJSON(w, document.IDResult{
+		Result: document.Result{
+			ActionResult: document.Saved,
+			Message:      fmt.Sprintf("Document with id '%s' was saved.", e.ID),
+		},
+		ID: e.ID,
+	})
 }
 
 // --------------------------------------------------------------------------------------------------------------------

@@ -13,8 +13,10 @@ ENV COMMIT=${buildtime_variable_commit}
 WORKDIR /backend-build
 COPY ./cmd ./cmd
 COPY ./go.mod ./
-COPY ./mydms  ./mydms
+COPY ./internal/mydms ./internal/mydms
 COPY ./pkg ./pkg
+COPY ./tools ./tools
+RUN go generate ./...
 RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -o mydms.api ./cmd/mydms/server/*.go
 ## --------------------------------------------------------------------------
 
@@ -25,6 +27,7 @@ LABEL author="henrik@binggl.net"
 WORKDIR /opt/mydms
 RUN mkdir -p /opt/mydms/uploads && mkdir -p /opt/mydms/etc && mkdir -p /opt/mydms/logs
 COPY --from=BACKEND-BUILD /backend-build/mydms.api /opt/mydms
+COPY --from=BACKEND-BUILD /backend-build/internal/mydms/assets /opt/mydms/assets
 
 EXPOSE 3000
 

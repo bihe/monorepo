@@ -44,8 +44,8 @@ var logger = log.NewLogfmtLogger(os.Stderr)
 */
 const testToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4NzAzOTI2NDcsImp0aSI6IjZmYWQ1YzAwLWZlZTItNDU5Yy1hYmFkLTIwNDU3Y2ZmM2Q4YSIsImlhdCI6MTU1OTc4Nzg0NywiaXNzIjoiaXNzdWVyIiwic3ViIjoidXNlciIsIlR5cGUiOiJsb2dpbi5Vc2VyIiwiRGlzcGxheU5hbWUiOiJEaXNwbGF5IE5hbWUiLCJFbWFpbCI6ImEuYkBjLmRlIiwiVXNlcklkIjoiMTIzNDUiLCJVc2VyTmFtZSI6ImEuYkBjLmRlIiwiR2l2ZW5OYW1lIjoiRGlzcGxheSIsIlN1cm5hbWUiOiJOYW1lIiwiQ2xhaW1zIjpbImNsYWltfGh0dHA6Ly9sb2NhbGhvc3Q6MzAwMHxyb2xlIl19.qUwvHXBmV_FuwLtykOnzu3AMbxSqrg82bQlAi3Nabyo"
 
-const encryptedPDF = "../testdata/encrypted.pdf"
-const unencryptedPDF = "../testdata/unencrypted.pdf"
+const encryptedPDF = "../../testdata/encrypted.pdf"
+const unencryptedPDF = "../../testdata/unencrypted.pdf"
 
 func TestEncryption_Validate_Input(t *testing.T) {
 	svc := crypter.NewService(logger, tokenSecurity)

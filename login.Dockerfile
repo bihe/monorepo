@@ -15,7 +15,7 @@ ENV COMMIT=${buildtime_variable_commit}
 WORKDIR /backend-build
 COPY ./cmd ./cmd
 COPY ./go.mod ./
-COPY ./login  ./login
+COPY ./internal/login  ./internal/login
 COPY ./pkg ./pkg
 RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -o login.api ./cmd/login/server/*.go
 ## --------------------------------------------------------------------------
@@ -27,8 +27,8 @@ LABEL author="henrik@binggl.net"
 WORKDIR /opt/login
 RUN mkdir -p /opt/login/etc && mkdir -p /opt/login/logs && mkdir -p /opt/login/templates && mkdir -p /opt/login/web
 ## required folders assets && templates
-COPY --from=BACKEND-BUILD /backend-build/login/web /opt/login/web
-COPY --from=BACKEND-BUILD /backend-build/login/templates /opt/login/templates
+COPY --from=BACKEND-BUILD /backend-build/internal/login/web /opt/login/web
+COPY --from=BACKEND-BUILD /backend-build/internal/login/templates /opt/login/templates
 ## the executable
 COPY --from=BACKEND-BUILD /backend-build/login.api /opt/login
 

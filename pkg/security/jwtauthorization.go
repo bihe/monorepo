@@ -100,7 +100,7 @@ func ParseJwtToken(token, tokenSecret, issuer string) (JwtTokenPayload, error) {
 		claims, ok := parsed.Claims.(*JwtTokenPayload)
 		if ok {
 			if validIssuer := claims.StandardClaims.VerifyIssuer(issuer, true); !validIssuer {
-				return JwtTokenPayload{}, fmt.Errorf("invalid issued created the token")
+				return JwtTokenPayload{}, fmt.Errorf("invalid issuer created the token")
 			}
 			return *claims, nil
 		}

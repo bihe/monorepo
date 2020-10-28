@@ -1,31 +1,20 @@
-onefrontend/.git
-onefrontend/.build
-onefrontend/.vscode
-onefrontend/logs
-onefrontend/web/angular.frontend/node_modules
-onefrontend/web/angular.frontend/dist
+internal/onefrontend/logs
+internal/onefrontend/web/angular.frontend/node_modules
+internal/onefrontend/web/angular.frontend/dist
 
-mydms/.git
-mydms/.build
-mydms/.vscode
-mydms/logs
+internal/mydms/logs
 
-login/.git
-login/.build
-login/.vscode
-login/logs
+internal/login/logs
 
-bookmarks/.git
-bookmarks/.build
-bookmarks/.vscode
-bookmarks/_logs
-bookmarks/postman
-bookmarks/uploads
+internal/bookmarks/_logs
+internal/bookmarks/postman
+internal/bookmarks/uploads
 
 _logs/
+.git/
+.github/
 .build/
 .vscode/
 db/
 dist/
 testdata/
-tools/

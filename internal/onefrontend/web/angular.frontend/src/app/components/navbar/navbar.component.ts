@@ -19,10 +19,11 @@ export class NavbarComponent implements OnInit {
   showProgress = false;
   appData: AppInfo;
   year: number = new Date().getFullYear();
+  isSiteAdmin = false;
 
   constructor(private state: ApplicationState,
     private appInfoService: ApiAppInfoService,
-    private snackBar: MatSnackBar) { 
+    private snackBar: MatSnackBar) {
 
       this.appInfoService.getApplicationInfo()
       .subscribe(
@@ -49,6 +50,14 @@ export class NavbarComponent implements OnInit {
         this.currentRoute = data;
       }
     );
+    // get the user-role for the site-application
+    // if the user is admin, the menu can be shown
+    this.state.getSitesVersion().subscribe(x => {
+      if (x.userInfo.roles.findIndex(r => r.toLowerCase() === 'admin') > -1) {
+        this.isSiteAdmin = true;
+      }
+    });
+
     this.state.getShowAmount()
       .subscribe(
         x => {
@@ -68,7 +77,7 @@ export class NavbarComponent implements OnInit {
         );
     });
 
-    
+
   }
 
   isCurrentRout(route: string): boolean {

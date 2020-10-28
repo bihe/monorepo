@@ -13,7 +13,7 @@ ENV COMMIT=${buildtime_variable_commit}
 WORKDIR /backend-build
 COPY ./cmd ./cmd
 COPY ./go.mod ./
-COPY ./crypter  ./crypter
+COPY ./internal/crypter  ./internal/crypter
 COPY ./pkg ./pkg
 COPY ./proto ./proto
 RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -o crypter.api ./cmd/crypter/server/*.go

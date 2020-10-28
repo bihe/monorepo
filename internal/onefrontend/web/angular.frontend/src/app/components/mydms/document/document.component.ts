@@ -171,7 +171,7 @@ export class MyDmsDocumentComponent implements OnInit {
         .subscribe(
           result => {
             if (result) {
-              if (result.result === 'Created' || result.result === 'Updated') {
+              if (result.result === 'saved') {
                 this.state.setProgress(false);
                 console.log(result.message);
                 this.router.navigate(['/' + Globals.MyDmsPath]);
@@ -202,7 +202,7 @@ export class MyDmsDocumentComponent implements OnInit {
         this.service.deleteDocument(this.document.id)
           .subscribe(
             r => {
-              if (r.result === 'Deleted') {
+              if (r.result === 'deleted') {
                 this.state.setProgress(false);
                 console.log(r.message);
                 this.router.navigate(['/' + Globals.MyDmsPath]);

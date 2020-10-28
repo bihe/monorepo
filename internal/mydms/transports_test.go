@@ -1,11 +1,14 @@
 package mydms_test
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -18,9 +21,12 @@ import (
 	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
 	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	"golang.binggl.net/monorepo/pkg/config"
+	"golang.binggl.net/monorepo/pkg/persistence"
 	"golang.binggl.net/monorepo/pkg/security"
 
 	pkgerr "golang.binggl.net/monorepo/pkg/errors"
+
+	_ "github.com/mattn/go-sqlite3" // use sqlite for testing
 )
 
 // --------------------------------------------------------------------------
@@ -28,6 +34,22 @@ import (
 // --------------------------------------------------------------------------
 
 // FileService --------------------------------------------------------------
+
+// rather small PDF payload
+// https://stackoverflow.com/questions/17279712/what-is-the-smallest-possible-valid-pdf
+const pdfPayload = `%PDF-1.0
+1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 3 3]>>endobj
+xref
+0 4
+0000000000 65535 f
+0000000010 00000 n
+0000000053 00000 n
+0000000102 00000 n
+trailer<</Size 4/Root 1 0 R>>
+startxref
+149
+%EOF
+`
 
 type mockFileService struct {
 	fail bool
@@ -47,7 +69,7 @@ func (m *mockFileService) GetFile(filePath string) (item filestore.FileItem, err
 	}
 	return filestore.FileItem{
 		MimeType: "application/pdf",
-		Payload:  []byte{0},
+		Payload:  []byte(pdfPayload),
 	}, nil
 }
 
@@ -123,11 +145,11 @@ func (s *mockDocumentService) DeleteDocumentByID(id string) (err error) {
 	return nil
 }
 
-func (s *mockDocumentService) SearchDocuments(title, tag, sender string, from, until time.Time, limit, skip int) (p document.PagedDcoument, err error) {
+func (s *mockDocumentService) SearchDocuments(title, tag, sender string, from, until time.Time, limit, skip int) (p document.PagedDocument, err error) {
 	if s.fail {
-		return document.PagedDcoument{}, fmt.Errorf("error")
+		return document.PagedDocument{}, fmt.Errorf("error")
 	}
-	return document.PagedDcoument{
+	return document.PagedDocument{
 		Documents: []document.Document{
 			{
 				ID: "id",
@@ -402,7 +424,7 @@ func Test_DeleteDocumentByID(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
 		t.Errorf("could not unmarshal: %v", err)
 	}
-	assert.Equal(t, document.Deleted, result.Result)
+	assert.Equal(t, document.Deleted, result.ActionResult)
 }
 
 func Test_DeleteDocumentByID_Invalid_Param(t *testing.T) {
@@ -540,4 +562,378 @@ func Test_SearchList_Fail(t *testing.T) {
 		t.Errorf("could not unmarshal: %v", err)
 	}
 	assert.Equal(t, 500, pd.Status)
+}
+
+// SearchDocuments ----------------------------------------------------------
+
+const search_documents_route = "/api/v1/documents/search"
+
+func Test_SearchDocuments(t *testing.T) {
+	var result document.PagedDocument
+
+	var url string
+	url = search_documents_route
+	url = url + "?title=a&tag=b&limit=10&skip=0"
+
+	// arrange
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", url, nil)
+	addAuth(req)
+
+	// act
+	handler().ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+
+	assert.Equal(t, 1, result.TotalEntries)
+}
+
+func Test_SearchDocuments_Fail(t *testing.T) {
+	var pd pkgerr.ProblemDetail
+
+	var url string
+	url = search_documents_route
+	url = url + "?title=a&tag=b&limit=10&skip=0"
+
+	// arrange
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", url, nil)
+	addAuth(req)
+
+	// act
+	handlerWith(&handlerOps{
+		docSvc: &mockDocumentService{fail: true},
+	}).ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &pd); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+}
+
+// SaveDocument -------------------------------------------------------------
+
+const save_document_route = "/api/v1/documents"
+
+func Test_SaveDocument(t *testing.T) {
+	var result document.Document
+
+	// arrange
+	rec := httptest.NewRecorder()
+	payload := `{
+		"id": "ID",
+		"title": "Title",
+		"fileName": "FileName",
+		"senders": ["sender"],
+		"tags": ["tag"]
+	}`
+	req, _ := http.NewRequest("POST", save_document_route, strings.NewReader(payload))
+	req.Header.Add("Content-Type", "application/json")
+	addAuth(req)
+
+	// act
+	handler().ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+
+	// invalid document supplied
+	rec = httptest.NewRecorder()
+	var pd pkgerr.ProblemDetail
+	req, _ = http.NewRequest("POST", save_document_route, strings.NewReader("{}"))
+	req.Header.Add("Content-Type", "application/json")
+	addAuth(req)
+
+	// act
+	handler().ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &pd); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+}
+
+func Test_SaveDocument_Fail(t *testing.T) {
+	var pd pkgerr.ProblemDetail
+
+	// arrange
+	rec := httptest.NewRecorder()
+	payload := `{
+		"id": "ID",
+		"title": "Title",
+		"fileName": "FileName",
+		"senders": ["sender"],
+		"tags": ["tag"]
+	}`
+	req, _ := http.NewRequest("POST", save_document_route, strings.NewReader(payload))
+	req.Header.Add("Content-Type", "application/json")
+	addAuth(req)
+
+	// act
+	handlerWith(&handlerOps{
+		docSvc: &mockDocumentService{fail: true},
+	}).ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &pd); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+
+	assert.Equal(t, 500, pd.Status)
+}
+
+// GetFile ------------------------------------------------------------------
+
+const get_file_route = "/api/v1/file"
+
+func Test_GetFile(t *testing.T) {
+	var result []byte
+
+	// arrange
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", fmt.Sprintf(get_file_route+"?path=%s", base64.StdEncoding.EncodeToString([]byte("/a"))), nil)
+	addAuth(req)
+
+	// act
+	handler().ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, rec.Code)
+	result = rec.Body.Bytes()
+	assert.True(t, len(result) > 0)
+}
+
+func Test_GetFile_Validation(t *testing.T) {
+	var pd pkgerr.ProblemDetail
+
+	// not base64
+
+	// arrange
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", get_file_route+"?path=/a", nil)
+	addAuth(req)
+
+	// act
+	handler().ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &pd); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+	assert.Equal(t, 400, pd.Status)
+
+	// missing path
+
+	// arrange
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", get_file_route, nil)
+	addAuth(req)
+
+	// act
+	handler().ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &pd); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+	assert.Equal(t, 400, pd.Status)
+}
+
+func Test_GetFile_Fail(t *testing.T) {
+	var pd pkgerr.ProblemDetail
+
+	// arrange
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", fmt.Sprintf(get_file_route+"?path=%s", base64.StdEncoding.EncodeToString([]byte("/a"))), nil)
+	addAuth(req)
+
+	// act
+	handlerWith(&handlerOps{
+		fsSvc: &mockFileService{fail: true},
+	}).ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &pd); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+	assert.Equal(t, 500, pd.Status)
+}
+
+// ----------------------------------------------------------------------------------------------------------
+// E2E-like test
+// use the real service and the real repository to create a document, read a document and delete a document
+// ----------------------------------------------------------------------------------------------------------
+
+func e2eHandler(repo document.Repository) http.Handler {
+	var (
+		ai appinfo.Service
+		ds document.Service
+		fs filestore.FileService
+		uc upload.Client
+	)
+
+	ai = &mockAppInfoService{}
+	fs = &mockFileService{}
+	uc = &mockUploadClient{}
+	ds = document.NewService(kitLog, repo, fs, uc)
+
+	endpoints := mydms.MakeServerEndpoints(ai, ds, fs, kitLog)
+	apiSrv := mydms.MakeHTTPHandler(endpoints, kitLog, logrusLog, mydms.HTTPHandlerOptions{
+		BasePath:     "./",
+		ErrorPath:    "/error",
+		AssetConfig:  assetConfig,
+		CookieConfig: config.ApplicationCookies{},
+		CorsConfig:   config.CorsSettings{},
+		JWTConfig:    jwtConfig,
+	})
+	return apiSrv
+}
+
+func getRepo() document.Repository {
+	// persistence store && application version
+	con := persistence.NewConnForDb("sqlite3", "file:test.db?cache=shared&mode=memory")
+	f, err := ioutil.ReadFile("./ddl_test.sql")
+	if err != nil {
+		panic("cannot read ddl_test.sql")
+	}
+	_, err = con.DB.Exec(string(f))
+	if err != nil {
+		panic("cannot setup sqlite!")
+	}
+
+	repo, err := document.NewRepository(con)
+	if err != nil {
+		panic(fmt.Sprintf("cannot establish database connection: %v", err))
+	}
+	return repo
+}
+
+func Test_DocumentCRUD(t *testing.T) {
+	repo := getRepo()
+	handler := e2eHandler(repo)
+
+	// -------------------- create a new document -----------------------
+
+	var result document.IDResult
+
+	// arrange
+	rec := httptest.NewRecorder()
+	payload := `{
+		"id": "ID",
+		"title": "Title",
+		"fileName": "FileName",
+		"senders": ["sender"],
+		"tags": ["tag"]
+	}`
+	req, _ := http.NewRequest("POST", save_document_route, strings.NewReader(payload))
+	req.Header.Add("Content-Type", "application/json")
+	addAuth(req)
+
+	// act
+	handler.ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+
+	assert.True(t, result.ID != "")
+
+	// -------------------- read the new document -----------------------
+
+	var doc document.Document
+
+	// arrange
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/v1/documents/"+result.ID, nil)
+	addAuth(req)
+
+	// act
+	handler.ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &doc); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+
+	// -------------------- update the document -------------------------
+
+	// arrange
+	rec = httptest.NewRecorder()
+	payload = `{
+		"id": "ID",
+		"title": "Title (updated)",
+		"fileName": "FileName (updated)",
+		"senders": ["sender1"],
+		"tags": ["tag1"]
+	}`
+	req, _ = http.NewRequest("POST", save_document_route, strings.NewReader(strings.Replace(payload, "ID", result.ID, 1)))
+	req.Header.Add("Content-Type", "application/json")
+	addAuth(req)
+
+	// act
+	handler.ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+
+	assert.True(t, result.ID != "")
+
+	// -------------------- delete the document -------------------------
+
+	var dr document.Result
+
+	// arrange
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("DELETE", "/api/v1/documents/"+result.ID, nil)
+	addAuth(req)
+
+	// act
+	handler.ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &dr); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+
+	assert.Equal(t, document.Deleted, dr.ActionResult)
+
+	// ----------------- read the document again ------------------------
+
+	var pd pkgerr.ProblemDetail
+
+	// arrange
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/v1/documents/"+result.ID, nil)
+	addAuth(req)
+
+	// act
+	handler.ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &pd); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+	assert.Equal(t, 404, pd.Status)
+
 }

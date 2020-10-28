@@ -12,7 +12,7 @@ import (
 
 func TestStore_Write_Read_Delete(t *testing.T) {
 	store := upload.NewStore(t.TempDir())
-	payload, err := ioutil.ReadFile("../../testdata/unencrypted.pdf")
+	payload, err := ioutil.ReadFile(unencryptedPDF)
 	if err != nil {
 		t.Fatalf("could not read testdata: %v", err)
 	}

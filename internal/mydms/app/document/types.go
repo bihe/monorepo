@@ -9,10 +9,8 @@ type ActionResult string
 const (
 	// None is the default result
 	None ActionResult = "none"
-	// Created indicates that an item was created
-	Created ActionResult = "created"
-	// Updated indicates that an item was updated
-	Updated ActionResult = "updated"
+	// Saved indicates that an item was saved
+	Saved ActionResult = "saved"
 	// Deleted indicates that an item was deleted
 	Deleted ActionResult = "deleted"
 	// Error indicates any error
@@ -22,8 +20,15 @@ const (
 // Result is a generic result object
 // swagger:model
 type Result struct {
-	Message string       `json:"message"`
-	Result  ActionResult `json:"result"`
+	Message      string       `json:"message"`
+	ActionResult ActionResult `json:"result"`
+}
+
+// IDResult is a generic result which returns an ID
+// swagger:model
+type IDResult struct {
+	Result
+	ID string `json:"id,omitempty"`
 }
 
 // Document represents a document entity
@@ -47,9 +52,9 @@ func (d Document) String() string {
 	return fmt.Sprintf("%s (ID: %s)", d.Title, d.ID)
 }
 
-// PagedDcoument represents a paged result
+// PagedDocument represents a paged result
 // swagger:model
-type PagedDcoument struct {
+type PagedDocument struct {
 	Documents    []Document `json:"documents"`
 	TotalEntries int        `json:"totalEntries"`
 }

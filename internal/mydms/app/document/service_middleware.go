@@ -43,7 +43,7 @@ func (mw loggingMiddleware) DeleteDocumentByID(id string) (err error) {
 	return mw.next.DeleteDocumentByID(id)
 }
 
-func (mw loggingMiddleware) SearchDocuments(title, tag, sender string, from, until time.Time, limit, skip int) (p PagedDcoument, err error) {
+func (mw loggingMiddleware) SearchDocuments(title, tag, sender string, from, until time.Time, limit, skip int) (p PagedDocument, err error) {
 	shared.Log(mw.logger, "SearchDocuments", err, "param:title", title, "param:tag", tag, "param:sender", sender, "param:from", from, "param:until", until, "param:limit", limit, "param:skip", skip)
 	defer shared.Log(mw.logger, "SearchDocuments-End", err)
 	return mw.next.SearchDocuments(title, tag, sender, from, until, limit, skip)

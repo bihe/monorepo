@@ -58,28 +58,11 @@
             "output": "debug"
         },
         {
-            "name": "Run :: mydms-go (echo)",
+            "name": "Run :: mydms-go (go-kit)",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/cmd/mydms/server/",
-            "env": {},
-			"args": [
-                "--port",
-                "8080",
-                "--basepath",
-                "../../../mydms"
-            ],
-            "envFile": "${workspaceFolder}/mydms/.env",
-            "internalConsoleOptions": "openOnSessionStart",
-            "showLog": true
-        },
-        {
-            "name": "Run :: mydms-go (solid)",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${workspaceFolder}/cmd/mydms/solid",
+            "program": "${workspaceFolder}/cmd/mydms/server",
             "env": {},
 			"args": [
                 "--port",
@@ -104,6 +87,18 @@
                 "../../../internal/bookmarks"
             ],
             "envFile": "${workspaceFolder}/internal/bookmarks/.env",
+            "internalConsoleOptions": "openOnSessionStart",
+            "showLog": true,
+            "output": "debug"
+        },
+        {
+            "name": "Run :: CREATE_TOKEN)",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/login/tokentest/",
+            "args": [],
+            "envFile": "${workspaceFolder}/cmd/login/tokentest/.env",
             "internalConsoleOptions": "openOnSessionStart",
             "showLog": true,
             "output": "debug"

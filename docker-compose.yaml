@@ -2,6 +2,27 @@ version: '3'
 
 services:
 
+    tokentest:
+        build:
+            context: .
+            dockerfile: ./tokentest.Dockerfile
+        image: tokentest
+        depends_on:
+            - db
+        networks:
+            - app-network
+        ports:
+            - "4000:3000"
+        restart:
+            always
+        environment:
+            JWT_COOKIE_NAME: $JWT_COOKIE_NAME
+            JWT_ISSUER: $JWTISSUER
+            JWT_SECRET: $JWTSECRET
+            JWT_USER_EMAIL: $JWT_USER_EMAIL
+            REDIRECT_URL: http://localhost:3000
+            PORT: 3000
+
     crypter:
         build:
             context: .
@@ -14,7 +35,7 @@ services:
         #ports:
         #    - "3333:3000/tcp"
         volumes:
-            - ./crypter:/opt/crypter/etc
+            - ./internal/crypter:/opt/crypter/etc
             - ./_logs:/opt/crypter/logs
         restart:
             always
@@ -54,7 +75,7 @@ services:
         ports:
             - "3001:3000"
         volumes:
-            - ./login:/opt/login/etc
+            - ./internal/login:/opt/login/etc
             - ./_logs:/opt/login/logs
         restart:
             always
@@ -78,19 +99,20 @@ services:
         ports:
             - "3002:3000"
         volumes:
-            - ./mydms/etc:/opt/mydms/etc
+            - ./internal/mydms:/opt/mydms/etc
             - ./_logs:/opt/mydms/logs
         restart:
             always
         environment:
             MY_ENVIRONMENT: Production
-            MY_SECURITY.JWTISSUER: $JWTISSUER
-            MY_SECURITY.JWTSECRET: $JWTSECRET
+            MY_BASECONFIG.SECURITY.JWTISSUER: $JWTISSUER
+            MY_BASECONFIG.SECURITY.JWTSECRET: $JWTSECRET
+            MY_BASECONFIG.SECURITY.CLAIM.URL: http://localhost:3002
+            MY_BASECONFIG.LOGGING.FILEPATH: /opt/mydms/logs/mydms-api.log
             MY_FILESTORE.REGION: $FILESTORE_REGION
             MY_FILESTORE.BUCKET: $FILESTORE_BUCKET
             MY_FILESTORE.KEY: $FILESTORE_KEY
             MY_FILESTORE.SECRET: $FILESTORE_SECRET
-            MY_LOGGING.FILEPATH: /opt/mydms/logs/mydms-api.log
             MY_UPLOAD.ENDPOINTURL: http://onefrontend-3000:3000
 
     bookmarks-3003:
@@ -105,7 +127,7 @@ services:
         ports:
             - "3003:3000"
         volumes:
-            - ./bookmarks/etc:/opt/bookmarks/etc
+            - ./internal/bookmarks/etc:/opt/bookmarks/etc
             - ./_logs:/opt/bookmarks/logs
         restart:
             always
@@ -130,7 +152,7 @@ services:
         ports:
             - "3000:3000"
         volumes:
-            - ./onefrontend/etc:/opt/onefrontend/etc
+            - ./internal/onefrontend/etc:/opt/onefrontend/etc
             - ./_logs:/opt/onefrontend/logs
         restart:
             always

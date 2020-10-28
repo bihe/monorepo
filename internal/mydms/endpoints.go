@@ -59,7 +59,7 @@ func MakeServerEndpoints(ai appinfo.Service, doc document.Service, f filestore.F
 	var searchDocumentsEndpoint endpoint.Endpoint
 	{
 		searchDocumentsEndpoint = document.MakeSearchDocumentsEndpoint(doc)
-		searchDocumentsEndpoint = EndpointLoggingMiddleware(log.With(logger, "method", "SearchDocuments"))(searchListEndpoint)
+		searchDocumentsEndpoint = EndpointLoggingMiddleware(log.With(logger, "method", "SearchDocuments"))(searchDocumentsEndpoint)
 	}
 
 	var saveDocumentEndpoint endpoint.Endpoint

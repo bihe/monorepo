@@ -7,12 +7,12 @@
         [strokeWidth]="7"
         [diameter]="40">
     </mat-progress-spinner>
-    
+
 </div>
 
 <!-- global navigation-->
 <div class="col-nav nav-section" [class.col-nav-expand]="navExpanded" [class.col-nav-small]="!navExpanded">
-    
+
     <div class="nav-item nav-item-small" [class.nav-item-expand]="navExpanded" [class.nav-item-small]="!navExpanded">
         <a class="headerLink" routerLink="/" title="Home"><i class="fa fa-circle-o" aria-hidden="true"></i>
         <span class="nav-item-description" *ngIf="navExpanded">One Frontend</span>
@@ -29,7 +29,7 @@
     <div class="nav-item" [class.selected]="isCurrentRout('/mydms')" [class.nav-item-expand]="navExpanded" [class.nav-item-small]="!navExpanded">
         <a class="headerLink" routerLink="/mydms" routerLinkActive="active" title="Documents"><i class="fa fa-file"
                 aria-hidden="true"></i>
-        <span class="nav-item-description" *ngIf="navExpanded">Documents</span>    
+        <span class="nav-item-description" *ngIf="navExpanded">Documents</span>
         </a>
 
         <div *ngIf="navExpanded" class="amount_toggle">
@@ -43,10 +43,10 @@
 
     </div>
 
-    <div class="nav-item" [class.selected]="isCurrentRout('/sites')" [class.nav-item-expand]="navExpanded" [class.nav-item-small]="!navExpanded">
+    <div *ngIf="isSiteAdmin === true" class="nav-item" [class.selected]="isCurrentRout('/sites')" [class.nav-item-expand]="navExpanded" [class.nav-item-small]="!navExpanded">
         <a class="headerLink" routerLink="/sites" routerLinkActive="active" title="Sites"><i class="fa fa-shield"
                 aria-hidden="true"></i>
-        <span class="nav-item-description" *ngIf="navExpanded">Sites</span>      
+        <span class="nav-item-description" *ngIf="navExpanded">Sites</span>
         </a>
     </div>
 

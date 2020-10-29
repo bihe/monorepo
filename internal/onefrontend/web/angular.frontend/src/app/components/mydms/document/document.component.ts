@@ -1,14 +1,15 @@
-import { Component, EventEmitter, OnInit } from '@angular/core';
+import { COMMA, ENTER } from '@angular/cdk/keycodes';
+import { Component, ElementRef, EventEmitter, OnInit, ViewChild } from '@angular/core';
+import { FormControl } from '@angular/forms';
+import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { MatChipInputEvent } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { humanizeBytes, UploadFile, UploadInput, UploadOutput } from 'ngx-uploader';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { Globals } from 'src/app/app.globals';
 import { AppInfo } from 'src/app/shared/models/app.info.model';
-import { AutoCompleteModel, TagType } from 'src/app/shared/models/autocomplete.model';
 import { MyDmsDocument } from 'src/app/shared/models/document.model';
 import { ApiMydmsService } from 'src/app/shared/service/api.mydms.service';
 import { ApplicationState } from 'src/app/shared/service/application.state';
@@ -50,6 +51,22 @@ export class MyDmsDocumentComponent implements OnInit {
   encPassword = '';
   initPassword = '';
 
+  // new chips
+  visible = true;
+  selectable = true;
+  removable = true;
+  separatorKeysCodes: number[] = [ENTER, COMMA];
+
+  tagCtrl = new FormControl();
+  filteredTags: string[];
+  @ViewChild('tagInput') tagInput: ElementRef<HTMLInputElement>;
+  @ViewChild('autoTag') matAutocompleteTag: MatAutocomplete;
+
+  senderCtrl = new FormControl();
+  filteredSenders: string[];
+  @ViewChild('senderInput') senderInput: ElementRef<HTMLInputElement>;
+  @ViewChild('autoSender') matAutocompleteSender: MatAutocomplete;
+
 
   private uploadToken = '';
 
@@ -64,6 +81,26 @@ export class MyDmsDocumentComponent implements OnInit {
     this.files = []; // local uploading files array
     this.uploadInput = new EventEmitter<UploadInput>(); // input events, we use this to emit data to ngx-uploader
     this.humanizeBytes = humanizeBytes;
+
+      this.senderCtrl.valueChanges.subscribe(
+        item => {
+          this.service.searchSenders(item).subscribe(
+            v => {
+               this.filteredSenders = v.result;
+             }
+           );
+        }
+      );
+
+      this.tagCtrl.valueChanges.subscribe(
+        item => {
+          this.service.searchTags(item).subscribe(
+            v => {
+               this.filteredTags = v.result;
+             }
+           );
+        }
+      );
   }
 
   ngOnInit() {
@@ -121,7 +158,7 @@ export class MyDmsDocumentComponent implements OnInit {
                 const sender: any = {};
                 sender.value = item;
                 sender.display = item;
-                this.selectedSenders.push(sender);
+                this.selectedSenders.push(item);
               });
             }
 
@@ -130,7 +167,7 @@ export class MyDmsDocumentComponent implements OnInit {
                 const tag: any = {};
                 tag.value = item;
                 tag.display = item;
-                this.selectedTags.push(tag);
+                this.selectedTags.push(item);
               });
             }
             this.titleService.setTitle('Document: ' + this.document.title);
@@ -152,7 +189,9 @@ export class MyDmsDocumentComponent implements OnInit {
 
   public onSave() {
     if (this.isFormValid()) {
-      this.convertSenderAndTags();
+      //this.convertSenderAndTags();
+      this.tags = this.selectedTags;
+      this.senders = this.selectedSenders;
 
       if (this.document === null) {
         this.document = new MyDmsDocument();
@@ -277,22 +316,21 @@ export class MyDmsDocumentComponent implements OnInit {
     }
   }
 
-  public searchForTags = (text: string): Observable<AutoCompleteModel[]> => {
-    return this.service.searchTags(text).pipe(map(a => {
-      // change the type of the array to meet the 'expectations' of ngx-chips
-      return this.mapAutocomplete(a.result, TagType.Tag);
-    }));
-  }
+  // public searchForTags = (text: string): Observable<AutoCompleteModel[]> => {
+  //   return this.service.searchTags(text).pipe(map(a => {
+  //     // change the type of the array to meet the 'expectations' of ngx-chips
+  //     return this.mapAutocomplete(a.result, TagType.Tag);
+  //   }));
+  // }
 
-  public searchForSenders = (text: string): Observable<AutoCompleteModel[]> => {
-    return this.service.searchSenders(text).pipe(map(a => {
-      // change the type of the array to meet the 'expectations' of ngx-chips
-      return this.mapAutocomplete(a.result, TagType.Sender);
-    }));
-  }
+  // public searchForSenders = (text: string): Observable<AutoCompleteModel[]> => {
+  //   return this.service.searchSenders(text).pipe(map(a => {
+  //     // change the type of the array to meet the 'expectations' of ngx-chips
+  //     return this.mapAutocomplete(a.result, TagType.Sender);
+  //   }));
+  // }
 
   public onClearUploadedFile() {
-
     this.uploadInput.emit({ type: 'removeAll' });
   }
 
@@ -304,31 +342,101 @@ export class MyDmsDocumentComponent implements OnInit {
     return false;
   }
 
-  private mapAutocomplete(items: string[], type: TagType): AutoCompleteModel[] {
-    const autocompletion: AutoCompleteModel[] = [];
-    items.forEach(x => {
-      const item = new AutoCompleteModel();
-      item.display = x;
-      item.value = x;
-      item.type = type;
-      autocompletion.push(item);
-    });
-    return autocompletion;
+
+  // -------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+  // -----------------------------------------------------------------------------------------
+
+
+  addSender(event: MatChipInputEvent): void {
+    this._add(event, this.selectedSenders, this.senderCtrl);
   }
 
-  private convertSenderAndTags() {
-    if (this.selectedSenders) {
-      this.senders = [];
-      this.selectedSenders.forEach(item => {
-        this.senders.push(item.display);
-      });
+  selectedSender(event: MatAutocompleteSelectedEvent): void {
+    this._selected(event, this.selectedSenders, this.senderCtrl, this.tagInput);
+  }
+
+  removeSender(input: string): void {
+    this._remove(input, this.selectedSenders);
+  }
+
+
+  addTag(event: MatChipInputEvent): void {
+    this._add(event, this.selectedTags, this.tagCtrl);
+  }
+
+  selectedTag(event: MatAutocompleteSelectedEvent): void {
+    this._selected(event, this.selectedTags, this.tagCtrl, this.tagInput);
+  }
+
+  removeTag(input: string): void {
+    this._remove(input, this.selectedTags);
+  }
+
+
+
+
+  private _add(event: MatChipInputEvent, target: string[], form: FormControl): void {
+    const input = event.input;
+    const value = event.value;
+
+    // Add our value
+    if ((value || '').trim()) {
+      target.push(value.trim());
     }
 
-    if (this.selectedTags) {
-      this.tags = [];
-      this.selectedTags.forEach(item => {
-        this.tags.push(item.display);
-      });
+    // Reset the input value
+    if (input) {
+      input.value = '';
+    }
+
+    form.setValue(null);
+  }
+
+  private _selected(event: MatAutocompleteSelectedEvent, target: string[], form: FormControl, elem: ElementRef<HTMLInputElement>): void {
+    target.push(event.option.viewValue);
+    elem.nativeElement.value = '';
+    form.setValue(null);
+  }
+
+  private _remove(input: string, target: string[]): void {
+    const index = target.indexOf(input);
+    if (index >= 0) {
+      target.splice(index, 1);
     }
   }
+
+  // private mapAutocomplete(items: string[], type: TagType): AutoCompleteModel[] {
+  //   const autocompletion: AutoCompleteModel[] = [];
+  //   items.forEach(x => {
+  //     const item = new AutoCompleteModel();
+  //     item.display = x;
+  //     item.value = x;
+  //     item.type = type;
+  //     autocompletion.push(item);
+  //   });
+  //   return autocompletion;
+  // }
+
+  // private convertSenderAndTags() {
+  //   if (this.selectedSenders) {
+  //     this.senders = [];
+  //     this.selectedSenders.forEach(item => {
+  //       this.senders.push(item.display);
+  //     });
+  //   }
+
+  //   if (this.selectedTags) {
+  //     this.tags = [];
+  //     this.selectedTags.forEach(item => {
+  //       this.tags.push(item.display);
+  //     });
+  //   }
+  // }
 }

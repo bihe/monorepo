@@ -14,7 +14,7 @@
         <div mat-card-avatar class="document__icon"><i class="fa fa-file-pdf-o fa-2x" aria-hidden="true"></i></div>
         <mat-card-title class="document_heading">
             <mat-form-field color="warn" hintLabel="Specify the name of the document" class="document_title">
-                <input matInput placeholder="Document title" [(ngModel)]="documentTitle">
+                <input matInput name="documentTitle" placeholder="Document title" [(ngModel)]="documentTitle">
             </mat-form-field>
 
 
@@ -43,11 +43,11 @@
           </mat-expansion-panel-header>
 
             <mat-form-field color="warn" hintLabel="Encryption payload with password" class="document_password">
-                <input matInput placeholder="Password" [(ngModel)]="encPassword">
+                <input matInput name="encPassword" placeholder="Password" [(ngModel)]="encPassword">
             </mat-form-field>
             &nbsp;&nbsp;
             <mat-form-field color="warn" hintLabel="Payload is already encrypted" class="document_initpassword">
-                <input matInput placeholder="Initial Password" [(ngModel)]="initPassword">
+                <input matInput name="initPassword" placeholder="Initial Password" [(ngModel)]="initPassword">
             </mat-form-field>
 
         </mat-expansion-panel>
@@ -92,36 +92,73 @@
     <mat-card-content>
         <div *ngIf="showAmount === true">
             <mat-form-field color="warn" hintLabel="Optional amount">
-                <input type="number" matInput placeholder="Amount" [(ngModel)]="documentAmount">
+                <input type="number"name="documentAmount"  matInput placeholder="Amount" [(ngModel)]="documentAmount">
             </mat-form-field>
         </div>
 
         <div class="invoice_number">
             <mat-form-field color="warn" hintLabel="Optional invoice number" class="document_invoicenumber">
-                <input matInput placeholder="Invoice Number" [(ngModel)]="invoiceNumber">
+                <input matInput  name="invoiceNumber" placeholder="Invoice Number" [(ngModel)]="invoiceNumber">
             </mat-form-field>
         </div>
+
         <div class="tags">
 
-            <tag-input [(ngModel)]='selectedSenders' required
-            secondaryPlaceholder="Add a sender"
-            placeholder="+senders"
-            >
-                <tag-input-dropdown
-                [autocompleteObservable]='searchForSenders'></tag-input-dropdown>
 
-            </tag-input>
+          <mat-form-field class="tag-list">
+            <mat-chip-list #senderList aria-label="Sender selection">
+              <mat-chip
+                *ngFor="let item of selectedSenders"
+                [selectable]="selectable"
+                [removable]="removable"
+                (removed)="removeSender(item)">
+                {{item}}
+                <mat-icon matChipRemove *ngIf="removable">cancel</mat-icon>
+              </mat-chip>
+              <input
+                name="sender"
+                placeholder="Select Sender..."
+                #tagInput
+                [formControl]="senderCtrl"
+                [matAutocomplete]="autoSender"
+                [matChipInputFor]="senderList"
+                [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                (matChipInputTokenEnd)="addSender($event)">
+            </mat-chip-list>
+            <mat-autocomplete #autoSender="matAutocomplete" (optionSelected)="selectedSender($event)">
+              <mat-option *ngFor="let item of filteredSenders" [value]="item">
+                {{item}}
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
 
-            <tag-input [(ngModel)]='selectedTags'
-            secondaryPlaceholder="Add a tag"
-            placeholder="+tags"
-            >
-                <tag-input-dropdown
-                [autocompleteObservable]='searchForTags'></tag-input-dropdown>
 
-            </tag-input>
-
-
+          <mat-form-field class="tag-list">
+            <mat-chip-list #tagList aria-label="Tag selection">
+              <mat-chip
+                *ngFor="let item of selectedTags"
+                [selectable]="selectable"
+                [removable]="removable"
+                (removed)="removeTag(item)">
+                {{item}}
+                <mat-icon matChipRemove *ngIf="removable">cancel</mat-icon>
+              </mat-chip>
+              <input
+                name="tag"
+                placeholder="Select Tag..."
+                #tagInput
+                [formControl]="tagCtrl"
+                [matAutocomplete]="autoTag"
+                [matChipInputFor]="tagList"
+                [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                (matChipInputTokenEnd)="addTag($event)">
+            </mat-chip-list>
+            <mat-autocomplete #autoTag="matAutocomplete" (optionSelected)="selectedTag($event)">
+              <mat-option *ngFor="let item of filteredTags" [value]="item">
+                {{item}}
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
 
         </div>
     </mat-card-content>

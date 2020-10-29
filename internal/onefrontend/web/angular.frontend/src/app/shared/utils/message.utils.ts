@@ -4,7 +4,7 @@ export class MessageUtils {
 
     public showError(snackBar: MatSnackBar, error: any) {
         console.error('Got error: ' + error);
-        if (error.message) {
+        if (error && error.message) {
             this.showMessage(snackBar, 'Error: ' + error.message, 'error', -1, 'Dismiss!');
         } else {
             this.showMessage(snackBar, 'Error: ' + error, 'error', -1, 'Dismiss!');

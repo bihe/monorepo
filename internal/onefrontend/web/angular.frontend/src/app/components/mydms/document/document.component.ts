@@ -184,7 +184,8 @@ export class MyDmsDocumentComponent implements OnInit {
           },
           error => {
             this.state.setProgress(false);
-            new MessageUtils().showError(this.snackBar, error.message);
+            console.error(error.detail);
+            new MessageUtils().showError(this.snackBar, error.detail);
           }
         );
     } else {

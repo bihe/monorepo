@@ -35,17 +35,16 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/transport"
-	"github.com/sirupsen/logrus"
 	"golang.binggl.net/monorepo/internal/mydms/app/appinfo"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
 	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
 	"golang.binggl.net/monorepo/internal/mydms/app/shared"
 	"golang.binggl.net/monorepo/pkg/config"
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 	"golang.binggl.net/monorepo/pkg/server"
 
+	"github.com/go-kit/kit/transport"
 	httptransport "github.com/go-kit/kit/transport/http"
 	pkgerr "golang.binggl.net/monorepo/pkg/errors"
 )
@@ -62,11 +61,13 @@ type HTTPHandlerOptions struct {
 
 // MakeHTTPHandler mounts all of the service endpoints into an http.Handler.
 // Useful in a profilesvc server.
-func MakeHTTPHandler(e Endpoints, logger log.Logger, lLogger *logrus.Entry, opts HTTPHandlerOptions) http.Handler {
-	r := server.SetupBasicRouter(opts.BasePath, opts.CookieConfig, opts.CorsConfig, opts.AssetConfig, lLogger)
-	apiRouter := server.SetupSecureAPIRouter(opts.ErrorPath, opts.JWTConfig, opts.CookieConfig, lLogger)
+func MakeHTTPHandler(e Endpoints, logger logging.Logger, opts HTTPHandlerOptions) http.Handler {
+	r := server.SetupBasicRouter(opts.BasePath, opts.CookieConfig, opts.CorsConfig, opts.AssetConfig, logger)
+	apiRouter := server.SetupSecureAPIRouter(opts.ErrorPath, opts.JWTConfig, opts.CookieConfig, logger)
 	options := []httptransport.ServerOption{
-		httptransport.ServerErrorHandler(transport.NewLogErrorHandler(logger)),
+		httptransport.ServerErrorHandler(transport.ErrorHandlerFunc(func(ctx context.Context, err error) {
+			logger.Error("httptransport error", logging.ErrV(err))
+		})),
 		httptransport.ServerErrorEncoder(encodeError),
 	}
 

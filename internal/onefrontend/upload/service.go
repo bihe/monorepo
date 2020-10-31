@@ -13,8 +13,6 @@ import (
 	"github.com/google/uuid"
 	"golang.binggl.net/monorepo/internal/crypter"
 	"golang.binggl.net/monorepo/pkg/logging"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // --------------------------------------------------------------------------
@@ -51,7 +49,7 @@ type Service interface {
 
 // ServiceOptions defines parameters used to initialize a new Service
 type ServiceOptions struct {
-	Logger           *log.Entry
+	Logger           logging.Logger
 	Store            Store
 	MaxUploadSize    int64
 	AllowedFileTypes []string
@@ -95,7 +93,7 @@ var (
 
 type uploadService struct {
 	store            Store
-	logger           *log.Entry
+	logger           logging.Logger
 	maxUploadSize    int64
 	allowedFileTypes []string
 	crypter          crypter.EncryptionService
@@ -111,7 +109,7 @@ func (s *uploadService) Save(file File) (string, error) {
 		payload []byte
 		err     error
 	)
-	logging.LogWith(s.logger, "upload.Save").Debugf("trying to upload file: '%s'", file.Name)
+	s.logger.Info(fmt.Sprintf("trying to upload file: '%s'", file.Name))
 
 	if err = s.validateFile(file); err != nil {
 		return id, err
@@ -120,7 +118,7 @@ func (s *uploadService) Save(file File) (string, error) {
 	// Copy
 	b := &bytes.Buffer{}
 	if _, err = io.Copy(b, file.File); err != nil {
-		logging.LogWith(s.logger, "upload.Save").Errorf("could not copy file: %v", err)
+		s.logger.Error(fmt.Sprintf("could not copy file: %v", err))
 		return id, ErrService
 	}
 	payload = b.Bytes()
@@ -139,7 +137,7 @@ func (s *uploadService) Save(file File) (string, error) {
 			Payload:   payload,
 		})
 		if err != nil {
-			logging.LogWith(s.logger, "upload.Save").Errorf("could not encrypt file: %v", err)
+			s.logger.Error(fmt.Sprintf("could not encrypt file: %v", err))
 			return id, fmt.Errorf("could not encrypt payload, %w", ErrService)
 		}
 	}
@@ -153,7 +151,7 @@ func (s *uploadService) Save(file File) (string, error) {
 		Created:  time.Now().UTC(),
 	}
 	if err = s.store.Write(u); err != nil {
-		logging.LogWith(s.logger, "upload.Save").Errorf("could not save upload file: %v", err)
+		s.logger.Error(fmt.Sprintf("could not save upload file: %v", err))
 		return id, ErrService
 	}
 	return id, nil
@@ -185,11 +183,10 @@ func (s *uploadService) Read(id string) (Upload, error) {
 		return item, fmt.Errorf("invalid or empty id supplied '%v'; %w", id, ErrInvalidParameters)
 	}
 
-	logging.LogWith(s.logger, "upload.Read").Debugf("get file by ID: '%s'", id)
-
+	s.logger.Info(fmt.Sprintf("get file by ID: '%s'", id))
 	item, err := s.store.Read(id)
 	if err != nil {
-		logging.LogWith(s.logger, "upload.Read").Errorf("cannot get item by id '%s': %v", id, err)
+		s.logger.Error(fmt.Sprintf("cannot get item by id '%s': %v", id, err))
 		return item, fmt.Errorf("cannot get item by id '%s'", id)
 	}
 	return item, nil
@@ -200,11 +197,10 @@ func (s *uploadService) Delete(id string) error {
 		return fmt.Errorf("invalid or empty id supplied '%v'; %w", id, ErrInvalidParameters)
 	}
 
-	logging.LogWith(s.logger, "upload.Delete").Debugf("delete file by ID: '%s'", id)
-
+	s.logger.Info(fmt.Sprintf("delete file by ID: '%s'", id))
 	err := s.store.Delete(id)
 	if err != nil {
-		logging.LogWith(s.logger, "upload.Delete").Errorf("cannot delete item by id '%s': %v", id, err)
+		s.logger.Error(fmt.Sprintf("cannot delete item by id '%s': %v", id, err))
 		return fmt.Errorf("cannot delete item by id '%s'", id)
 	}
 	return nil

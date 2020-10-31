@@ -1,8 +1,7 @@
 package appinfo
 
 import (
-	"github.com/go-kit/kit/log"
-	"golang.binggl.net/monorepo/internal/mydms/app/shared"
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
 
@@ -13,20 +12,20 @@ type ServiceMiddleware func(Service) Service
 
 // ServiceLoggingMiddleware takes a logger as a dependency
 // and returns a ServiceLoggingMiddleware.
-func ServiceLoggingMiddleware(logger log.Logger) ServiceMiddleware {
+func ServiceLoggingMiddleware(logger logging.Logger) ServiceMiddleware {
 	return func(next Service) Service {
 		return loggingMiddleware{logger, next}
 	}
 }
 
 type loggingMiddleware struct {
-	logger log.Logger
+	logger logging.Logger
 	next   Service
 }
 
 // GetAppInfo implements the Service so that it can be used transparently
 // the provided parameters are logged and the execution is passed on to the underlying/next service
 func (mw loggingMiddleware) GetAppInfo(user *security.User) (ai AppInfo, err error) {
-	defer shared.Log(mw.logger, "GetAppInfo", err)
+	defer mw.logger.Info("called GetAppInfo", logging.ErrV(err))
 	return mw.next.GetAppInfo(user)
 }

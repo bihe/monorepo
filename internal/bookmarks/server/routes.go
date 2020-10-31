@@ -20,7 +20,7 @@ func (s *Server) routes() {
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(handler.NewLoggerMiddleware(s.log).LoggerContext)
+	r.Use(handler.NewRequestLogger(s.logger).LoggerContext)
 	// use the default list of "compressable" content-type
 	r.Use(middleware.NewCompressor(5).Handler)
 	r.Use(middleware.Recoverer)
@@ -44,7 +44,7 @@ func (s *Server) routes() {
 	// this group "indicates" that all routes within this group use the JWT authentication
 	r.Group(func(r chi.Router) {
 		// authenticate and authorize users via JWT
-		r.Use(security.NewJwtMiddleware(s.jwtOpts, s.cookieSettings, s.log).JwtContext)
+		r.Use(security.NewJwtMiddleware(s.jwtOpts, s.cookieSettings, s.logger).JwtContext)
 
 		r.Mount("/hc", s.healthCheck.GetHandler())
 		r.Mount("/appinfo", s.appInfoAPI.GetHandler())

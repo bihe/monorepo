@@ -15,12 +15,12 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/handler"
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
 
@@ -42,6 +42,7 @@ type RunOptions struct {
 	Build         string
 	Environment   string
 	ServerHandler http.Handler
+	Logger        logging.Logger
 }
 
 // Run configures and starts the Server
@@ -54,23 +55,22 @@ func Run(opt RunOptions) (err error) {
 			return
 		}
 	}()
-	return Graceful(httpSrv, 5*time.Second)
+	return Graceful(httpSrv, 5*time.Second, opt.Logger)
 }
 
 // Graceful is used to shutdown a server in a graceful manner
-func Graceful(s *http.Server, timeout time.Duration) error {
+func Graceful(s *http.Server, timeout time.Duration, logger logging.Logger) error {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 	<-stop
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	log.Infof("\nShutdown with timeout: %s\n", timeout)
+	logger.Info(fmt.Sprintf("Shutdown with timeout: %s", timeout))
 	if err := s.Shutdown(ctx); err != nil {
 		return err
 	}
-
-	log.Info("Server stopped")
+	logger.Info(fmt.Sprintf("Server stopped"))
 	return nil
 }
 
@@ -110,13 +110,14 @@ func ReadConfig(envPrefix string, getCfg func() interface{}) (hostname string, p
 }
 
 // SetupBasicRouter configures typically used middleware components
-func SetupBasicRouter(basePath string, cookieSettings config.ApplicationCookies, corsConfig config.CorsSettings, assets config.AssetSettings, logger *log.Entry) chi.Router {
+func SetupBasicRouter(basePath string, cookieSettings config.ApplicationCookies, corsConfig config.CorsSettings, assets config.AssetSettings, logger logging.Logger) chi.Router {
 	r := chi.NewRouter()
 
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(handler.NewLoggerMiddleware(logger).LoggerContext)
+	//r.Use(handler.NewLoggerMiddleware(logger).LoggerContext)
+	r.Use(handler.NewRequestLogger(logger).LoggerContext)
 	// use the default list of "compressable" content-type
 	r.Use(middleware.NewCompressor(5).Handler)
 	r.Use(middleware.Recoverer)
@@ -140,7 +141,7 @@ func SetupBasicRouter(basePath string, cookieSettings config.ApplicationCookies,
 }
 
 // SetupSecureAPIRouter wires the JWT auth for this router
-func SetupSecureAPIRouter(errorPath string, jwtOptions config.Security, cookieSettings config.ApplicationCookies, logger *log.Entry) chi.Router {
+func SetupSecureAPIRouter(errorPath string, jwtOptions config.Security, cookieSettings config.ApplicationCookies, logger logging.Logger) chi.Router {
 	apiRouter := chi.NewRouter()
 	apiRouter.Use(security.NewJwtMiddleware(security.JwtOptions{
 		CacheDuration: jwtOptions.CacheDuration,

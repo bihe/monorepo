@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"os"
@@ -12,14 +11,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-kit/kit/log"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"golang.binggl.net/monorepo/internal/crypter"
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/server"
 	"golang.binggl.net/monorepo/proto"
 	"google.golang.org/grpc"
-	"gopkg.in/Graylog2/go-gelf.v2/gelf"
+
+	c "golang.binggl.net/monorepo/pkg/config"
 
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 )
@@ -49,17 +49,9 @@ func main() {
 func run(version, build string) error {
 	hostname, port, _, config := readConfig()
 	addr := fmt.Sprintf("%s:%d", hostname, port)
-	logger, logFile, gelfWriter := setupLog(config)
 
-	// ensure closing of logfile on exit
-	defer func(file io.WriteCloser, gw gelf.Writer) {
-		if file != nil {
-			file.Close()
-		}
-		if gw != nil {
-			gw.Close()
-		}
-	}(logFile, gelfWriter)
+	logger := setupLog(config)
+	defer logger.Close()
 
 	// Build the layers of the service "onion" from the inside out. First, the
 	// business logic service; then, the set of endpoints that wrap the service;
@@ -76,14 +68,13 @@ func run(version, build string) error {
 	// The gRPC listener mounts the Go kit gRPC server we created.
 	grpcListener, err := net.Listen("tcp", addr)
 	if err != nil {
-		logger.Log("transport", "gRPC", "during", "Listen", "err", err)
+		logger.Error("list error", logging.ErrV(err))
 		return fmt.Errorf("could not start grpc listener: %v", err)
 	}
 	srv := grpc.NewServer(grpc.UnaryInterceptor(kitgrpc.Interceptor))
 	proto.RegisterCrypterServer(srv, grpcServer)
 
-	logger.Log("function", "main.run", "msg", "start up grpc server")
-
+	logger.Info("start-up GRPC server")
 	go func() {
 		server.PrintServerBanner("crypter", version, build, string(config.Environment), addr)
 		if err := srv.Serve(grpcListener); err != http.ErrServerClosed {
@@ -95,48 +86,36 @@ func run(version, build string) error {
 
 // --------------------------------------------------------------------------
 
-func graceful(s *grpc.Server, logger log.Logger, timeout time.Duration) error {
+func graceful(s *grpc.Server, logger logging.Logger, timeout time.Duration) error {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 	<-stop
 
-	logger.Log("\nShutdown with timeout: %s\n", timeout)
+	logger.Info(fmt.Sprintf("Shutdown with timeout: %s", timeout))
 	s.GracefulStop()
-	logger.Log("Server stopped")
+	logger.Info("Server stopped")
 	return nil
 }
 
-func setupLog(config crypter.AppConfig) (log.Logger, io.WriteCloser, gelf.Writer) {
-	var (
-		file       *os.File
-		logger     log.Logger
-		writer     io.Writer
-		gelfWriter gelf.Writer
-	)
+func setupLog(cfg crypter.AppConfig) logging.Logger {
+	var env c.Environment
 
-	logger = log.NewJSONLogger(os.Stderr)
-	if config.Environment != crypter.Development {
-		file, err := os.OpenFile(config.Logging.FilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-		if err != nil {
-			panic(fmt.Sprintf("cannot use filepath '%s' as a logfile: %v", config.Logging.FilePath, err))
-		}
-		writer = file
-		if config.Logging.GrayLogServer != "" {
-			gelfWriter, err := gelf.NewUDPWriter(config.Logging.GrayLogServer)
-			if err != nil {
-				panic(fmt.Sprintf("could not create a new gelf UDP writer: %s", err))
-			}
-			// log to both file and graylog2
-			writer = io.MultiWriter(file, gelfWriter)
-		}
-		logger = log.NewJSONLogger(writer)
+	switch cfg.Environment {
+	case crypter.Development:
+		env = c.Development
+	case crypter.Production:
+		env = c.Production
 	}
 
-	logger = log.With(logger, ApplicationNameKey, config.ServiceName)
-	logger = log.With(logger, HostIDKey, config.HostID)
-	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
-	logger = log.With(logger, "caller", log.DefaultCaller)
-	return logger, file, gelfWriter
+	return logging.New(logging.LogConfig{
+		FilePath:      cfg.Logging.FilePath,
+		LogLevel:      cfg.Logging.LogLevel,
+		GrayLogServer: cfg.Logging.GrayLogServer,
+		Trace: logging.TraceConfig{
+			AppName: cfg.ServiceName,
+			HostID:  cfg.HostID,
+		},
+	}, env)
 }
 
 func readConfig() (hostname string, port int, basePath string, conf crypter.AppConfig) {

@@ -15,13 +15,11 @@ import (
 	"golang.binggl.net/monorepo/internal/login/persistence"
 	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/errors"
-	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 	"golang.org/x/oauth2"
 
 	"github.com/coreos/go-oidc"
 
-	log "github.com/sirupsen/logrus"
 	per "golang.binggl.net/monorepo/pkg/persistence"
 )
 
@@ -67,7 +65,7 @@ func NewOIDC(c config.OAuthConfig) (oauthConfig *oauth2.Config, oauthVerifier OI
 	ctx := context.Background()
 	provider, err := oidc.NewProvider(ctx, c.Provider)
 	if err != nil {
-		log.Fatal(err)
+		panic(fmt.Sprintf("could not create a new OIDC provider: %v", err))
 	}
 	oidcConfig := &oidc.Config{
 		ClientID: c.ClientID,
@@ -165,7 +163,7 @@ func (a *loginAPI) GetOIDCRedirectURL() string {
 func (a *loginAPI) HandleOIDCRedirect(w http.ResponseWriter, r *http.Request) error {
 	state := randToken()
 	a.appCookie.Set(stateParam, state, cookieExpiry, w)
-	logging.LogWithReq(r, a.logEntry, "api.HandleOIDCRedirect").Debugf("GetRedirect: initiate using state '%s'", state)
+	a.logger.InfoRequest(fmt.Sprintf("HandleOIDCRedirect: initiate using state '%s'", state), r)
 	http.Redirect(w, r, a.GetOIDCRedirectURL(), http.StatusTemporaryRedirect)
 	return nil
 }
@@ -174,7 +172,7 @@ func (a *loginAPI) HandleOIDCRedirect(w http.ResponseWriter, r *http.Request) er
 func (a *loginAPI) HandleAuthFlow(w http.ResponseWriter, r *http.Request) error {
 	state := randToken()
 	a.appCookie.Set(stateParam, state, cookieExpiry, w)
-	logging.LogWithReq(r, a.logEntry, "api.HandleAuthFlow").Debugf("initiate using state '%s'", state)
+	a.logger.InfoRequest(fmt.Sprintf("HandleAuthFlow: initiate using state '%s'", state), r)
 
 	site, redirect := a.query(r, siteParam), a.query(r, redirectParam)
 	if site == "" || redirect == "" {
@@ -189,10 +187,10 @@ func (a *loginAPI) HandleAuthFlow(w http.ResponseWriter, r *http.Request) error 
 func (a *loginAPI) HandleOIDCRedirectFinal(w http.ResponseWriter, r *http.Request) error {
 	state := a.appCookie.Get(stateParam, r)
 	if state == "" {
-		logging.LogWithReq(r, a.logEntry, "api.HandleOIDCRedirectFinal").Debugf("emptiy state from cookie, referrer: '%s'", r.Referer())
+		a.logger.ErrorRequest(fmt.Sprintf("HandleOIDCRedirectFinal: empty state from cookie, referrer: '%s'", r.Referer()), r)
 		return errors.BadRequestError{Err: fmt.Errorf("missing state, cannot initiate OIDC"), Request: r}
 	}
-	logging.LogWithReq(r, a.logEntry, "api.HandleOIDCRedirectFinal").Debugf("initiate OIDC redirect using state: '%s'", state)
+	a.logger.InfoRequest(fmt.Sprintf("HandleOIDCRedirectFinal: initiate OIDC redirect using state: '%s'", state), r)
 	http.Redirect(w, r, a.oauthConfig.AuthCodeURL(state), http.StatusFound)
 	return nil
 }
@@ -206,7 +204,7 @@ func (a *loginAPI) HandleOIDCLogin(w http.ResponseWriter, r *http.Request) error
 
 	// read the stateParam again
 	state := a.appCookie.Get(stateParam, r)
-	logging.LogWithReq(r, a.logEntry, "api.HandleOIDCLogin").Debugf("got state param: %s", state)
+	a.logger.InfoRequest(fmt.Sprintf("HandleOIDCLogin: got state param: %s", state), r)
 
 	if a.query(r, stateParam) != state {
 		return errors.BadRequestError{Err: fmt.Errorf("state did not match"), Request: r}
@@ -220,7 +218,7 @@ func (a *loginAPI) HandleOIDCLogin(w http.ResponseWriter, r *http.Request) error
 	)
 	authFlowParams := a.appCookie.Get(authFlowCookie, r)
 	if authFlowParams != "" {
-		logging.LogWithReq(r, a.logEntry, "api.HandleOIDCLogin").Debugf("auth/flow login-mode")
+		a.logger.InfoRequest(fmt.Sprintf("HandleOIDCLogin: auth/flow login-mode"), r)
 		parts := strings.Split(authFlowParams, "|")
 		site = parts[0]
 		redirect = parts[1]
@@ -260,17 +258,17 @@ func (a *loginAPI) HandleOIDCLogin(w http.ResponseWriter, r *http.Request) error
 	success := true
 	sites, err := a.repo.GetSitesByUser(oidcClaims.Email)
 	if err != nil {
-		logging.LogWithReq(r, a.logEntry, "api.HandleOIDCLogin").Warnf("successfull login by '%s' but error fetching sites! %v", oidcClaims.Email, err)
+		a.logger.ErrorRequest(fmt.Sprintf("HandleOIDCLogin: successfull login by '%s' but error fetching sites! %v", oidcClaims.Email, err), r)
 		success = false
 	}
 
 	if len(sites) == 0 {
-		logging.LogWithReq(r, a.logEntry, "api.HandleOIDCLogin").Warnf("successfull login by '%s' but no sites availabel!", oidcClaims.Email)
+		a.logger.ErrorRequest(fmt.Sprintf("HandleOIDCLogin: successfull login by '%s' but no sites availabel!", oidcClaims.Email), r)
 		success = false
 	}
 
 	if authFlow {
-		logging.LogWithReq(r, a.logEntry, "api.HandleOIDCLogin").Debugf("auth/flow - check for specific site '%s'", site)
+		a.logger.InfoRequest(fmt.Sprintf("HandleOIDCLogin: auth/flow - check for specific site '%s'", site), r)
 		success = false
 		// check specific site
 		for _, e := range sites {
@@ -304,7 +302,7 @@ func (a *loginAPI) HandleOIDCLogin(w http.ResponseWriter, r *http.Request) error
 	}
 	token, err := security.CreateToken(a.jwt.JwtIssuer, []byte(a.jwt.JwtSecret), a.jwt.Expiry, claims)
 	if err != nil {
-		logging.LogWithReq(r, a.logEntry, "api.HandleOIDCLogin").Errorf("could not create a JWT token: %v", err)
+		a.logger.ErrorRequest(fmt.Sprintf("HandleOIDCLogin: could not create a JWT token: %v", err), r)
 		return errors.ServerError{Err: fmt.Errorf("error creating JWT: %v", err), Request: r}
 	}
 
@@ -320,7 +318,7 @@ func (a *loginAPI) HandleOIDCLogin(w http.ResponseWriter, r *http.Request) error
 
 	err = a.repo.StoreLogin(login, per.Atomic{})
 	if err != nil {
-		logging.LogWithReq(r, a.logEntry, "api.HandleOIDCLogin").Errorf("the login could not be saved: %v", err)
+		a.logger.ErrorRequest(fmt.Sprintf("HandleOIDCLogin: the login could not be saved: %v", err), r)
 		return errors.ServerError{Err: fmt.Errorf("error storing the login: %v", err), Request: r}
 	}
 
@@ -330,7 +328,7 @@ func (a *loginAPI) HandleOIDCLogin(w http.ResponseWriter, r *http.Request) error
 
 	redirectURL := a.jwt.LoginRedirect
 	if authFlow {
-		logging.LogWithReq(r, a.logEntry, "api.HandleOIDCLogin").Debugf("auth/flow - redirect to specific URL: '%s'", redirect)
+		a.logger.InfoRequest(fmt.Sprintf("HandleOIDCLogin: auth/flow - redirect to specific URL: '%s'", redirect), r)
 		redirectURL = redirect
 	}
 
@@ -341,7 +339,7 @@ func (a *loginAPI) HandleOIDCLogin(w http.ResponseWriter, r *http.Request) error
 
 // HandleLogout invalidates the authenticated user
 func (a *loginAPI) HandleLogout(user security.User, w http.ResponseWriter, r *http.Request) error {
-	logging.LogWithReq(r, a.logEntry, "api.HandleLogout").Debugf("for user '%s'", user.Username)
+	a.logger.InfoRequest(fmt.Sprintf("HandleLogout: for user '%s'", user.Username), r)
 	// remove the cookie by expiring it
 	a.setJWTCookie(a.jwt.CookieName, "", -1, w)
 	a.appCookie.Set(errors.FlashKeyInfo, fmt.Sprintf("User '%s' was logged-off!", user.Email), cookieExpiry, w)

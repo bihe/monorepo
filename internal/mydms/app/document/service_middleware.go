@@ -1,10 +1,10 @@
 package document
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/go-kit/kit/log"
-	"golang.binggl.net/monorepo/internal/mydms/app/shared"
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
 
@@ -15,7 +15,7 @@ type ServiceMiddleware func(Service) Service
 
 // ServiceLoggingMiddleware takes a logger as a dependency
 // and returns a ServiceLoggingMiddleware.
-func ServiceLoggingMiddleware(logger log.Logger) ServiceMiddleware {
+func ServiceLoggingMiddleware(logger logging.Logger) ServiceMiddleware {
 	return func(next Service) Service {
 		return loggingMiddleware{logger, next}
 	}
@@ -27,36 +27,47 @@ var (
 )
 
 type loggingMiddleware struct {
-	logger log.Logger
+	logger logging.Logger
 	next   Service
 }
 
 func (mw loggingMiddleware) GetDocumentByID(id string) (d Document, err error) {
-	shared.Log(mw.logger, "GetDocumentByID", err, "param:ID", id)
-	defer shared.Log(mw.logger, "GetDocumentByID-End", err)
+	mw.logger.Info("GetDocumentByID", logging.LogV("param:ID", id))
+	defer mw.logger.Info("called GetDocumentByID", logging.ErrV(err))
 	return mw.next.GetDocumentByID(id)
 }
 
 func (mw loggingMiddleware) DeleteDocumentByID(id string) (err error) {
-	shared.Log(mw.logger, "DeleteDocumentByID", err, "param:ID", id)
-	defer shared.Log(mw.logger, "DeleteDocumentByID-End", err)
+	mw.logger.Info("DeleteDocumentByID", logging.LogV("param:ID", id))
+	defer mw.logger.Info("called DeleteDocumentByID", logging.ErrV(err))
 	return mw.next.DeleteDocumentByID(id)
 }
 
 func (mw loggingMiddleware) SearchDocuments(title, tag, sender string, from, until time.Time, limit, skip int) (p PagedDocument, err error) {
-	shared.Log(mw.logger, "SearchDocuments", err, "param:title", title, "param:tag", tag, "param:sender", sender, "param:from", from, "param:until", until, "param:limit", limit, "param:skip", skip)
-	defer shared.Log(mw.logger, "SearchDocuments-End", err)
+	mw.logger.Info("SearchDocuments", logging.LogV("param:title", title),
+		logging.LogV("param:tag", tag),
+		logging.LogV("param:sender", sender),
+		logging.LogV("param:from", from.String()),
+		logging.LogV("param:until", until.String()),
+		logging.LogV("param:limit", fmt.Sprintf("%d", limit)),
+		logging.LogV("param:skip", fmt.Sprintf("%d", skip)),
+	)
+	defer mw.logger.Info("called SearchDocuments", logging.ErrV(err))
 	return mw.next.SearchDocuments(title, tag, sender, from, until, limit, skip)
 }
 
 func (mw loggingMiddleware) SearchList(name string, st SearchType) (l []string, err error) {
-	shared.Log(mw.logger, "SearchList", err, "param:name", name, "param:st", st)
-	defer shared.Log(mw.logger, "SearchList-End", err)
+	mw.logger.Info("DeleteDocumentByID", logging.LogV("param:name", name), logging.LogV("param:searchtype", st.String()))
+	defer mw.logger.Info("called SearchList", logging.ErrV(err))
 	return mw.next.SearchList(name, st)
 }
 
 func (mw loggingMiddleware) SaveDocument(doc Document, user security.User) (d Document, err error) {
-	shared.Log(mw.logger, "SaveDocument", err, "param:doc", doc, "param:user", user, "param.doc.filename", doc.FileName, "param.doc.uploadtoken", doc.UploadToken)
-	defer shared.Log(mw.logger, "SaveDocument-Err", err)
+	mw.logger.Info("SaveDocument", logging.LogV("param:doc", doc.String()),
+		logging.LogV("param:user", user.String()),
+		logging.LogV("param.doc.filename", doc.FileName),
+		logging.LogV("param.doc.uploadtoken", doc.UploadToken),
+	)
+	defer mw.logger.Info("called SaveDocument", logging.ErrV(err))
 	return mw.next.SaveDocument(doc, user)
 }

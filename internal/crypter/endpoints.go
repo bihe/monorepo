@@ -2,10 +2,11 @@ package crypter
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/log"
+	"golang.binggl.net/monorepo/pkg/logging"
 )
 
 // --------------------------------------------------------------------------
@@ -22,11 +23,11 @@ type Endpoints struct {
 
 // NewEndpoints returns Endpoints which wrap the provided server, and wires in all of the
 // expected endpoint middlewares via the various parameters.
-func NewEndpoints(svc EncryptionService, logger log.Logger) Endpoints {
+func NewEndpoints(svc EncryptionService, logger logging.Logger) Endpoints {
 	var cryptEndpoint endpoint.Endpoint
 	{
 		cryptEndpoint = MakeEncryptEndpoint(svc)
-		cryptEndpoint = EndpointLoggingMiddleware(log.With(logger, "method", "Encrypt"))(cryptEndpoint)
+		cryptEndpoint = EndpointLoggingMiddleware(logger, "Encrypt")(cryptEndpoint)
 	}
 	return Endpoints{
 		CrypterEndpoint: cryptEndpoint,
@@ -59,11 +60,15 @@ func MakeEncryptEndpoint(s EncryptionService) endpoint.Endpoint {
 
 // EndpointLoggingMiddleware returns an endpoint middleware that logs the
 // duration of each invocation, and the resulting error, if any.
-func EndpointLoggingMiddleware(logger log.Logger) endpoint.Middleware {
+func EndpointLoggingMiddleware(logger logging.Logger, endpointName string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+			logger.Info(fmt.Sprintf("call endpoint: %s", endpointName))
 			defer func(begin time.Time) {
-				logger.Log("transport_error", err, "took", time.Since(begin))
+				logger.Info(fmt.Sprintf("%s: endpoint stats", endpointName), logging.LogV("took", time.Since(begin).String()))
+				if err != nil {
+					logger.Error(fmt.Sprintf("%s: transport-error", endpointName), logging.ErrV(err))
+				}
 			}(time.Now())
 			return next(ctx, request)
 		}

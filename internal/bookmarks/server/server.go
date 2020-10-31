@@ -11,6 +11,7 @@ import (
 	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/handler"
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 
 	"github.com/go-chi/chi"
@@ -18,8 +19,6 @@ import (
 	"golang.binggl.net/monorepo/internal/bookmarks/config"
 	"golang.binggl.net/monorepo/internal/bookmarks/server/api"
 	"golang.binggl.net/monorepo/internal/bookmarks/store"
-
-	log "github.com/sirupsen/logrus"
 
 	_ "github.com/jinzhu/gorm/dialects/mysql" // use mysql
 )
@@ -33,11 +32,11 @@ type Server struct {
 	logConfig      config.LogConfig
 	cors           config.CorsSettings
 	environment    config.Environment
+	logger         logging.Logger
 	errorHandler   *handler.TemplateHandler
 	appInfoAPI     *handler.AppInfoHandler
 	healthCheck    *handler.HealthCheckHandler
 	bookmarkAPI    *api.BookmarksAPI
-	log            *log.Entry
 }
 
 type healthCheck struct {
@@ -70,7 +69,7 @@ func (h *healthCheck) Check(user security.User) (handler.HealthCheck, error) {
 }
 
 // Create instantiates a new Server instance
-func Create(basePath string, config config.AppConfig, version bookmarks.VersionInfo, logger *log.Entry) *Server {
+func Create(basePath string, config config.AppConfig, version bookmarks.VersionInfo, logger logging.Logger) *Server {
 	base, err := filepath.Abs(basePath)
 	if err != nil {
 		panic(fmt.Sprintf("cannot resolve basepath '%s', %v", basePath, err))
@@ -82,7 +81,7 @@ func Create(basePath string, config config.AppConfig, version bookmarks.VersionI
 	if err != nil {
 		panic(fmt.Sprintf("cannot create database connection: %v", err))
 	}
-	repository := store.Create(con)
+	repository := store.Create(con, logger)
 
 	// setup handlers for API
 	// ------------------------------------------------------------------
@@ -166,7 +165,7 @@ func Create(basePath string, config config.AppConfig, version bookmarks.VersionI
 		healthCheck:    hc,
 		errorHandler:   errHandler,
 		bookmarkAPI:    bookmarkAPI,
-		log:            logger,
+		logger:         logger,
 	}
 	srv.routes()
 	return &srv

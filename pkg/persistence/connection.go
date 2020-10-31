@@ -24,7 +24,6 @@ func NewConn(connstr string) Connection {
 
 // NewConnForDb creates a connection to a store/repository
 func NewConnForDb(dbType, connstr string) Connection {
-	// dialect is specifically set to "mysql"
 	db := sqlx.MustConnect(dbType, connstr)
 	return Connection{DB: db, Active: true}
 }

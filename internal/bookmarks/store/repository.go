@@ -37,10 +37,11 @@ type Repository interface {
 }
 
 // Create a new repository
-func Create(db *gorm.DB) Repository {
+func Create(db *gorm.DB, logger logging.Logger) Repository {
 	return &dbRepository{
 		transient: db,
 		shared:    nil,
+		logger:    logger,
 	}
 }
 
@@ -51,6 +52,7 @@ func Create(db *gorm.DB) Repository {
 type dbRepository struct {
 	transient *gorm.DB
 	shared    *gorm.DB
+	logger    logging.Logger
 }
 
 // CheckStoreConnectivity performs a basic test if the store is accessible
@@ -72,6 +74,7 @@ func (r *dbRepository) InUnitOfWork(fn func(repo Repository) error) error {
 		return fn(&dbRepository{
 			transient: r.transient,
 			shared:    tx, // the transaction is used as the shared connection
+			logger:    r.logger,
 		})
 	})
 }
@@ -202,7 +205,7 @@ func (r *dbRepository) Create(item Bookmark) (Bookmark, error) {
 	}
 	item.Created = time.Now().UTC()
 
-	logging.Log("store.Create").Debugf("create new bookmark item: %+v", item)
+	r.logger.Debug(fmt.Sprintf("create new bookmark item: %+v", item))
 
 	// if we create a new bookmark item using a specific path we need to ensure that
 	// the parent-path is available. as this is a hierarchical structure this is quite tedious
@@ -221,7 +224,7 @@ func (r *dbRepository) Create(item Bookmark) (Bookmark, error) {
 			}
 		}
 		if !found {
-			logging.Log("store.Create").Warnf("cannot create the bookmark '%+v' because the parent path '%s' is not available!", item, item.Path)
+			r.logger.Error(fmt.Sprintf("cannot create the bookmark '%+v' because the parent path '%s' is not available!", item, item.Path))
 			return Bookmark{}, fmt.Errorf("cannot create item because of missing path hierarchy '%s'", item.Path)
 		}
 	}
@@ -262,7 +265,7 @@ func (r *dbRepository) Update(item Bookmark) (Bookmark, error) {
 		return Bookmark{}, fmt.Errorf("cannot get bookmark by id '%s': %v", item.ID, h.Error)
 	}
 
-	logging.Log("store.Update").Debugf("update bookmark item: %+v", item)
+	r.logger.Debug(fmt.Sprintf("update bookmark item: %+v", item))
 
 	// if we create a new bookmark item using a specific path we need to ensure that
 	// the parent-path is available. as this is a hierarchical structure this is quite tedious
@@ -281,7 +284,7 @@ func (r *dbRepository) Update(item Bookmark) (Bookmark, error) {
 			}
 		}
 		if !found {
-			logging.Log("store.Update").Warnf("cannot update the bookmark '%+v' because the parent path '%s' is not available!", item, item.Path)
+			r.logger.Error(fmt.Sprintf("cannot update the bookmark '%+v' because the parent path '%s' is not available!", item, item.Path))
 			return Bookmark{}, fmt.Errorf("cannot update item because of missing path hierarchy '%s'", item.Path)
 		}
 	}
@@ -315,7 +318,7 @@ func (r *dbRepository) Delete(item Bookmark) error {
 		return fmt.Errorf("cannot get bookmark by id '%s': %v", item.ID, h.Error)
 	}
 
-	logging.Log("store.Delete").Debugf("delete bookmark item: %+v", item)
+	r.logger.Debug(fmt.Sprintf("delete bookmark item: %+v", item))
 
 	// one item is removed from a given path, decrement the child-count for
 	// the folder / path this item is located in

@@ -20,9 +20,8 @@ import (
 	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/handler"
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
-
-	log "github.com/sirupsen/logrus"
 
 	_ "github.com/jinzhu/gorm/dialects/sqlite" // use sqlite for testing
 )
@@ -44,7 +43,7 @@ var baseHandler = handler.Handler{
 		},
 		ErrorPath: "error",
 	},
-	Log: log.New().WithField("mode", "test"),
+	Log: logging.NewNop(),
 }
 
 func jwtUser(next http.Handler) http.Handler {
@@ -479,7 +478,8 @@ func repository(t *testing.T) (store.Repository, *gorm.DB) {
 	DB.AutoMigrate(&store.Bookmark{})
 
 	DB.LogMode(true)
-	return store.Create(DB), DB
+	logger := logging.NewNop()
+	return store.Create(DB, logger), DB
 }
 
 func (r *MockRepository) InUnitOfWork(fn func(repo store.Repository) error) error {

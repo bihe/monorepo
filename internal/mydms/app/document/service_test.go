@@ -2,17 +2,16 @@ package document_test
 
 import (
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
-	"github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
 
-var logger = log.NewLogfmtLogger(os.Stderr)
+var logger = logging.NewNop()
 
 const expectations = "there were unfulfilled expectations: %s"
 

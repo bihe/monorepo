@@ -9,10 +9,9 @@ import (
 	"github.com/go-chi/chi"
 	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/errors"
+	"golang.binggl.net/monorepo/pkg/logging"
 
 	"github.com/stretchr/testify/assert"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const cookie = "cookie"
@@ -38,7 +37,7 @@ var cookieSettings = cookies.Settings{
 	Path:   "/",
 	Secure: false,
 }
-var logger = log.New().WithField("mode", "test")
+var logger = logging.NewNop()
 
 func getJWTMiddleware() *JwtMiddleware {
 	return NewJwtMiddleware(jwtOpts, cookieSettings, logger)

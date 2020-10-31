@@ -6,19 +6,19 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
 	"golang.binggl.net/monorepo/internal/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/config"
 	"golang.binggl.net/monorepo/pkg/handler"
+	"golang.binggl.net/monorepo/pkg/logging"
 
 	_ "github.com/jinzhu/gorm/dialects/sqlite" // use sqlite for testing
 )
 
 const userName = "username"
 
-var logger = log.New().WithField("mode", "test")
+var logger = logging.NewNop()
 
 var appCfg = config.AppConfig{
 	Database: config.Database{

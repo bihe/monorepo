@@ -9,9 +9,9 @@ import (
 	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/handler"
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 
-	log "github.com/sirupsen/logrus"
 	per "golang.binggl.net/monorepo/pkg/persistence"
 )
 
@@ -26,7 +26,7 @@ var stateCookieName = cookieSettings.Prefix + "_" + stateParam
 var authFlowCookieName = cookieSettings.Prefix + "_" + authFlowCookie
 
 var Err = fmt.Errorf("error")
-var logEntry = log.New().WithField("mode", "test")
+var logger = logging.NewNop()
 
 var oauthConfig = config.OAuthConfig{
 	ClientID:     "CLIENTID",
@@ -86,7 +86,7 @@ var baseHandler = handler.Handler{
 		},
 		ErrorPath: "error",
 	},
-	Log: logEntry,
+	Log: logger,
 }
 
 // --------------------------------------------------------------------------

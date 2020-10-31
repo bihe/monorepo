@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/errors"
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
 
@@ -23,7 +23,7 @@ var hc = &HealthCheckHandler{
 				Prefix: "test",
 			},
 		},
-		Log: log.New().WithField("mode", "test"),
+		Log: logging.NewNop(),
 	},
 	Checker: simpleChecker{},
 }

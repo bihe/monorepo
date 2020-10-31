@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
-	"github.com/go-kit/kit/log"
+	"golang.binggl.net/monorepo/pkg/logging"
 )
 
 // --------------------------------------------------------------------------
@@ -50,7 +50,7 @@ type S3Config struct {
 }
 
 // NewService returns a new instance of the fileservice
-func NewService(logger log.Logger, config S3Config) FileService {
+func NewService(logger logging.Logger, config S3Config) FileService {
 	var svc FileService
 	{
 		svc = &s3service{config: config}

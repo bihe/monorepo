@@ -18,10 +18,9 @@ import (
 	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/handler"
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 	"google.golang.org/grpc"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // Server configures a HTTP server
@@ -40,7 +39,7 @@ type Server struct {
 	StartURL       string
 	Environment    config.Environment
 	Version        types.VersionInfo
-	Log            *log.Entry
+	Log            logging.Logger
 	router         chi.Router
 }
 
@@ -135,7 +134,7 @@ func (s *Server) MapRoutes() {
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(handler.NewLoggerMiddleware(s.Log).LoggerContext)
+	r.Use(handler.NewRequestLogger(s.Log).LoggerContext)
 	// use the default list of "compressable" content-type
 	r.Use(middleware.NewCompressor(5).Handler)
 	r.Use(middleware.Recoverer)

@@ -302,6 +302,13 @@ const (
 	SENDERS
 )
 
+func (s SearchType) String() string {
+	if s == TAGS {
+		return "tags"
+	}
+	return "senders"
+}
+
 // SearchLists collects all tag-entries from all documents and returns those elements which start with
 // the given search term. The search is performed case insensitive
 func (rw *dbRepository) SearchLists(s string, st SearchType) ([]string, error) {

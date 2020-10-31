@@ -11,7 +11,8 @@ tokenSecurity:
 
 logging:
     filePath: "./logs/crypter-grpc-api.log"
-    #grayLogServer: "seq-input-gelf:12201"
+    logLevel: debug
+    grayLogServer: ""
 
 # common application settings
 serviceName: crypter

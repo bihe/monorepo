@@ -88,13 +88,13 @@ func (h *HealthCheckHandler) check() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user, ok := security.UserFromContext(r.Context())
 		if !ok || user == nil {
-			logging.LogWithReq(r, h.Log, "handler.check").Errorf("user is not available in context!")
+			h.Log.Error("check: user is not available in context!")
 			h.ErrRep.Negotiate(w, r, errors.SecurityError{Err: fmt.Errorf("user is not available in context"), Request: r})
 			return
 		}
 
 		if err := h.getHealth(*user, w, r, h.Checker); err != nil {
-			logging.LogWithReq(r, h.Log, "handler.check").Errorf("error during health-check call %v\n", err)
+			h.Log.Error("check: error in health-check function", logging.ErrV(fmt.Errorf("error during health-check call %v", err)))
 			h.ErrRep.Negotiate(w, r, err)
 			return
 		}
@@ -103,13 +103,13 @@ func (h *HealthCheckHandler) check() http.HandlerFunc {
 
 // getHealth returns health-check info about the service
 func (h *HealthCheckHandler) getHealth(user security.User, w http.ResponseWriter, r *http.Request, checker HealthChecker) error {
-	logging.LogWithReq(r, h.Log, "handler.getHealth").Debugf("check for health")
+	h.Log.Debug("check for health")
 	health, err := checker.Check(user)
 	if err != nil {
-		logging.LogWithReq(r, h.Log, "handler.getHealth").Errorf("error during health-check call %v\n", err)
+		h.Log.Error("getHealth: error from Check function", logging.ErrV(fmt.Errorf("error during health-check call %v", err)))
 		return err
 	}
-	logging.LogWithReq(r, h.Log, "handler.getHealth").Infof("health: %s", health)
+	h.Log.Info(fmt.Sprintf("health: %s", health))
 	if health.Status != OK {
 		w.WriteHeader(http.StatusServiceUnavailable)
 	}

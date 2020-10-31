@@ -8,8 +8,6 @@ import (
 	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // Handler defines common handler logic
@@ -17,7 +15,7 @@ type Handler struct {
 	// ErrRep is used to send errors according to the users accept headers
 	ErrRep *errors.ErrorReporter
 	// Log is the supplied log-handler
-	Log *log.Entry
+	Log logging.Logger
 }
 
 // Secure wraps handlers to have a common signature
@@ -26,12 +24,12 @@ func (h *Handler) Secure(f func(user security.User, w http.ResponseWriter, r *ht
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user, ok := security.UserFromContext(r.Context())
 		if !ok || user == nil {
-			logging.LogWithReq(r, h.Log, "handler.Secure").Errorf("user is not available in context!")
+			h.Log.InfoRequest("user is not available in context!", r)
 			h.ErrRep.Negotiate(w, r, fmt.Errorf("user is not available in context"))
 			return
 		}
 		if err := f(*user, w, r); err != nil {
-			logging.LogWithReq(r, h.Log, "handler.Secure").Errorf("error during API call %v\n", err)
+			h.Log.Error("Secure: function returned an error", logging.ErrV(fmt.Errorf("error during API call %v", err)))
 			h.ErrRep.Negotiate(w, r, err)
 			return
 		}
@@ -42,7 +40,7 @@ func (h *Handler) Secure(f func(user security.User, w http.ResponseWriter, r *ht
 func (h *Handler) Call(f func(w http.ResponseWriter, r *http.Request) error) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := f(w, r); err != nil {
-			logging.LogWithReq(r, h.Log, "handler.Call").Errorf("error during API call %v\n", err)
+			h.Log.Error("Call: function returned an error", logging.ErrV(fmt.Errorf("error during API call %v", err)))
 			h.ErrRep.Negotiate(w, r, err)
 			return
 		}

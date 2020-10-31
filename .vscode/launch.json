@@ -92,7 +92,7 @@
             "output": "debug"
         },
         {
-            "name": "Run :: CREATE_TOKEN)",
+            "name": "Run :: CREATE_TOKEN",
             "type": "go",
             "request": "launch",
             "mode": "auto",

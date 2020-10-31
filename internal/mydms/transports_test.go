@@ -7,13 +7,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/go-kit/kit/log"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/internal/mydms"
 	"golang.binggl.net/monorepo/internal/mydms/app/appinfo"
@@ -21,6 +18,7 @@ import (
 	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
 	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	"golang.binggl.net/monorepo/pkg/config"
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/persistence"
 	"golang.binggl.net/monorepo/pkg/security"
 
@@ -182,8 +180,7 @@ var _ document.Service = &mockDocumentService{}
 const jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4MDIxNDIwNjYsImp0aSI6IjhjMmRlNzIzLTUwOTItNDQxOC05ZTcyLTZkNDlkYjZiMGI1ZSIsImlhdCI6MTYwMTUzNzI2NiwiaXNzIjoidGVzdCIsInN1YiI6ImEuYkBjLmRlIiwiVHlwZSI6ImxvZ2luLlVzZXIiLCJEaXNwbGF5TmFtZSI6IlRlc3QgVXNlciIsIkVtYWlsIjoiYS5iQGMuZGUiLCJVc2VySWQiOiIxMjM0NSIsIlVzZXJOYW1lIjoiVXNlcm5hbWUiLCJHaXZlbk5hbWUiOiJUZXN0IiwiU3VybmFtZSI6IlVzZXIiLCJDbGFpbXMiOlsidGVzdHxodHRwOi8vbG9jYWxob3N0L3Rlc3R8cm9sZUEiXX0.nVynmKxh8RN1iNuwNmDd47pHrH25nVRcssC80-PFXLs"
 const jwt_different_role = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4MDIxNDIwNjYsImp0aSI6IjhjMmRlNzIzLTUwOTItNDQxOC05ZTcyLTZkNDlkYjZiMGI1ZSIsImlhdCI6MTYwMTUzNzI2NiwiaXNzIjoidGVzdCIsInN1YiI6ImEuYkBjLmRlIiwiVHlwZSI6ImxvZ2luLlVzZXIiLCJEaXNwbGF5TmFtZSI6IlRlc3QgVXNlciIsIkVtYWlsIjoiYS5iQGMuZGUiLCJVc2VySWQiOiIxMjM0NSIsIlVzZXJOYW1lIjoiVXNlcm5hbWUiLCJHaXZlbk5hbWUiOiJUZXN0IiwiU3VybmFtZSI6IlVzZXIiLCJDbGFpbXMiOlsidGVzdHxodHRwOi8vbG9jYWxob3N0L3Rlc3R8ZGlmZmVyZW50Um9sZSJdfQ.RRg7Bdk0_PlCDwUhzDa__2HMXQ1WlfJkAi6VNaiwVTQ"
 
-var kitLog = log.NewLogfmtLogger(os.Stderr)
-var logrusLog = logrus.New().WithField("mode", "test")
+var logger = logging.NewNop()
 
 var jwtConfig = config.Security{
 	CacheDuration: "10s",
@@ -236,8 +233,8 @@ func handlerWith(ops *handlerOps) http.Handler {
 		}
 	}
 
-	endpoints := mydms.MakeServerEndpoints(ai, ds, fs, kitLog)
-	apiSrv := mydms.MakeHTTPHandler(endpoints, kitLog, logrusLog, mydms.HTTPHandlerOptions{
+	endpoints := mydms.MakeServerEndpoints(ai, ds, fs, logger)
+	apiSrv := mydms.MakeHTTPHandler(endpoints, logger, mydms.HTTPHandlerOptions{
 		BasePath:     "./",
 		ErrorPath:    "/error",
 		AssetConfig:  assetConfig,
@@ -788,10 +785,10 @@ func e2eHandler(repo document.Repository) http.Handler {
 	ai = &mockAppInfoService{}
 	fs = &mockFileService{}
 	uc = &mockUploadClient{}
-	ds = document.NewService(kitLog, repo, fs, uc)
+	ds = document.NewService(logger, repo, fs, uc)
 
-	endpoints := mydms.MakeServerEndpoints(ai, ds, fs, kitLog)
-	apiSrv := mydms.MakeHTTPHandler(endpoints, kitLog, logrusLog, mydms.HTTPHandlerOptions{
+	endpoints := mydms.MakeServerEndpoints(ai, ds, fs, logger)
+	apiSrv := mydms.MakeHTTPHandler(endpoints, logger, mydms.HTTPHandlerOptions{
 		BasePath:     "./",
 		ErrorPath:    "/error",
 		AssetConfig:  assetConfig,

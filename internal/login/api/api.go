@@ -33,8 +33,6 @@ import (
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 	"golang.org/x/oauth2"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // --------------------------------------------------------------------------
@@ -117,11 +115,11 @@ type loginAPI struct {
 	repo           persistence.Repository
 	jwt            config.Security
 	editRole       string
-	logEntry       *log.Entry
+	logger         logging.Logger
 }
 
 // New creates a new instance of the API type
-func New(basePath string, baseHandler handler.Handler, cs cookies.Settings, version login.VersionInfo, oauth config.OAuthConfig, jwt config.Security, repo persistence.Repository, logEntry *log.Entry) Login {
+func New(basePath string, baseHandler handler.Handler, cs cookies.Settings, version login.VersionInfo, oauth config.OAuthConfig, jwt config.Security, repo persistence.Repository, logger logging.Logger) Login {
 	c, v := NewOIDC(oauth)
 	api := loginAPI{
 		Handler:        baseHandler,
@@ -138,7 +136,7 @@ func New(basePath string, baseHandler handler.Handler, cs cookies.Settings, vers
 		repo:          repo,
 		jwt:           jwt,
 		editRole:      jwt.Claim.Roles[0], // use the first role of the defined claims as the edit role
-		logEntry:      logEntry,
+		logger:        logger,
 	}
 
 	return &api
@@ -156,7 +154,7 @@ func (a *loginAPI) respond(w http.ResponseWriter, r *http.Request, code int, dat
 	if data != nil {
 		err := json.NewEncoder(w).Encode(data)
 		if err != nil {
-			logging.LogWithReq(r, a.logEntry, "server.respond").Errorf("could not marshal json %v\n", err)
+			a.logger.ErrorRequest("json error", r, logging.ErrV(fmt.Errorf("could not marshal json %v", err)))
 			a.errRep.Negotiate(w, r, errors.ServerError{
 				Err:     fmt.Errorf("could not marshal json %v", err),
 				Request: r,
@@ -188,7 +186,7 @@ func (a *loginAPI) query(r *http.Request, name string) string {
 	keys, ok := r.URL.Query()[name]
 
 	if !ok || len(keys[0]) < 1 {
-		logging.LogWithReq(r, a.logEntry, "server.getQuery").Debugf("Url Param '%s' is missing", name)
+		a.logger.ErrorRequest("validation error", r, logging.ErrV(fmt.Errorf("Url Param '%s' is missing", name)))
 		return ""
 	}
 

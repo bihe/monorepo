@@ -28,6 +28,7 @@ database:
 logging:
     filePath: "./logs/login-api.log"
     logLevel: debug
+    grayLogServer: ""
 
 # cookies are needed for user-facing sites and messaging
 appCookies:

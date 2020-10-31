@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
 
@@ -96,7 +95,7 @@ func (h *AppInfoHandler) GetHandler() http.Handler {
 //     schema:
 //       "$ref": "#/definitions/ProblemDetail"
 func (h *AppInfoHandler) HandleAppInfo(user security.User, w http.ResponseWriter, r *http.Request) error {
-	logging.LogWithReq(r, h.Handler.Log, "handler.HandleAppInfo").Debugf("return the application metadata info")
+	h.Log.Debug("HandleAppInfo: return the application metadata info")
 	info := Meta{
 		Version: VersionInfo{
 			Version: h.Version,

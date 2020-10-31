@@ -4,9 +4,8 @@ package cookies
 
 import (
 	"fmt"
+	"log"
 	"net/http"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // CookieSameSite specifies the cookie SameSite mode
@@ -80,7 +79,7 @@ func (a *AppCookie) Get(name string, r *http.Request) string {
 	)
 	cookieName := a.cookieName(name)
 	if cookie, err = r.Cookie(cookieName); err != nil {
-		log.WithField("func", "cookies.Get").Debugf("could not read cookie '%s': %v\n", cookieName, err)
+		log.Printf("cookies.Get: could not read cookie '%s': %v", cookieName, err)
 		return ""
 	}
 	return cookie.Value

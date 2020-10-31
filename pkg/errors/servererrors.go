@@ -5,12 +5,11 @@ package errors
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/markusthoemmes/goautoneg"
 	"golang.binggl.net/monorepo/pkg/cookies"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type content int
@@ -266,11 +265,11 @@ func writeProblemJSON(w http.ResponseWriter, code int, pd *ProblemDetail) {
 	w.WriteHeader(code)
 	b, err := json.Marshal(pd)
 	if err != nil {
-		log.WithField("func", "writeProblemJSON").Errorf("could not marshal json %v\n", err)
+		log.Printf("writeProblemJSON: could not marshal json %v", err)
 	}
 	_, err = w.Write(b)
 	if err != nil {
-		log.WithField("func", "writeProblemJSON").Errorf("could not write bytes using http.ResponseWriter: %v\n", err)
+		log.Printf("writeProblemJSON: could not write bytes using http.ResponseWriter: %v", err)
 	}
 }
 

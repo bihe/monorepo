@@ -17,7 +17,7 @@ import (
 	"golang.binggl.net/monorepo/internal/login/config"
 	"golang.binggl.net/monorepo/internal/login/server"
 
-	log "github.com/sirupsen/logrus"
+	c "golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/logging"
 	srv "golang.binggl.net/monorepo/pkg/server"
 )
@@ -44,16 +44,10 @@ func run() (err error) {
 	}
 
 	hostName, port, basePath, appConfig := readConfig()
-	l := logging.Setup(logging.LogConfig{
-		FilePath: appConfig.Logging.FilePath,
-		LogLevel: appConfig.Logging.LogLevel,
-		Trace: logging.TraceConfig{
-			AppName: appConfig.AppName,
-			HostID:  appConfig.HostID,
-		},
-		GrayLogServer: appConfig.Logging.GrayLogServer,
-	}, string(appConfig.Environment))
-	apiSrv := server.Create(basePath, appConfig, version, l)
+	logger := setupLog(appConfig)
+	defer logger.Close()
+
+	apiSrv := server.Create(basePath, appConfig, version, logger)
 	addr := fmt.Sprintf("%s:%d", hostName, port)
 	httpSrv := &http.Server{Addr: addr, Handler: apiSrv}
 
@@ -63,22 +57,21 @@ func run() (err error) {
 			return
 		}
 	}()
-	return graceful(httpSrv, 5*time.Second)
+	return graceful(httpSrv, 5*time.Second, logger)
 }
 
-func graceful(s *http.Server, timeout time.Duration) error {
+func graceful(s *http.Server, timeout time.Duration, logger logging.Logger) error {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 	<-stop
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	log.Infof("\nShutdown with timeout: %s\n", timeout)
+	logger.Info(fmt.Sprintf("Shutdown with timeout: %s", timeout))
 	if err := s.Shutdown(ctx); err != nil {
 		return err
 	}
-
-	log.Info("Server stopped")
+	logger.Info(fmt.Sprintf("Server stopped"))
 	return nil
 }
 
@@ -116,4 +109,25 @@ func readConfig() (hostname string, port int, basePath string, conf config.AppCo
 		panic(fmt.Sprintf("Could not unmarshall server configuration values: %v", err))
 	}
 	return
+}
+
+func setupLog(cfg config.AppConfig) logging.Logger {
+	var env c.Environment
+
+	switch cfg.Environment {
+	case config.Development:
+		env = c.Development
+	case config.Production:
+		env = c.Production
+	}
+
+	return logging.New(logging.LogConfig{
+		FilePath:      cfg.Logging.FilePath,
+		LogLevel:      cfg.Logging.LogLevel,
+		GrayLogServer: cfg.Logging.GrayLogServer,
+		Trace: logging.TraceConfig{
+			AppName: cfg.AppName,
+			HostID:  cfg.HostID,
+		},
+	}, env)
 }

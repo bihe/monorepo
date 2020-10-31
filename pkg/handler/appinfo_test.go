@@ -10,9 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/errors"
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -27,7 +26,7 @@ var handler = &AppInfoHandler{
 				Prefix: "test",
 			},
 		},
-		Log: log.New().WithField("mode", "test"),
+		Log: logging.NewNop(),
 	},
 	Version: version,
 	Build:   build,

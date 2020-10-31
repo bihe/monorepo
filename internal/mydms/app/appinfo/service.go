@@ -1,8 +1,7 @@
 package appinfo
 
 import (
-	"github.com/go-kit/kit/log"
-
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
 
@@ -17,7 +16,7 @@ type Service interface {
 }
 
 // NewService returns a Service with all of the expected middlewares wired in.
-func NewService(logger log.Logger, version, build string) Service {
+func NewService(logger logging.Logger, version, build string) Service {
 	var svc Service
 	{
 		svc = &appInfoService{

@@ -10,11 +10,14 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
+	"golang.binggl.net/monorepo/pkg/logging"
 
 	_ "github.com/jinzhu/gorm/dialects/sqlite" // use sqlite for testing
 )
 
 const expectations = "there were unfulfilled expectations: %s"
+
+var logger = logging.NewNop()
 
 func mockRepository() (Repository, sqlmock.Sqlmock, error) {
 	var (
@@ -29,7 +32,7 @@ func mockRepository() (Repository, sqlmock.Sqlmock, error) {
 	if DB, err = gorm.Open("mysql", db); err != nil {
 		return nil, nil, err
 	}
-	return Create(DB), mock, nil
+	return Create(DB, logger), mock, nil
 }
 
 func repository(t *testing.T) (Repository, *gorm.DB) {
@@ -42,7 +45,7 @@ func repository(t *testing.T) (Repository, *gorm.DB) {
 	}
 	// Migrate the schema
 	DB.AutoMigrate(&Bookmark{})
-	return Create(DB), DB
+	return Create(DB, logger), DB
 }
 
 func Test_Mock_GetAllBookmarks(t *testing.T) {

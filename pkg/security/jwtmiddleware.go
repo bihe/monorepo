@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/logging"
@@ -28,11 +27,11 @@ var userKey ctxtKey
 type JwtMiddleware struct {
 	jwt    JwtOptions
 	errRep *errors.ErrorReporter
-	log    *log.Entry
+	log    logging.Logger
 }
 
 // NewJwtMiddleware creates a new instance using the provided options
-func NewJwtMiddleware(options JwtOptions, settings cookies.Settings, logger *log.Entry) *JwtMiddleware {
+func NewJwtMiddleware(options JwtOptions, settings cookies.Settings, logger logging.Logger) *JwtMiddleware {
 	m := JwtMiddleware{
 		jwt: options,
 		errRep: &errors.ErrorReporter{
@@ -59,7 +58,7 @@ func NewContext(ctx context.Context, u *User) context.Context {
 	return context.WithValue(ctx, userKey, u)
 }
 
-func handleJWT(next http.Handler, options JwtOptions, errRep *errors.ErrorReporter, logger *log.Entry) http.Handler {
+func handleJWT(next http.Handler, options JwtOptions, errRep *errors.ErrorReporter, logger logging.Logger) http.Handler {
 	jwtAuth := NewJWTAuthorization(options, true)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -84,7 +83,7 @@ func handleJWT(next http.Handler, options JwtOptions, errRep *errors.ErrorReport
 			// fallback to get the token via the cookie
 			var cookie *http.Cookie
 			if cookie, err = r.Cookie(options.CookieName); err != nil {
-				logging.LogWithReq(r, logger, "security.handleJWT").Warnf("could not get token from header nor cookie: %v", err)
+				logger.Warn("get token failed", logging.ErrV(fmt.Errorf("could not get token from header nor cookie: %v", err)))
 				// neither the header nor the cookie supplied a jwt token
 				errRep.Negotiate(w, r, errors.RedirectError{
 					Status:  http.StatusUnauthorized,
@@ -100,7 +99,7 @@ func handleJWT(next http.Handler, options JwtOptions, errRep *errors.ErrorReport
 
 		user, err = jwtAuth.EvaluateToken(token)
 		if err != nil {
-			logging.LogWithReq(r, logger, "security.handleJWT").Warnf("error during JWT token evaluation: %v", err)
+			logger.Warn("token evaluation failed", logging.ErrV(fmt.Errorf("error during JWT token evaluation: %v", err)))
 			errRep.Negotiate(w, r, errors.SecurityError{
 				Err:     fmt.Errorf("error during token evaluation: %v", err),
 				Request: r,

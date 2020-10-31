@@ -2,13 +2,14 @@ package mydms
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/log"
 	"golang.binggl.net/monorepo/internal/mydms/app/appinfo"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
 	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
+	"golang.binggl.net/monorepo/pkg/logging"
 )
 
 // Endpoints collects all of the endpoints that compose a profile service. It's
@@ -26,14 +27,14 @@ type Endpoints struct {
 
 // MakeServerEndpoints returns an Endpoints struct where each endpoint invokes
 // the corresponding method on the provided service.
-func MakeServerEndpoints(ai appinfo.Service, doc document.Service, f filestore.FileService, logger log.Logger) Endpoints {
+func MakeServerEndpoints(ai appinfo.Service, doc document.Service, f filestore.FileService, logger logging.Logger) Endpoints {
 
 	// Application endpoints
 
 	var appInfoEndopint endpoint.Endpoint
 	{
 		appInfoEndopint = appinfo.MakeGetAppInfoEndpoint(ai)
-		appInfoEndopint = EndpointLoggingMiddleware(log.With(logger, "method", "GetAppInfo"))(appInfoEndopint)
+		appInfoEndopint = EndpointLoggingMiddleware(logger, "GetAppInfo")(appInfoEndopint)
 	}
 
 	// Document endpoints
@@ -41,31 +42,31 @@ func MakeServerEndpoints(ai appinfo.Service, doc document.Service, f filestore.F
 	var documentByIDEndpoint endpoint.Endpoint
 	{
 		documentByIDEndpoint = document.MakeGetDocumentByIDEndpoint(doc)
-		documentByIDEndpoint = EndpointLoggingMiddleware(log.With(logger, "method", "GetDocumentByID"))(documentByIDEndpoint)
+		documentByIDEndpoint = EndpointLoggingMiddleware(logger, "GetDocumentByID")(documentByIDEndpoint)
 	}
 
 	var deleteDocumentByIDEndpoint endpoint.Endpoint
 	{
 		deleteDocumentByIDEndpoint = document.MakeDeleteDocumentByIDEndpoint(doc)
-		deleteDocumentByIDEndpoint = EndpointLoggingMiddleware(log.With(logger, "method", "DeleteDocumentByID"))(deleteDocumentByIDEndpoint)
+		deleteDocumentByIDEndpoint = EndpointLoggingMiddleware(logger, "DeleteDocumentByID")(deleteDocumentByIDEndpoint)
 	}
 
 	var searchListEndpoint endpoint.Endpoint
 	{
 		searchListEndpoint = document.MakeSearchListEndpoint(doc)
-		searchListEndpoint = EndpointLoggingMiddleware(log.With(logger, "method", "SearchList"))(searchListEndpoint)
+		searchListEndpoint = EndpointLoggingMiddleware(logger, "SearchList")(searchListEndpoint)
 	}
 
 	var searchDocumentsEndpoint endpoint.Endpoint
 	{
 		searchDocumentsEndpoint = document.MakeSearchDocumentsEndpoint(doc)
-		searchDocumentsEndpoint = EndpointLoggingMiddleware(log.With(logger, "method", "SearchDocuments"))(searchDocumentsEndpoint)
+		searchDocumentsEndpoint = EndpointLoggingMiddleware(logger, "SearchDocuments")(searchDocumentsEndpoint)
 	}
 
 	var saveDocumentEndpoint endpoint.Endpoint
 	{
 		saveDocumentEndpoint = document.MakeSaveDocumentEnpoint(doc)
-		saveDocumentEndpoint = EndpointLoggingMiddleware(log.With(logger, "method", "SaveDocument"))(saveDocumentEndpoint)
+		saveDocumentEndpoint = EndpointLoggingMiddleware(logger, "SaveDocument")(saveDocumentEndpoint)
 	}
 
 	// File endpoints
@@ -73,7 +74,7 @@ func MakeServerEndpoints(ai appinfo.Service, doc document.Service, f filestore.F
 	var getFileEndpoint endpoint.Endpoint
 	{
 		getFileEndpoint = filestore.MakeGetFileEndpoint(f)
-		getFileEndpoint = EndpointLoggingMiddleware(log.With(logger, "method", "GetFile"))(getFileEndpoint)
+		getFileEndpoint = EndpointLoggingMiddleware(logger, "GetFile")(getFileEndpoint)
 	}
 
 	return Endpoints{
@@ -93,11 +94,15 @@ func MakeServerEndpoints(ai appinfo.Service, doc document.Service, f filestore.F
 
 // EndpointLoggingMiddleware returns an endpoint middleware that logs the
 // duration of each invocation, and the resulting error, if any.
-func EndpointLoggingMiddleware(logger log.Logger) endpoint.Middleware {
+func EndpointLoggingMiddleware(logger logging.Logger, endpointName string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+			logger.Info(fmt.Sprintf("call endpoint: %s", endpointName))
 			defer func(begin time.Time) {
-				logger.Log("transport_error", err, "took", time.Since(begin))
+				logger.Info(fmt.Sprintf("%s: endpoint stats", endpointName), logging.LogV("took", time.Since(begin).String()))
+				if err != nil {
+					logger.Error(fmt.Sprintf("%s: transport-error", endpointName), logging.ErrV(err))
+				}
 			}(time.Now())
 			return next(ctx, request)
 		}

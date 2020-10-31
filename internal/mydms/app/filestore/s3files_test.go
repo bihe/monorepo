@@ -4,14 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
-	"github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
+	"golang.binggl.net/monorepo/pkg/logging"
 )
 
 // rather small PDF payload
@@ -31,7 +30,7 @@ startxref
 `
 const mimeType = "application/pdf"
 
-var logger = log.NewLogfmtLogger(os.Stderr)
+var logger = logging.NewNop()
 
 // Define a mock struct to be used in your unit tests of myFunc.
 // https://github.com/aws/aws-sdk-go/blob/master/service/s3/s3iface/interface.go

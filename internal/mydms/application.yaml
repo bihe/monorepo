@@ -50,6 +50,7 @@ baseconfig:
     logging:
         filePath: "./logs/mydms-api.log"
         logLevel: debug
+        grayLogServer: ""
 
     # cookies are needed for user-facing sites and messaging
     cookies:

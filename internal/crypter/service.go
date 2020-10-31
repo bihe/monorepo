@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/go-kit/kit/log"
 	pdfApi "github.com/pdfcpu/pdfcpu/pkg/api"
 	pdf "github.com/pdfcpu/pdfcpu/pkg/pdfcpu"
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
 
@@ -29,7 +29,7 @@ var (
 )
 
 // NewService returns a Service with all of the expected middlewares wired in.
-func NewService(logger log.Logger, tokenSetting TokenSecurity) EncryptionService {
+func NewService(logger logging.Logger, tokenSetting TokenSecurity) EncryptionService {
 	var useCache = tokenSetting.CacheDuration != ""
 	var svc EncryptionService
 	{
@@ -62,14 +62,14 @@ type ServiceMiddleware func(EncryptionService) EncryptionService
 
 // ServiceLoggingMiddleware takes a logger as a dependency
 // and returns a ServiceLoggingMiddleware.
-func ServiceLoggingMiddleware(logger log.Logger) ServiceMiddleware {
+func ServiceLoggingMiddleware(logger logging.Logger) ServiceMiddleware {
 	return func(next EncryptionService) EncryptionService {
 		return loggingMiddleware{logger, next}
 	}
 }
 
 type loggingMiddleware struct {
-	logger log.Logger
+	logger logging.Logger
 	next   EncryptionService
 }
 
@@ -77,7 +77,12 @@ type loggingMiddleware struct {
 // the provided parameters are logged and the execution is passed on to the underlying/next service
 func (mw loggingMiddleware) Encrypt(ctx context.Context, req Request) (encPayload []byte, err error) {
 	defer func() {
-		mw.logger.Log("method", "Encrypt", "payload(length)", len(req.Payload), "payloadType", req.Type, "encPayload(lenght)", len(encPayload), "err", err)
+		mw.logger.Info("Encrypt called",
+			logging.LogV("payload(length)", fmt.Sprintf("%d", req.Payload)),
+			logging.LogV("payloadType", fmt.Sprintf("%s", req.Type)),
+			logging.LogV("encPayload(lenght)", fmt.Sprintf("%d", len(encPayload))),
+			logging.ErrV(err),
+		)
 	}()
 	// pass on to the real service
 	return mw.next.Encrypt(ctx, req)
@@ -94,22 +99,22 @@ var (
 
 // implment the Service
 type encryptionSvc struct {
-	logger  log.Logger
+	logger  logging.Logger
 	jwtAuth *security.JWTAuthorization
 }
 
 func (e *encryptionSvc) Encrypt(ctx context.Context, req Request) ([]byte, error) {
 	err := validateEncryptionRequest(req.AuthToken, req.NewPass, req.Payload)
 	if err != nil {
-		e.logger.Log("method", "Encrypt", "err", fmt.Errorf("validation arguments error: %v", err))
+		e.logger.Error("Encrypt error", logging.ErrV(fmt.Errorf("validation arguments error: %v", err)))
 		return nil, err
 	}
 	user, err := e.jwtAuth.EvaluateToken(req.AuthToken)
 	if err != nil {
-		e.logger.Log("method", "Encrypt", "err", fmt.Errorf("error during token evaluation: %v", err))
+		e.logger.Error("Encrypt error", logging.ErrV(fmt.Errorf("error during token evaluation: %v", err)))
 		return nil, err
 	}
-	e.logger.Log("method", "Encrypt", "user", user.UserID, "msg", fmt.Errorf("user '%s' requests encryption of payload", user.UserID))
+	e.logger.Info(fmt.Sprintf("Encrypt: user '%s' requests encryption of payload", user.UserID))
 
 	// encrypt the payload per respective type
 	switch req.Type {

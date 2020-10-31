@@ -3,11 +3,10 @@ package crypter_test
 import (
 	"context"
 	"io/ioutil"
-	"os"
 	"testing"
 
-	"github.com/go-kit/kit/log"
 	"golang.binggl.net/monorepo/internal/crypter"
+	"golang.binggl.net/monorepo/pkg/logging"
 )
 
 var tokenSecurity = crypter.TokenSecurity{
@@ -21,7 +20,7 @@ var tokenSecurity = crypter.TokenSecurity{
 	CacheDuration: "10m",
 }
 
-var logger = log.NewLogfmtLogger(os.Stderr)
+var logger = logging.NewNop()
 
 /*
 {

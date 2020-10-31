@@ -1,12 +1,11 @@
 package handler
 
 import (
-	"context"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/middleware"
-	log "github.com/sirupsen/logrus"
 	"golang.binggl.net/monorepo/pkg/logging"
 )
 
@@ -23,62 +22,52 @@ var logKey logCtxtKey
 //
 // this implementation was derived from the go-chi middleware https://github.com/go-chi/chi/blob/master/middleware/logger.go
 type LoggerMiddleware struct {
-	log *log.Entry
+	logger logging.Logger
 }
 
-// NewLoggerMiddleware creates a new instance using the provided options
-func NewLoggerMiddleware(logger *log.Entry) *LoggerMiddleware {
+// NewRequestLogger instantiats a new middleware to log requests
+func NewRequestLogger(logger logging.Logger) *LoggerMiddleware {
 	m := LoggerMiddleware{
-		log: logger,
+		logger: logger,
 	}
 	return &m
 }
 
 // LoggerContext performs the middleware action
-func (j *LoggerMiddleware) LoggerContext(next http.Handler) http.Handler {
-	return handleLog(next, j.log)
+func (l *LoggerMiddleware) LoggerContext(next http.Handler) http.Handler {
+	return handleLog(next, l.logger)
 }
 
-// WithLogEntry sets the in-context LogEntry for a request.
-func WithLogEntry(r *http.Request, entry *log.Entry) *http.Request {
-	r = r.WithContext(context.WithValue(r.Context(), logKey, entry))
-	return r
-}
-
-func handleLog(next http.Handler, logger *log.Entry) http.Handler {
+func handleLog(next http.Handler, logger logging.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		entry := newLogEntry(r, logger)
-		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+		var (
+			kvs    []logging.KeyValue
+			scheme string
+		)
 
+		scheme = "http"
+		if r.TLS != nil {
+			scheme = "https"
+		}
+		kvs = append(kvs, logging.LogV("scheme", scheme),
+			logging.LogV("method", r.Method),
+			logging.LogV("host", r.Host),
+			logging.LogV("requestURI", r.RequestURI),
+			logging.LogV("proto", r.Proto),
+			logging.LogV("remoteAddr", r.RemoteAddr),
+		)
+
+		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 		t1 := time.Now()
 		defer func() {
-			write(entry, ww.Status(), ww.BytesWritten(), time.Since(t1))
+			kvs = append(kvs,
+				logging.LogV("status", fmt.Sprintf("%d", ww.Status())),
+				logging.LogV("bytes", fmt.Sprintf("%d", ww.BytesWritten())),
+				logging.LogV("duration", fmt.Sprintf("%d", time.Since(t1))),
+			)
+			logger.InfoRequest("request", r, kvs...)
 		}()
 
-		next.ServeHTTP(ww, WithLogEntry(r, entry))
+		next.ServeHTTP(ww, r)
 	})
-}
-
-func newLogEntry(r *http.Request, logger *log.Entry) *log.Entry {
-	entry := logging.LogWithReq(r, logger, "handler.LoggerContext")
-	scheme := "http"
-	if r.TLS != nil {
-		scheme = "https"
-	}
-	return entry.WithFields(log.Fields{
-		"method":     r.Method,
-		"scheme":     scheme,
-		"host":       r.Host,
-		"requestURI": r.RequestURI,
-		"proto":      r.Proto,
-		"remoteAddr": r.RemoteAddr,
-	})
-}
-
-func write(entry *log.Entry, status, bytes int, elapsed time.Duration) {
-	entry.WithFields(log.Fields{
-		"status":   status,
-		"bytes":    bytes,
-		"duration": elapsed,
-	}).Info("request")
 }

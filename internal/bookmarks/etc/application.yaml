@@ -19,6 +19,7 @@ database:
 logging:
     filePath: "./logs/bookmarks-api.log"
     logLevel: debug
+    grayLogServer: ""
 
 # cookies are needed for user-facing sites and messaging
 cookies:

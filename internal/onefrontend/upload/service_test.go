@@ -9,12 +9,12 @@ import (
 
 	"golang.binggl.net/monorepo/internal/crypter"
 	"golang.binggl.net/monorepo/internal/onefrontend/upload"
+	"golang.binggl.net/monorepo/pkg/logging"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
-var logger = log.New().WithField("mode", "test")
+var logger = logging.NewNop()
 
 const unencryptedPDF = "../../../testdata/unencrypted.pdf"
 

@@ -44,6 +44,7 @@ services:
             CR_TOKENSECURITY.JWTISSUER: $JWTISSUER
             CR_TOKENSECURITY.JWTSECRET: $JWTSECRET
             CR_LOGGING.FILEPATH: /opt/crypter/logs/crypter-grpc-api.log
+            CR_LOGGING.GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
 
     db:
         image: mariadb:10.4
@@ -86,6 +87,7 @@ services:
             LO_OIDC.CLIENTID: $OIDC_CLIENTID
             LO_OIDC.CLIENTSECRET: $OIDC_CLIENTSECRET
             LO_LOGGING.FILEPATH: /opt/login/logs/login-api.log
+            LO_LOGGING.GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
 
     mydms-3002:
         build:
@@ -104,11 +106,12 @@ services:
         restart:
             always
         environment:
-            MY_ENVIRONMENT: Production
+            MY_BASECONFIG.ENVIRONMENT: Production
             MY_BASECONFIG.SECURITY.JWTISSUER: $JWTISSUER
             MY_BASECONFIG.SECURITY.JWTSECRET: $JWTSECRET
             MY_BASECONFIG.SECURITY.CLAIM.URL: http://localhost:3002
             MY_BASECONFIG.LOGGING.FILEPATH: /opt/mydms/logs/mydms-api.log
+            MY_BASECONFIG.LOGGING.GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
             MY_FILESTORE.REGION: $FILESTORE_REGION
             MY_FILESTORE.BUCKET: $FILESTORE_BUCKET
             MY_FILESTORE.KEY: $FILESTORE_KEY
@@ -137,6 +140,7 @@ services:
             BM_SECURITY.JWTISSUER: $JWTISSUER
             BM_SECURITY.JWTSECRET: $JWTSECRET
             BM_LOGGING.FILEPATH: /opt/bookmarks/logs/bookmarks-api.log
+            BM_LOGGING.GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
 
     onefrontend-3000:
         build:
@@ -161,6 +165,7 @@ services:
             ONE_JWT.JWTISSUER: $JWTISSUER
             ONE_JWT.JWTSECRET: $JWTSECRET
             ONE_LOGGING.FILEPATH: /opt/onefrontend/logs/onefrontend-api.log
+            ONE_LOGGING.GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
             ONE_UPLOAD.ENCGRPCCONN: crypter:3000
 
 networks:

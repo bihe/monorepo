@@ -15,11 +15,11 @@ import (
 	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/handler"
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 
 	"golang.binggl.net/monorepo/internal/login/api"
 
-	log "github.com/sirupsen/logrus"
 	per "golang.binggl.net/monorepo/pkg/persistence"
 )
 
@@ -38,11 +38,11 @@ type Server struct {
 	environment    config.Environment
 	logConfig      config.LogConfig
 	cors           config.CorsSettings
-	log            *log.Entry
+	log            logging.Logger
 }
 
 // Create instantiates a new Server instance
-func Create(basePath string, config config.AppConfig, version login.VersionInfo, logEntry *log.Entry) *Server {
+func Create(basePath string, config config.AppConfig, version login.VersionInfo, logger logging.Logger) *Server {
 	base, err := filepath.Abs(basePath)
 	if err != nil {
 		panic(fmt.Sprintf("cannot resolve basepath '%s', %v", basePath, err))
@@ -77,7 +77,7 @@ func Create(basePath string, config config.AppConfig, version login.VersionInfo,
 	}
 	baseHandler := handler.Handler{
 		ErrRep: errorReporter,
-		Log:    logEntry,
+		Log:    logger,
 	}
 
 	appInfo := &handler.AppInfoHandler{
@@ -94,9 +94,9 @@ func Create(basePath string, config config.AppConfig, version login.VersionInfo,
 		environment: config.Environment,
 		logConfig:   config.Logging,
 		cors:        config.Cors,
-		api:         api.New(base, baseHandler, cookieSettings, version, config.OIDC, config.Security, repo, logEntry),
+		api:         api.New(base, baseHandler, cookieSettings, version, config.OIDC, config.Security, repo, logger),
 		appInfoAPI:  appInfo,
-		log:         logEntry,
+		log:         logger,
 	}
 	srv.routes()
 	return &srv

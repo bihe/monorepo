@@ -15,6 +15,7 @@ jwt:
 logging:
     filePath: "./logs/onefrontend-api.log"
     logLevel: debug
+    grayLogServer: ""
 
 cookies:
     path: /

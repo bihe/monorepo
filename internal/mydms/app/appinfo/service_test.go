@@ -1,19 +1,16 @@
 package appinfo_test
 
 import (
-	"os"
 	"testing"
 
-	"github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/internal/mydms/app/appinfo"
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
 
-var logger = log.NewLogfmtLogger(os.Stderr)
-
 func Test_GetAppInfo(t *testing.T) {
-	svc := appinfo.NewService(logger, "1.0.0", "20200901-local")
+	svc := appinfo.NewService(logging.NewNop(), "1.0.0", "20200901-local")
 	if svc == nil {
 		t.Fatal("could not crate a new service instance")
 	}

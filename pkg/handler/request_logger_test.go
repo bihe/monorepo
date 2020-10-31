@@ -1,70 +1,96 @@
 package handler
 
 import (
-	"encoding/json"
-	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
-	log "github.com/sirupsen/logrus"
+	"golang.binggl.net/monorepo/pkg/logging"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 )
 
-func getLoggerMiddleware(w io.Writer) *LoggerMiddleware {
-	logger := log.New()
-	logger.SetFormatter(&log.JSONFormatter{})
-	logger.SetOutput(w)
-	entry := logger.WithField("mode", "test")
-	return NewLoggerMiddleware(entry)
+// mock the logging.Logger
+
+/*
+type Logger interface {
+	// implement the io.Closer interface
+	io.Closer
+	// Info logs a message and values with logging-level INFO
+	Info(msg string, keyvals ...KeyValue)
+	// Info logs a message and values with logging-level DEBUG
+	Debug(msg string, keyvals ...KeyValue)
+	// Warn logs a message and values with logging-level WARNING
+	Warn(msg string, keyvals ...KeyValue)
+	// Error logs a message and values with logging-level ERROR
+	Error(msg string, keyvals ...KeyValue)
+	// LogRequest is used to log a *http.Request (with a Trace-ID, if available)
+	LogRequest(req *http.Request, keyvals ...KeyValue)
+}
+*/
+
+type mockLogger struct {
+	keyvals []logging.KeyValue
 }
 
-type logEntry struct {
-	Appname    string
-	Bytes      int
-	Duration   int
-	Function   string
-	Host       string
-	Hostid     string
-	Level      string
-	Method     string
-	Msg        string
-	Proto      string
-	RemoteAddr string
-	RequestURI string
-	RequestID  string
-	Scheme     string
-	Status     int
-	Time       string
+func (m *mockLogger) Info(msg string, keyvals ...logging.KeyValue) {
+	m.keyvals = append(m.keyvals, keyvals...)
 }
 
-func TestLoggerMiddleware(t *testing.T) {
+func (m *mockLogger) Debug(msg string, keyvals ...logging.KeyValue) {
+	m.keyvals = append(m.keyvals, keyvals...)
+}
+
+func (m *mockLogger) Warn(msg string, keyvals ...logging.KeyValue) {
+	m.keyvals = append(m.keyvals, keyvals...)
+}
+
+func (m *mockLogger) Error(msg string, keyvals ...logging.KeyValue) {
+	m.keyvals = append(m.keyvals, keyvals...)
+}
+
+func (m *mockLogger) InfoRequest(msg string, req *http.Request, keyvals ...logging.KeyValue) {
+	m.keyvals = append(m.keyvals, keyvals...)
+}
+
+func (m *mockLogger) ErrorRequest(msg string, req *http.Request, keyvals ...logging.KeyValue) {
+	m.keyvals = append(m.keyvals, keyvals...)
+}
+
+func (m *mockLogger) Close() error {
+	return nil
+}
+
+var _ logging.Logger = &mockLogger{}
+
+func TestRequestLogger(t *testing.T) {
+	logger := &mockLogger{}
+
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	r := chi.NewRouter()
-	var b strings.Builder
-	logger := getLoggerMiddleware(&b)
+	mw := NewRequestLogger(logger)
 
-	r.Use(logger.LoggerContext)
+	r.Use(mw.LoggerContext)
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 	})
 
 	r.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusOK, rec.Code)
+	// the request-logger addes 9 entries
+	assert.Equal(t, 9, len(logger.keyvals))
 
-	logMsg := b.String()
-	assert.NotEmpty(t, logMsg)
-	var payload logEntry
-	err := json.Unmarshal([]byte(logMsg), &payload)
-	if err != nil {
-		t.Errorf("could not unmarshall: %v", err)
+	var keys []string
+	for _, kv := range logger.keyvals {
+		v := kv.Read()
+		keys = append(keys, v[0])
 	}
 
-	assert.Equal(t, "example.com", payload.Host)
-	assert.Equal(t, "handler.LoggerContext", payload.Function)
-	assert.Equal(t, "/", payload.RequestURI)
+	for _, key := range keys {
+		if key != "scheme" && key != "method" && key != "host" && key != "requestURI" && key != "proto" && key != "remoteAddr" && key != "status" && key != "bytes" && key != "duration" {
+			t.Errorf("request-logging did not return the correct keys %v", keys)
+		}
+	}
 
 }

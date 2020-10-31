@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/transport"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/proto"
 	"google.golang.org/grpc"
 )
@@ -17,9 +17,11 @@ type grpcServer struct {
 }
 
 // NewGRPCServer makes endpoints available as a gRPC CrypterServer.
-func NewGRPCServer(endpoints Endpoints, logger log.Logger) proto.CrypterServer {
+func NewGRPCServer(endpoints Endpoints, logger logging.Logger) proto.CrypterServer {
 	options := []grpctransport.ServerOption{
-		grpctransport.ServerErrorHandler(transport.NewLogErrorHandler(logger)),
+		grpctransport.ServerErrorHandler(transport.ErrorHandlerFunc(func(ctx context.Context, err error) {
+			logger.Error("httptransport error", logging.ErrV(err))
+		})),
 	}
 
 	return &grpcServer{

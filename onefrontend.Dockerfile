@@ -17,7 +17,7 @@ FROM golang:alpine AS BACKEND-BUILD
 
 ARG buildtime_variable_version=1.0.0
 ARG buildtime_variable_timestamp=YYYYMMDD
-ARG buildtime_variable_commit=githash
+ARG buildtime_variable_commit=local
 
 ENV VERSION=${buildtime_variable_version}
 ENV BUILD=${buildtime_variable_timestamp}

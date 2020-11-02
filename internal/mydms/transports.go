@@ -49,7 +49,7 @@ import (
 	pkgerr "golang.binggl.net/monorepo/pkg/errors"
 )
 
-// HTTPHandlerOptions containts configuration settings relevant for the uses HTTP handler implementation
+// HTTPHandlerOptions containts configuration settings relevant for the HTTP handler implementation
 type HTTPHandlerOptions struct {
 	BasePath     string
 	ErrorPath    string
@@ -59,8 +59,7 @@ type HTTPHandlerOptions struct {
 	AssetConfig  config.AssetSettings
 }
 
-// MakeHTTPHandler mounts all of the service endpoints into an http.Handler.
-// Useful in a profilesvc server.
+// MakeHTTPHandler mounts all service endpoints into an http.Handler.
 func MakeHTTPHandler(e Endpoints, logger logging.Logger, opts HTTPHandlerOptions) http.Handler {
 	r := server.SetupBasicRouter(opts.BasePath, opts.CookieConfig, opts.CorsConfig, opts.AssetConfig, logger)
 	apiRouter := server.SetupSecureAPIRouter(opts.ErrorPath, opts.JWTConfig, opts.CookieConfig, logger)

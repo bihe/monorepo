@@ -33,7 +33,7 @@ func (f keyvalueFunc) Read() []string {
 	return f()
 }
 
-// LogV create a KeyValue pair
+// LogV creates a KeyValue pair
 func LogV(key, value string) KeyValue {
 	return keyvalueFunc(func() []string {
 		return []string{key, value}
@@ -50,7 +50,7 @@ func ErrV(err error) KeyValue {
 	})
 }
 
-// Logger defines functions to
+// Logger interface defines common logging functions for applications
 type Logger interface {
 	// implement the io.Closer interface
 	io.Closer
@@ -68,7 +68,7 @@ type Logger interface {
 	ErrorRequest(msg string, req *http.Request, keyvals ...KeyValue)
 }
 
-// NewNop is useful for testing
+// NewNop is useful for testing, it creates a zero / noop instance
 func NewNop() Logger {
 	l := zap.NewNop()
 	s := l.Sugar()

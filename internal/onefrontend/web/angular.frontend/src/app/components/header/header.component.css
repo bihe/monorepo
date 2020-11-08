@@ -143,3 +143,30 @@ div.navinfo {
 .search-area {
   width: 100%;
 }
+
+.module-name {
+  display: inline;
+}
+
+
+.progress {
+  position: absolute;
+  top: 45px;
+  left: 0px;
+}
+
+
+/* Smartphones (portrait) ----------- */
+@media only screen and (max-width : 450px) {
+  /* Styles */
+
+  div.navinfo {
+      width: 30px;
+      flex: none;
+  }
+
+  .module-name {
+    display: none;
+  }
+
+}

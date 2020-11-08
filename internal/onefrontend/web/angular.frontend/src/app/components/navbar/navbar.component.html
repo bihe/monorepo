@@ -1,17 +1,5 @@
-<div>
-    <mat-progress-spinner
-        *ngIf="showProgress"
-        mode="indeterminate"
-        class="progress"
-        color="accent"
-        [strokeWidth]="7"
-        [diameter]="40">
-    </mat-progress-spinner>
-
-</div>
-
 <!-- global navigation-->
-<div class="col-nav nav-section" [class.col-nav-expand]="navExpanded" [class.col-nav-small]="!navExpanded">
+<div class="col-nav nav-section" [class.col-nav-expand]="navExpanded" [class.col-nav-small]="!navExpanded" [class.show-sidebar]="!showSideBar">
 
     <div class="nav-item nav-item-small" [class.nav-item-expand]="navExpanded" [class.nav-item-small]="!navExpanded">
         <a class="headerLink" routerLink="/" title="Home"><i class="fa fa-circle-o" aria-hidden="true"></i>

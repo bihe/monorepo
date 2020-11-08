@@ -1,7 +1,7 @@
+import { Injectable } from "@angular/core";
 import { ReplaySubject } from 'rxjs';
 import { AppInfo } from '../models/app.info.model';
 import { ModuleInfo } from '../models/module.model';
-import { Injectable } from "@angular/core";
 
 const ShowAmountKey = 'mydms.amount.show';
 
@@ -15,7 +15,7 @@ export class ApplicationState {
   private requestReload: ReplaySubject<boolean> = new ReplaySubject();
   private searchInput: ReplaySubject<string> = new ReplaySubject();
   private appRoute: ReplaySubject<string> = new ReplaySubject();
-
+  private showSideBar: ReplaySubject<boolean> = new ReplaySubject();
   private mydmsVersion: ReplaySubject<AppInfo> = new ReplaySubject();
   private bookmarksVersion: ReplaySubject<AppInfo> = new ReplaySubject();
   private sitesVersion: ReplaySubject<AppInfo> = new ReplaySubject();
@@ -115,5 +115,12 @@ export class ApplicationState {
   }
   setSitesVersion(data: AppInfo) {
     this.sitesVersion.next(data);
+  }
+
+  getShowSideBar(): ReplaySubject<boolean> {
+    return this.showSideBar;
+  }
+  setShowSideBar(data: boolean) {
+    this.showSideBar.next(data);
   }
 }

@@ -1,14 +1,15 @@
 <div class="navmenu">
     <div class="navcontent">
+
+        <mat-progress-bar *ngIf="showProgress" class="progress" mode="query" color="warn"></mat-progress-bar>
+
         <!-- INFO -->
         <div class="navinfo">
-          <i class="{{modInfo?.classValue}}" aria-hidden="true"></i>&nbsp;{{modInfo?.displayName}}
-
-
+          <a (click)="toggleSideBar()" ><i class="{{modInfo?.classValue}}" aria-hidden="true" ></i></a><span class="module-name">&nbsp;{{modInfo?.displayName}}</span>
         </div>
 
         <!-- ACTIONS -->
-        <div class="navactions d-none d-sm-inline">
+        <div class="navactions d-sm-inline">
           <div class="search-area">
             <input type="text" placeholder="Search" class="searchBox" [(ngModel)]="searchText" #search (keyup)="onSearch(search.value)"/>
           </div>

@@ -22,13 +22,22 @@
   color: #999999;
 }
 
-.add {
+/* .add {
 
     cursor: pointer;
     position: fixed;
     bottom: 50px;
     right: 30px;
 
+} */
+
+.add {
+  cursor: pointer;
+  position: fixed;
+  top: 2px;
+  right: 10px;
+  height: 40px;
+  z-index: 99;
 }
 
 .show_more_results {

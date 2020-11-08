@@ -13,6 +13,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
@@ -44,8 +45,8 @@ import { ApiSiteService } from './shared/service/api.sites.service';
 import { ApplicationState } from './shared/service/application.state';
 
 @NgModule({
-  imports: [ MatProgressSpinnerModule, MatTooltipModule, MatSnackBarModule, MatButtonModule, MatDialogModule, MatInputModule, MatFormFieldModule, MatRadioModule, MatOptionModule, MatSelectModule, MatMenuModule, MatIconModule, MatBadgeModule, DragDropModule, MatCheckboxModule, MatCardModule, MatChipsModule, MatSlideToggleModule, MatExpansionModule, MatChipsModule, MatAutocompleteModule ],
-  exports: [ MatProgressSpinnerModule, MatTooltipModule, MatSnackBarModule, MatButtonModule, MatDialogModule, MatInputModule, MatFormFieldModule, MatRadioModule, MatOptionModule, MatSelectModule, MatMenuModule, MatIconModule, MatBadgeModule, DragDropModule, MatCheckboxModule, MatCardModule, MatChipsModule, MatSlideToggleModule, MatExpansionModule, MatChipsModule, MatAutocompleteModule ],
+  imports: [ MatProgressSpinnerModule, MatTooltipModule, MatSnackBarModule, MatButtonModule, MatDialogModule, MatInputModule, MatFormFieldModule, MatRadioModule, MatOptionModule, MatSelectModule, MatMenuModule, MatIconModule, MatBadgeModule, DragDropModule, MatCheckboxModule, MatCardModule, MatChipsModule, MatSlideToggleModule, MatExpansionModule, MatChipsModule, MatAutocompleteModule, MatProgressBarModule ],
+  exports: [ MatProgressSpinnerModule, MatTooltipModule, MatSnackBarModule, MatButtonModule, MatDialogModule, MatInputModule, MatFormFieldModule, MatRadioModule, MatOptionModule, MatSelectModule, MatMenuModule, MatIconModule, MatBadgeModule, DragDropModule, MatCheckboxModule, MatCardModule, MatChipsModule, MatSlideToggleModule, MatExpansionModule, MatChipsModule, MatAutocompleteModule, MatProgressBarModule ],
 })
 export class AppMaterialModule { }
 

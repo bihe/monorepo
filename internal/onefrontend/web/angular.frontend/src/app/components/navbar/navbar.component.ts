@@ -16,10 +16,11 @@ export class NavbarComponent implements OnInit {
   currentRoute = '';
   navExpanded = false;
   showAmount = false;
-  showProgress = false;
+
   appData: AppInfo;
   year: number = new Date().getFullYear();
   isSiteAdmin = false;
+  showSideBar = false;
 
   constructor(private state: ApplicationState,
     private appInfoService: ApiAppInfoService,
@@ -41,7 +42,6 @@ export class NavbarComponent implements OnInit {
           new MessageUtils().showError(this.snackBar, error);
         }
       );
-
     }
 
   ngOnInit() {
@@ -64,20 +64,13 @@ export class NavbarComponent implements OnInit {
           this.showAmount = x;
         }
       );
-    // get rid of Error: ExpressionChangedAfterItHasBeenCheckedError
-    setTimeout(() => {
-      this.state.getProgress()
-        .subscribe(
-          data => {
-            this.showProgress = data;
-          },
-          error => {
-            new MessageUtils().showError(this.snackBar, error);
-          }
-        );
-    });
 
-
+    this.state.getShowSideBar()
+    .subscribe(
+      x => {
+        this.showSideBar = x;
+      }
+    );
   }
 
   isCurrentRout(route: string): boolean {

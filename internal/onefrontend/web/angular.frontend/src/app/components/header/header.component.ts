@@ -21,6 +21,8 @@ export class HeaderComponent implements OnInit {
   year: number = new Date().getFullYear();
   modInfo: ModuleInfo
   searchText = '';
+  showSideBar = false;
+  showProgress = false;
 
   constructor(
     private state: ApplicationState,
@@ -33,7 +35,6 @@ export class HeaderComponent implements OnInit {
   }
 
   ngOnInit() {
-    
 
     this.state.getModInfo()
       .subscribe(
@@ -44,6 +45,8 @@ export class HeaderComponent implements OnInit {
           new MessageUtils().showError(this.snackBar, error);
         }
       );
+
+    this.state.setProgress(true);
 
     this.state.getSearchInput().pipe(
       debounceTime(500))
@@ -60,6 +63,12 @@ export class HeaderComponent implements OnInit {
         }
       );
 
+    this.state.getShowSideBar().subscribe(
+      x => {
+        this.showSideBar = x;
+      }
+    );
+
     this.siteApi.getApplicationInfo().subscribe(
       result => {
         this.state.setSitesVersion(result);
@@ -75,9 +84,28 @@ export class HeaderComponent implements OnInit {
         this.state.setMyDmsVersion(result);
       }
     );
+
+    // get rid of Error: ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      this.state.getProgress()
+        .subscribe(
+          data => {
+            this.showProgress = data;
+          },
+          error => {
+            new MessageUtils().showError(this.snackBar, error);
+          }
+        );
+    });
+
   }
 
   onSearch(searchText: string) {
     this.state.setSearchInput(searchText);
+  }
+
+  toggleSideBar() {
+    console.log('click');
+    this.state.setShowSideBar(!this.showSideBar);
   }
 }

@@ -54,9 +54,9 @@
   display: block;
   padding: 10px;
   font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
-  background-color: #E5E8E8;
+  background-color: #fff6e2;
+  border-bottom: dotted 1px #cccccc;
   margin-bottom: 19px;
-  border-bottom: solid 1px #aaaaaa;
 }
 
 .version_info {

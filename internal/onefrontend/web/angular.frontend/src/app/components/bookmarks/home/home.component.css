@@ -13,7 +13,7 @@
 }
 
 .drop_highlight_not {
-  background-color: #E5E8E8;
+  background-color: #fff6e2;
 }
 
 .bookmarks_breadcrumb a.root {
@@ -43,13 +43,13 @@
   padding-right: 10px;
   padding-top: 10px;
   padding-bottom: 10px;
-  border-top: solid 1px #999999;
+  border-top: dotted 1px #cccccc;
   background-color: #ffffff;
   cursor: move;
 }
 
 .bookmark_item:last-child {
-  border-bottom: solid 1px #999999;
+  border-bottom: dotted 1px #cccccc;
 }
 
 @media (max-width: 575.98px) {

@@ -71,9 +71,9 @@
 
 
           <span class="badge badge-dark bookmark_path_info" *ngIf="searchMode" (click)="gotoPath(item.path)">{{ item.path }}</span>&nbsp;
-          <a href="{{baseApiURL}}/api/v1/bookmarks/fetch/{{ item.id}}" target="_blank" class="bookmark_name">{{ item.displayName | ellipsis:40 }}</a>
+          <a href="{{baseApiURL}}/api/v1/bookmarks/fetch/{{ item.id}}" class="bookmark_name">{{ item.displayName | ellipsis:40 }}</a>
           <span class="d-none d-sm-inline">
-            <!--<a href="{{baseApiURL}}/api/v1/bookmarks/fetch/{{ item.id}}" target="_blank" class="bookmark_url">{{ item.url | ellipsis:30 }}</a>]-->
+            <!--<a href="{{baseApiURL}}/api/v1/bookmarks/fetch/{{ item.id}}" class="bookmark_url">{{ item.url | ellipsis:30 }}</a>]-->
           </span>
         </span>
 

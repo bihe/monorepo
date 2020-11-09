@@ -12,7 +12,7 @@
 
   <mat-card class="dashboard_card" *ngFor="let item of dashboardBookmarks; let i = index" id="{{ item.id }}" matBadge="{{ item.accessCount }}" >
     <mat-card-title>
-      <a class="dashboard_card_title" href="{{ baseApiURL }}/api/v1/bookmarks/fetch/{{ item.id}}" target="_blank">{{ item.displayName | ellipsis: 30}}</a>
+      <a class="dashboard_card_title" href="{{ baseApiURL }}/api/v1/bookmarks/fetch/{{ item.id}}">{{ item.displayName | ellipsis: 30}}</a>
     </mat-card-title>
     <mat-card-content>
       <img *ngIf="item.favicon === null || item.favicon === ''" src="assets/favicon.ico"
@@ -26,7 +26,7 @@
         width="16px" height="16px"
         alt="favicon"/>
       &nbsp;
-      <a href="{{ baseApiURL }}/api/v1/bookmakrs/fetch/{{ item.id}}" target="_blank">{{ item.url | ellipsis:25 }}</a>
+      <a href="{{ baseApiURL }}/api/v1/bookmakrs/fetch/{{ item.id}}">{{ item.url | ellipsis:25 }}</a>
     </mat-card-content>
     <mat-card-footer class="dashboard_card_footer">
       last accessed: {{ item.modified | dfmt:"DD.MM.YYYY HH:mm" }}

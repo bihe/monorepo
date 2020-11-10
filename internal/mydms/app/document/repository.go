@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"math/rand"
 	"sort"
 	"strings"
 	"time"
@@ -145,7 +144,7 @@ func (rw *dbRepository) Save(doc DocEntity, a persistence.Atomic) (d DocEntity, 
 	if newEnty {
 		doc.ID = uuid.New().String()
 		doc.Created = time.Now().UTC()
-		doc.AltID = randomString(8)
+		doc.AltID = randomString()
 		r, err = atomic.NamedExec("INSERT INTO DOCUMENTS (id,title,filename,alternativeid,previewlink,amount,taglist,senderlist,created,invoicenumber) VALUES (:id,:title,:filename,:alternativeid,:previewlink,:amount,:taglist,:senderlist,:created,:invoicenumber)", &doc)
 	} else {
 		m := sql.NullTime{Time: time.Now().UTC(), Valid: true}
@@ -369,15 +368,8 @@ func prepareQuery(c persistence.Connection, q string, args map[string]interface{
 	return query, namedargs, nil
 }
 
-// found: https://www.admfactory.com/how-to-generate-a-fixed-length-random-string-using-golang/
-func randomString(n int) string {
-	var letter = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letter[rand.Intn(len(letter))]
-	}
-	return string(b)
+func randomString() string {
+	return uuid.New().String()
 }
 
 func orderBy(order []OrderBy) string {

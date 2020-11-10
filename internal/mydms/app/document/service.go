@@ -177,7 +177,7 @@ func (s documentService) SaveDocument(doc Document, user security.User) (d Docum
 	cleanDoc := s.sanitize(&doc)
 	d = *cleanDoc
 
-	filename, err := s.procssUploadFile(d.UploadToken, d.FileName, atomic, user)
+	filename, err := s.procssUploadFile(d.UploadToken, d.FileName, user)
 	if err != nil {
 		s.logger.Error("SaveDocuemnt: upload-processing error", logging.ErrV(fmt.Errorf("could not process the uploaded file, %v", err)))
 		return
@@ -215,6 +215,12 @@ func (s documentService) SaveDocument(doc Document, user security.User) (d Docum
 	if err != nil {
 		s.logger.Error("error saving document with repository", logging.ErrV(fmt.Errorf("could not save document: %v", err)))
 		return d, fmt.Errorf("error while saving document: %v", err)
+	}
+
+	err = s.uploadClient.Delete(d.UploadToken, user.Token)
+	if err != nil {
+		// this error is ignored, does not invalidate the overall operation
+		s.logger.Warn("unable to delete uploaded file", logging.ErrV(fmt.Errorf("could not delete the upload-item by id '%s', %v", d.UploadToken, err)))
 	}
 
 	return s.convertToDomain(docE), nil
@@ -306,16 +312,16 @@ func (s documentService) sanitize(d *Document) *Document {
 	return &doc
 }
 
-func (s documentService) procssUploadFile(token, fileName string, atomic persistence.Atomic, user security.User) (string, error) {
-	if token == "" || token == "-" {
+func (s documentService) procssUploadFile(uploadToken, fileName string, user security.User) (string, error) {
+	if uploadToken == "" || uploadToken == "-" {
 		return fileName, nil
 	}
-	u, err := s.uploadClient.Get(token, user.Token)
+	u, err := s.uploadClient.Get(uploadToken, user.Token)
 	if err != nil {
-		s.logger.Error("uploadclient returned error", logging.ErrV(fmt.Errorf("could not read upload-file for token '%s', %v", token, err)))
+		s.logger.Error("uploadclient returned error", logging.ErrV(fmt.Errorf("could not read upload-file for token '%s', %v", uploadToken, err)))
 		return "", fmt.Errorf("upload token error: %v", err)
 	}
-	s.logger.Info(fmt.Sprintf("use uploaded file identified by token '%s'", token))
+	s.logger.Info(fmt.Sprintf("use uploaded file identified by token '%s'", uploadToken))
 
 	now := time.Now().UTC()
 	folder := now.Format("2006_01_02")
@@ -333,11 +339,6 @@ func (s documentService) procssUploadFile(token, fileName string, atomic persist
 		return "", fmt.Errorf("error while saving file: %v", err)
 	}
 
-	err = s.uploadClient.Delete(token, user.Token)
-	if err != nil {
-		// this error is ignored, does not invalidate the overall operation
-		s.logger.Warn("unable to delete uploaded file", logging.ErrV(fmt.Errorf("could not delete the upload-item by id '%s', %v", token, err)))
-	}
 	return fmt.Sprintf("/%s/%s", folder, fileName), nil
 }
 

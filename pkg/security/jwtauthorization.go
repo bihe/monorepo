@@ -6,9 +6,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
+	"github.com/lestrrat-go/jwx/jwa"
+	"github.com/lestrrat-go/jwx/jwt"
 )
+
+// keys used for the custom jwt-claims
+const jwtType = "Type"
+const userName = "UserName"
+const displayName = "DisplayName"
+const email = "Email"
+const userID = "UserId"
+const surname = "Surname"
+const givenName = "GivenName"
+const claims = "Claims"
 
 // JWTAuthorization handles authorizaton of supplied JWT tokens
 type JWTAuthorization struct {
@@ -86,26 +97,32 @@ func Authorize(required Claim, claims []string) (roles []string, err error) {
 
 // ParseJwtToken parses, validates and extracts data from a jwt token
 func ParseJwtToken(token, tokenSecret, issuer string) (JwtTokenPayload, error) {
-	parsed, err := jwt.ParseWithClaims(token, &JwtTokenPayload{}, func(token *jwt.Token) (interface{}, error) {
-		// Don't forget to validate the alg is what you expect:
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(tokenSecret), nil
-	})
+	reader := strings.NewReader(token)
+	t, err := jwt.Parse(reader, jwt.WithVerify(jwa.HS256, []byte(tokenSecret)))
 	if err != nil {
 		return JwtTokenPayload{}, err
 	}
-	if parsed.Valid {
-		claims, ok := parsed.Claims.(*JwtTokenPayload)
-		if ok {
-			if validIssuer := claims.StandardClaims.VerifyIssuer(issuer, true); !validIssuer {
-				return JwtTokenPayload{}, fmt.Errorf("invalid issuer created the token")
-			}
-			return *claims, nil
-		}
+	if err = jwt.Validate(t, jwt.WithIssuer(issuer)); err != nil {
+		return JwtTokenPayload{}, err
 	}
-	return JwtTokenPayload{}, fmt.Errorf("could not parse JWT token")
+
+	return JwtTokenPayload{
+		Type:        getTokenValueString(t, jwtType),
+		UserName:    getTokenValueString(t, userName),
+		Email:       getTokenValueString(t, email),
+		UserID:      getTokenValueString(t, userID),
+		DisplayName: getTokenValueString(t, displayName),
+		Surname:     getTokenValueString(t, surname),
+		GivenName:   getTokenValueString(t, givenName),
+		Claims:      getTokenValueSlice(t, claims),
+		StandardClaims: StandardClaims{
+			ID:        t.JwtID(),
+			Subject:   t.Subject(),
+			Issuer:    t.Issuer(),
+			ExpiresAt: t.Expiration().Unix(),
+			IssuedAt:  t.IssuedAt().Unix(),
+		},
+	}, nil
 }
 
 // CreateToken uses the configuration and supplied parameter to create a new token
@@ -118,33 +135,52 @@ func CreateToken(issuer string, key []byte, expiry int, c Claims) (string, error
 	exp := now.Add(time.Duration(expiry*24) * time.Hour)
 	id := uuid.New()
 
-	type jwtClaims struct {
-		jwt.StandardClaims
-		Claims
-	}
+	// use jwx to create a token
+	t := jwt.New()
+	// std. claims
+	t.Set(jwt.JwtIDKey, id.String())
+	t.Set(jwt.SubjectKey, c.Email)
+	t.Set(jwt.IssuerKey, issuer)
+	t.Set(jwt.ExpirationKey, exp.Unix())
+	t.Set(jwt.IssuedAtKey, now.Unix())
+	// custom claims
+	t.Set(jwtType, c.Type)
+	t.Set(displayName, c.DisplayName)
+	t.Set(email, c.Email)
+	t.Set(userID, c.UserID)
+	t.Set(userName, c.UserName)
+	t.Set(givenName, c.GivenName)
+	t.Set(surname, c.Surname)
+	t.Set(claims, c.Claims)
 
-	claims := jwtClaims{
-		jwt.StandardClaims{
-			Id:        id.String(),
-			IssuedAt:  now.Unix(),
-			ExpiresAt: exp.Unix(),
-			Issuer:    issuer,
-			Subject:   c.Email,
-		},
-		Claims{
-			Type:        c.Type,
-			DisplayName: c.DisplayName,
-			Email:       c.Email,
-			UserID:      c.UserID,
-			UserName:    c.UserName,
-			GivenName:   c.GivenName,
-			Surname:     c.Surname,
-			Claims:      c.Claims,
-		},
+	payload, err := jwt.Sign(t, jwa.HS256, key)
+	if err != nil {
+		return "", fmt.Errorf("could not create jwt token: %w", err)
 	}
+	return string(payload), nil
+}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(key)
+func getTokenValueString(t jwt.Token, key string) string {
+	v, ok := t.Get(key)
+	if ok {
+		return v.(string)
+	}
+	return ""
+}
+
+func getTokenValueSlice(t jwt.Token, key string) []string {
+	var s = make([]string, 0)
+	v, ok := t.Get(key)
+	if ok {
+		// []string was converted to []interface{} - ah, generics would be great - golang2.0!
+		vv, ok := v.([]interface{})
+		if ok {
+			for _, item := range vv {
+				s = append(s, item.(string))
+			}
+		}
+	}
+	return s
 }
 
 func parseDuration(duration string) time.Duration {

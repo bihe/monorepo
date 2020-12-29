@@ -2,8 +2,6 @@ package security
 
 import (
 	"fmt"
-
-	"github.com/dgrijalva/jwt-go"
 )
 
 // User is the authenticated principal extracted from the JWT token
@@ -22,6 +20,17 @@ func (u User) String() string {
 	return fmt.Sprintf("%s (%s)", u.DisplayName, u.Username)
 }
 
+// StandardClaims are "reserved" elements of the JWT specification
+type StandardClaims struct {
+	Audience  string
+	ExpiresAt int64
+	ID        string
+	IssuedAt  int64
+	Issuer    string
+	NotBefore int64
+	Subject   string
+}
+
 // JwtTokenPayload is the parsed contents of the given token
 type JwtTokenPayload struct {
 	Type        string
@@ -32,7 +41,7 @@ type JwtTokenPayload struct {
 	DisplayName string
 	Surname     string
 	GivenName   string
-	jwt.StandardClaims
+	StandardClaims
 }
 
 // Claims defines custom JWT claims for the token

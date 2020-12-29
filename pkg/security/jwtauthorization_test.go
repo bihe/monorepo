@@ -50,6 +50,7 @@ func TestJWTAuthorization(t *testing.T) {
 		t.Errorf("could not parse JWT token: %v", err)
 	}
 
+	// custom claims
 	assert.Equal(t, "Display Name", user.DisplayName)
 	assert.Equal(t, "a.b@c.de", user.Email)
 	assert.Equal(t, true, user.Authenticated)
@@ -73,6 +74,25 @@ func TestJWTAuthorization(t *testing.T) {
 	_, err = jwtAuth.EvaluateToken(testToken)
 	if err == nil {
 		t.Errorf("should have authorization errror")
+	}
+
+	// wrong issuer
+	jwtOpts = JwtOptions{
+		JwtSecret:  "secret",
+		JwtIssuer:  "wrong_issuer",
+		CookieName: cookie,
+		RequiredClaim: Claim{
+			Name:  "claim",
+			URL:   "http://localhost:3000",
+			Roles: []string{"role"},
+		},
+		RedirectURL:   "/redirect",
+		CacheDuration: "10m",
+	}
+	jwtAuth = NewJWTAuthorization(jwtOpts, false)
+	_, err = jwtAuth.EvaluateToken(testToken)
+	if err == nil {
+		t.Errorf("expected issuer error")
 	}
 }
 

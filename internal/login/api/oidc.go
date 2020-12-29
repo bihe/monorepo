@@ -18,7 +18,7 @@ import (
 	"golang.binggl.net/monorepo/pkg/security"
 	"golang.org/x/oauth2"
 
-	"github.com/coreos/go-oidc"
+	"github.com/coreos/go-oidc/v3/oidc"
 
 	per "golang.binggl.net/monorepo/pkg/persistence"
 )

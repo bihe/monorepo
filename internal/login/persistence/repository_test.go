@@ -138,7 +138,7 @@ func TestStoreSiteForUser(t *testing.T) {
 	username := "USER"
 	now := time.Now().UTC()
 	sites := []UserSite{
-		UserSite{
+		{
 			Name:     "site1",
 			User:     username,
 			URL:      "http://url1",

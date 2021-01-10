@@ -244,3 +244,17 @@ func Test_Errors_Using_Mock(t *testing.T) {
 		t.Errorf(expectations, err)
 	}
 }
+
+func Test_UnitOfWork_Recurstion(t *testing.T) {
+	repo, DB := repo(t)
+	defer closeRepo(DB, t)
+
+	err := repo.InUnitOfWork(func(r store.Repository) error {
+		return r.InUnitOfWork(func(r store.Repository) error {
+			return nil
+		})
+	})
+	if err == nil {
+		t.Errorf(errExpected)
+	}
+}

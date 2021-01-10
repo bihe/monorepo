@@ -26,9 +26,8 @@ type Repository interface {
 // Create a new repository
 func Create(db *gorm.DB, logger logging.Logger) Repository {
 	return &dbRepository{
-		transient: db,
-		shared:    nil,
-		logger:    logger,
+		db:     db,
+		logger: logger,
 	}
 }
 
@@ -39,22 +38,22 @@ var _ Repository = &dbRepository{} // compile time interface check
 // --------------------------------------------------------------------------
 
 type dbRepository struct {
-	transient *gorm.DB
-	shared    *gorm.DB
-	logger    logging.Logger
+	db       *gorm.DB
+	logger   logging.Logger
+	activeTX bool
 }
 
 // InUnitOfWork uses a transaction to execute the supplied function
 func (r *dbRepository) InUnitOfWork(fn func(repo Repository) error) error {
+	// be sure the stop recursion here
+	if r.activeTX {
+		return fmt.Errorf("a shared transaction is already available, will not start a new one")
+	}
 	return r.con().Transaction(func(tx *gorm.DB) error {
-		// be sure the stop recursion here
-		if r.shared != nil {
-			return fmt.Errorf("a shared connection/transaction is already available, will not start a new one")
-		}
 		return fn(&dbRepository{
-			transient: r.transient,
-			shared:    tx, // the transaction is used as the shared connection
-			logger:    r.logger,
+			db:       tx, // the transaction is used as the shared connection
+			logger:   r.logger,
+			activeTX: true,
 		})
 	})
 }
@@ -115,11 +114,8 @@ func (r *dbRepository) StoreLogin(login LoginsEntity) (err error) {
 
 // Con returns a database transaction, based on the state of the Repository this is a shared or transient connection
 func (r *dbRepository) con() *gorm.DB {
-	if r.shared != nil {
-		return r.shared
-	}
-	if r.transient == nil {
+	if r.db == nil {
 		panic("no database connection is available")
 	}
-	return r.transient
+	return r.db
 }

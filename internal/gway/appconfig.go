@@ -1,4 +1,4 @@
-package authenticator
+package gway
 
 import "golang.binggl.net/monorepo/pkg/config"
 

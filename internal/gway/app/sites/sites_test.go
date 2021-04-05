@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"golang.binggl.net/monorepo/internal/gway/sites"
-	"golang.binggl.net/monorepo/internal/gway/store"
+	"golang.binggl.net/monorepo/internal/gway/app/sites"
+	"golang.binggl.net/monorepo/internal/gway/app/store"
 	"golang.binggl.net/monorepo/pkg/security"
 )
 

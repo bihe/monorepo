@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"golang.binggl.net/monorepo/internal/gway/store"
+	"golang.binggl.net/monorepo/internal/gway/app/store"
 )
 
 const userName = "USER"

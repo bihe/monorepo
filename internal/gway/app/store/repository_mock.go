@@ -24,10 +24,10 @@ func (m *MockRepo) InUnitOfWork(fn func(repo Repository) error) error {
 }
 
 func (m *MockRepo) GetSitesForUser(user string) ([]UserSiteEntity, error) {
-	if _, ok := m.sites[user]; !ok {
-		return nil, fmt.Errorf("no sites for user available")
+	if _, ok := m.sites[user]; ok {
+		return m.sites[user], nil
 	}
-	return m.sites[user], nil
+	return make([]UserSiteEntity, 0), nil
 }
 
 func (m *MockRepo) GetUsersForSite(site string) ([]string, error) {

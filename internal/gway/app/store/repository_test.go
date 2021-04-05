@@ -8,7 +8,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
-	"golang.binggl.net/monorepo/internal/gway/store"
+	"golang.binggl.net/monorepo/internal/gway/app/store"
 	"golang.binggl.net/monorepo/pkg/logging"
 
 	"gorm.io/driver/mysql"

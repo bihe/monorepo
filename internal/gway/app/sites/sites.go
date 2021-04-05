@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"golang.binggl.net/monorepo/internal/gway/store"
+	"golang.binggl.net/monorepo/internal/gway/app/store"
 	"golang.binggl.net/monorepo/pkg/security"
 )
 

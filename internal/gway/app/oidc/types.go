@@ -23,14 +23,27 @@ func NewConfigAndVerifier(c gway.OAuthConfig) (OIDCConfig, OIDCVerifier) {
 		panic(fmt.Sprintf("could not create a new OIDC provider: %v", err))
 	}
 	ver := provider.Verifier(&oidc.Config{
-		ClientID: c.ClientID,
+		ClientID:             c.ClientID,
+		SupportedSigningAlgs: []string{"RS256", "HS256"},
 	})
 	oidcVer := &oidcVerifier{ver}
+
+	var endPoint oauth2.Endpoint
+	// either the endpoint is "constructed" by the supplied endpoint-URL
+	// or the specific provider-endpoint is used
+	if c.EndPointURL != "" {
+		endPoint = oauth2.Endpoint{
+			AuthURL:  c.EndPointURL + "/auth",
+			TokenURL: c.EndPointURL + "/token",
+		}
+	} else {
+		endPoint = provider.Endpoint()
+	}
 	oidcCfg := &oidcConfig{
 		config: &oauth2.Config{
 			ClientID:     c.ClientID,
 			ClientSecret: c.ClientSecret,
-			Endpoint:     provider.Endpoint(),
+			Endpoint:     endPoint,
 			RedirectURL:  c.RedirectURL,
 			Scopes:       openIDScope,
 		},

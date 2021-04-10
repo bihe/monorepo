@@ -37,6 +37,7 @@ var jwtConfig = gway.Security{
 		URL:   "http://urlA",
 		Roles: []string{"a", "b"},
 	},
+	LoginRedirect: "http://redirect",
 }
 
 const adminRole = "ADMIN"
@@ -120,10 +121,12 @@ func setupMockOAuthServer() (*httptest.Server, func()) {
 		fmt.Println("mockOAuth --> /auth")
 	})
 
+	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+	id_token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE4MTYyMzkwMjIsImlzcyI6Imh0dHBzOi8vYWNjb3VudHMuZ29vZ2xlLmNvbSIsImF1ZCI6IkNMSUVOVF9JRCJ9.liGIFlDU_usFWxdgqpHuyr_DXSyWNSwiP1iwVd4QkJY"
 	mux.HandleFunc("/token", func(w http.ResponseWriter, r *http.Request) {
 		// Should return acccess token back to the user
 		w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-		_, _ = w.Write([]byte("access_token=mocktoken&scope=user&token_type=bearer"))
+		_, _ = w.Write([]byte(fmt.Sprintf("access_token=%s&scope=user&token_type=bearer&id_token=%s", token, id_token)))
 		fmt.Println("mockOAuth --> /token")
 	})
 
@@ -210,7 +213,7 @@ func (t *mockToken) GetClaims(v interface{}) error {
 
 // --------------------------------------------------------------------------
 
-func Test_OIDCLogin(t *testing.T) {
+func Test_OIDCLogin_Mock_Full(t *testing.T) {
 	// arrange
 	testSrv, closeSrv := setupMockOAuthServer()
 	defer func() {
@@ -285,4 +288,33 @@ func Test_OIDCLogin(t *testing.T) {
 	svc = oidc.New(c, mockV, jwtConfig, newMockRepo())
 	_, _, err = svc.LoginOIDC("123456", "123456", "code")
 	assert.Error(t, err)
+}
+
+func Test_OIDCLogin_Mock(t *testing.T) {
+	// arrange
+	testSrv, closeSrv := setupMockOAuthServer()
+	defer func() {
+		closeSrv()
+	}()
+	c, _ := oidc.NewConfigAndVerifier(gway.OAuthConfig{
+		ClientID:     "CLIENT_ID",
+		ClientSecret: "CLIENT_SECRET",
+		RedirectURL:  "REDIRECT_URL",
+		EndPointURL:  testSrv.URL,
+		Provider:     "https://accounts.google.com",
+	})
+	v := &mockVerifier{}
+
+	repo := withMockRepo(map[string][]store.UserSiteEntity{
+		userEmail: oicdTestSites,
+	})
+
+	// act
+	svc := oidc.New(c, v, jwtConfig, repo)
+	token, redirect, err := svc.LoginOIDC("123456", "123456", "code")
+
+	// assert
+	assert.NoError(t, err)
+	assert.Equal(t, jwtConfig.LoginRedirect, redirect)
+	assert.True(t, len(token) > 1)
 }

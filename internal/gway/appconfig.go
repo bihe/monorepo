@@ -35,4 +35,5 @@ type OAuthConfig struct {
 	ClientSecret string
 	RedirectURL  string
 	Provider     string
+	EndPointURL  string
 }

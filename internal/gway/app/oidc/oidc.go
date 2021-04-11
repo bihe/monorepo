@@ -41,6 +41,8 @@ type Service interface {
 	GetExtOIDCRedirect(state string) (url string, err error)
 	// LoginOIDC evaluates the returend data from the OIDC interaction and creates a token and redirect url
 	LoginOIDC(state, oidcState, oidcCode string) (token, url string, err error)
+	// LoginSiteOIDC performs a login via OIDC but checks if the user has permissions for the given site and redirects to the defined url
+	LoginSiteOIDC(state, oidcState, oidcCode, site, redirectURL string) (token, url string, err error)
 }
 
 // --------------------------------------------------------------------------
@@ -81,6 +83,30 @@ func (o *oidcService) GetExtOIDCRedirect(state string) (url string, err error) {
 }
 
 func (o *oidcService) LoginOIDC(state, oidcState, oidcCode string) (token, url string, err error) {
+	err = validate(state, oidcState, oidcCode)
+	if err != nil {
+		return
+	}
+	return o.performOIDCLogin(state, oidcState, oidcCode, "", "")
+}
+
+func (o *oidcService) LoginSiteOIDC(state, oidcState, oidcCode, site, redirectURL string) (token, url string, err error) {
+	err = validate(state, oidcState, oidcCode)
+	if err != nil {
+		return
+	}
+	if site == "" {
+		err = fmt.Errorf("empty 'site' parameter supplied")
+		return
+	}
+	if redirectURL == "" {
+		err = fmt.Errorf("empty 'redirectURL' parameter supplied")
+		return
+	}
+	return o.performOIDCLogin(state, oidcState, oidcCode, site, redirectURL)
+}
+
+func validate(state, oidcState, oidcCode string) (err error) {
 	if state == "" {
 		err = fmt.Errorf("invalid/empty 'state' parameter supplied")
 		return
@@ -93,10 +119,18 @@ func (o *oidcService) LoginOIDC(state, oidcState, oidcCode string) (token, url s
 		err = fmt.Errorf("invalid/empty 'oidcCode' parameter supplied")
 		return
 	}
-
 	if state != oidcState {
 		err = fmt.Errorf("the provided oidcState '%s' does not match the initial state '%s'", oidcState, state)
 		return
+	}
+	return
+}
+
+func (o *oidcService) performOIDCLogin(state, oidcState, oidcCode, site, redirectURL string) (token, url string, err error) {
+
+	var siteLogin bool
+	if site != "" {
+		siteLogin = true
 	}
 
 	// retrieve the ext auth provider token via the supplied code of the OIDC redirect from the auth provider
@@ -134,6 +168,22 @@ func (o *oidcService) LoginOIDC(state, oidcState, oidcCode string) (token, url s
 		return
 	}
 
+	// check if this is a site-login
+	if siteLogin {
+		var siteFound = false
+		for _, e := range sites {
+			if e.Name == site {
+				siteFound = true
+				break
+			}
+		}
+
+		if !siteFound {
+			err = fmt.Errorf("user '%s' is not allowed to login", oidcClaims.Email)
+			return
+		}
+	}
+
 	// create the token using the claims of the database
 	var siteClaims []string
 	for _, s := range sites {
@@ -157,10 +207,15 @@ func (o *oidcService) LoginOIDC(state, oidcState, oidcCode string) (token, url s
 	}
 
 	err = o.repo.InUnitOfWork(func(repo store.Repository) error {
+		var t store.Logintype
+		t = store.DIRECT
+		if siteLogin {
+			t = store.FLOW
+		}
 		return repo.StoreLogin(store.LoginsEntity{
 			User:      oidcClaims.Email,
 			CreatedAt: time.Now().UTC(),
-			Type:      store.DIRECT,
+			Type:      t,
 		})
 	})
 	if err != nil {
@@ -169,6 +224,9 @@ func (o *oidcService) LoginOIDC(state, oidcState, oidcCode string) (token, url s
 	}
 
 	url = o.jwtConfig.LoginRedirect
+	if siteLogin {
+		url = redirectURL
+	}
 
 	return
 

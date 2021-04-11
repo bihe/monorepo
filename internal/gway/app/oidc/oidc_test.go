@@ -318,3 +318,43 @@ func Test_OIDCLogin_Mock(t *testing.T) {
 	assert.Equal(t, jwtConfig.LoginRedirect, redirect)
 	assert.True(t, len(token) > 1)
 }
+
+func Test_OIDCSiteLogin_Mock(t *testing.T) {
+	// arrange
+	testSrv, closeSrv := setupMockOAuthServer()
+	defer func() {
+		closeSrv()
+	}()
+	c, v := newMockOIDCConfigAndVerifier(gway.OAuthConfig{
+		ClientID:     "CLIENT_ID",
+		ClientSecret: "CLIENT_SECRET",
+		RedirectURL:  "REDIRECT_URL",
+	}, testSrv.URL)
+
+	repo := withMockRepo(map[string][]store.UserSiteEntity{
+		userEmail: oicdTestSites,
+	})
+
+	// act
+	svc := oidc.New(c, v, jwtConfig, repo)
+	token, redirect, err := svc.LoginSiteOIDC("123456", "123456", "code", "A", "https://redirectA")
+
+	// assert
+	assert.NoError(t, err)
+	assert.Equal(t, "https://redirectA", redirect)
+	assert.True(t, len(token) > 1)
+
+	// wrong site
+	_, _, err = svc.LoginSiteOIDC("123456", "123456", "code", "B", "https://redirectB")
+	assert.Error(t, err)
+
+	// check validation errors
+	_, _, err = svc.LoginSiteOIDC("", "123456", "code", "", "")
+	assert.Error(t, err)
+
+	_, _, err = svc.LoginSiteOIDC("123456", "123456", "code", "", "")
+	assert.Error(t, err)
+
+	_, _, err = svc.LoginSiteOIDC("123456", "123456", "code", "A", "")
+	assert.Error(t, err)
+}

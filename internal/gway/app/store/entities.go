@@ -9,11 +9,11 @@ import (
 // Entity definitions
 // --------------------------------------------------------------------------
 
-type logintype uint
+type Logintype uint
 
 const (
 	// DIRECT login to the site
-	DIRECT logintype = iota
+	DIRECT Logintype = iota
 	// FLOW or indirect login via login-flow
 	FLOW
 )
@@ -23,7 +23,7 @@ type LoginsEntity struct {
 	ID        int       `gorm:"primaryKey;TYPE:int;autoIncrement;COLUMN:id"`
 	User      string    `gorm:"TYPE:varchar(128);COLUMN:user;NOT NULL;INDEX:IX_LOGINS_USER;check:user <> ''"`
 	CreatedAt time.Time `gorm:"COLUMN:created;NOT NULL"`
-	Type      logintype `gorm:"TYPE:uint;COLUMN:type;NOT NULL;INDEX:IX_LOGINS_TYPE"`
+	Type      Logintype `gorm:"TYPE:uint;COLUMN:type;NOT NULL;INDEX:IX_LOGINS_TYPE"`
 }
 
 func (b LoginsEntity) String() string {

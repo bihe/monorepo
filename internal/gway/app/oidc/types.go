@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"golang.binggl.net/monorepo/internal/gway"
+	"golang.binggl.net/monorepo/internal/gway/app/conf"
 	"golang.org/x/oauth2"
 )
 
@@ -16,7 +16,7 @@ const idTokenParam = "id_token"
 // --------------------------------------------------------------------------
 
 // NewConfigAndVerifier creates the necessary configuration for OIDC
-func NewConfigAndVerifier(c gway.OAuthConfig) (OIDCConfig, OIDCVerifier) {
+func NewConfigAndVerifier(c conf.OAuthConfig) (OIDCConfig, OIDCVerifier) {
 	ctx := context.Background()
 	provider, err := oidc.NewProvider(ctx, c.Provider)
 	if err != nil {
@@ -50,6 +50,8 @@ func NewConfigAndVerifier(c gway.OAuthConfig) (OIDCConfig, OIDCVerifier) {
 	}
 	return oidcCfg, oidcVer
 }
+
+// --------------------------------------------------------------------------
 
 // OIDCConfig holds the underlying oauth config which is necessary for the OIDC process
 type OIDCConfig interface {

@@ -10,21 +10,21 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"golang.binggl.net/monorepo/internal/gway"
+	"golang.binggl.net/monorepo/internal/gway/app/conf"
 	"golang.binggl.net/monorepo/internal/gway/app/oidc"
 	"golang.binggl.net/monorepo/internal/gway/app/store"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.org/x/oauth2"
 )
 
-var oauthConfig = gway.OAuthConfig{
+var oauthConfig = conf.OAuthConfig{
 	ClientID:     "client",
 	ClientSecret: "secret",
 	RedirectURL:  "/redirect",
 	Provider:     "https://accounts.google.com",
 }
 
-var jwtConfig = gway.Security{
+var jwtConfig = conf.Security{
 	JwtIssuer:    "issuer",
 	JwtSecret:    "secret",
 	CookieName:   "cookie",
@@ -68,13 +68,13 @@ func newOIDCConfig() (oidc.OIDCConfig, oidc.OIDCVerifier) {
 	return oidc.NewConfigAndVerifier(oauthConfig)
 }
 
-func withOIDCConfig(oauthConfig gway.OAuthConfig) (oidc.OIDCConfig, oidc.OIDCVerifier) {
+func withOIDCConfig(oauthConfig conf.OAuthConfig) (oidc.OIDCConfig, oidc.OIDCVerifier) {
 	return oidc.NewConfigAndVerifier(oauthConfig)
 }
 
 func Test_Panic_InvalidConfig(t *testing.T) {
 	assert.Panics(t, func() {
-		c, v := withOIDCConfig(gway.OAuthConfig{
+		c, v := withOIDCConfig(conf.OAuthConfig{
 			ClientID:     "client",
 			ClientSecret: "secret",
 			RedirectURL:  "/redirect",
@@ -138,7 +138,7 @@ func setupMockOAuthServer() (*httptest.Server, func()) {
 }
 
 // mock the configuration and verifier for the test-cases
-func newMockOIDCConfigAndVerifier(c gway.OAuthConfig, url string) (oidc.OIDCConfig, oidc.OIDCVerifier) {
+func newMockOIDCConfigAndVerifier(c conf.OAuthConfig, url string) (oidc.OIDCConfig, oidc.OIDCVerifier) {
 	oidcVer := &mockVerifier{}
 	oidcCfg := &mockConfig{
 		config: &oauth2.Config{
@@ -219,7 +219,7 @@ func Test_OIDCLogin_Mock_Full(t *testing.T) {
 	defer func() {
 		closeSrv()
 	}()
-	c, v := newMockOIDCConfigAndVerifier(gway.OAuthConfig{
+	c, v := newMockOIDCConfigAndVerifier(conf.OAuthConfig{
 		ClientID:     "CLIENT_ID",
 		ClientSecret: "CLIENT_SECRET",
 		RedirectURL:  "REDIRECT_URL",
@@ -296,7 +296,7 @@ func Test_OIDCLogin_Mock(t *testing.T) {
 	defer func() {
 		closeSrv()
 	}()
-	c, _ := oidc.NewConfigAndVerifier(gway.OAuthConfig{
+	c, _ := oidc.NewConfigAndVerifier(conf.OAuthConfig{
 		ClientID:     "CLIENT_ID",
 		ClientSecret: "CLIENT_SECRET",
 		RedirectURL:  "REDIRECT_URL",
@@ -325,7 +325,7 @@ func Test_OIDCSiteLogin_Mock(t *testing.T) {
 	defer func() {
 		closeSrv()
 	}()
-	c, v := newMockOIDCConfigAndVerifier(gway.OAuthConfig{
+	c, v := newMockOIDCConfigAndVerifier(conf.OAuthConfig{
 		ClientID:     "CLIENT_ID",
 		ClientSecret: "CLIENT_SECRET",
 		RedirectURL:  "REDIRECT_URL",

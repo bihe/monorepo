@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"golang.binggl.net/monorepo/internal/gway"
+	"golang.binggl.net/monorepo/internal/gway/app/conf"
 	"golang.binggl.net/monorepo/internal/gway/app/store"
 	"golang.binggl.net/monorepo/pkg/security"
 
@@ -53,14 +53,14 @@ type oidcService struct {
 	oauthConfig   OIDCConfig
 	oauthVerifier OIDCVerifier
 	repo          store.Repository
-	jwtConfig     gway.Security
+	jwtConfig     conf.Security
 }
 
 // compile guard
 var _ Service = &oidcService{}
 
 // New create a new instance of the Service
-func New(oidcConfig OIDCConfig, oidcVerifier OIDCVerifier, jwtConfig gway.Security, repo store.Repository) Service {
+func New(oidcConfig OIDCConfig, oidcVerifier OIDCVerifier, jwtConfig conf.Security, repo store.Repository) Service {
 	return &oidcService{
 		oauthConfig:   oidcConfig,
 		oauthVerifier: oidcVerifier,

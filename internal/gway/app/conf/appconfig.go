@@ -1,4 +1,4 @@
-package gway
+package conf
 
 import "golang.binggl.net/monorepo/pkg/config"
 

@@ -86,5 +86,8 @@ func (a *AppCookie) Get(name string, r *http.Request) string {
 }
 
 func (a *AppCookie) cookieName(name string) string {
+	if a == nil || a.Settings.Prefix == "" {
+		return name
+	}
 	return fmt.Sprintf("%s_%s", a.Settings.Prefix, name)
 }

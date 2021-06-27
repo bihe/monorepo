@@ -19,11 +19,8 @@ type Database struct {
 type Security struct {
 	JwtIssuer     string
 	JwtSecret     string
-	Expiry        int
 	CookieName    string
-	CookieDomain  string
-	CookiePath    string
-	CookieSecure  bool
+	Expiry        int
 	Claim         config.Claim
 	CacheDuration string
 	LoginRedirect string

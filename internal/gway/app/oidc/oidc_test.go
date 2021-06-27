@@ -25,13 +25,10 @@ var oauthConfig = conf.OAuthConfig{
 }
 
 var jwtConfig = conf.Security{
-	JwtIssuer:    "issuer",
-	JwtSecret:    "secret",
-	CookieName:   "cookie",
-	CookieDomain: "localhost",
-	CookiePath:   "/",
-	CookieSecure: true,
-	Expiry:       500,
+	JwtIssuer:  "issuer",
+	JwtSecret:  "secret",
+	CookieName: "cookie",
+	Expiry:     500,
 	Claim: config.Claim{
 		Name:  "A",
 		URL:   "http://urlA",

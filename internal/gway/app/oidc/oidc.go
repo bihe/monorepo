@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"golang.binggl.net/monorepo/internal/gway/app/conf"
+	"golang.binggl.net/monorepo/internal/gway/app/shared"
 	"golang.binggl.net/monorepo/internal/gway/app/store"
 	"golang.binggl.net/monorepo/pkg/security"
+	"golang.org/x/oauth2"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/google/uuid"
@@ -33,6 +35,10 @@ var oidcClaims struct {
 // OIDCInitiateURL is used as a local hop to ensure that cookies are written to the local domain
 const OIDCInitiateURL = "/redirect-oidc"
 
+// --------------------------------------------------------------------------
+//   Service defintion
+// --------------------------------------------------------------------------
+
 // Service defines the logic of the OIDC interaction
 type Service interface {
 	// PrepIntOIDCRedirect returns the internal OIDC hop and a random state param
@@ -46,7 +52,120 @@ type Service interface {
 }
 
 // --------------------------------------------------------------------------
-// interface implementation
+//   OIDC wrapping
+// --------------------------------------------------------------------------
+
+const idTokenParam = "id_token"
+
+// NewConfigAndVerifier creates the necessary configuration for OIDC
+func NewConfigAndVerifier(c conf.OAuthConfig) (OIDCConfig, OIDCVerifier) {
+	ctx := context.Background()
+	provider, err := oidc.NewProvider(ctx, c.Provider)
+	if err != nil {
+		panic(fmt.Sprintf("could not create a new OIDC provider: %v", err))
+	}
+	ver := provider.Verifier(&oidc.Config{
+		ClientID:             c.ClientID,
+		SupportedSigningAlgs: []string{"RS256", "HS256"},
+	})
+	oidcVer := &oidcVerifier{ver}
+
+	var endPoint oauth2.Endpoint
+	// either the endpoint is "constructed" by the supplied endpoint-URL
+	// or the specific provider-endpoint is used
+	if c.EndPointURL != "" {
+		endPoint = oauth2.Endpoint{
+			AuthURL:  c.EndPointURL + "/auth",
+			TokenURL: c.EndPointURL + "/token",
+		}
+	} else {
+		endPoint = provider.Endpoint()
+	}
+	oidcCfg := &oidcConfig{
+		config: &oauth2.Config{
+			ClientID:     c.ClientID,
+			ClientSecret: c.ClientSecret,
+			Endpoint:     endPoint,
+			RedirectURL:  c.RedirectURL,
+			Scopes:       openIDScope,
+		},
+	}
+	return oidcCfg, oidcVer
+}
+
+// --------------------------------------------------------------------------
+
+// OIDCConfig holds the underlying oauth config which is necessary for the OIDC process
+type OIDCConfig interface {
+	// AuthCodeURL returns a URL to OAuth 2.0 provider's consent page
+	AuthCodeURL(state string) string
+	// GetIDToken converts an authorization code into a token.
+	GetIDToken(ctx context.Context, code string, opts ...oauth2.AuthCodeOption) (string, error)
+}
+
+var _ OIDCConfig = (*oidcConfig)(nil)
+
+type oidcConfig struct {
+	config *oauth2.Config
+}
+
+func (o *oidcConfig) AuthCodeURL(state string) string {
+	return o.config.AuthCodeURL(state)
+}
+
+func (o *oidcConfig) GetIDToken(ctx context.Context, code string, opts ...oauth2.AuthCodeOption) (string, error) {
+	oauth2Token, err := o.config.Exchange(ctx, code, opts...)
+	if err != nil {
+		return "", fmt.Errorf("could not get the token, error in OIDC interaction: %v", err)
+	}
+	rawIDToken, ok := oauth2Token.Extra(idTokenParam).(string)
+	if !ok {
+		return "", fmt.Errorf("OIDC processing error, no 'id_token' field in exchanged oauth2 token")
+	}
+	return rawIDToken, nil
+}
+
+// --------------------------------------------------------------------------
+
+// OIDCVerifier wraps the underlying implementation of oidc-verify
+type OIDCVerifier interface {
+	VerifyToken(ctx context.Context, rawToken string) (OIDCToken, error)
+}
+
+var _ OIDCVerifier = (*oidcVerifier)(nil)
+
+type oidcVerifier struct {
+	*oidc.IDTokenVerifier
+}
+
+func (v *oidcVerifier) VerifyToken(ctx context.Context, rawToken string) (OIDCToken, error) {
+	t, err := v.Verify(ctx, rawToken)
+	if err != nil {
+		return nil, err
+	}
+	return &oidcToken{t}, nil
+}
+
+// --------------------------------------------------------------------------
+
+// OIDCToken wraps the underlying implementation of oidc-token
+type OIDCToken interface {
+	GetClaims(v interface{}) error
+}
+
+var _ OIDCToken = (*oidcToken)(nil)
+
+type oidcToken struct {
+	*oidc.IDToken
+}
+
+// GetClaims returns the token claims
+func (t *oidcToken) GetClaims(v interface{}) error {
+	return t.Claims(v)
+}
+
+// --------------------------------------------------------------------------
+//   Service implementation
 // --------------------------------------------------------------------------
 
 type oidcService struct {
@@ -77,7 +196,7 @@ func (o *oidcService) PrepIntOIDCRedirect() (url string, state string) {
 
 func (o *oidcService) GetExtOIDCRedirect(state string) (url string, err error) {
 	if state == "" {
-		return "", fmt.Errorf("invalid/empty state parameter supplied")
+		return "", shared.ErrValidation("invalid/empty state parameter supplied")
 	}
 	return o.oauthConfig.AuthCodeURL(state), nil
 }
@@ -96,11 +215,11 @@ func (o *oidcService) LoginSiteOIDC(state, oidcState, oidcCode, site, redirectUR
 		return
 	}
 	if site == "" {
-		err = fmt.Errorf("empty 'site' parameter supplied")
+		err = shared.ErrValidation("empty 'site' parameter supplied")
 		return
 	}
 	if redirectURL == "" {
-		err = fmt.Errorf("empty 'redirectURL' parameter supplied")
+		err = shared.ErrValidation("empty 'redirectURL' parameter supplied")
 		return
 	}
 	return o.performOIDCLogin(state, oidcState, oidcCode, site, redirectURL)
@@ -108,19 +227,19 @@ func (o *oidcService) LoginSiteOIDC(state, oidcState, oidcCode, site, redirectUR
 
 func validate(state, oidcState, oidcCode string) (err error) {
 	if state == "" {
-		err = fmt.Errorf("invalid/empty 'state' parameter supplied")
+		err = shared.ErrValidation("invalid/empty 'state' parameter supplied")
 		return
 	}
 	if oidcState == "" {
-		err = fmt.Errorf("invalid/empty 'oidcState' parameter supplied")
+		err = shared.ErrValidation("invalid/empty 'oidcState' parameter supplied")
 		return
 	}
 	if oidcCode == "" {
-		err = fmt.Errorf("invalid/empty 'oidcCode' parameter supplied")
+		err = shared.ErrValidation("invalid/empty 'oidcCode' parameter supplied")
 		return
 	}
 	if state != oidcState {
-		err = fmt.Errorf("the provided oidcState '%s' does not match the initial state '%s'", oidcState, state)
+		err = shared.ErrValidation(fmt.Sprintf("the provided oidcState '%s' does not match the initial state '%s'", oidcState, state))
 		return
 	}
 	return
@@ -158,13 +277,13 @@ func (o *oidcService) performOIDCLogin(state, oidcState, oidcCode, site, redirec
 	var sites []store.UserSiteEntity
 	sites, err = o.repo.GetSitesForUser(oidcClaims.Email)
 	if err != nil {
-		err = fmt.Errorf("could not retrieve site-information for the given user '%s', %v", oidcClaims.Email, err)
+		err = shared.ErrSecurity(fmt.Sprintf("could not retrieve site-information for the given user '%s', %v", oidcClaims.Email, err))
 		return
 	}
 	if len(sites) == 0 {
 		// the user was loged-in successfully by the external auth provider. but by using the given Email
 		// as the ID, we did not find ANY site which is associated to the ID, therefor the ID is not valid!
-		err = fmt.Errorf("the given user '%s' is not allowed to access the system", oidcClaims.Email)
+		err = shared.ErrSecurity(fmt.Sprintf("the given user '%s' is not allowed to access the system", oidcClaims.Email))
 		return
 	}
 
@@ -179,7 +298,7 @@ func (o *oidcService) performOIDCLogin(state, oidcState, oidcCode, site, redirec
 		}
 
 		if !siteFound {
-			err = fmt.Errorf("user '%s' is not allowed to login", oidcClaims.Email)
+			err = shared.ErrSecurity(fmt.Sprintf("user '%s' is not allowed to login", oidcClaims.Email))
 			return
 		}
 	}
@@ -219,7 +338,7 @@ func (o *oidcService) performOIDCLogin(state, oidcState, oidcCode, site, redirec
 		})
 	})
 	if err != nil {
-		err = fmt.Errorf("could not store the the login: %v", err)
+		err = fmt.Errorf("could not store the login: %v", err)
 		return
 	}
 

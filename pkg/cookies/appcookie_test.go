@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCookies(t *testing.T) {
@@ -36,5 +38,26 @@ func TestCookies(t *testing.T) {
 	if v != "" {
 		t.Errorf("could not clear the cookie, got %s", v)
 	}
+}
 
+func Test_Cookie_Prefix(t *testing.T) {
+	// arrange
+	c := NewAppCookie(Settings{
+		Path:   "/",
+		Domain: "localhost",
+		Secure: false,
+		Prefix: "",
+	})
+	rec := httptest.NewRecorder()
+	name := "test"
+	value := "value"
+
+	// act
+	c.Set(name, value, 60, rec)
+
+	// assert
+	r := &http.Request{Header: http.Header{"Cookie": []string{rec.Header().Get("Set-Cookie")}}}
+	cookie, err := r.Cookie(name)
+	assert.NoError(t, err)
+	assert.Equal(t, value, cookie.Value)
 }

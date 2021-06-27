@@ -1,8 +1,8 @@
 ---
 baseconfig:
     ## common application properties
-    appName: authenticator-gokit
-    hostID: authenticator
+    appName: gateway
+    hostID: localhost-dev
     environment: Development
     errorPath: /error
 
@@ -54,16 +54,13 @@ security:
     jwtSecret: secret
     cookieName: login_token
     expiry: 7
-    cookieDomain: localhost
-    cookiePath: /
-    cookieSecure: false
     claim:
         name: login
         url: http://localhost:3001
         roles:
         - User
     cacheDuration: 10m
-    loginRedirect: /
+    loginRedirect: http://www.orf.at
 
 oidc:
   clientID: clientID

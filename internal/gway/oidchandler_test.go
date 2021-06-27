@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/internal/gway"
+	"golang.binggl.net/monorepo/internal/gway/app/conf"
 	"golang.binggl.net/monorepo/internal/gway/app/oidc"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/logging"
@@ -36,6 +37,9 @@ func (m *mockService) GetExtOIDCRedirect(state string) (url string, err error) {
 }
 
 func (m *mockService) LoginOIDC(state, oidcState, oidcCode string) (token, url string, err error) {
+	if m.fail {
+		return "", "", fmt.Errorf("error")
+	}
 	return "token", "redirect", nil
 }
 
@@ -68,14 +72,23 @@ func handlerWith(ops *handlerOps) http.Handler {
 	return gway.MakeHTTPHandler(svc, logger, gway.HTTPHandlerOptions{
 		BasePath:  "./",
 		ErrorPath: "/error",
-		JWTConfig: config.Security{},
-		CookieConfig: config.ApplicationCookies{
-			Prefix: "gway",
-		},
-		CorsConfig: config.CorsSettings{},
-		AssetConfig: config.AssetSettings{
-			AssetDir:    "./",
-			AssetPrefix: "/static",
+		Config: conf.AppConfig{
+			BaseConfig: config.BaseConfig{
+				Cookies: config.ApplicationCookies{
+					Prefix: "gway",
+				},
+				Security: config.Security{},
+				Logging:  config.LogConfig{},
+				Cors:     config.CorsSettings{},
+				Assets: config.AssetSettings{
+					AssetDir:    "./",
+					AssetPrefix: "/static",
+				},
+			},
+			Security: conf.Security{
+				CookieName: "jwt",
+				Expiry:     10,
+			},
 		},
 	})
 }
@@ -145,5 +158,56 @@ func Test_HandleOIDC_Redirect(t *testing.T) {
 	}
 	assert.Equal(t, 500, pd.Status)
 	assert.NotEmpty(t, pd.Detail)
+}
 
+func Test_HandleOIDC_Login(t *testing.T) {
+	// arrange
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/signin-oidc", nil)
+	req.AddCookie(&http.Cookie{Name: "gway_state", Value: "state"})
+
+	// act
+	handler().ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusTemporaryRedirect, rec.Code)
+	assert.Equal(t, "/redirect", rec.Header().Get("Location"))
+
+	// ---- general error ----
+
+	var pd pkgerr.ProblemDetail
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/signin-oidc", nil)
+	req.AddCookie(&http.Cookie{Name: "gway_state", Value: "state"})
+
+	// act
+	handlerWith(&handlerOps{
+		oidcSvc: &mockService{fail: true},
+	}).ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &pd); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+	assert.Equal(t, 500, pd.Status)
+	assert.NotEmpty(t, pd.Detail)
+
+	// ---- missing state ----
+
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/signin-oidc", nil)
+
+	// act
+	handler().ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &pd); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+	assert.Equal(t, 400, pd.Status)
+	assert.NotEmpty(t, pd.Detail)
+
+	// TODO: test failed login!
 }

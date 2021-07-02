@@ -1,4 +1,4 @@
-package gway_test
+package api_test
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"golang.binggl.net/monorepo/internal/gway"
+	"golang.binggl.net/monorepo/internal/gway/api"
 	"golang.binggl.net/monorepo/internal/gway/app/conf"
 	"golang.binggl.net/monorepo/internal/gway/app/oidc"
 	"golang.binggl.net/monorepo/pkg/config"
@@ -26,25 +26,25 @@ type mockService struct {
 }
 
 func (m *mockService) PrepIntOIDCRedirect() (url string, state string) {
-	return "initial-redirect", "state"
+	return "/initial-redirect", "state"
 }
 
 func (m *mockService) GetExtOIDCRedirect(state string) (url string, err error) {
 	if m.fail {
 		return "", fmt.Errorf("error")
 	}
-	return "oidc-redirect", nil
+	return "/oidc-redirect", nil
 }
 
 func (m *mockService) LoginOIDC(state, oidcState, oidcCode string) (token, url string, err error) {
 	if m.fail {
 		return "", "", fmt.Errorf("error")
 	}
-	return "token", "redirect", nil
+	return "token", "/redirect", nil
 }
 
 func (m *mockService) LoginSiteOIDC(state, oidcState, oidcCode, site, redirectURL string) (token, url string, err error) {
-	return "token", "redirect", nil
+	return "token", redirectURL, nil
 }
 
 // --------------------------------------------------------------------------
@@ -69,7 +69,7 @@ func handlerWith(ops *handlerOps) http.Handler {
 		svc = ops.oidcSvc
 	}
 
-	return gway.MakeHTTPHandler(svc, logger, gway.HTTPHandlerOptions{
+	return api.MakeHTTPHandler(svc, logger, api.HTTPHandlerOptions{
 		BasePath:  "./",
 		ErrorPath: "/error",
 		Config: conf.AppConfig{
@@ -108,6 +108,50 @@ func Test_HandleOIDC_Prepare(t *testing.T) {
 	// assert
 	assert.Equal(t, http.StatusTemporaryRedirect, rec.Code)
 	assert.Equal(t, "/initial-redirect", rec.Header().Get("Location"))
+}
+
+func Test_HandleOIDC_Auth_Flow(t *testing.T) {
+	// arrange
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/auth/flow?~site=A&~url=http://a", nil)
+
+	// act
+	handler().ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusTemporaryRedirect, rec.Code)
+	assert.Equal(t, "/initial-redirect", rec.Header().Get("Location"))
+
+	header := http.Header{}
+	cookies := rec.Header().Values("Set-Cookie")
+	for _, c := range cookies {
+		header.Add("Cookie", c)
+	}
+	r := http.Request{Header: header}
+
+	// state cookie
+	c, err := r.Cookie("gway_state")
+	assert.NoError(t, err)
+	assert.NotNil(t, c)
+
+	// auth_flow cookie
+	c, err = r.Cookie("gway_auth_flow")
+
+	// state cookie
+	assert.NoError(t, err)
+	assert.NotNil(t, c)
+	assert.Equal(t, "A|http://a", c.Value)
+
+	// ---- missing parameters ----
+	// arrange
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/auth/flow?~site=&~url=", nil)
+
+	// act
+	handler().ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
 
 func Test_HandleOIDC_Redirect(t *testing.T) {
@@ -210,4 +254,32 @@ func Test_HandleOIDC_Login(t *testing.T) {
 	assert.NotEmpty(t, pd.Detail)
 
 	// TODO: test failed login!
+}
+
+func Test_HandleOIDC_Login_AuthFlow(t *testing.T) {
+	// arrange
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/signin-oidc", nil)
+	req.AddCookie(&http.Cookie{Name: "gway_state", Value: "state"})
+	req.AddCookie(&http.Cookie{Name: "gway_auth_flow", Value: "a|http://redirectA"})
+
+	// act
+	handler().ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusTemporaryRedirect, rec.Code)
+	assert.Equal(t, "http://redirectA", rec.Header().Get("Location"))
+
+	// ---- wrong auth-flow ----
+
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/signin-oidc", nil)
+	req.AddCookie(&http.Cookie{Name: "gway_state", Value: "state"})
+	req.AddCookie(&http.Cookie{Name: "gway_auth_flow", Value: "http://redirectA"})
+
+	// act
+	handler().ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }

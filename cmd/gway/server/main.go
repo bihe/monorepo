@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"golang.binggl.net/monorepo/internal/gway"
+	"golang.binggl.net/monorepo/internal/gway/api"
 	"golang.binggl.net/monorepo/internal/gway/app/conf"
 	"golang.binggl.net/monorepo/internal/gway/app/oidc"
 	"golang.binggl.net/monorepo/internal/gway/app/store"
@@ -62,7 +62,7 @@ func run(version, build string) error {
 		repo                     = store.Create(con, logger)
 		oidcConfig, oidcVerifier = oidc.NewConfigAndVerifier(appCfg.OIDC)
 		oidcSvc                  = oidc.New(oidcConfig, oidcVerifier, appCfg.Security, repo)
-		handler                  = gway.MakeHTTPHandler(oidcSvc, logger, gway.HTTPHandlerOptions{
+		handler                  = api.MakeHTTPHandler(oidcSvc, logger, api.HTTPHandlerOptions{
 			BasePath:  basePath,
 			ErrorPath: appCfg.ErrorPath,
 			Config:    *appCfg,

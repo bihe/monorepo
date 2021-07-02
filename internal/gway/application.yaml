@@ -7,9 +7,9 @@ baseconfig:
     errorPath: /error
 
     # static assets
-    assets:
-        assetDir: "./assets"
-        assetPrefix: "/assets"
+    #assets:
+    #    assetDir: "./assets"
+    #    assetPrefix: "/assets"
 
     # allow cross-origin requests
     cors:

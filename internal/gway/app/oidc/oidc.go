@@ -3,6 +3,7 @@ package oidc
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"golang.binggl.net/monorepo/internal/gway/app/conf"
@@ -290,15 +291,23 @@ func (o *oidcService) performOIDCLogin(state, oidcState, oidcCode, site, redirec
 	// check if this is a site-login
 	if siteLogin {
 		var siteFound = false
+		var siteURL string
 		for _, e := range sites {
 			if e.Name == site {
 				siteFound = true
+				siteURL = e.URL
 				break
 			}
 		}
 
 		if !siteFound {
 			err = shared.ErrSecurity(fmt.Sprintf("user '%s' is not allowed to login", oidcClaims.Email))
+			return
+		}
+
+		// validate the redirectURL
+		if !strings.HasPrefix(redirectURL, siteURL) {
+			err = shared.ErrSecurity(fmt.Sprintf("the provided redirectURL '%s' is not allowed for the given site", redirectURL))
 			return
 		}
 	}

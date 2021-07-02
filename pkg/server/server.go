@@ -133,10 +133,11 @@ func SetupBasicRouter(basePath string, cookieSettings config.ApplicationCookies,
 	})
 	r.Use(cors.Handler)
 
-	// serving static content
-	handler.ServeStaticFile(r, "/favicon.ico", filepath.Join(basePath, assets.AssetDir, "favicon.ico"))
-	handler.ServeStaticDir(r, assets.AssetPrefix, http.Dir(filepath.Join(basePath, assets.AssetDir)))
-
+	if assets.AssetDir != "" {
+		// serving static content
+		handler.ServeStaticFile(r, "/favicon.ico", filepath.Join(basePath, assets.AssetDir, "favicon.ico"))
+		handler.ServeStaticDir(r, assets.AssetPrefix, http.Dir(filepath.Join(basePath, assets.AssetDir)))
+	}
 	return r
 }
 

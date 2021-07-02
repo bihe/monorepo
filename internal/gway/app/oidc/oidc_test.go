@@ -334,15 +334,19 @@ func Test_OIDCSiteLogin_Mock(t *testing.T) {
 
 	// act
 	svc := oidc.New(c, v, jwtConfig, repo)
-	token, redirect, err := svc.LoginSiteOIDC("123456", "123456", "code", "A", "https://redirectA")
+	token, redirect, err := svc.LoginSiteOIDC("123456", "123456", "code", "A", "http://urlA/redirect")
 
 	// assert
 	assert.NoError(t, err)
-	assert.Equal(t, "https://redirectA", redirect)
+	assert.Equal(t, "http://urlA/redirect", redirect)
 	assert.True(t, len(token) > 1)
 
 	// wrong site
 	_, _, err = svc.LoginSiteOIDC("123456", "123456", "code", "B", "https://redirectB")
+	assert.Error(t, err)
+
+	// wrong redirect
+	_, _, err = svc.LoginSiteOIDC("123456", "123456", "code", "A", "http://urlB/redirect")
 	assert.Error(t, err)
 
 	// check validation errors

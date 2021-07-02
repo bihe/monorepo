@@ -1,4 +1,4 @@
-package gway
+package api
 
 import (
 	"encoding/json"
@@ -15,8 +15,6 @@ import (
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/server"
 )
-
-const StateCookie = "state"
 
 // HTTPHandlerOptions are used to configure the http handler setup
 type HTTPHandlerOptions struct {
@@ -37,9 +35,11 @@ func MakeHTTPHandler(oidcSvc oidc.Service, logger logging.Logger, opts HTTPHandl
 	r := server.SetupBasicRouter(opts.BasePath, opts.Config.Cookies, opts.Config.Cors, opts.Config.Assets, logger)
 	//apiRouter := server.SetupSecureAPIRouter(opts.ErrorPath, opts.JWTConfig, opts.CookieConfig, logger)
 
+	// ---- OIDC routes ----
 	r.Get("/start-oidc", handlePrepIntOIDCRedirect(oidcSvc, logger, cookie))
 	r.Get(oidc.OIDCInitiateURL, handleGetExtOIDCRedirect(oidcSvc, logger, cookie))
 	r.Get("/signin-oidc", handleLoginOIDC(oidcSvc, opts.Config.Security.CookieName, opts.Config.Security.Expiry, logger, cookie))
+	r.Get("/auth/flow", handleAuthFlow(oidcSvc, logger, cookie))
 
 	return r
 }

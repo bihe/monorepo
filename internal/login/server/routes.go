@@ -47,7 +47,7 @@ func (s *Server) routes() {
 	// this group "indicates" that all routes within this group use the JWT authentication
 	r.Group(func(r chi.Router) {
 		// authenticate and authorize users via JWT
-		r.Use(security.NewJwtMiddleware(s.jwtOpts, s.cookieSettings, s.log).JwtContext)
+		r.Use(security.NewJwtMiddleware(s.jwtOpts, s.log).JwtContext)
 
 		r.Get("/logout", s.api.Secure(s.api.HandleLogout))
 

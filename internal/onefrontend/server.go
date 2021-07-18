@@ -16,7 +16,6 @@ import (
 	"golang.binggl.net/monorepo/internal/onefrontend/types"
 	"golang.binggl.net/monorepo/internal/onefrontend/upload"
 	"golang.binggl.net/monorepo/pkg/cookies"
-	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
@@ -52,13 +51,8 @@ func (s *Server) MapRoutes() {
 		Secure: s.Cookies.Secure,
 		Prefix: "one",
 	}
-	errorReporter := &errors.ErrorReporter{
-		CookieSettings: cookieSettings,
-		ErrorPath:      s.ErrorPath,
-	}
 	baseHandler := handler.Handler{
-		ErrRep: errorReporter,
-		Log:    s.Log,
+		Log: s.Log,
 	}
 
 	// handler responsible returning application information
@@ -158,7 +152,7 @@ func (s *Server) MapRoutes() {
 	// this group "indicates" that all routes within this group use the JWT authentication
 	r.Group(func(r chi.Router) {
 		// authenticate and authorize users via JWT
-		r.Use(security.NewJwtMiddleware(jwtOptions, cookieSettings, s.Log).JwtContext)
+		r.Use(security.NewJwtMiddleware(jwtOptions, s.Log).JwtContext)
 
 		r.Get("/appinfo", appInfo.Secure(appInfo.HandleAppInfo))
 		r.Mount("/upload", uh.GetHandlers())

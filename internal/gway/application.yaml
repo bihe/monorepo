@@ -53,14 +53,14 @@ security:
     jwtIssuer: issuer
     jwtSecret: secret
     cookieName: login_token
-    expiry: 7
+    expiry: 7 # the expiry in days
     claim:
         name: login
         url: http://localhost:3001
         roles:
         - User
     cacheDuration: 10m
-    loginRedirect: http://www.orf.at
+    loginRedirect: /ok
 
 oidc:
   clientID: clientID

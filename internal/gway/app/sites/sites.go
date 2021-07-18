@@ -56,7 +56,7 @@ func (s *siteService) GetSitesForUser(user security.User) (UserSites, error) {
 		Editable: hasRole(user, s.adminRole),
 	}
 	for _, s := range sites {
-		parts := strings.Split(s.PermList, ";")
+		parts := strings.Split(s.PermList, security.RoleDelimiter)
 		u.Sites = append(u.Sites, SiteInfo{
 			Name: s.Name,
 			URL:  s.URL,
@@ -90,7 +90,7 @@ func (s *siteService) SaveSitesForUser(sites UserSites, user security.User) erro
 			Name:     s.Name,
 			URL:      s.URL,
 			User:     user.Email,
-			PermList: strings.Join(s.Perm, ","),
+			PermList: strings.Join(s.Perm, security.RoleDelimiter),
 		})
 	}
 	if err := s.repo.StoreSiteForUser(storeEntities); err != nil {

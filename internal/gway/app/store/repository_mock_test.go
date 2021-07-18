@@ -48,8 +48,9 @@ func Test_Get_Sites_For_User(t *testing.T) {
 	assert.Equal(t, "A", s[0].Name)
 
 	// unknown username
-	_, err = repo.GetSitesForUser("userName")
-	assert.Error(t, err)
+	sites, err := repo.GetSitesForUser("userName")
+	assert.NoError(t, err)
+	assert.Empty(t, sites)
 }
 
 func Test_Store_Sites_For_User(t *testing.T) {
@@ -108,10 +109,9 @@ func Test_Store_Login(t *testing.T) {
 	// std.call
 	count, err := repo.GetLoginsForUser(userName)
 	assert.NoError(t, err)
-	assert.Equal(t, 2, count)
+	assert.Equal(t, int64(2), count)
 
 	// user without logins
 	count, err = repo.GetLoginsForUser(userName + "1")
-	assert.NoError(t, err)
-	assert.Equal(t, 0, count)
+	assert.Error(t, err)
 }

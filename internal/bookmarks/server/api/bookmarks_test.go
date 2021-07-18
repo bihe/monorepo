@@ -17,8 +17,6 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/internal/bookmarks/store"
-	"golang.binggl.net/monorepo/pkg/cookies"
-	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
@@ -36,13 +34,6 @@ var errRaised = fmt.Errorf("error")
 
 // common components necessary for handlers
 var baseHandler = handler.Handler{
-	ErrRep: &errors.ErrorReporter{
-		CookieSettings: cookies.Settings{
-			Path:   "/",
-			Domain: "localhost",
-		},
-		ErrorPath: "error",
-	},
 	Log: logging.NewNop(),
 }
 

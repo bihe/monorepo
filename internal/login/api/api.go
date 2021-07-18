@@ -106,7 +106,6 @@ var _ Login = (*loginAPI)(nil)
 type loginAPI struct {
 	handler.Handler
 	login.VersionInfo
-	errRep         *errors.ErrorReporter
 	cookieSettings cookies.Settings
 	appCookie      *cookies.AppCookie
 	basePath       string
@@ -125,18 +124,14 @@ func New(basePath string, baseHandler handler.Handler, cs cookies.Settings, vers
 		Handler:        baseHandler,
 		VersionInfo:    version,
 		cookieSettings: cs,
-		errRep: &errors.ErrorReporter{
-			CookieSettings: cs,
-			ErrorPath:      "/error",
-		},
-		appCookie:     cookies.NewAppCookie(cs),
-		basePath:      basePath,
-		oauthConfig:   c,
-		oauthVerifier: v,
-		repo:          repo,
-		jwt:           jwt,
-		editRole:      jwt.Claim.Roles[0], // use the first role of the defined claims as the edit role
-		logger:        logger,
+		appCookie:      cookies.NewAppCookie(cs),
+		basePath:       basePath,
+		oauthConfig:    c,
+		oauthVerifier:  v,
+		repo:           repo,
+		jwt:            jwt,
+		editRole:       jwt.Claim.Roles[0], // use the first role of the defined claims as the edit role
+		logger:         logger,
 	}
 
 	return &api
@@ -155,7 +150,7 @@ func (a *loginAPI) respond(w http.ResponseWriter, r *http.Request, code int, dat
 		err := json.NewEncoder(w).Encode(data)
 		if err != nil {
 			a.logger.ErrorRequest("json error", r, logging.ErrV(fmt.Errorf("could not marshal json %v", err)))
-			a.errRep.Negotiate(w, r, errors.ServerError{
+			errors.WriteError(w, r, errors.ServerError{
 				Err:     fmt.Errorf("could not marshal json %v", err),
 				Request: r,
 			})
@@ -186,7 +181,7 @@ func (a *loginAPI) query(r *http.Request, name string) string {
 	keys, ok := r.URL.Query()[name]
 
 	if !ok || len(keys[0]) < 1 {
-		a.logger.ErrorRequest("validation error", r, logging.ErrV(fmt.Errorf("Url Param '%s' is missing", name)))
+		a.logger.ErrorRequest("validation error", r, logging.ErrV(fmt.Errorf("url param '%s' is missing", name)))
 		return ""
 	}
 

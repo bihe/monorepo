@@ -7,6 +7,7 @@ import (
 	"golang.binggl.net/monorepo/internal/gway/api"
 	"golang.binggl.net/monorepo/internal/gway/app/conf"
 	"golang.binggl.net/monorepo/internal/gway/app/oidc"
+	"golang.binggl.net/monorepo/internal/gway/app/sites"
 	"golang.binggl.net/monorepo/internal/gway/app/store"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/server"
@@ -62,7 +63,8 @@ func run(version, build string) error {
 		repo                     = store.Create(con, logger)
 		oidcConfig, oidcVerifier = oidc.NewConfigAndVerifier(appCfg.OIDC)
 		oidcSvc                  = oidc.New(oidcConfig, oidcVerifier, appCfg.Security, repo)
-		handler                  = api.MakeHTTPHandler(oidcSvc, logger, api.HTTPHandlerOptions{
+		siteSvc                  = sites.New(appCfg.Security.Claim.Roles[0], repo)
+		handler                  = api.MakeHTTPHandler(oidcSvc, siteSvc, logger, api.HTTPHandlerOptions{
 			BasePath:  basePath,
 			ErrorPath: appCfg.ErrorPath,
 			Config:    *appCfg,

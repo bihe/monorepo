@@ -11,6 +11,9 @@ import (
 	"github.com/lestrrat-go/jwx/jwt"
 )
 
+// RoleDelimiter specifies the element used to seperate a list of roles
+const RoleDelimiter = ";"
+
 // keys used for the custom jwt-claims
 const jwtType = "Type"
 const userName = "UserName"
@@ -33,7 +36,11 @@ func NewJWTAuthorization(options JwtOptions, useCache bool) *JWTAuthorization {
 	jwtAuth := &JWTAuthorization{}
 	jwtAuth.Options = options
 	if useCache {
-		jwtAuth.Cache = NewMemCache(parseDuration(options.CacheDuration))
+		var duration = options.CacheDuration
+		if duration == "" {
+			duration = "10m"
+		}
+		jwtAuth.Cache = NewMemCache(parseDuration(duration))
 	}
 	return jwtAuth
 }

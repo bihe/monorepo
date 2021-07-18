@@ -67,7 +67,7 @@
                 "--port",
                 "3001",
                 "--basepath",
-                "../../../internal/gway"
+                "./internal/gway"
             ],
             "envFile": "${workspaceFolder}/internal/gway/.env",
             "internalConsoleOptions": "openOnSessionStart",

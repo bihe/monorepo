@@ -33,12 +33,12 @@ func (m *MockRepo) GetSitesForUser(user string) ([]UserSiteEntity, error) {
 func (m *MockRepo) GetUsersForSite(site string) ([]string, error) {
 	var users []string
 	var foundUsers map[string]bool = make(map[string]bool)
-	for _, s := range m.sites {
-		for _, u := range s {
-			if u.Name == site {
-				if _, ok := foundUsers[u.Name]; !ok {
-					users = append(users, u.Name)
-					foundUsers[u.Name] = true
+	for _, sites := range m.sites {
+		for _, s := range sites {
+			if s.Name == site {
+				if _, ok := foundUsers[s.User]; !ok {
+					users = append(users, s.User)
+					foundUsers[s.User] = true
 				}
 			}
 		}

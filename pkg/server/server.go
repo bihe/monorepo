@@ -18,7 +18,6 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"golang.binggl.net/monorepo/pkg/config"
-	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
@@ -156,11 +155,6 @@ func SetupSecureAPIRouter(errorPath string, jwtOptions config.Security, cookieSe
 			URL:   jwtOptions.Claim.URL,
 			Roles: jwtOptions.Claim.Roles,
 		},
-	}, cookies.Settings{
-		Domain: cookieSettings.Domain,
-		Path:   cookieSettings.Path,
-		Prefix: cookieSettings.Prefix,
-		Secure: cookieSettings.Secure,
 	}, logger).JwtContext)
 
 	return apiRouter

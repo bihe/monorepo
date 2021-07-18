@@ -7,7 +7,6 @@ import (
 	"golang.binggl.net/monorepo/internal/login/config"
 	"golang.binggl.net/monorepo/internal/login/persistence"
 	"golang.binggl.net/monorepo/pkg/cookies"
-	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
@@ -79,13 +78,6 @@ var jwtOpts = security.JwtOptions{
 
 // common components necessary for handlers
 var baseHandler = handler.Handler{
-	ErrRep: &errors.ErrorReporter{
-		CookieSettings: cookies.Settings{
-			Path:   "/",
-			Domain: "localhost",
-		},
-		ErrorPath: "error",
-	},
 	Log: logger,
 }
 

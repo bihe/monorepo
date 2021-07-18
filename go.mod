@@ -19,7 +19,6 @@ require (
 	github.com/labstack/gommon v0.3.0
 	github.com/lestrrat-go/jwx v1.0.6
 	github.com/magiconair/properties v1.8.4 // indirect
-	github.com/markusthoemmes/goautoneg v0.0.0-20190713162725-c6008fefa5b1
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/microcosm-cc/bluemonday v1.0.4

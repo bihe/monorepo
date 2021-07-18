@@ -106,8 +106,9 @@ func TestJWTAuthorizationCache(t *testing.T) {
 			URL:   "http://localhost:3000",
 			Roles: []string{"role"},
 		},
-		RedirectURL:   "/redirect",
-		CacheDuration: "10m",
+		RedirectURL: "/redirect",
+		// omit the cache-duration - defaults to 10m
+		//CacheDuration: "10m",
 	}
 	var jwtAuth = NewJWTAuthorization(jwtOpts, true)
 

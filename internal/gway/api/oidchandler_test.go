@@ -8,11 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"golang.binggl.net/monorepo/internal/gway/api"
-	"golang.binggl.net/monorepo/internal/gway/app/conf"
 	"golang.binggl.net/monorepo/internal/gway/app/oidc"
-	"golang.binggl.net/monorepo/pkg/config"
-	"golang.binggl.net/monorepo/pkg/logging"
 
 	pkgerr "golang.binggl.net/monorepo/pkg/errors"
 )
@@ -21,75 +17,35 @@ import (
 //   Mock Service implementation
 // --------------------------------------------------------------------------
 
-type mockService struct {
+type mockOidcService struct {
 	fail bool
 }
 
-func (m *mockService) PrepIntOIDCRedirect() (url string, state string) {
+func (m *mockOidcService) PrepIntOIDCRedirect() (url string, state string) {
 	return "/initial-redirect", "state"
 }
 
-func (m *mockService) GetExtOIDCRedirect(state string) (url string, err error) {
+func (m *mockOidcService) GetExtOIDCRedirect(state string) (url string, err error) {
 	if m.fail {
 		return "", fmt.Errorf("error")
 	}
 	return "/oidc-redirect", nil
 }
 
-func (m *mockService) LoginOIDC(state, oidcState, oidcCode string) (token, url string, err error) {
+func (m *mockOidcService) LoginOIDC(state, oidcState, oidcCode string) (token, url string, err error) {
 	if m.fail {
 		return "", "", fmt.Errorf("error")
 	}
 	return "token", "/redirect", nil
 }
 
-func (m *mockService) LoginSiteOIDC(state, oidcState, oidcCode, site, redirectURL string) (token, url string, err error) {
+func (m *mockOidcService) LoginSiteOIDC(state, oidcState, oidcCode, site, redirectURL string) (token, url string, err error) {
 	return "token", redirectURL, nil
 }
 
-// --------------------------------------------------------------------------
-//   Boilerplate to make the tests happen
-// --------------------------------------------------------------------------
-
-var logger = logging.NewNop()
-
-type handlerOps struct {
-	oidcSvc oidc.Service
-}
-
-func handler() http.Handler {
-	return handlerWith(nil)
-}
-
-func handlerWith(ops *handlerOps) http.Handler {
-	var svc oidc.Service
-	svc = &mockService{}
-
-	if ops != nil && ops.oidcSvc != nil {
-		svc = ops.oidcSvc
-	}
-
-	return api.MakeHTTPHandler(svc, logger, api.HTTPHandlerOptions{
-		BasePath:  "./",
-		ErrorPath: "/error",
-		Config: conf.AppConfig{
-			BaseConfig: config.BaseConfig{
-				Cookies: config.ApplicationCookies{
-					Prefix: "gway",
-				},
-				Security: config.Security{},
-				Logging:  config.LogConfig{},
-				Cors:     config.CorsSettings{},
-				Assets: config.AssetSettings{
-					AssetDir:    "./",
-					AssetPrefix: "/static",
-				},
-			},
-			Security: conf.Security{
-				CookieName: "jwt",
-				Expiry:     10,
-			},
-		},
+func oidcHandler() http.Handler {
+	return handlerWith(&handlerOps{
+		oidcSvc: &mockOidcService{},
 	})
 }
 
@@ -103,7 +59,7 @@ func Test_HandleOIDC_Prepare(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/start-oidc", nil)
 
 	// act
-	handler().ServeHTTP(rec, req)
+	oidcHandler().ServeHTTP(rec, req)
 
 	// assert
 	assert.Equal(t, http.StatusTemporaryRedirect, rec.Code)
@@ -116,7 +72,7 @@ func Test_HandleOIDC_Auth_Flow(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/auth/flow?~site=A&~url=http://a", nil)
 
 	// act
-	handler().ServeHTTP(rec, req)
+	oidcHandler().ServeHTTP(rec, req)
 
 	// assert
 	assert.Equal(t, http.StatusTemporaryRedirect, rec.Code)
@@ -148,7 +104,7 @@ func Test_HandleOIDC_Auth_Flow(t *testing.T) {
 	req, _ = http.NewRequest("GET", "/auth/flow?~site=&~url=", nil)
 
 	// act
-	handler().ServeHTTP(rec, req)
+	oidcHandler().ServeHTTP(rec, req)
 
 	// assert
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -161,7 +117,7 @@ func Test_HandleOIDC_Redirect(t *testing.T) {
 	req.AddCookie(&http.Cookie{Name: "gway_state", Value: "state"})
 
 	// act
-	handler().ServeHTTP(rec, req)
+	oidcHandler().ServeHTTP(rec, req)
 
 	// assert
 	assert.Equal(t, http.StatusTemporaryRedirect, rec.Code)
@@ -173,7 +129,7 @@ func Test_HandleOIDC_Redirect(t *testing.T) {
 	req, _ = http.NewRequest("GET", oidc.OIDCInitiateURL, nil)
 
 	// act
-	handler().ServeHTTP(rec, req)
+	oidcHandler().ServeHTTP(rec, req)
 
 	// assert
 	var pd pkgerr.ProblemDetail
@@ -192,7 +148,7 @@ func Test_HandleOIDC_Redirect(t *testing.T) {
 
 	// act
 	handlerWith(&handlerOps{
-		oidcSvc: &mockService{fail: true},
+		oidcSvc: &mockOidcService{fail: true},
 	}).ServeHTTP(rec, req)
 
 	// assert
@@ -211,7 +167,7 @@ func Test_HandleOIDC_Login(t *testing.T) {
 	req.AddCookie(&http.Cookie{Name: "gway_state", Value: "state"})
 
 	// act
-	handler().ServeHTTP(rec, req)
+	oidcHandler().ServeHTTP(rec, req)
 
 	// assert
 	assert.Equal(t, http.StatusTemporaryRedirect, rec.Code)
@@ -226,7 +182,7 @@ func Test_HandleOIDC_Login(t *testing.T) {
 
 	// act
 	handlerWith(&handlerOps{
-		oidcSvc: &mockService{fail: true},
+		oidcSvc: &mockOidcService{fail: true},
 	}).ServeHTTP(rec, req)
 
 	// assert
@@ -243,7 +199,7 @@ func Test_HandleOIDC_Login(t *testing.T) {
 	req, _ = http.NewRequest("GET", "/signin-oidc", nil)
 
 	// act
-	handler().ServeHTTP(rec, req)
+	oidcHandler().ServeHTTP(rec, req)
 
 	// assert
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -264,7 +220,7 @@ func Test_HandleOIDC_Login_AuthFlow(t *testing.T) {
 	req.AddCookie(&http.Cookie{Name: "gway_auth_flow", Value: "a|http://redirectA"})
 
 	// act
-	handler().ServeHTTP(rec, req)
+	oidcHandler().ServeHTTP(rec, req)
 
 	// assert
 	assert.Equal(t, http.StatusTemporaryRedirect, rec.Code)
@@ -278,7 +234,7 @@ func Test_HandleOIDC_Login_AuthFlow(t *testing.T) {
 	req.AddCookie(&http.Cookie{Name: "gway_auth_flow", Value: "http://redirectA"})
 
 	// act
-	handler().ServeHTTP(rec, req)
+	oidcHandler().ServeHTTP(rec, req)
 
 	// assert
 	assert.Equal(t, http.StatusBadRequest, rec.Code)

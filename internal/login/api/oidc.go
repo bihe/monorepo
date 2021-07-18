@@ -86,6 +86,12 @@ func NewOIDC(c config.OAuthConfig) (oauthConfig *oauth2.Config, oauthVerifier OI
 // constants and defintions
 // --------------------------------------------------------------------------
 
+// FlashKeyError is a key to retrieve an error message
+const FlashKeyError = "error.flash"
+
+// FlashKeyInfo is a key to retrieve an info message
+const FlashKeyInfo = "info.flash"
+
 const stateParam = "state"
 const codeParam = "code"
 const idTokenParam = "id_token"
@@ -128,18 +134,18 @@ func (a *loginAPI) HandleError(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// read (flash)
-	err = cookie.Get(errors.FlashKeyError, r)
+	err = cookie.Get(FlashKeyError, r)
 	if err != "" {
 		isError = true
 	}
-	msg = cookie.Get(errors.FlashKeyInfo, r)
+	msg = cookie.Get(FlashKeyInfo, r)
 	if msg != "" {
 		isMessage = true
 	}
 
 	// clear (flash)
-	cookie.Del(errors.FlashKeyError, w)
-	cookie.Del(errors.FlashKeyInfo, w)
+	cookie.Del(FlashKeyError, w)
+	cookie.Del(FlashKeyInfo, w)
 
 	data := map[string]interface{}{
 		"year":      time.Now().Year(),
@@ -280,7 +286,7 @@ func (a *loginAPI) HandleOIDCLogin(w http.ResponseWriter, r *http.Request) error
 	}
 
 	if !success {
-		a.appCookie.Set(errors.FlashKeyError, fmt.Sprintf("User '%s' is not allowed to login!", oidcClaims.Email), cookieExpiry, w)
+		a.appCookie.Set(FlashKeyError, fmt.Sprintf("User '%s' is not allowed to login!", oidcClaims.Email), cookieExpiry, w)
 		http.Redirect(w, r, "/error", http.StatusTemporaryRedirect)
 		return nil
 	}
@@ -342,7 +348,7 @@ func (a *loginAPI) HandleLogout(user security.User, w http.ResponseWriter, r *ht
 	a.logger.InfoRequest(fmt.Sprintf("HandleLogout: for user '%s'", user.Username), r)
 	// remove the cookie by expiring it
 	a.setJWTCookie(a.jwt.CookieName, "", -1, w)
-	a.appCookie.Set(errors.FlashKeyInfo, fmt.Sprintf("User '%s' was logged-off!", user.Email), cookieExpiry, w)
+	a.appCookie.Set(FlashKeyInfo, fmt.Sprintf("User '%s' was logged-off!", user.Email), cookieExpiry, w)
 	http.Redirect(w, r, a.jwt.LoginRedirect, http.StatusTemporaryRedirect)
 	return nil
 }

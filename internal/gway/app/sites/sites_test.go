@@ -72,9 +72,8 @@ func Test_Get_Sites_For_User(t *testing.T) {
 		Username: "userName",
 		Email:    "userName",
 	})
-	if err == nil {
-		t.Error("error expected")
-	}
+	assert.NoError(t, err)
+	assert.Empty(t, s.Sites)
 }
 
 func Test_Get_Users_For_Site(t *testing.T) {
@@ -109,9 +108,7 @@ func Test_Get_Users_For_Site(t *testing.T) {
 		Email:    userName,
 		Roles:    []string{adminRole, "a"},
 	})
-	if err == nil {
-		t.Errorf("error expected")
-	}
+	assert.NoError(t, err)
 }
 
 func Test_Save_Sites_For_User(t *testing.T) {

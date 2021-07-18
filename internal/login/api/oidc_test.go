@@ -359,7 +359,7 @@ func TestLogout(t *testing.T) {
 	logout := "/logout"
 	r, api := newAPIRouter()
 
-	r.Use(security.NewJwtMiddleware(jwtOpts, cookieSettings, logger).JwtContext)
+	r.Use(security.NewJwtMiddleware(jwtOpts, logger).JwtContext)
 	r.Get(logout, api.Secure(api.HandleLogout))
 
 	rec := httptest.NewRecorder()

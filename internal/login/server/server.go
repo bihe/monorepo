@@ -13,7 +13,6 @@ import (
 	"golang.binggl.net/monorepo/internal/login/config"
 	"golang.binggl.net/monorepo/internal/login/persistence"
 	"golang.binggl.net/monorepo/pkg/cookies"
-	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
@@ -71,13 +70,8 @@ func Create(basePath string, config config.AppConfig, version login.VersionInfo,
 		Secure: config.AppCookies.Secure,
 		Prefix: config.AppCookies.Prefix,
 	}
-	errorReporter := &errors.ErrorReporter{
-		CookieSettings: cookieSettings,
-		ErrorPath:      "/error",
-	}
 	baseHandler := handler.Handler{
-		ErrRep: errorReporter,
-		Log:    logger,
+		Log: logger,
 	}
 
 	appInfo := &handler.AppInfoHandler{

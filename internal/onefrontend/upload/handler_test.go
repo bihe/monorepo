@@ -13,7 +13,6 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/internal/onefrontend/upload"
-	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/security"
@@ -41,13 +40,6 @@ const contentType = "Content-Type"
 
 // common components necessary for handlers
 var baseHandler = handler.Handler{
-	ErrRep: &errors.ErrorReporter{
-		CookieSettings: cookies.Settings{
-			Path:   "/",
-			Domain: "localhost",
-		},
-		ErrorPath: "error",
-	},
 	Log: logger,
 }
 

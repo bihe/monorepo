@@ -9,7 +9,6 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"golang.binggl.net/monorepo/pkg/cookies"
-	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
@@ -91,13 +90,8 @@ func Create(basePath string, config config.AppConfig, version bookmarks.VersionI
 		Secure: config.Cookies.Secure,
 		Prefix: config.Cookies.Prefix,
 	}
-	errorReporter := &errors.ErrorReporter{
-		CookieSettings: cookieSettings,
-		ErrorPath:      config.ErrorPath,
-	}
 	baseHandler := handler.Handler{
-		ErrRep: errorReporter,
-		Log:    logger,
+		Log: logger,
 	}
 
 	// std. application information

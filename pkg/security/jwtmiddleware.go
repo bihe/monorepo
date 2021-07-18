@@ -6,10 +6,8 @@ import (
 
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 
-	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/logging"
 )
@@ -25,18 +23,14 @@ var userKey ctxtKey
 // the token is either retrieved by the well known Authorization header
 // or fetched from a cookie
 type JwtMiddleware struct {
-	jwt    JwtOptions
-	errRep *errors.ErrorReporter
-	log    logging.Logger
+	jwt JwtOptions
+	log logging.Logger
 }
 
 // NewJwtMiddleware creates a new instance using the provided options
-func NewJwtMiddleware(options JwtOptions, settings cookies.Settings, logger logging.Logger) *JwtMiddleware {
+func NewJwtMiddleware(options JwtOptions, logger logging.Logger) *JwtMiddleware {
 	m := JwtMiddleware{
 		jwt: options,
-		errRep: &errors.ErrorReporter{
-			CookieSettings: settings,
-		},
 		log: logger,
 	}
 	return &m
@@ -44,7 +38,7 @@ func NewJwtMiddleware(options JwtOptions, settings cookies.Settings, logger logg
 
 // JwtContext performs the middleware action
 func (j *JwtMiddleware) JwtContext(next http.Handler) http.Handler {
-	return handleJWT(next, j.jwt, j.errRep, j.log)
+	return handleJWT(next, j.jwt, j.log)
 }
 
 // UserFromContext returns the User value stored in ctx, if any.
@@ -58,7 +52,7 @@ func NewContext(ctx context.Context, u *User) context.Context {
 	return context.WithValue(ctx, userKey, u)
 }
 
-func handleJWT(next http.Handler, options JwtOptions, errRep *errors.ErrorReporter, logger logging.Logger) http.Handler {
+func handleJWT(next http.Handler, options JwtOptions, logger logging.Logger) http.Handler {
 	jwtAuth := NewJWTAuthorization(options, true)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -67,15 +61,7 @@ func handleJWT(next http.Handler, options JwtOptions, errRep *errors.ErrorReport
 			token string
 			user  *User
 		)
-
 		authHeader := r.Header.Get("Authorization")
-		reqURL := r.URL.String()
-		if reqURL != "" {
-			reqURL = url.QueryEscape(reqURL)
-		}
-		// add request-Url and take care of url-encoding
-		redirectURL := options.RedirectURL + "%26ref=" + reqURL
-
 		if authHeader != "" {
 			token = strings.Replace(authHeader, "Bearer ", "", 1)
 		}
@@ -85,11 +71,10 @@ func handleJWT(next http.Handler, options JwtOptions, errRep *errors.ErrorReport
 			if cookie, err = r.Cookie(options.CookieName); err != nil {
 				logger.Warn("get token failed", logging.ErrV(fmt.Errorf("could not get token from header nor cookie: %v", err)))
 				// neither the header nor the cookie supplied a jwt token
-				errRep.Negotiate(w, r, errors.RedirectError{
-					Status:  http.StatusUnauthorized,
+				errors.WriteError(w, r, errors.SecurityError{
 					Err:     fmt.Errorf("security error because of missing JWT token"),
 					Request: r,
-					URL:     redirectURL,
+					Status:  http.StatusUnauthorized,
 				})
 				return
 			}
@@ -100,9 +85,10 @@ func handleJWT(next http.Handler, options JwtOptions, errRep *errors.ErrorReport
 		user, err = jwtAuth.EvaluateToken(token)
 		if err != nil {
 			logger.Warn("token evaluation failed", logging.ErrV(fmt.Errorf("error during JWT token evaluation: %v", err)))
-			errRep.Negotiate(w, r, errors.SecurityError{
+			errors.WriteError(w, r, errors.SecurityError{
 				Err:     fmt.Errorf("error during token evaluation: %v", err),
 				Request: r,
+				Status:  http.StatusUnauthorized,
 			})
 			return
 		}

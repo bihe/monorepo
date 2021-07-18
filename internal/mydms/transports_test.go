@@ -331,11 +331,11 @@ func Test_GetAppInfo_MissingPermissions(t *testing.T) {
 	handler().ServeHTTP(rec, req)
 
 	// assert
-	assert.Equal(t, http.StatusForbidden, rec.Code)
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 	if err := json.Unmarshal(rec.Body.Bytes(), &pd); err != nil {
 		t.Errorf("could not unmarshal: %v", err)
 	}
-	assert.Equal(t, 403, pd.Status)
+	assert.Equal(t, http.StatusUnauthorized, pd.Status)
 }
 
 // GetDocumentByID ----------------------------------------------------------

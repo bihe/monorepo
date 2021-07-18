@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
-	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
@@ -18,11 +17,6 @@ import (
 
 var hc = &HealthCheckHandler{
 	Handler: Handler{
-		ErrRep: &errors.ErrorReporter{
-			CookieSettings: cookies.Settings{
-				Prefix: "test",
-			},
-		},
 		Log: logging.NewNop(),
 	},
 	Checker: simpleChecker{},

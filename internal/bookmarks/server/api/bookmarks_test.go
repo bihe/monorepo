@@ -13,17 +13,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/internal/bookmarks/store"
-	"golang.binggl.net/monorepo/pkg/cookies"
-	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 
-	_ "github.com/jinzhu/gorm/dialects/sqlite" // use sqlite for testing
+	_ "github.com/mattn/go-sqlite3" // use sqlite for testing
 )
 
 // --------------------------------------------------------------------------
@@ -36,13 +34,6 @@ var errRaised = fmt.Errorf("error")
 
 // common components necessary for handlers
 var baseHandler = handler.Handler{
-	ErrRep: &errors.ErrorReporter{
-		CookieSettings: cookies.Settings{
-			Path:   "/",
-			Domain: "localhost",
-		},
-		ErrorPath: "error",
-	},
 	Log: logging.NewNop(),
 }
 

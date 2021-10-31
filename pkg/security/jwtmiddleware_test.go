@@ -6,8 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-chi/chi"
-	"golang.binggl.net/monorepo/pkg/cookies"
+	"github.com/go-chi/chi/v5"
 	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/logging"
 
@@ -32,15 +31,10 @@ var jwtOpts = JwtOptions{
 	CacheDuration: "10m",
 }
 
-var cookieSettings = cookies.Settings{
-	Domain: "localhost",
-	Path:   "/",
-	Secure: false,
-}
 var logger = logging.NewNop()
 
 func getJWTMiddleware() *JwtMiddleware {
-	return NewJwtMiddleware(jwtOpts, cookieSettings, logger)
+	return NewJwtMiddleware(jwtOpts, logger)
 }
 
 func TestJWTMiddlewareWrongJWTOptions(t *testing.T) {
@@ -49,7 +43,7 @@ func TestJWTMiddlewareWrongJWTOptions(t *testing.T) {
 	r := chi.NewRouter()
 	wrongOpts := jwtOpts
 	wrongOpts.CacheDuration = "wrong"
-	jwt := NewJwtMiddleware(wrongOpts, cookieSettings, logger)
+	jwt := NewJwtMiddleware(wrongOpts, logger)
 
 	req.AddCookie(&http.Cookie{Name: cookie, Value: token})
 
@@ -140,12 +134,12 @@ func TestJWTMiddlewareWrongToken(t *testing.T) {
 	})
 
 	r.ServeHTTP(rec, req)
-	assert.Equal(t, http.StatusForbidden, rec.Code)
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 
 	var p errors.ProblemDetail
 	err := json.Unmarshal(rec.Body.Bytes(), &p)
 	if err != nil {
 		t.Errorf(unmarshal, err)
 	}
-	assert.Equal(t, http.StatusForbidden, p.Status)
+	assert.Equal(t, http.StatusUnauthorized, p.Status)
 }

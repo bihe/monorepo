@@ -1,0 +1,11 @@
+
+.progress {
+  position: absolute;
+  top: 65px;
+  left: 0px;
+}
+
+.selected {
+  border-bottom: #C62828 3px solid;
+}
+

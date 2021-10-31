@@ -1,0 +1,168 @@
+version: '3'
+
+services:
+
+    tokentest:
+        build:
+            context: .
+            dockerfile: ./tokentest.Dockerfile
+        image: tokentest
+        depends_on:
+            - db
+        networks:
+            - app-network
+        # ports:
+        #     - "4000:3000"
+        restart:
+            always
+        environment:
+            JWT_COOKIE_NAME: $JWT_COOKIE_NAME
+            JWT_ISSUER: $JWTISSUER
+            JWT_SECRET: $JWTSECRET
+            JWT_USER_EMAIL: $JWT_USER_EMAIL
+            JWT_COOKIE_DOMAIN: $JWT_COOKIE_DOMAIN
+            REDIRECT_URL: https://dev.binggl.net
+            PORT: 3000
+
+    crypter:
+        build:
+            context: .
+            dockerfile: ./crypter.Dockerfile
+        image: crypter
+        depends_on:
+            - db
+        networks:
+            - app-network
+        #ports:
+        #    - "3333:3000/tcp"
+        volumes:
+            - ./internal/crypter:/opt/crypter/etc
+            - ./_logs:/opt/crypter/logs
+        restart:
+            always
+        environment:
+            CR_ENVIRONMENT: Production
+            CR_TOKENSECURITY.JWTISSUER: $JWTISSUER
+            CR_TOKENSECURITY.JWTSECRET: $JWTSECRET
+            CR_LOGGING.FILEPATH: /opt/crypter/logs/crypter-grpc-api.log
+            CR_LOGGING.GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
+
+    db:
+        image: mariadb:10.4
+        networks:
+            - app-network
+        ports:
+            - "3306:3306"
+        volumes:
+            - ./db:/docker-entrypoint-initdb.d
+        restart:
+            on-failure
+        healthcheck:
+            test: "/usr/bin/mysql --host=127.0.0.1 --user=root --password=mariadb --execute \"SHOW DATABASES;\""
+            interval: 4s
+            timeout: 4s
+            retries: 6
+        environment:
+            MYSQL_ROOT_PASSWORD: "mariadb"
+
+    core-3001:
+        build:
+            context: .
+            dockerfile: ./core.Dockerfile
+        image: core
+        depends_on:
+            - db
+        networks:
+            - app-network
+        # ports:
+        #     - "3001:3000"
+        volumes:
+            - ./internal/core:/opt/core/etc
+            - ./_logs:/opt/core/logs
+            - ./upload:/opt/core/uploads
+        restart:
+            always
+        environment:
+            CO_BASECONFIG.ENVIRONMENT: Development
+            CO_BASECONFIG.LOGGING.FILEPATH: /opt/core/logs/core-api.log
+            CO_BASECONFIG.LOGGING.GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
+            CO_SECURITY.JWTISSUER: $JWTISSUER
+            CO_SECURITY.JWTSECRET: $JWTSECRET
+            CO_SECURITY.LOGINREDIRECT: https://dev.binggl.net
+            CO_OIDC.REDIRECTURL: "https://dev.binggl.net/oidc/signin"
+            CO_OIDC.CLIENTID: $OIDC_CLIENTID
+            CO_OIDC.CLIENTSECRET: $OIDC_CLIENTSECRET
+            CO_UPLOAD.UPLOADPATH: /opt/core/uploads
+            CO_UPLOAD.ENCGRPCCONN: crypter:3000
+
+    mydms-3002:
+        build:
+            context: .
+            dockerfile: ./mydms.Dockerfile
+        image: mydms
+        depends_on:
+            - db
+        networks:
+            - app-network
+        # ports:
+        #     - "3002:3000"
+        volumes:
+            - ./internal/mydms:/opt/mydms/etc
+            - ./_logs:/opt/mydms/logs
+        restart:
+            always
+        environment:
+            MY_BASECONFIG.ENVIRONMENT: Development
+            MY_BASECONFIG.SECURITY.JWTISSUER: $JWTISSUER
+            MY_BASECONFIG.SECURITY.JWTSECRET: $JWTSECRET
+            MY_BASECONFIG.SECURITY.CLAIM.URL: http://localhost:3002
+            MY_BASECONFIG.LOGGING.FILEPATH: /opt/mydms/logs/mydms-api.log
+            MY_BASECONFIG.LOGGING.GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
+            MY_FILESTORE.REGION: $FILESTORE_REGION
+            MY_FILESTORE.BUCKET: $FILESTORE_BUCKET
+            MY_FILESTORE.KEY: $FILESTORE_KEY
+            MY_FILESTORE.SECRET: $FILESTORE_SECRET
+            MY_UPLOAD.ENDPOINTURL: http://core-3001:3000/api/v1
+
+    bookmarks-3003:
+        build:
+            context: .
+            dockerfile: ./bookmarks.Dockerfile
+        image: bookmarks
+        depends_on:
+            - db
+        networks:
+            - app-network
+        # ports:
+        #     - "3003:3000"
+        volumes:
+            - ./internal/bookmarks/etc:/opt/bookmarks/etc
+            - ./_logs:/opt/bookmarks/logs
+        restart:
+            always
+        environment:
+            FRONTEND_MODE: integration
+            BM_ENVIRONMENT: Development
+            BM_SECURITY.JWTISSUER: $JWTISSUER
+            BM_SECURITY.JWTSECRET: $JWTSECRET
+            BM_LOGGING.FILEPATH: /opt/bookmarks/logs/bookmarks-api.log
+            BM_LOGGING.GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
+            BM_DATABASE.CONNECTIONSTRING: "bookmarks:bookmarks@tcp(192.168.1.2:3307)/bookmarks?parseTime=true&sql_mode='PIPES_AS_CONCAT'"
+
+    # to access host-ip
+    # https://nickjanetakis.com/blog/docker-tip-65-get-your-docker-hosts-ip-address-from-in-a-container
+    caddy-frontend-443:
+        image: caddy:2-alpine
+        networks:
+            - app-network
+        ports:
+            - "443:443"
+        volumes:
+            - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+            - ./caddy/certs:/opt/caddy/certs
+        restart:
+            on-failure
+        #environment:
+
+networks:
+    app-network: {}

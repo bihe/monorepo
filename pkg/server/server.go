@@ -12,13 +12,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/cors"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"golang.binggl.net/monorepo/pkg/config"
-	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
@@ -133,10 +132,11 @@ func SetupBasicRouter(basePath string, cookieSettings config.ApplicationCookies,
 	})
 	r.Use(cors.Handler)
 
-	// serving static content
-	handler.ServeStaticFile(r, "/favicon.ico", filepath.Join(basePath, assets.AssetDir, "favicon.ico"))
-	handler.ServeStaticDir(r, assets.AssetPrefix, http.Dir(filepath.Join(basePath, assets.AssetDir)))
-
+	if assets.AssetDir != "" {
+		// serving static content
+		handler.ServeStaticFile(r, "/favicon.ico", filepath.Join(basePath, assets.AssetDir, "favicon.ico"))
+		handler.ServeStaticDir(r, assets.AssetPrefix, http.Dir(filepath.Join(basePath, assets.AssetDir)))
+	}
 	return r
 }
 
@@ -155,11 +155,6 @@ func SetupSecureAPIRouter(errorPath string, jwtOptions config.Security, cookieSe
 			URL:   jwtOptions.Claim.URL,
 			Roles: jwtOptions.Claim.Roles,
 		},
-	}, cookies.Settings{
-		Domain: cookieSettings.Domain,
-		Path:   cookieSettings.Path,
-		Prefix: cookieSettings.Prefix,
-		Secure: cookieSettings.Secure,
 	}, logger).JwtContext)
 
 	return apiRouter

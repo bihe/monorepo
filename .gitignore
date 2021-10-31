@@ -20,10 +20,9 @@ devserver.sh
 live.devserver.sh
 __devserver
 
-login/.env
-mydms/.env
-filecrypt/.env
-bookmarks/.env
-
 .env
+.env.container
+.env.monorepo
 _logs/
+upload/
+caddy/Caddyfile.prod

@@ -5,10 +5,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/pkg/cookies"
-	"golang.binggl.net/monorepo/pkg/errors"
 )
 
 func TestErrorPage(t *testing.T) {
@@ -20,12 +19,7 @@ func TestErrorPage(t *testing.T) {
 	}
 
 	errHandler := &TemplateHandler{
-		Handler: Handler{
-			ErrRep: &errors.ErrorReporter{
-				CookieSettings: cookieSettings,
-				ErrorPath:      "error",
-			},
-		},
+		Handler:        Handler{},
 		Version:        "1",
 		Build:          "2",
 		CookieSettings: cookieSettings,
@@ -40,13 +34,13 @@ func TestErrorPage(t *testing.T) {
 	req.AddCookie(&http.Cookie{
 		Path:   cookieSettings.Path,
 		Domain: cookieSettings.Domain,
-		Name:   "_" + errors.FlashKeyError,
+		Name:   "_" + FlashKeyError,
 		Value:  "error",
 	})
 	req.AddCookie(&http.Cookie{
 		Path:   cookieSettings.Path,
 		Domain: cookieSettings.Domain,
-		Name:   "_" + errors.FlashKeyInfo,
+		Name:   "_" + FlashKeyInfo,
 		Value:  "info",
 	})
 

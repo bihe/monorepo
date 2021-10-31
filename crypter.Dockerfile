@@ -13,6 +13,7 @@ ENV COMMIT=${buildtime_variable_commit}
 WORKDIR /backend-build
 COPY ./cmd ./cmd
 COPY ./go.mod ./
+COPY ./go.sum ./
 COPY ./internal/crypter  ./internal/crypter
 COPY ./pkg ./pkg
 COPY ./proto ./proto

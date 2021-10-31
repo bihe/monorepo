@@ -1,0 +1,69 @@
+.heading {
+  display: block;
+  padding: 10px;
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+}
+
+.edit {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+}
+
+.dashboard {
+  display: block;
+}
+
+.dashboard_card {
+  max-width: 400px;
+  display: inline-block;
+  margin: 20px;
+  min-width: 280px;
+  min-height: 150px;
+}
+
+.dashboard_card_title {
+  color: black;
+}
+
+.dashboard_card_title:hover {
+  text-decoration: none;
+}
+
+.dashboard_card_footer {
+  font-weight: normal;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.8em;
+  padding: 5px;
+  text-align: right;
+  color: #999999;
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+}
+
+.permission {
+  padding: 2px;
+  margin-right: 2px;
+  color: black;
+  font-family: 'Roboto Mono', monospace;
+}
+
+
+.application_title {
+  display: block;
+  padding-top: 0px;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-bottom: 10px;
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+  /* background-color: #eeeeee; */
+  border-bottom: dotted 1px #cccccc;
+  margin-bottom: 19px;
+}
+
+.version_info {
+  position: relative;
+  top: -18px;
+  font-size: 0.9em;
+}

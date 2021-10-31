@@ -11,7 +11,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/labstack/gommon/log"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"golang.binggl.net/monorepo/internal/bookmarks"
@@ -69,12 +68,12 @@ func graceful(s *http.Server, timeout time.Duration) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	log.Infof("\nShutdown with timeout: %s\n", timeout)
+	fmt.Printf("\nShutdown with timeout: %s\n", timeout)
 	if err := s.Shutdown(ctx); err != nil {
 		return err
 	}
 
-	log.Info("Server stopped")
+	fmt.Printf("Server stopped")
 	return nil
 }
 

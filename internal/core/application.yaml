@@ -1,0 +1,78 @@
+---
+baseconfig:
+    ## common application properties
+    appName: core
+    hostID: localhost-dev
+    environment: Development
+    errorPath: /error
+
+    # allow cross-origin requests
+    cors:
+        origins:
+        - "http://localhost:8080"
+        - "http://localhost:3000"
+        - "http://localhost:4200"
+        - "http://dev.binggl.net"
+        - "https://dev.binggl.net"
+        - "http://dev.binggl.net:4200"
+        methods:
+        - "GET"
+        - "POST"
+        - "PUT"
+        - "DELETE"
+        - "OPTIONS"
+        headers:
+        - "cache-control"
+        - "content-type"
+        - "pragma"
+        - "accept"
+        - "authorization"
+        credentials: true
+        maxAge: 500
+
+    # log settings
+    logging:
+        filePath: "./logs/core.log"
+        logLevel: debug
+        grayLogServer: ""
+
+    # cookies are needed for user-facing sites and messaging
+    cookies:
+        domain: dev.binggl.net
+        path: "/"
+        secure: false
+        prefix: core
+
+database:
+    connectionString: "root:mariadb@tcp(db:3306)/login?parseTime=true"
+
+# configuration for JWT authentication
+security:
+    jwtIssuer: issuer
+    jwtSecret: secret
+    cookieName: login_token
+    expiry: 7 # the expiry in days
+    claim:
+        name: core
+        url: http://localhost:3001
+        roles:
+        - User
+    cacheDuration: 10m
+    loginRedirect: /ok
+
+oidc:
+    clientID: clientID
+    clientSecret: clientSecret
+    redirectURL: "http://dev.binggl.net:3001/oidc/signin"
+    provider: "https://accounts.google.com"
+
+upload:
+    allowedFileTypes:
+    - "pdf"
+    - "jpg"
+    - "jpeg"
+    - "png"
+    - "gif"
+    maxUploadSize: 500000
+    uploadPath: "/tmp/"
+    encGrpcConn: "localhost:3001"

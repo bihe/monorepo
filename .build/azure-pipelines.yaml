@@ -35,7 +35,7 @@ steps:
   inputs:
     command: build
     Dockerfile: 'bookmarks.Dockerfile'
-    repository: bihe/monorepo/bookmarks-go
+    repository: bihe/monorepo/bookmarks
     tags: |
       latest
       $(githash)
@@ -49,26 +49,26 @@ steps:
   inputs:
     command: build
     Dockerfile: 'mydms.Dockerfile'
-    repository: bihe/monorepo/mydms-go
+    repository: bihe/monorepo/mydms
     tags: |
       latest
       $(githash)
     arguments: |
-      --build-arg buildtime_variable_version=2.0.$(Build.BuildId)
+      --build-arg buildtime_variable_version=3.0.$(Build.BuildId)
       --build-arg buildtime_variable_timestamp=$(TSTAMP)
       --build-arg buildtime_variable_commit=$(githash)
 
 - task: Docker@2
-  displayName: 'Build login'
+  displayName: 'Build core'
   inputs:
     command: build
-    Dockerfile: 'login.Dockerfile'
-    repository: bihe/monorepo/login-go
+    Dockerfile: 'core.Dockerfile'
+    repository: bihe/monorepo/core
     tags: |
       latest
       $(githash)
     arguments: |
-      --build-arg buildtime_variable_version=2.0.$(Build.BuildId)
+      --build-arg buildtime_variable_version=3.0.$(Build.BuildId)
       --build-arg buildtime_variable_timestamp=$(TSTAMP)
       --build-arg buildtime_variable_commit=$(githash)
 
@@ -82,23 +82,20 @@ steps:
       latest
       $(githash)
     arguments: |
-      --build-arg buildtime_variable_version=2.0.$(Build.BuildId)
+      --build-arg buildtime_variable_version=1.0.$(Build.BuildId)
       --build-arg buildtime_variable_timestamp=$(TSTAMP)
       --build-arg buildtime_variable_commit=$(githash)
 
 - task: Docker@2
-  displayName: 'Build onefrontend-go'
+  displayName: 'Build frontend'
   inputs:
     command: build
-    Dockerfile: 'onefrontend.Dockerfile'
-    repository: bihe/monorepo/onefrontend-go
+    Dockerfile: 'caddy.Dockerfile'
+    repository: bihe/monorepo/frontend
     tags: |
       latest
       $(githash)
     arguments: |
-      --build-arg buildtime_variable_version=2.0.$(Build.BuildId)
-      --build-arg buildtime_variable_timestamp=$(TSTAMP)
-      --build-arg buildtime_variable_commit=$(githash)
       --build-arg FRONTEND_MODE=$(FRONTEND_MODE)
 
 
@@ -111,7 +108,7 @@ steps:
   inputs:
     containerRegistry: github_docker_images
     command: push
-    repository: bihe/monorepo/bookmarks-go
+    repository: bihe/monorepo/bookmarks
     tags: |
       latest
       $(githash)
@@ -121,17 +118,17 @@ steps:
   inputs:
     containerRegistry: github_docker_images
     command: push
-    repository: bihe/monorepo/mydms-go
+    repository: bihe/monorepo/mydms
     tags: |
       latest
       $(githash)
 
 - task: Docker@2
-  displayName: 'Push login'
+  displayName: 'Push core'
   inputs:
     containerRegistry: github_docker_images
     command: push
-    repository: bihe/monorepo/login-go
+    repository: bihe/monorepo/core
     tags: |
       latest
       $(githash)
@@ -151,7 +148,7 @@ steps:
   inputs:
     containerRegistry: github_docker_images
     command: push
-    repository: bihe/monorepo/onefrontend-go
+    repository: bihe/monorepo/frontend
     tags: |
       latest
       $(githash)

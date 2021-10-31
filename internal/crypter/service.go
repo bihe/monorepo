@@ -55,7 +55,7 @@ func NewService(logger logging.Logger, tokenSetting TokenSecurity) EncryptionSer
 // Service Middleware
 // --------------------------------------------------------------------------
 
-// ServiceMiddleware describes a service (as opposed to endpoint) middleware.
+// ServiceMiddleware describes a service middleware.
 // it is used to intercept the method execution and perform actions before/after the
 // serivce method execution
 type ServiceMiddleware func(EncryptionService) EncryptionService
@@ -78,8 +78,8 @@ type loggingMiddleware struct {
 func (mw loggingMiddleware) Encrypt(ctx context.Context, req Request) (encPayload []byte, err error) {
 	defer func() {
 		mw.logger.Info("Encrypt called",
-			logging.LogV("payload(length)", fmt.Sprintf("%d", req.Payload)),
-			logging.LogV("payloadType", fmt.Sprintf("%s", req.Type)),
+			logging.LogV("payload(length)", fmt.Sprintf("%d", len(req.Payload))),
+			logging.LogV("payloadType", string(req.Type)),
 			logging.LogV("encPayload(lenght)", fmt.Sprintf("%d", len(encPayload))),
 			logging.ErrV(err),
 		)

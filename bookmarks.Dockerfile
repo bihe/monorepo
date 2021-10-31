@@ -13,6 +13,7 @@ ENV COMMIT=${buildtime_variable_commit}
 WORKDIR /backend-build
 COPY ./cmd ./cmd
 COPY ./go.mod ./
+COPY ./go.sum ./
 COPY ./internal/bookmarks  ./internal/bookmarks
 COPY ./pkg ./pkg
 RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -o bookmarks.api ./cmd/bookmarks/server/*.go

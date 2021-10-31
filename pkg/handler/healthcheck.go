@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/logging"
@@ -89,13 +89,13 @@ func (h *HealthCheckHandler) check() http.HandlerFunc {
 		user, ok := security.UserFromContext(r.Context())
 		if !ok || user == nil {
 			h.Log.Error("check: user is not available in context!")
-			h.ErrRep.Negotiate(w, r, errors.SecurityError{Err: fmt.Errorf("user is not available in context"), Request: r})
+			errors.WriteError(w, r, errors.SecurityError{Err: fmt.Errorf("user is not available in context"), Request: r})
 			return
 		}
 
 		if err := h.getHealth(*user, w, r, h.Checker); err != nil {
 			h.Log.Error("check: error in health-check function", logging.ErrV(fmt.Errorf("error during health-check call %v", err)))
-			h.ErrRep.Negotiate(w, r, err)
+			errors.WriteError(w, r, err)
 			return
 		}
 	})

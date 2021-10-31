@@ -13,6 +13,8 @@ type User struct {
 	DisplayName   string
 	Authenticated bool
 	Token         string
+	ProfileURL    string
+	Claims        []Claim
 }
 
 // String represents the User struct as a string
@@ -41,6 +43,7 @@ type JwtTokenPayload struct {
 	DisplayName string
 	Surname     string
 	GivenName   string
+	ProfileURL  string
 	StandardClaims
 }
 
@@ -53,6 +56,7 @@ type Claims struct {
 	UserName    string   `json:"UserName"`
 	GivenName   string   `json:"GivenName"`
 	Surname     string   `json:"Surname"`
+	ProfileURL  string   `json:"PictureUrl"`
 	Claims      []string `json:"Claims"`
 }
 

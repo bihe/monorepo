@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/pkg/logging"
 
-	_ "github.com/jinzhu/gorm/dialects/sqlite" // use sqlite for testing
+	_ "github.com/mattn/go-sqlite3" // use sqlite for testing
 )
 
 const expectations = "there were unfulfilled expectations: %s"

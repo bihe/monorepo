@@ -33,7 +33,7 @@ import (
 
 	stdlog "log"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"golang.binggl.net/monorepo/internal/mydms/app/appinfo"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"

@@ -18,10 +18,9 @@ import (
 	"golang.binggl.net/monorepo/pkg/server"
 	"golang.binggl.net/monorepo/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 
 	c "golang.binggl.net/monorepo/pkg/config"
-
-	kitgrpc "github.com/go-kit/kit/transport/grpc"
 )
 
 var (
@@ -53,35 +52,29 @@ func run(version, build string) error {
 	logger := setupLog(config)
 	defer logger.Close()
 
-	// Build the layers of the service "onion" from the inside out. First, the
-	// business logic service; then, the set of endpoints that wrap the service;
-	// and finally, a series of concrete transport adapters. The adapters, like
-	// the HTTP handler or the gRPC server, are the bridge between Go kit and
-	// the interfaces that the transports expect. Note that we're not binding
-	// them to ports or anything yet; we'll do that next.
 	var (
-		service    = crypter.NewService(logger, config.TokenSecurity)
-		endpoints  = crypter.NewEndpoints(service, logger)
-		grpcServer = crypter.NewGRPCServer(endpoints, logger)
+		service       = crypter.NewService(logger, config.TokenSecurity)
+		crypterServer = crypter.NewServer(service, logger)
+		grpcServer    = grpc.NewServer()
 	)
-
-	// The gRPC listener mounts the Go kit gRPC server we created.
 	grpcListener, err := net.Listen("tcp", addr)
 	if err != nil {
 		logger.Error("list error", logging.ErrV(err))
 		return fmt.Errorf("could not start grpc listener: %v", err)
 	}
-	srv := grpc.NewServer(grpc.UnaryInterceptor(kitgrpc.Interceptor))
-	proto.RegisterCrypterServer(srv, grpcServer)
+	proto.RegisterCrypterServer(grpcServer, crypterServer)
+
+	// Register reflection service on gRPC server.
+	reflection.Register(grpcServer)
 
 	logger.Info("start-up GRPC server")
 	go func() {
 		server.PrintServerBanner("crypter", version, build, string(config.Environment), addr)
-		if err := srv.Serve(grpcListener); err != http.ErrServerClosed {
+		if err := grpcServer.Serve(grpcListener); err != http.ErrServerClosed {
 			return
 		}
 	}()
-	return graceful(srv, logger, 5*time.Second)
+	return graceful(grpcServer, logger, 5*time.Second)
 }
 
 // --------------------------------------------------------------------------

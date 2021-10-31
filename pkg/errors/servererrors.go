@@ -7,31 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-
-	"github.com/markusthoemmes/goautoneg"
-	"golang.binggl.net/monorepo/pkg/cookies"
-)
-
-type content int
-
-const (
-	// TEXT content-type requested by client
-	TEXT content = iota
-	// JSON content-type requested by client
-	JSON
-	// HTML content-type requested by client
-	HTML
-)
-
-const (
-	// DefaultCookieExpiry is the default expiry time of a cookie
-	DefaultCookieExpiry = 60
-
-	// FlashKeyError is used as a flash message for errors
-	FlashKeyError = "flash_error"
-
-	// FlashKeyInfo is used as a key for flash messages
-	FlashKeyInfo = "flash_info"
 )
 
 // --------------------------------------------------------------------------
@@ -95,23 +70,11 @@ func (e ServerError) Error() string {
 	return fmt.Sprintf("the request '%s' resulted in an unexpected error: %v", e.Request.RequestURI, e.Err)
 }
 
-// RedirectError is a specific error indicating a necessary redirect
-type RedirectError struct {
-	Err     error
-	Request *http.Request
-	Status  int
-	URL     string
-}
-
-// Error implements the error interface
-func (e RedirectError) Error() string {
-	return fmt.Sprintf("the request '%s' resulted in a redirect to: '%s', error: %v", e.Request.RequestURI, e.URL, e.Err)
-}
-
 // SecurityError is used when something is not allowed
 type SecurityError struct {
 	Err     error
 	Request *http.Request
+	Status  uint
 }
 
 // Error implements the error interface
@@ -157,22 +120,15 @@ func ErrServerError(err ServerError) *ProblemDetail {
 
 // ErrSecurityError returns a http.StatusForbidden
 func ErrSecurityError(err SecurityError) *ProblemDetail {
+	status := http.StatusForbidden
+	if err.Status > 0 {
+		status = int(err.Status)
+	}
 	return &ProblemDetail{
 		Type:   t,
 		Title:  "operation is not allowed",
-		Status: http.StatusForbidden,
+		Status: status,
 		Detail: err.Error(),
-	}
-}
-
-// ErrRedirectError returns a http.StatusTemporaryRedirect
-func ErrRedirectError(err RedirectError) *ProblemDetail {
-	return &ProblemDetail{
-		Type:     t,
-		Title:    "missing authentication requires a redirect",
-		Status:   err.Status,
-		Detail:   err.Error(),
-		Instance: err.URL,
 	}
 }
 
@@ -180,59 +136,17 @@ func ErrRedirectError(err RedirectError) *ProblemDetail {
 // Error handling
 // --------------------------------------------------------------------------
 
-// ErrorReporter handles sending of errors to clients respecting the context (Accept header)
-type ErrorReporter struct {
-	CookieSettings cookies.Settings
-	ErrorPath      string
-
-	cookie *cookies.AppCookie
-}
-
-// defaultConfig checks the supplied config and uses reasonable defaults if nothing specific was defined
-func (e *ErrorReporter) defaultConfig(r *http.Request) {
-	// assume that application have an /error location
-	if e.ErrorPath == "" {
-		e.ErrorPath = "/error"
-	}
-
-	e.cookie = &cookies.AppCookie{
-		Settings: e.CookieSettings,
-	}
-
-	// work with the most often used values
-	if e.cookie.Settings.Path == "" {
-		e.cookie.Settings.Path = "/"
-	}
-	if e.cookie.Settings.Prefix == "" {
-		e.cookie.Settings.Prefix = "app"
-	}
-	if e.cookie.Settings.Domain == "" {
-		e.cookie.Settings.Domain = r.Host
-	}
-}
-
-// Negotiate respects content-types, sets the status code and returns error information
-func (e *ErrorReporter) Negotiate(w http.ResponseWriter, r *http.Request, err error) {
+// WriteError sets the correct status code and returns error information as a ProblemDetail
+func WriteError(w http.ResponseWriter, r *http.Request, err error) {
 	var (
-		pd          *ProblemDetail
-		redirectURL string
+		pd *ProblemDetail
 	)
-
-	// not sure if a valid config was supplied, check and use defaults otherwise
-	e.defaultConfig(r)
-	content := negotiateContent(r)
-	redirectURL = e.ErrorPath
 
 	// default error is the server-error
 	if svrErr, ok := err.(ServerError); ok {
 		pd = ErrServerError(svrErr)
 	} else {
 		pd = ErrServerError(ServerError{Err: err, Request: r})
-	}
-
-	if redirect, ok := err.(RedirectError); ok {
-		pd = ErrRedirectError(redirect)
-		redirectURL = redirect.URL
 	}
 
 	if notfound, ok := err.(NotFoundError); ok {
@@ -247,17 +161,11 @@ func (e *ErrorReporter) Negotiate(w http.ResponseWriter, r *http.Request, err er
 		pd = ErrSecurityError(security)
 	}
 
-	switch content {
-	case HTML:
-		e.cookie.Set(FlashKeyError, pd.Detail, DefaultCookieExpiry, w)
-		http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
-	default:
-		status := http.StatusInternalServerError
-		if pd.Status > 0 {
-			status = pd.Status
-		}
-		writeProblemJSON(w, status, pd)
+	status := http.StatusInternalServerError
+	if pd.Status > 0 {
+		status = pd.Status
 	}
+	writeProblemJSON(w, status, pd)
 }
 
 func writeProblemJSON(w http.ResponseWriter, code int, pd *ProblemDetail) {
@@ -270,29 +178,5 @@ func writeProblemJSON(w http.ResponseWriter, code int, pd *ProblemDetail) {
 	_, err = w.Write(b)
 	if err != nil {
 		log.Printf("writeProblemJSON: could not write bytes using http.ResponseWriter: %v", err)
-	}
-}
-
-func negotiateContent(r *http.Request) content {
-	header := r.Header.Get("Accept")
-	if header == "" {
-		return JSON // default
-	}
-
-	accept := goautoneg.ParseAccept(header)
-	if len(accept) == 0 {
-		return JSON // default
-	}
-
-	// use the first element, because this has the highest priority
-	switch accept[0].SubType {
-	case "html":
-		return HTML
-	case "json":
-		return JSON
-	case "plain":
-		return TEXT
-	default:
-		return JSON
 	}
 }

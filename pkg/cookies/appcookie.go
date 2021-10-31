@@ -4,7 +4,6 @@ package cookies
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 )
 
@@ -79,12 +78,14 @@ func (a *AppCookie) Get(name string, r *http.Request) string {
 	)
 	cookieName := a.cookieName(name)
 	if cookie, err = r.Cookie(cookieName); err != nil {
-		log.Printf("cookies.Get: could not read cookie '%s': %v", cookieName, err)
 		return ""
 	}
 	return cookie.Value
 }
 
 func (a *AppCookie) cookieName(name string) string {
+	if a == nil || a.Settings.Prefix == "" {
+		return name
+	}
 	return fmt.Sprintf("%s_%s", a.Settings.Prefix, name)
 }

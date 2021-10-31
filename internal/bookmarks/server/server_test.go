@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,13 +9,10 @@ import (
 
 	"golang.binggl.net/monorepo/internal/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/config"
-	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/logging"
 
-	_ "github.com/jinzhu/gorm/dialects/sqlite" // use sqlite for testing
+	_ "github.com/mattn/go-sqlite3" // use sqlite for testing
 )
-
-const userName = "username"
 
 var logger = logging.NewNop()
 
@@ -71,23 +67,4 @@ func TestPostAuthRedirectRoutes(t *testing.T) {
 
 	assert.Equal(t, http.StatusFound, rec.Code)
 	assert.Equal(t, "/api/v1/bookmarks/fetch/fd249874-b8ee-44eb-942b-18328ec7530a", rec.Header().Get("Location"))
-}
-
-func TestHealthChck(t *testing.T) {
-	// arrange
-	srv := Create("../", appCfg, bookmarks.VersionInfo{}, logger)
-	rec := httptest.NewRecorder()
-
-	// act
-	req, _ := http.NewRequest("GET", "/hc", nil)
-	req.AddCookie(&http.Cookie{Name: cookie, Value: token})
-
-	srv.ServeHTTP(rec, req)
-
-	assert.Equal(t, http.StatusOK, rec.Code)
-	var result handler.HealthCheckResponse
-	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
-		t.Errorf("could not unmarshal body: %v", err)
-	}
-	assert.Equal(t, handler.OK, result.Status)
 }

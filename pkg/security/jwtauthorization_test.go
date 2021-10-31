@@ -106,8 +106,9 @@ func TestJWTAuthorizationCache(t *testing.T) {
 			URL:   "http://localhost:3000",
 			Roles: []string{"role"},
 		},
-		RedirectURL:   "/redirect",
-		CacheDuration: "10m",
+		RedirectURL: "/redirect",
+		// omit the cache-duration - defaults to 10m
+		//CacheDuration: "10m",
 	}
 	var jwtAuth = NewJWTAuthorization(jwtOpts, true)
 
@@ -138,18 +139,33 @@ func TestJWTAuthorizationCache(t *testing.T) {
 }
 
 func TestAuthorization(t *testing.T) {
+	var (
+		claims    []string
+		allClaims []Claim
+		err       error
+	)
+
 	reqClaim := Claim{Name: "test", URL: "http://a.b.c.de/f", Roles: []string{"user", "admin"}}
-	var claims []string
 
-	claims = append(claims, "a|http://1.com|nothing")
 	claims = append(claims, "test|http://a.b.c.de/f|user")
+	claims = append(claims, "a|http://1.com|nothing")
 
-	if _, err := Authorize(reqClaim, claims); err != nil {
+	if _, _, err := Authorize(reqClaim, claims); err != nil {
 		t.Error(failed, err)
 	}
 
-	claims = claims[0:1]
-	if _, err := Authorize(reqClaim, claims); err == nil {
+	if _, allClaims, err = Authorize(reqClaim, claims); err != nil {
+		t.Error(failed, err)
+	}
+	if len(allClaims) != 2 {
+		t.Errorf("2 items for allclaims expected, got %d entries", len(allClaims))
+	}
+	if allClaims[1].Name != "a" || allClaims[0].URL != "http://a.b.c.de/f" {
+		t.Errorf("the contents of allClaims is incorrect")
+	}
+
+	claims = claims[1:]
+	if _, _, err := Authorize(reqClaim, claims); err == nil {
 		t.Error(shouldFail, err)
 	}
 
@@ -157,23 +173,23 @@ func TestAuthorization(t *testing.T) {
 	claims = append(claims, "a|http://1.com|nothing")
 	claims = append(claims, "test|http://a.b.c.de/f|admin")
 
-	if _, err := Authorize(reqClaim, claims); err != nil {
+	if _, _, err := Authorize(reqClaim, claims); err != nil {
 		t.Error(failed, err)
 	}
 
 	claims = []string{"test|http://a.b.c.de/nomatch|role"}
-	if _, err := Authorize(reqClaim, claims); err == nil {
+	if _, _, err := Authorize(reqClaim, claims); err == nil {
 		t.Error(shouldFail, err)
 	}
 
 	claims = []string{"test|NOURLä|role"}
-	if _, err := Authorize(reqClaim, claims); err == nil {
+	if _, _, err := Authorize(reqClaim, claims); err == nil {
 		t.Error(shouldFail, err)
 	}
 
 	claims = []string{"test|http://a.b.c.de|user"}
 	reqClaim = Claim{Name: "test", URL: "http://a.b.c.de/", Roles: []string{"user"}}
-	if _, err := Authorize(reqClaim, claims); err != nil {
+	if _, _, err := Authorize(reqClaim, claims); err != nil {
 		t.Error(failed, err)
 	}
 }

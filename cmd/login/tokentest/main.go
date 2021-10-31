@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"golang.binggl.net/monorepo/pkg/security"
 )
 
@@ -22,7 +22,7 @@ func main() {
 			Value:    jwt,
 			MaxAge:   3600, /* exp in seconds */
 			HttpOnly: true, // only let the api access those cookies
-			Domain:   "localhost",
+			Domain:   getEnvOrDefault("JWT_COOKIE_DOMAIN", "localhost"),
 			Path:     "/",
 			Secure:   false,
 		}
@@ -42,7 +42,7 @@ func getEnvOrDefault(env, def string) string {
 
 func createToken() string {
 	var siteClaims []string
-	siteClaims = append(siteClaims, fmt.Sprintf("%s|%s|%s", "login", "http://localhost:3001", "User;Admin"))
+	siteClaims = append(siteClaims, fmt.Sprintf("%s|%s|%s", "core", "http://localhost:3001", "User;Admin"))
 	siteClaims = append(siteClaims, fmt.Sprintf("%s|%s|%s", "mydms", "http://localhost:3002", "User"))
 	siteClaims = append(siteClaims, fmt.Sprintf("%s|%s|%s", "bookmarks", "http://localhost:3003", "User"))
 	siteClaims = append(siteClaims, fmt.Sprintf("%s|%s|%s", "crypter", "http://localhost:3004", "User"))
@@ -56,6 +56,7 @@ func createToken() string {
 		UserName:    getEnvOrDefault("JWT_USER_EMAIL", "a.b@c.de"),
 		GivenName:   "Test",
 		Surname:     "User",
+		ProfileURL:  "https://lh3.googleusercontent.com/a-/AOh14Ghd0ONOWZ9mNBoUvtLhw4D1lPmGupZkggK6RahYMA",
 		Claims:      siteClaims,
 	}
 	token, _ := security.CreateToken(getEnvOrDefault("JWT_ISSUER", "issuer"), []byte(getEnvOrDefault("JWT_SECRET", "secret")), 3600, claims)

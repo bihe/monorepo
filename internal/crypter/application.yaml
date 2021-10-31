@@ -10,7 +10,7 @@ tokenSecurity:
     cacheDuration: 10m
 
 logging:
-    filePath: "./logs/crypter-grpc-api.log"
+    filePath: "../../../_logs/crypter-grpc-api.log"
     logLevel: debug
     grayLogServer: ""
 

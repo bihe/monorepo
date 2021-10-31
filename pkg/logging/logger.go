@@ -11,7 +11,7 @@ import (
 	"net/url"
 
 	gl "github.com/bihe/go-gelf/gelf" // this is the forked version of the library "gopkg.in/Graylog2/go-gelf.v2/gelf"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.binggl.net/monorepo/pkg/config"
@@ -231,7 +231,7 @@ func (l *zapLogger) ErrorRequest(msg string, req *http.Request, keyvals ...KeyVa
 func (l *zapLogger) appendKeys(keyvals ...KeyValue) []interface{} {
 	var kvs []interface{}
 	kvs = append(kvs, l.stdKeys()...)
-	if keyvals != nil && len(keyvals) > 0 {
+	if len(keyvals) > 0 {
 		for _, kv := range keyvals {
 			v := kv.Read()
 			for _, e := range v {
@@ -250,9 +250,7 @@ func (l *zapLogger) stdKeys() []interface{} {
 		ApplicationNameKey, l.conf.Trace.AppName,
 		HostIDKey, l.conf.Trace.HostID,
 	}
-	for _, e := range std {
-		kvs = append(kvs, e)
-	}
+	kvs = append(kvs, std...)
 	return kvs
 }
 

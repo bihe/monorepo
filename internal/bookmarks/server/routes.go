@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/cors"
 	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/security"
@@ -44,13 +44,13 @@ func (s *Server) routes() {
 	// this group "indicates" that all routes within this group use the JWT authentication
 	r.Group(func(r chi.Router) {
 		// authenticate and authorize users via JWT
-		r.Use(security.NewJwtMiddleware(s.jwtOpts, s.cookieSettings, s.logger).JwtContext)
-
-		r.Mount("/hc", s.healthCheck.GetHandler())
-		r.Mount("/appinfo", s.appInfoAPI.GetHandler())
+		r.Use(security.NewJwtMiddleware(s.jwtOpts, s.logger).JwtContext)
 
 		// group API methods together
 		r.Route("/api/v1/bookmarks", func(r chi.Router) {
+			r.Mount("/hc", s.healthCheck.GetHandler())
+			r.Mount("/appinfo", s.appInfoAPI.GetHandler())
+
 			r.Post("/", s.bookmarkAPI.Secure(s.bookmarkAPI.Create))
 			r.Put("/", s.bookmarkAPI.Secure(s.bookmarkAPI.Update))
 			r.Put("/sortorder", s.bookmarkAPI.Secure(s.bookmarkAPI.UpdateSortOrder))

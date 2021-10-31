@@ -32,7 +32,7 @@ import (
 
 	er "errors"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"golang.binggl.net/monorepo/internal/bookmarks/favicon"
 	"golang.binggl.net/monorepo/internal/bookmarks/store"

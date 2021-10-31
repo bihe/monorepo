@@ -1,0 +1,108 @@
+.document__icon {
+    top: 10px;
+    position: relative;
+}
+
+.save {
+    background-color: #239B56;
+    color: white;
+}
+
+.delete {
+    background-color: #CB4335;
+    color: white;
+}
+
+div.tags {
+    padding-top: 15px;
+    padding-bottom: 20px;
+}
+
+.tag {
+    background-color: green;
+    color: white;
+}
+
+.is-drop-over {
+    font-style: italic;
+    background-color: #cccccc;
+    border-style: dashed;
+    border-width: 3px;
+    border-color: #999999;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.upload__zone {
+    text-align: center;
+}
+
+.upload__zone_dd_text {
+    font-style: italic;
+    font-size: 1.2em;
+}
+
+.upload__file {
+    padding-top: 20px;
+}
+
+.drop-container {
+    padding: 10px;
+}
+
+[hidden] {
+    display: none;
+}
+
+.document_heading {
+  width: 100%;
+}
+
+.document_title {
+  width: 100%;
+}
+
+.document_invoicenumber {
+    color: darkred;
+}
+
+.upload_section {
+  padding-top: 25px;
+  padding-bottom: 15px;
+}
+
+.upload_link {
+  font-size: 1.3em;
+}
+
+.application_title {
+    display: block;
+  padding-top: 0px;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-bottom: 10px;
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+  /* background-color: #eeeeee; */
+  border-bottom: dotted 1px #cccccc;
+  margin-bottom: 19px;
+  }
+
+.version_info {
+position: relative;
+top: -18px;
+font-size: 0.9em;
+}
+
+.encpass_set {
+    font-weight: bold;
+    color: red;
+}
+
+
+.tag-list {
+    width: 100%;
+}
+
+.file-input {
+    display: none;
+  }

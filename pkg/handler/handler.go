@@ -12,8 +12,6 @@ import (
 
 // Handler defines common handler logic
 type Handler struct {
-	// ErrRep is used to send errors according to the users accept headers
-	ErrRep *errors.ErrorReporter
 	// Log is the supplied log-handler
 	Log logging.Logger
 }
@@ -25,12 +23,12 @@ func (h *Handler) Secure(f func(user security.User, w http.ResponseWriter, r *ht
 		user, ok := security.UserFromContext(r.Context())
 		if !ok || user == nil {
 			h.Log.InfoRequest("user is not available in context!", r)
-			h.ErrRep.Negotiate(w, r, fmt.Errorf("user is not available in context"))
+			errors.WriteError(w, r, fmt.Errorf("user is not available in context"))
 			return
 		}
 		if err := f(*user, w, r); err != nil {
 			h.Log.Error("Secure: function returned an error", logging.ErrV(fmt.Errorf("error during API call %v", err)))
-			h.ErrRep.Negotiate(w, r, err)
+			errors.WriteError(w, r, err)
 			return
 		}
 	})
@@ -41,7 +39,7 @@ func (h *Handler) Call(f func(w http.ResponseWriter, r *http.Request) error) htt
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := f(w, r); err != nil {
 			h.Log.Error("Call: function returned an error", logging.ErrV(fmt.Errorf("error during API call %v", err)))
-			h.ErrRep.Negotiate(w, r, err)
+			errors.WriteError(w, r, err)
 			return
 		}
 	})

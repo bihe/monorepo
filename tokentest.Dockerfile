@@ -5,6 +5,7 @@ FROM golang:alpine AS BACKEND-BUILD
 WORKDIR /backend-build
 COPY ./cmd ./cmd
 COPY ./go.mod ./
+COPY ./go.sum ./
 COPY ./pkg ./pkg
 RUN GOOS=linux GOARCH=amd64 go build -o tokentest.server ./cmd/login/tokentest/*.go
 ## --------------------------------------------------------------------------

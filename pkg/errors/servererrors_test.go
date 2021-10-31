@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
-	"golang.binggl.net/monorepo/pkg/cookies"
 )
 
 const errText = "error occurred"
@@ -52,35 +50,21 @@ func TestErrorHandler(t *testing.T) {
 			Accept: "application/json",
 		},
 		{
-			Name:     "RedirectErrorBrowser",
-			Status:   http.StatusTemporaryRedirect,
-			Error:    RedirectError{Err: fmt.Errorf(errText), Request: errReq, URL: "http://redirect", Status: http.StatusTemporaryRedirect},
-			Accept:   "text/html",
-			Redirect: "http://redirect",
-		},
-		{
-			Name:   "RedirectErrorBrowserJSON",
-			Status: http.StatusTemporaryRedirect,
-			Error:  RedirectError{Err: fmt.Errorf(errText), Request: errReq, URL: "http://redirect", Status: http.StatusTemporaryRedirect},
-			Accept: "application/json",
-		},
-		{
 			Name:   "error",
 			Status: http.StatusInternalServerError,
 			Error:  fmt.Errorf(errText),
 			Accept: "application/json",
 		},
 		{
-			Name:     "error.HTML",
-			Status:   http.StatusTemporaryRedirect,
-			Error:    fmt.Errorf(errText),
-			Accept:   "text/html",
-			Redirect: "/error",
-		},
-		{
-			Name:   "security",
+			Name:   "SecurityError_Forbidden",
 			Status: http.StatusForbidden,
 			Error:  SecurityError{Err: fmt.Errorf(errText), Request: errReq},
+			Accept: "application/json",
+		},
+		{
+			Name:   "SecurityError_UnAuthorized",
+			Status: http.StatusUnauthorized,
+			Error:  SecurityError{Err: fmt.Errorf(errText), Request: errReq, Status: http.StatusUnauthorized},
 			Accept: "application/json",
 		},
 		{
@@ -92,14 +76,6 @@ func TestErrorHandler(t *testing.T) {
 	}
 
 	r = chi.NewRouter()
-	errRep := &ErrorReporter{
-		ErrorPath: "error",
-		CookieSettings: cookies.Settings{
-			Secure: false,
-			Prefix: "test",
-		},
-	}
-
 	for _, tc := range testcases {
 		t.Run(tc.Name, func(t *testing.T) {
 			rec = httptest.NewRecorder()
@@ -108,7 +84,7 @@ func TestErrorHandler(t *testing.T) {
 
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				if tc.Error != nil {
-					errRep.Negotiate(w, r, tc.Error)
+					WriteError(w, r, tc.Error)
 					return
 				}
 				w.WriteHeader(http.StatusOK)
@@ -116,66 +92,9 @@ func TestErrorHandler(t *testing.T) {
 			r.ServeHTTP(rec, req)
 
 			assert.Equal(t, tc.Status, rec.Code)
-
-			if tc.Redirect != "" {
-				assert.Equal(t, tc.Redirect, rec.Header().Get("Location"))
-				// check that the correct cookie was set
-				assert.True(t, strings.Contains(rec.Header().Get("Set-Cookie"), errRep.CookieSettings.Prefix+"_"+FlashKeyError))
-				return
-			}
 			s = rec.Body.String()
 			if s != "" {
 				assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &pd))
-			}
-		})
-	}
-}
-
-func TestContentNegotiation(t *testing.T) {
-
-	tests := []struct {
-		name   string
-		header string
-		want   content
-	}{{
-		name:   "empty",
-		header: "",
-		want:   JSON,
-	}, {
-		name:   "html",
-		header: "text/html",
-		want:   HTML,
-	}, {
-		name:   "json",
-		header: "application/json",
-		want:   JSON,
-	}, {
-		name:   "text",
-		header: "text/plain",
-		want:   TEXT,
-	}, {
-		name:   "nosubtype",
-		header: "text/",
-		want:   JSON,
-	}, {
-		name:   "fancysubtype",
-		header: "text/fancy",
-		want:   JSON,
-	}, {
-		name:   "complext",
-		header: "text/plain; q=0.5, application/json, text/x-dvi; q=0.8, text/x-c",
-		want:   JSON,
-	}}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/", nil)
-			req.Header.Set("Accept", test.header)
-
-			content := negotiateContent(req)
-
-			if content != test.want {
-				t.Errorf("Unexpected value\ngot:  %+v\nwant: %+v", content, test.want)
 			}
 		})
 	}

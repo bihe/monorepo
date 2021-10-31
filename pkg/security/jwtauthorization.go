@@ -11,6 +11,9 @@ import (
 	"github.com/lestrrat-go/jwx/jwt"
 )
 
+// RoleDelimiter specifies the element used to seperate a list of roles
+const RoleDelimiter = ";"
+
 // keys used for the custom jwt-claims
 const jwtType = "Type"
 const userName = "UserName"
@@ -19,6 +22,7 @@ const email = "Email"
 const userID = "UserId"
 const surname = "Surname"
 const givenName = "GivenName"
+const profileURL = "ProfileURL"
 const claims = "Claims"
 
 // JWTAuthorization handles authorizaton of supplied JWT tokens
@@ -33,7 +37,11 @@ func NewJWTAuthorization(options JwtOptions, useCache bool) *JWTAuthorization {
 	jwtAuth := &JWTAuthorization{}
 	jwtAuth.Options = options
 	if useCache {
-		jwtAuth.Cache = NewMemCache(parseDuration(options.CacheDuration))
+		var duration = options.CacheDuration
+		if duration == "" {
+			duration = "10m"
+		}
+		jwtAuth.Cache = NewMemCache(parseDuration(duration))
 	}
 	return jwtAuth
 }
@@ -41,8 +49,12 @@ func NewJWTAuthorization(options JwtOptions, useCache bool) *JWTAuthorization {
 // EvaluateToken parses the supplied JWT token and extracts a User object
 func (j *JWTAuthorization) EvaluateToken(token string) (*User, error) {
 	var (
-		err  error
-		user *User
+		err       error
+		user      *User
+		roles     []string
+		allClaims []Claim
+		claim     Claim
+		payload   JwtTokenPayload
 	)
 
 	if j.Cache != nil {
@@ -52,16 +64,13 @@ func (j *JWTAuthorization) EvaluateToken(token string) (*User, error) {
 		return user, nil
 	}
 
-	var payload JwtTokenPayload
 	if payload, err = ParseJwtToken(token, j.Options.JwtSecret, j.Options.JwtIssuer); err != nil {
 		return nil, fmt.Errorf("could not parse the JWT token: %v", err)
 	}
-	var roles []string
-	claim := j.Options.RequiredClaim
-	if roles, err = Authorize(Claim{Name: claim.Name, URL: claim.URL, Roles: claim.Roles}, payload.Claims); err != nil {
+	claim = j.Options.RequiredClaim
+	if roles, allClaims, err = Authorize(Claim{Name: claim.Name, URL: claim.URL, Roles: claim.Roles}, payload.Claims); err != nil {
 		return nil, fmt.Errorf("insufficient permissions to access the resource: %v", err)
 	}
-
 	user = &User{
 		DisplayName:   payload.DisplayName,
 		Email:         payload.Email,
@@ -70,6 +79,8 @@ func (j *JWTAuthorization) EvaluateToken(token string) (*User, error) {
 		Username:      payload.UserName,
 		Authenticated: true,
 		Token:         token, // add the token to call other services which need auth!
+		ProfileURL:    payload.ProfileURL,
+		Claims:        allClaims, // add all existing claims to the user, the roles only specify the required/requested roles
 	}
 	if j.Cache != nil {
 		j.Cache.Set(token, user)
@@ -84,21 +95,24 @@ func (j *JWTAuthorization) EvaluateToken(token string) (*User, error) {
 // Authorize validates the given claims and verifies if
 // they match the required claim
 // a claim entry is in the form "name|url|role"
-func Authorize(required Claim, claims []string) (roles []string, err error) {
+func Authorize(required Claim, claims []string) (roles []string, allClaims []Claim, err error) {
 	for _, claim := range claims {
 		c := split(claim)
+		allClaims = append(allClaims, c)
 		ok, _ := compareURL(required.URL, c.URL)
 		if required.Name == c.Name && matchRole(c.Roles, required.Roles) && ok {
-			return c.Roles, nil
+			roles = append(roles, c.Roles...)
 		}
 	}
-	return roles, fmt.Errorf("supplied claims are not sufficient")
+	if len(roles) == 0 {
+		err = fmt.Errorf("supplied claims are not sufficient")
+	}
+	return
 }
 
 // ParseJwtToken parses, validates and extracts data from a jwt token
 func ParseJwtToken(token, tokenSecret, issuer string) (JwtTokenPayload, error) {
-	reader := strings.NewReader(token)
-	t, err := jwt.Parse(reader, jwt.WithVerify(jwa.HS256, []byte(tokenSecret)))
+	t, err := jwt.Parse([]byte(token), jwt.WithVerify(jwa.HS256, []byte(tokenSecret)))
 	if err != nil {
 		return JwtTokenPayload{}, err
 	}
@@ -114,6 +128,7 @@ func ParseJwtToken(token, tokenSecret, issuer string) (JwtTokenPayload, error) {
 		DisplayName: getTokenValueString(t, displayName),
 		Surname:     getTokenValueString(t, surname),
 		GivenName:   getTokenValueString(t, givenName),
+		ProfileURL:  getTokenValueString(t, profileURL),
 		Claims:      getTokenValueSlice(t, claims),
 		StandardClaims: StandardClaims{
 			ID:        t.JwtID(),
@@ -151,6 +166,7 @@ func CreateToken(issuer string, key []byte, expiry int, c Claims) (string, error
 	t.Set(userName, c.UserName)
 	t.Set(givenName, c.GivenName)
 	t.Set(surname, c.Surname)
+	t.Set(profileURL, c.ProfileURL)
 	t.Set(claims, c.Claims)
 
 	payload, err := jwt.Sign(t, jwa.HS256, key)
@@ -202,13 +218,13 @@ func matchRole(a []string, b []string) bool {
 	return false
 }
 
-func split(claim string) *Claim {
+func split(claim string) Claim {
 	parts := strings.Split(claim, "|")
 	if len(parts) == 3 {
 		r := strings.Split(parts[2], ";")
-		return &Claim{Name: parts[0], URL: parts[1], Roles: r}
+		return Claim{Name: parts[0], URL: parts[1], Roles: r}
 	}
-	return &Claim{}
+	return Claim{}
 }
 
 func compareURL(a, b string) (bool, error) {
@@ -224,11 +240,11 @@ func compareURL(a, b string) (bool, error) {
 		return false, err
 	}
 	if urlA.Scheme != urlB.Scheme || urlA.Port() != urlB.Port() || urlA.Host != urlB.Host {
-		return false, fmt.Errorf("The urls do not match: '%s vs. %s'", urlA, urlB)
+		return false, fmt.Errorf("the urls do not match: '%s vs. %s'", urlA, urlB)
 	}
 
 	if normalizePath(urlA.Path) != normalizePath(urlB.Path) {
-		return false, fmt.Errorf("The path of the urls does not match: '%s vs. %s'", urlA.Path, urlB.Path)
+		return false, fmt.Errorf("the path of the urls does not match: '%s vs. %s'", urlA.Path, urlB.Path)
 	}
 	return true, nil
 }

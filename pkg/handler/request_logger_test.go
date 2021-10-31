@@ -7,7 +7,7 @@ import (
 
 	"golang.binggl.net/monorepo/pkg/logging"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 )
 

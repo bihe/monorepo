@@ -9,8 +9,13 @@ import (
 	"time"
 
 	"golang.binggl.net/monorepo/pkg/cookies"
-	"golang.binggl.net/monorepo/pkg/errors"
 )
+
+// FlashKeyError is a key to retrieve an error message
+const FlashKeyError = "error.flash"
+
+// FlashKeyInfo is a key to retrieve an info message
+const FlashKeyInfo = "info.flash"
 
 const errorTemplate = "error.tmpl"
 
@@ -46,18 +51,18 @@ func (h *TemplateHandler) HandleError(w http.ResponseWriter, r *http.Request) er
 	}
 
 	// read (flash)
-	err = cookie.Get(errors.FlashKeyError, r)
+	err = cookie.Get(FlashKeyError, r)
 	if err != "" {
 		isError = true
 	}
-	msg = cookie.Get(errors.FlashKeyInfo, r)
+	msg = cookie.Get(FlashKeyInfo, r)
 	if msg != "" {
 		isMessage = true
 	}
 
 	// clear (flash)
-	cookie.Del(errors.FlashKeyError, w)
-	cookie.Del(errors.FlashKeyInfo, w)
+	cookie.Del(FlashKeyError, w)
+	cookie.Del(FlashKeyInfo, w)
 
 	appName := "binggl.net"
 	if h.AppName != "" {

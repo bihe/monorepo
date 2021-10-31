@@ -9,24 +9,17 @@ on:
 
 jobs:
 
-  setup:
-    name: Setup environment
+  build:
+    name: Build
     runs-on: ubuntu-latest
     continue-on-error: false
+
     steps:
       - name: Set up Go
         uses: actions/setup-go@v1
         with:
           go-version: 1.17
 
-
-  build:
-    name: Build
-    needs: [setup]
-    runs-on: ubuntu-latest
-    continue-on-error: false
-
-    steps:
       - name: Check out code
         uses: actions/checkout@v1
 
@@ -43,6 +36,11 @@ jobs:
     continue-on-error: false
 
     steps:
+      - name: Set up Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.17
+
       - name: Check out code
         uses: actions/checkout@v1
 

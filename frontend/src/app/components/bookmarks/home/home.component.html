@@ -54,7 +54,7 @@
             alt="favicon"/>
 
 
-          <span class="badge badge-dark bookmark_path_info" *ngIf="searchMode" (click)="gotoPath(item.path)">{{ item.path }}</span>&nbsp;
+          <span class="badge bg-dark bookmark_path_info" *ngIf="searchMode" (click)="gotoPath(item.path)">{{ item.path }}</span>&nbsp;
           <a href="{{baseApiURL}}/api/v1/bookmarks/fetch/{{ item.id}}" class="bookmark_name">{{ item.displayName | ellipsis:25 }}</a>
           <span class="d-none d-sm-inline">
           </span>

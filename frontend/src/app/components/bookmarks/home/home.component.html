@@ -40,7 +40,7 @@
 
       <div cdkDrag [cdkDragStartDelay]="600" class="bookmark_item" *ngFor="let item of bookmarks; let i = index" id="{{ item.id }}">
 
-        <span *ngIf="item.type === 'Node'">
+        <span *ngIf="item.type === 'Node'" class="bookmark_node">
           <img *ngIf="item.favicon === null || item.favicon === ''" src="assets/favicon.ico"
             class="bookmark_favicon"
             width="16px" height="16px"
@@ -55,7 +55,7 @@
 
 
           <span class="badge bg-dark bookmark_path_info" *ngIf="searchMode" (click)="gotoPath(item.path)">{{ item.path }}</span>&nbsp;
-          <a href="{{baseApiURL}}/api/v1/bookmarks/fetch/{{ item.id}}" class="bookmark_name">{{ item.displayName | ellipsis:25 }}</a>
+          <a href="{{baseApiURL}}/api/v1/bookmarks/fetch/{{ item.id}}" class="bookmark_name">{{ item.displayName | ellipsis:ellipsisVal}}</a>
           <span class="d-none d-sm-inline">
           </span>
         </span>
@@ -82,7 +82,7 @@
 
 
 
-        <div class="bookmark_actions">
+        <span class="bookmark_actions">
 
           <span class="copy_url" *ngIf="item.type === 'Node'" (click)="copyUrlToClipboard(item.url)">
             <i class="fa fa-clipboard" aria-hidden="true"></i>
@@ -102,7 +102,7 @@
               <span>edit</span>
             </button>
           </mat-menu>
-        </div>
+        </span>
 
       </div>
     </div>

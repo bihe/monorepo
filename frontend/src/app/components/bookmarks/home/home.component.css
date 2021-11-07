@@ -49,13 +49,17 @@
   border-top: dotted 1px #cccccc;
   background-color: #ffffff;
   cursor: move;
+
+
+
 }
 
 .bookmark_item:last-child {
   border-bottom: dotted 1px #cccccc;
+
 }
 
-@media (max-width: 575.98px) {
+@media (max-width: 650px) {
   .bookmark_item {
     padding-left: 10px;
     padding-right: 10px;
@@ -65,13 +69,14 @@
     background-color: #ffffff;
     cursor: default;
   }
-
 }
+
 
 a.bookmark_name {
   font-weight: bold;
   font-family: 'Source Code Pro', monospace;
   font-size: 1.2em;
+
 }
 
 a.bookmark_folder {
@@ -90,7 +95,7 @@ a.bookmark_url {
 
 .bookmark_actions {
   float: right;
-  padding-right: 0px;
+  padding: 0px;
   position: relative;
   top: -7px;
 }

@@ -1,4 +1,5 @@
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -52,6 +53,7 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
   searchMode: boolean = false;
   highlightDropZone: boolean = false;
   appInfo: AppInfo;
+  ellipsisVal: number = 60;
   readonly baseApiURL = environment.apiBaseURL;
 
   // all subscriptions are held in this array, on destroy all active subscriptions are unsubscribed
@@ -64,12 +66,26 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
     private router: Router,
     private activeRoute: ActivatedRoute,
     private titleService: Title,
-    private moduleIndex: ModuleIndex
+    private moduleIndex: ModuleIndex,
+    private breakpointObserver: BreakpointObserver
   ) {
     this.state.setModInfo(this.moduleIndex.getModuleInfo(ModuleName.Bookmarks));
     this.state.setRoute(this.router.url);
     this.state.setCurrentModule(AppModules.Bookmarks);
     this.subscriptions = [];
+
+
+    // https://stackoverflow.com/questions/48628220/using-proper-css-media-queries-in-angular
+    this.subscriptions.push(this.breakpointObserver
+      .observe(['(min-width: 400px)'])
+      .subscribe((state: BreakpointState) => {
+        if (state.matches) {
+          this.ellipsisVal = 60;
+        } else {
+          this.ellipsisVal = 20;
+        }
+    }));
+
   }
 
   ngOnDestroy() {

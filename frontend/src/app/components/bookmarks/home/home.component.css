@@ -49,9 +49,10 @@
   border-top: dotted 1px #cccccc;
   background-color: #ffffff;
   cursor: move;
+}
 
-
-
+.bookmark_item:hover {
+  background-color: #f5f5f5;
 }
 
 .bookmark_item:last-child {
@@ -65,7 +66,6 @@
     padding-right: 10px;
     padding-top: 10px;
     padding-bottom: 10px;
-    border-top: solid 1px #999999;
     background-color: #ffffff;
     cursor: default;
   }

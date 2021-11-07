@@ -65,12 +65,12 @@
 
 
 .document_card {
-  max-width: 450px;
+  max-width: 400px;
   display: inline-block;
   margin: 10px;
   margin-left: 20px;
   margin-right: 20px;
-  min-width: 370px;
+  min-width: 320px;
   min-height: 170px;
   text-align: left;
 }

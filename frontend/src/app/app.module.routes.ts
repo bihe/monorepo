@@ -13,17 +13,20 @@ import { MyDmsHomeComponent } from './components/mydms/home/home.component';
 // e.g. /bookmarks => path: /
 // e.g. /bookmarks/Folder1/Folders2 => path: /Folder1/Folder2
 // e.g. /bookmarks/a/b/c/d/e/f/g => path: /a/b/c/d/e/f/g
+//
+// fallback: also take care of the /ui/bookmarks/... URLs
+//   /ui was used for the last version, so this logic helps to work with saved bookmarks
 export function matchStartAndSubPath ( url: UrlSegment[] ): UrlMatchResult {
 
   if (url.length === 0) {
     return null;
   }
 
-  if (url[0].path === AppModules.Bookmarks) {
+  if (url[0].path === AppModules.Bookmarks || url[0].path === 'ui') {
     let path = '/';
     if (url.length > 1) {
       url.forEach((e, i) => {
-        if (e.path !== AppModules.Bookmarks) {
+        if (e.path !== AppModules.Bookmarks && e.path !== 'ui') {
           if (!path.endsWith('/')) {
             path += '/';
           }

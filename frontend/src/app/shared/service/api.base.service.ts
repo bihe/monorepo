@@ -9,9 +9,13 @@ export class BaseDataService {
 
   protected handleError (error: HttpErrorResponse | any) {
     let errorRaised = new ErrorModel();
+
     if (error instanceof HttpErrorResponse) {
       try {
         errorRaised.message = `'${error.statusText}' for url ${error.url}`;
+        if (error.error /* ProblemDetails */) {
+          errorRaised.message = error.error.detail;
+        }
         errorRaised.status = error.status;
         errorRaised.statusText = error.statusText;
       } catch (exception) {

@@ -216,9 +216,9 @@ export class MyDmsDocumentComponent implements OnInit, OnDestroy {
             new MessageUtils().showSuccess(this.snackBar, data.message);
           },
           error => {
-            console.log('could not upload file');
-            console.log(error);
-            new MessageUtils().showError(this.snackBar, error.detail);
+            console.log('could not upload file because of error');
+            console.log(`${error.status} - ${error.message}`);
+            new MessageUtils().showError(this.snackBar, error.message);
           }
         );
     }

@@ -95,7 +95,7 @@ go-build:
 
 go-test:
 	@echo "  >  Testing the monorepo ..."
-	go test -race -count=1 ./...
+	go test -v -race -count=1 ./...
 
 go-coverage:
 	@echo "  >  Testing the monorepo (coverage) ..."

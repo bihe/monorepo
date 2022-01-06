@@ -75,7 +75,7 @@ func run(version, build string) error {
 	}
 
 	var (
-		repo                     = store.Create(con, logger)
+		repo                     = store.NewDBStore(con, logger)
 		oidcConfig, oidcVerifier = oidc.NewConfigAndVerifier(appCfg.OIDC)
 		oidcSvc                  = oidc.New(oidcConfig, oidcVerifier, appCfg.Security, repo)
 		siteSvc                  = sites.New(appCfg.Security.Claim.Roles[0], repo)

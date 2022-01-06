@@ -36,7 +36,7 @@ func repo(t *testing.T) (store.Repository, *gorm.DB) {
 	}
 	// Migrate the schema
 	DB.AutoMigrate(&store.UserSiteEntity{}, &store.LoginsEntity{})
-	return store.Create(DB, logger), DB
+	return store.NewDBStore(DB, logger), DB
 }
 
 func mockRepo(t *testing.T, useTx bool) (store.Repository, *gorm.DB, sqlmock.Sqlmock) {
@@ -56,7 +56,7 @@ func mockRepo(t *testing.T, useTx bool) (store.Repository, *gorm.DB, sqlmock.Sql
 	}); err != nil {
 		t.Fatalf("cannot create database connection: %v", err)
 	}
-	return store.Create(DB, logger), DB, mock
+	return store.NewDBStore(DB, logger), DB, mock
 }
 
 func closeRepo(db *gorm.DB, t *testing.T) {
@@ -79,25 +79,14 @@ func Test_Create_Login(t *testing.T) {
 	repo, DB := repo(t)
 	defer closeRepo(DB, t)
 
-	err := repo.InUnitOfWork(func(r store.Repository) error {
-		login := store.LoginsEntity{
-			User: "test",
-			Type: store.DIRECT,
-		}
-		err := r.StoreLogin(login)
-		if err != nil {
-			return err
-		}
-
-		if login.String() == "" {
-			return Err
-		}
-		return nil
-	})
-	if err != nil {
-		t.Errorf("could not create login in transaction; %v", err)
+	login := store.LoginsEntity{
+		User: "test",
+		Type: store.DIRECT,
 	}
-
+	err := repo.StoreLogin(login)
+	if err != nil {
+		t.Errorf("could not store login for user; %v", err)
+	}
 	c, err := repo.GetLoginsForUser("test")
 	if err != nil {
 		t.Errorf("could not get logins for user; %v", err)
@@ -247,19 +236,5 @@ func Test_Errors_Using_Mock(t *testing.T) {
 	// we make sure that all expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf(expectations, err)
-	}
-}
-
-func Test_UnitOfWork_Recurstion(t *testing.T) {
-	repo, DB := repo(t)
-	defer closeRepo(DB, t)
-
-	err := repo.InUnitOfWork(func(r store.Repository) error {
-		return r.InUnitOfWork(func(r store.Repository) error {
-			return nil
-		})
-	})
-	if err == nil {
-		t.Errorf(errExpected)
 	}
 }

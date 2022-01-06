@@ -348,30 +348,25 @@ func (o *oidcService) performOIDCLogin(state, oidcState, oidcCode, site, redirec
 		return
 	}
 
-	err = o.repo.InUnitOfWork(func(repo store.Repository) error {
-		var t store.Logintype
-		t = store.DIRECT
-		if siteLogin {
-			t = store.FLOW
-		}
-		return repo.StoreLogin(store.LoginsEntity{
-			User:      oidcClaims.Email,
-			CreatedAt: time.Now().UTC(),
-			Type:      t,
-		})
+	var t store.Logintype
+	t = store.DIRECT
+	if siteLogin {
+		t = store.FLOW
+	}
+	err = o.repo.StoreLogin(store.LoginsEntity{
+		User:      oidcClaims.Email,
+		CreatedAt: time.Now().UTC(),
+		Type:      t,
 	})
 	if err != nil {
 		err = fmt.Errorf("could not store the login: %v", err)
 		return
 	}
-
 	url = o.jwtConfig.LoginRedirect
 	if siteLogin {
 		url = redirectURL
 	}
-
 	return
-
 }
 
 func randToken() string {

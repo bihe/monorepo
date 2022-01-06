@@ -1,7 +1,6 @@
 package store_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -26,17 +25,6 @@ var sites = map[string][]store.UserSiteEntity{
 func Test_New_Repo(t *testing.T) {
 	repo := store.NewMock(sites)
 	assert.NotNil(t, repo)
-}
-
-func Test_InUnitOfWork(t *testing.T) {
-	repo := store.NewMock(sites)
-	err := repo.InUnitOfWork(func(r store.Repository) error {
-		if r == nil {
-			return fmt.Errorf("no repo supplied")
-		}
-		return nil
-	})
-	assert.NoError(t, err)
 }
 
 func Test_Get_Sites_For_User(t *testing.T) {

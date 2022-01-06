@@ -8,20 +8,19 @@ import { sharedConfig } from './app.module.shared';
 
 
 @NgModule({
-  bootstrap: sharedConfig.bootstrap,
-  declarations: sharedConfig.declarations,
-  imports: [
-      BrowserModule,
-      BrowserAnimationsModule,
-      FormsModule,
-      HttpClientModule,
-      AppRoutingModule,
-      ReactiveFormsModule,
-      ...sharedConfig.imports
-  ],
-  providers: [
-      ...sharedConfig.providers
-  ],
-  entryComponents: sharedConfig.entryComponents
+    bootstrap: sharedConfig.bootstrap,
+    declarations: sharedConfig.declarations,
+    imports: [
+        BrowserModule,
+        BrowserAnimationsModule,
+        FormsModule,
+        HttpClientModule,
+        AppRoutingModule,
+        ReactiveFormsModule,
+        ...sharedConfig.imports
+    ],
+    providers: [
+        ...sharedConfig.providers
+    ]
 })
 export class AppModule { }

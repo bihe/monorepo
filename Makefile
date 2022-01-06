@@ -45,15 +45,15 @@ coverage: ## print coverage results for the monorepo
 
 dev-frontend: ## start the development angular-frontend
 	@echo "  >  Starting angular frontend ..."
-	cd ./frontend;	yarn install && npm start -- --public-host https://dev.binggl.net
+	cd ./frontend;	yarn install && yarn start -- --public-host https://dev.binggl.net
 
 compose-dev: ## start the microservices for development of frontend
 	@echo "  >  Starting docker containers for development..."
-	docker compose -f compose-dev-frontend.yaml build && docker compose -f compose-dev-frontend.yaml up
+	docker-compose -f compose-dev-frontend.yaml build && docker-compose -f compose-dev-frontend.yaml up
 
 compose-int: ## start the whole application for integration testing
 	@echo "  >  Starting docker containers for integration ..."
-	docker compose -f compose-integration.yaml down --remove-orphans && docker compose -f compose-integration.yaml build && docker compose -f compose-integration.yaml up
+	docker-compose -f compose-integration.yaml down --remove-orphans && docker-compose -f compose-integration.yaml build && docker-compose -f compose-integration.yaml up
 
 
 # internal tasks

@@ -63,7 +63,7 @@ dev.binggl.net {
     }
 
     handle /* {
-        reverse_proxy http://host.docker.internal:4200 {
+        reverse_proxy http://frontend-dev:4200 {
             import proxy-transport
         }
     }

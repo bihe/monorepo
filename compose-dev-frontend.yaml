@@ -147,10 +147,23 @@ services:
             BM_SECURITY.JWTSECRET: $JWTSECRET
             BM_LOGGING.FILEPATH: /opt/bookmarks/logs/bookmarks-api.log
             BM_LOGGING.GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
-            BM_DATABASE.CONNECTIONSTRING: "bookmarks:bookmarks@tcp(192.168.1.2:3307)/bookmarks?parseTime=true&sql_mode='PIPES_AS_CONCAT'"
 
-    # to access host-ip
-    # https://nickjanetakis.com/blog/docker-tip-65-get-your-docker-hosts-ip-address-from-in-a-container
+    ## the frontend-dev is a simple docker-image which just executes the angular stuff
+    ## the local development folder is mounted into the image, giving it access to the necessary files
+    frontend-dev:
+        build:
+            context: .
+            dockerfile: ./frontend.dev.Dockerfile
+        image: frontenddev
+        volumes:
+            - ./frontend:/opt/onefrontend
+        restart:
+            always
+        networks:
+            - app-network
+
+    ## caddy reverse-proxies the development frontend container-imager
+    ## therefor just the one-and-only exposed port (apart from the DB) is the https/443 port of caddy
     caddy-frontend-443:
         image: caddy:2-alpine
         networks:
@@ -162,7 +175,8 @@ services:
             - ./caddy/certs:/opt/caddy/certs
         restart:
             on-failure
-        #environment:
+        extra_hosts:
+            - host.docker.internal:host-gateway
 
 networks:
     app-network: {}

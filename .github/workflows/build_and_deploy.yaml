@@ -6,6 +6,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  REPOSITORY: bihe/monorepo
   GIT_COMMIT_SHA: ${{ github.sha }}
   BUILD_ID: ${{ github.run_id }}
   FRONTEND_MODE: build
@@ -57,8 +58,8 @@ jobs:
             buildtime_variable_commit=${{ env.GIT_HASH }}
           push: true
           tags: |
-            ${{ env.REGISTRY }}/bihe/monorepo/bookmarks:latest
-            ${{ env.REGISTRY }}/bihe/monorepo/bookmarks:${{ env.GIT_HASH }}
+            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/bookmarks:latest
+            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/bookmarks:${{ env.GIT_HASH }}
 
       # ---------------------------------------------------------------------
 
@@ -73,8 +74,8 @@ jobs:
             buildtime_variable_commit=${{ env.GIT_HASH }}
           push: true
           tags: |
-            ${{ env.REGISTRY }}/bihe/monorepo/core:latest
-            ${{ env.REGISTRY }}/bihe/monorepo/core:${{ env.GIT_HASH }}
+            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/core:latest
+            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/core:${{ env.GIT_HASH }}
 
       # ---------------------------------------------------------------------
 
@@ -89,8 +90,8 @@ jobs:
             buildtime_variable_commit=${{ env.GIT_HASH }}
           push: true
           tags: |
-            ${{ env.REGISTRY }}/bihe/monorepo/mydms:latest
-            ${{ env.REGISTRY }}/bihe/monorepo/mydms:${{ env.GIT_HASH }}
+            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/mydms:latest
+            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/mydms:${{ env.GIT_HASH }}
 
       # ---------------------------------------------------------------------
 
@@ -105,8 +106,8 @@ jobs:
             buildtime_variable_commit=${{ env.GIT_HASH }}
           push: true
           tags: |
-            ${{ env.REGISTRY }}/bihe/monorepo/crypter:latest
-            ${{ env.REGISTRY }}/bihe/monorepo/crypter:${{ env.GIT_HASH }}
+            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/crypter:latest
+            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/crypter:${{ env.GIT_HASH }}
 
       # ---------------------------------------------------------------------
 
@@ -122,6 +123,6 @@ jobs:
             FRONTEND_MODE=${{ env.FRONTEND_MODE }}
           push: true
           tags: |
-            ${{ env.REGISTRY }}/bihe/monorepo/frontend:latest
-            ${{ env.REGISTRY }}/bihe/monorepo/frontend:${{ env.GIT_HASH }}
+            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/frontend:latest
+            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/frontend:${{ env.GIT_HASH }}
 

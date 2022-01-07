@@ -8,8 +8,7 @@ ARG buildtime_variable_commit=local
 ARG buildtime_variable_runtime=golang
 
 ENV VERSION=${buildtime_variable_version}
-ENV BUILD=${buildtime_variable_timestamp}
-ENV RUNTIME=${buildtime_variable_runtime}
+ENV TSTAMP=${buildtime_variable_timestamp}
 ENV COMMIT=${buildtime_variable_commit}
 
 WORKDIR /backend-build
@@ -20,7 +19,7 @@ COPY ./internal/core  ./internal/core
 COPY ./internal/crypter  ./internal/crypter
 COPY ./pkg ./pkg
 COPY ./proto ./proto
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -o core.api ./cmd/core/server/*.go
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${TSTAMP}-${VERSION} -X main.Build=${COMMIT}" -o core.api ./cmd/core/server/*.go
 ## --------------------------------------------------------------------------
 
 ## runtime

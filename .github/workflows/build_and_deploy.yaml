@@ -51,7 +51,5 @@ jobs:
             buildtime_variable_commit=${{ env.GIT_HASH }}
           push: true
           tags: |
-            bihe/monorepo/bookmarks-go:latest
-            ghcr.io/bihe/monorepo/bookmarks-go:latest
-            bihe/monorepo/bookmarks-go:${{ env.GIT_HASH }}
-            ghcr.io/bihe/monorepo/bookmarks-go:${{ env.GIT_HASH }}
+            latest
+            ${{ env.GIT_HASH }}

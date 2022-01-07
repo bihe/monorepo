@@ -7,7 +7,7 @@ ARG buildtime_variable_timestamp=YYYYMMDD
 ARG buildtime_variable_commit=githash
 
 ENV VERSION=${buildtime_variable_version}
-ENV BUILD=${buildtime_variable_timestamp}
+ENV TSTAMP=${buildtime_variable_timestamp}
 ENV COMMIT=${buildtime_variable_commit}
 
 WORKDIR /backend-build
@@ -17,7 +17,7 @@ COPY ./go.sum ./
 COPY ./internal/crypter  ./internal/crypter
 COPY ./pkg ./pkg
 COPY ./proto ./proto
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -o crypter.api ./cmd/crypter/server/*.go
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.Version=${TSTAMP}-${VERSION} -X main.Build=${COMMIT}" -o crypter.api ./cmd/crypter/server/*.go
 ## --------------------------------------------------------------------------
 
 ## runtime

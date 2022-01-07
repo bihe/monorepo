@@ -7,7 +7,7 @@ ARG buildtime_variable_timestamp=YYYYMMDD
 ARG buildtime_variable_commit=local
 
 ENV VERSION=${buildtime_variable_version}
-ENV BUILD=${buildtime_variable_timestamp}
+ENV TSTAMP=${buildtime_variable_timestamp}
 ENV COMMIT=${buildtime_variable_commit}
 
 WORKDIR /backend-build
@@ -18,7 +18,7 @@ COPY ./internal/mydms ./internal/mydms
 COPY ./pkg ./pkg
 COPY ./tools ./tools
 RUN go generate ./...
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -o mydms.api ./cmd/mydms/server/*.go
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${TSTAMP}-${VERSION} -X main.Build=${COMMIT}" -o mydms.api ./cmd/mydms/server/*.go
 ## --------------------------------------------------------------------------
 
 ## runtime

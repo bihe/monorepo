@@ -8,6 +8,7 @@ env:
   REGISTRY: ghcr.io
   GIT_COMMIT_SHA: ${{ github.sha }}
   BUILD_ID: ${{ github.run_id }}
+  FRONTEND_MODE: build
 
 jobs:
   build-and-push-image:
@@ -32,8 +33,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-        with:
-          buildkitd-flags: --debug
 
       - name: Provide the abbrev git-commit-hash
         id: githash
@@ -76,3 +75,53 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/bihe/monorepo/core:latest
             ${{ env.REGISTRY }}/bihe/monorepo/core:${{ env.GIT_HASH }}
+
+      # ---------------------------------------------------------------------
+
+      - name: "Build :: mydms"
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: mydms.Dockerfile
+          build-args: |
+            buildtime_variable_version=${{ env.BUILD_ID }}
+            buildtime_variable_timestamp=${{steps.date.outputs.date}}
+            buildtime_variable_commit=${{ env.GIT_HASH }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/bihe/monorepo/mydms:latest
+            ${{ env.REGISTRY }}/bihe/monorepo/mydms:${{ env.GIT_HASH }}
+
+      # ---------------------------------------------------------------------
+
+      - name: "Build :: crypter"
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: crypter.Dockerfile
+          build-args: |
+            buildtime_variable_version=${{ env.BUILD_ID }}
+            buildtime_variable_timestamp=${{steps.date.outputs.date}}
+            buildtime_variable_commit=${{ env.GIT_HASH }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/bihe/monorepo/crypter:latest
+            ${{ env.REGISTRY }}/bihe/monorepo/crypter:${{ env.GIT_HASH }}
+
+      # ---------------------------------------------------------------------
+
+      - name: "Build :: frontend"
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: caddy.Dockerfile
+          build-args: |
+            buildtime_variable_version=${{ env.BUILD_ID }}
+            buildtime_variable_timestamp=${{steps.date.outputs.date}}
+            buildtime_variable_commit=${{ env.GIT_HASH }}
+            FRONTEND_MODE=${{ env.FRONTEND_MODE }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/bihe/monorepo/frontend:latest
+            ${{ env.REGISTRY }}/bihe/monorepo/frontend:${{ env.GIT_HASH }}
+

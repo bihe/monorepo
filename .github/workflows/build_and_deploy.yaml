@@ -40,6 +40,12 @@ jobs:
         id: date
         run: echo "::set-output name=date::$(date +'%Y%m%d')"
 
+      - name: "Metadata :: bookmarks"
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          mages: ${{ env.REGISTRY }}/bihe/monorepo/onefrontend-go
+
       - name: "Build :: bookmarks"
         uses: docker/build-push-action@v2
         with:

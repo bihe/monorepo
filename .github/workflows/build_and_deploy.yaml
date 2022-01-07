@@ -44,7 +44,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          mages: ${{ env.REGISTRY }}/bihe/monorepo/onefrontend-go
+          images: ${{ env.REGISTRY }}/bihe/monorepo/onefrontend-go
 
       - name: "Build :: bookmarks"
         uses: docker/build-push-action@v2

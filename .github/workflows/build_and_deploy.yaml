@@ -47,15 +47,6 @@ jobs:
 
       # ---------------------------------------------------------------------
 
-      - name: "Metadata :: bookmarks"
-        id: meta
-        uses: docker/metadata-action@v3
-        with:
-          images: ${{ env.REGISTRY }}/bihe/monorepo/bookmarks
-          tags: |
-            latest
-            ${{ env.GIT_HASH }}
-
       - name: "Build :: bookmarks"
         uses: docker/build-push-action@v2
         with:
@@ -66,18 +57,11 @@ jobs:
             buildtime_variable_timestamp=${{steps.date.outputs.date}}
             buildtime_variable_commit=${{ env.GIT_HASH }}
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ${{ env.REGISTRY }}/bihe/monorepo/bookmarks:latest
+            ${{ env.REGISTRY }}/bihe/monorepo/bookmarks:${{ env.GIT_HASH }}
 
       # ---------------------------------------------------------------------
-
-      - name: "Metadata :: core"
-        id: meta
-        uses: docker/metadata-action@v3
-        with:
-          images: ${{ env.REGISTRY }}/bihe/monorepo/core
-          tags: |
-            latest
-            ${{ env.GIT_HASH }}
 
       - name: "Build :: core"
         uses: docker/build-push-action@v2
@@ -89,4 +73,6 @@ jobs:
             buildtime_variable_timestamp=${{steps.date.outputs.date}}
             buildtime_variable_commit=${{ env.GIT_HASH }}
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ${{ env.REGISTRY }}/bihe/monorepo/core:latest
+            ${{ env.REGISTRY }}/bihe/monorepo/core:${{ env.GIT_HASH }}

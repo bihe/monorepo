@@ -7,7 +7,7 @@ ARG buildtime_variable_timestamp=YYYYMMDD
 ARG buildtime_variable_commit=local
 
 ENV VERSION=${buildtime_variable_version}
-ENV BUILD=${buildtime_variable_timestamp}
+ENV TSTAMP=${buildtime_variable_timestamp}
 ENV COMMIT=${buildtime_variable_commit}
 
 WORKDIR /backend-build
@@ -16,7 +16,7 @@ COPY ./go.mod ./
 COPY ./go.sum ./
 COPY ./internal/bookmarks  ./internal/bookmarks
 COPY ./pkg ./pkg
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.Version=${VERSION}-${COMMIT} -X main.Build=${BUILD}" -o bookmarks.api ./cmd/bookmarks/server/*.go
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.Version=${TSTAMP}-${VERSION} -X main.Build=${COMMIT}" -o bookmarks.api ./cmd/bookmarks/server/*.go
 ## --------------------------------------------------------------------------
 
 ## runtime

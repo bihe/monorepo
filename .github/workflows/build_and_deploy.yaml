@@ -1,4 +1,4 @@
-name: Create and publish a Docker images
+name: "Container: Build and publish"
 
 on:
   push:
@@ -46,10 +46,10 @@ jobs:
           context: .
           file: bookmarks.Dockerfile
           build-args: |
-            buildtime_variable_version=1.0.${{ env.BUILD_ID }}
+            buildtime_variable_version=${{ env.BUILD_ID }}
             buildtime_variable_timestamp=${{steps.date.outputs.date}}
             buildtime_variable_commit=${{ env.GIT_HASH }}
-          push: false
+          push: true
           tags: |
             bihe/monorepo/bookmarks-go:latest
             ghcr.io/bihe/monorepo/bookmarks-go:latest

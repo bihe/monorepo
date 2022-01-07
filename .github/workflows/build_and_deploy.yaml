@@ -27,8 +27,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
+        with:
+          buildkitd-flags: --debug
 
       - name: Provide the abbrev git-commit-hash
         id: githash
@@ -44,7 +49,10 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ${{ env.REGISTRY }}/bihe/monorepo/onefrontend-go
+          images: ${{ env.REGISTRY }}/bihe/monorepo/bookmarks
+          tags: |
+            latest
+            ${{ env.GIT_HASH }}
 
       - name: "Build :: bookmarks"
         uses: docker/build-push-action@v2
@@ -56,6 +64,5 @@ jobs:
             buildtime_variable_timestamp=${{steps.date.outputs.date}}
             buildtime_variable_commit=${{ env.GIT_HASH }}
           push: true
-          tags: |
-            latest
-            ${{ env.GIT_HASH }}
+          tags: ${{ steps.meta.outputs.tags }}
+

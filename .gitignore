@@ -26,3 +26,4 @@ __devserver
 _logs/
 upload/
 caddy/Caddyfile.prod
+proddb/

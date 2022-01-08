@@ -13,7 +13,7 @@
           <div class="">
             <span *ngFor="let p of pathElemets; let i = index">
               <span *ngIf="p === '/'">
-                mydms:/ <a class="rootroot" (click)="gotoPath('/')">root</a>
+                bookmarks:/ <a class="rootroot" (click)="gotoPath('/')">root</a>
               </span>
               <span *ngIf="p !== '/' && i &lt; pathElemets.length - 1">
                 / <a class="root" (click)="gotoPath(absolutePaths[i])">{{ p }}</a>

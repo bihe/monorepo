@@ -54,7 +54,7 @@ services:
         ports:
             - "3306:3306"
         volumes:
-            - ./db:/docker-entrypoint-initdb.d
+            - ./testdata/db:/docker-entrypoint-initdb.d
         restart:
             on-failure
         healthcheck:
@@ -80,6 +80,7 @@ services:
             - ./internal/core:/opt/core/etc
             - ./_logs:/opt/core/logs
             - ./upload:/opt/core/uploads
+            - ./testdata/sqlite/:/opt/core/db
         restart:
             always
         environment:
@@ -94,6 +95,7 @@ services:
             CO_OIDC.CLIENTSECRET: $OIDC_CLIENTSECRET
             CO_UPLOAD.UPLOADPATH: /opt/core/uploads
             CO_UPLOAD.ENCGRPCCONN: crypter:3000
+            CO_DATABASE.CONNECTIONSTRING: /opt/core/db/integration_login.db
 
     mydms-3002:
         build:

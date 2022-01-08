@@ -12,14 +12,17 @@ ENV TSTAMP=${buildtime_variable_timestamp}
 ENV COMMIT=${buildtime_variable_commit}
 
 WORKDIR /backend-build
-COPY ./cmd/core/ ./cmd/core/
 COPY ./go.mod ./
 COPY ./go.sum ./
 COPY ./internal/core  ./internal/core
 COPY ./internal/crypter  ./internal/crypter
 COPY ./pkg ./pkg
 COPY ./proto ./proto
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${TSTAMP}-${VERSION} -X main.Build=${COMMIT}" -o core.api ./cmd/core/server/*.go
+
+# necessary to build sqlite3
+RUN apk add build-base
+
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${TSTAMP}-${VERSION} -X main.Build=${COMMIT}" -o core.api ./internal/core/server.go
 ## --------------------------------------------------------------------------
 
 ## runtime
@@ -27,7 +30,7 @@ RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${TSTAMP}-$
 FROM alpine:latest
 LABEL author="henrik@binggl.net"
 WORKDIR /opt/core
-RUN mkdir -p /opt/core/etc && mkdir -p /opt/core/logs && mkdir -p /opt/core/uploads
+RUN mkdir -p /opt/core/etc && mkdir -p /opt/core/logs && mkdir -p /opt/core/uploads && mkdir -p /opt/core/db
 COPY --from=BACKEND-BUILD /backend-build/core.api /opt/core
 EXPOSE 3000
 

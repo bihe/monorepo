@@ -36,12 +36,6 @@ func (r *dbRepository) GetUsersForSite(site string) ([]string, error) {
 	return users, h.Error
 }
 
-func (r *dbRepository) GetLoginsForUser(user string) (int64, error) {
-	var c int64
-	h := r.con().Model(&LoginsEntity{}).Where("lower(user) = @user", sql.Named("user", strings.ToLower(user))).Count(&c)
-	return c, h.Error
-}
-
 func (r *dbRepository) StoreSiteForUser(sites []UserSiteEntity) (err error) {
 	// brutal approach, delete all sites of the given user, and insert the new ones!
 	h := r.con().Where(&UserSiteEntity{
@@ -56,18 +50,6 @@ func (r *dbRepository) StoreSiteForUser(sites []UserSiteEntity) (err error) {
 		return h.Error
 	}
 	if h.RowsAffected != int64(len(sites)) {
-		err = fmt.Errorf("invalid number of rows affected, got %d", h.RowsAffected)
-		return
-	}
-	return nil
-}
-
-func (r *dbRepository) StoreLogin(login LoginsEntity) (err error) {
-	h := r.con().Create(&login)
-	if h.Error != nil {
-		return h.Error
-	}
-	if h.RowsAffected != 1 {
 		err = fmt.Errorf("invalid number of rows affected, got %d", h.RowsAffected)
 		return
 	}

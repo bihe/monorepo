@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
+
 	"golang.binggl.net/monorepo/pkg/logging"
 )
 
@@ -60,7 +61,12 @@ type dbRepository struct {
 func (r *dbRepository) CheckStoreConnectivity(timeOut uint) (err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeOut)*time.Second)
 	defer cancel()
-	err = r.con().DB().PingContext(ctx)
+	db, err := r.con().DB()
+	if err != nil {
+		err = fmt.Errorf("could not access db; %v", err)
+		return
+	}
+	err = db.PingContext((ctx))
 	return
 }
 
@@ -404,7 +410,7 @@ func (r *dbRepository) con() *gorm.DB {
 }
 
 func (r *dbRepository) updateChildCount(folder *Bookmark, count int) error {
-	if h := r.con().Model(folder).Update(
+	if h := r.con().Model(folder).Updates(
 		map[string]interface{}{"child_count": count, "modified": time.Now().UTC()}); h.Error != nil {
 		return fmt.Errorf("cannot update item '%+v': %v", *folder, h.Error)
 	}

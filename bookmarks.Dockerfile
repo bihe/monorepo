@@ -3,8 +3,8 @@
 FROM golang:alpine AS BACKEND-BUILD
 
 ARG buildtime_variable_version=1.0.0
-ARG buildtime_variable_timestamp=YYYYMMDD
-ARG buildtime_variable_commit=local
+ARG buildtime_variable_timestamp=20220101
+ARG buildtime_variable_commit=dev
 
 ENV VERSION=${buildtime_variable_version}
 ENV TSTAMP=${buildtime_variable_timestamp}
@@ -16,7 +16,11 @@ COPY ./go.mod ./
 COPY ./go.sum ./
 COPY ./internal/bookmarks  ./internal/bookmarks
 COPY ./pkg ./pkg
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.Version=${TSTAMP}-${VERSION} -X main.Build=${COMMIT}" -o bookmarks.api ./cmd/bookmarks/server/*.go
+
+# necessary to build sqlite3
+RUN apk add build-base
+
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o bookmarks.api ./cmd/bookmarks/server/*.go
 ## --------------------------------------------------------------------------
 
 ## runtime
@@ -24,7 +28,7 @@ RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.Version=${TSTAMP}-$
 FROM alpine:latest
 LABEL author="henrik@binggl.net"
 WORKDIR /opt/bookmarks
-RUN mkdir -p /opt/bookmarks/etc && mkdir -p /opt/bookmarks/logs && mkdir -p /opt/bookmarks/templates && mkdir -p /opt/bookmarks/uploads
+RUN mkdir -p /opt/bookmarks/etc && mkdir -p /opt/bookmarks/logs && mkdir -p /opt/bookmarks/templates && mkdir -p /opt/bookmarks/uploads && mkdir -p /opt/bookmarks/db
 ## required folders assets && templates
 COPY --from=BACKEND-BUILD /backend-build/internal/bookmarks/assets /opt/bookmarks/assets
 COPY --from=BACKEND-BUILD /backend-build/internal/bookmarks/templates /opt/bookmarks/templates

@@ -13,8 +13,8 @@ import (
 	"golang.binggl.net/monorepo/pkg/persistence"
 	"golang.binggl.net/monorepo/pkg/server"
 
-	// include the mysql driver for runtime
-	_ "github.com/go-sql-driver/mysql"
+	// include the sqlite driver for runtime
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var (
@@ -52,7 +52,7 @@ func run(version, build string) error {
 	defer logger.Close()
 
 	// persistence store && application version
-	con := persistence.NewConnForDb("mysql", appCfg.Database.ConnectionString)
+	con := persistence.NewConnForDb("sqlite3", appCfg.Database.ConnectionString)
 	repo, err := document.NewRepository(con)
 	if err != nil {
 		panic(fmt.Sprintf("cannot establish database connection: %v", err))

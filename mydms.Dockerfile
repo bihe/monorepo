@@ -3,8 +3,8 @@
 FROM golang:alpine AS BACKEND-BUILD
 
 ARG buildtime_variable_version=3.0.0
-ARG buildtime_variable_timestamp=YYYYMMDD
-ARG buildtime_variable_commit=local
+ARG buildtime_variable_timestamp=20220101
+ARG buildtime_variable_commit=dev
 
 ENV VERSION=${buildtime_variable_version}
 ENV TSTAMP=${buildtime_variable_timestamp}
@@ -18,7 +18,11 @@ COPY ./internal/mydms ./internal/mydms
 COPY ./pkg ./pkg
 COPY ./tools ./tools
 RUN go generate ./...
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${TSTAMP}-${VERSION} -X main.Build=${COMMIT}" -o mydms.api ./cmd/mydms/server/*.go
+
+# necessary to build sqlite3
+RUN apk add build-base
+
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o mydms.api ./cmd/mydms/server/*.go
 ## --------------------------------------------------------------------------
 
 ## runtime
@@ -26,7 +30,7 @@ RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${TSTAMP}-$
 FROM alpine:latest
 LABEL author="henrik@binggl.net"
 WORKDIR /opt/mydms
-RUN mkdir -p /opt/mydms/uploads && mkdir -p /opt/mydms/etc && mkdir -p /opt/mydms/logs
+RUN mkdir -p /opt/mydms/uploads && mkdir -p /opt/mydms/etc && mkdir -p /opt/mydms/logs && mkdir -p /opt/mydms/db
 COPY --from=BACKEND-BUILD /backend-build/mydms.api /opt/mydms
 COPY --from=BACKEND-BUILD /backend-build/internal/mydms/assets /opt/mydms/assets
 

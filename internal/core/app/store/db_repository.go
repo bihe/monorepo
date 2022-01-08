@@ -5,23 +5,20 @@ import (
 	"fmt"
 	"strings"
 
-	"golang.binggl.net/monorepo/pkg/logging"
 	"gorm.io/gorm"
 )
 
 var _ Repository = &dbRepository{} // compile time interface check
 
 // NewDBStore creates a new DB repository intance
-func NewDBStore(db *gorm.DB, logger logging.Logger) *dbRepository {
+func NewDBStore(db *gorm.DB) *dbRepository {
 	return &dbRepository{
-		db:     db,
-		logger: logger,
+		db: db,
 	}
 }
 
 type dbRepository struct {
-	db     *gorm.DB
-	logger logging.Logger
+	db *gorm.DB
 }
 
 func (r *dbRepository) GetSitesForUser(user string) ([]UserSiteEntity, error) {

@@ -13,8 +13,7 @@ security:
     cacheDuration: 10m
 
 database:
-    connectionString: "root:mariadb@tcp(db:3306)/bookmarks?parseTime=true&sql_mode='PIPES_AS_CONCAT'"
-    dialect: mysql
+    connectionString: "DATABASE"
 
 logging:
     filePath: "./logs/bookmarks-api.log"

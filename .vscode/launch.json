@@ -29,12 +29,12 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/cmd/core/server/",
+            "program": "${workspaceFolder}/internal/core/server.go",
             "args": [
                 "--port",
                 "3001",
                 "--basepath",
-                "../../../internal/core"
+                "./"
             ],
             "envFile": "${workspaceFolder}/.env.monorepo",
             "internalConsoleOptions": "openOnSessionStart",
@@ -83,6 +83,18 @@
             "program": "${workspaceFolder}/cmd/login/tokentest/",
             "args": [],
             "envFile": "${workspaceFolder}/.env.monorepo",
+            "internalConsoleOptions": "openOnSessionStart",
+            "showLog": true,
+            "output": "debug"
+        },
+        {
+            "name": "Run :: migrate mysql=>sqlite",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/mydms/sqlite/",
+            "args": [],
+            "envFile": "${workspaceFolder}/.env.migrate",
             "internalConsoleOptions": "openOnSessionStart",
             "showLog": true,
             "output": "debug"

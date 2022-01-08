@@ -35,7 +35,7 @@ func repo(t *testing.T) (store.Repository, *gorm.DB) {
 	}
 	// Migrate the schema
 	DB.AutoMigrate(&store.UserSiteEntity{})
-	return store.NewDBStore(DB, logger), DB
+	return store.NewDBStore(DB), DB
 }
 
 func mockRepo(t *testing.T, useTx bool) (store.Repository, *gorm.DB, sqlmock.Sqlmock) {
@@ -55,7 +55,7 @@ func mockRepo(t *testing.T, useTx bool) (store.Repository, *gorm.DB, sqlmock.Sql
 	}); err != nil {
 		t.Fatalf("cannot create database connection: %v", err)
 	}
-	return store.NewDBStore(DB, logger), DB, mock
+	return store.NewDBStore(DB), DB, mock
 }
 
 func closeRepo(db *gorm.DB, t *testing.T) {

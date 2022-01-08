@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -14,14 +15,14 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/internal/bookmarks/store"
 	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 
-	_ "github.com/mattn/go-sqlite3" // use sqlite for testing
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 // --------------------------------------------------------------------------
@@ -457,20 +458,22 @@ func TestGetMostVisited(t *testing.T) {
 	assert.Equal(t, true, bl.Success)
 }
 
-func repository(t *testing.T) (store.Repository, *gorm.DB) {
+func repository(t *testing.T) (store.Repository, *sql.DB) {
 	var (
 		DB  *gorm.DB
 		err error
 	)
-	if DB, err = gorm.Open("sqlite3", ":memory:"); err != nil {
+	if DB, err = gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{}); err != nil {
 		t.Fatalf("cannot create database connection: %v", err)
 	}
 	// Migrate the schema
 	DB.AutoMigrate(&store.Bookmark{})
-
-	DB.LogMode(true)
+	db, err := DB.DB()
+	if err != nil {
+		t.Fatalf("cannot access database handle: %v", err)
+	}
 	logger := logging.NewNop()
-	return store.Create(DB, logger), DB
+	return store.Create(DB, logger), db
 }
 
 func (r *MockRepository) InUnitOfWork(fn func(repo store.Repository) error) error {

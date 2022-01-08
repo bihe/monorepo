@@ -23,6 +23,7 @@ __devserver
 .env
 .env.container
 .env.monorepo
+.env.migrate
 _logs/
 upload/
 caddy/Caddyfile.prod

@@ -7,8 +7,6 @@ services:
             context: .
             dockerfile: ./tokentest.Dockerfile
         image: tokentest
-        depends_on:
-            - db
         networks:
             - app-network
         # ports:
@@ -29,8 +27,6 @@ services:
             context: .
             dockerfile: ./crypter.Dockerfile
         image: crypter
-        depends_on:
-            - db
         networks:
             - app-network
         #ports:
@@ -47,31 +43,11 @@ services:
             CR_LOGGING.FILEPATH: /opt/crypter/logs/crypter-grpc-api.log
             CR_LOGGING.GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
 
-    db:
-        image: mariadb:10.4
-        networks:
-            - app-network
-        ports:
-            - "3306:3306"
-        volumes:
-            - ./testdata/db:/docker-entrypoint-initdb.d
-        restart:
-            on-failure
-        healthcheck:
-            test: "/usr/bin/mysql --host=127.0.0.1 --user=root --password=mariadb --execute \"SHOW DATABASES;\""
-            interval: 4s
-            timeout: 4s
-            retries: 6
-        environment:
-            MYSQL_ROOT_PASSWORD: "mariadb"
-
     core-3001:
         build:
             context: .
             dockerfile: ./core.Dockerfile
         image: core
-        depends_on:
-            - db
         networks:
             - app-network
         # ports:
@@ -95,15 +71,14 @@ services:
             CO_OIDC.CLIENTSECRET: $OIDC_CLIENTSECRET
             CO_UPLOAD.UPLOADPATH: /opt/core/uploads
             CO_UPLOAD.ENCGRPCCONN: crypter:3000
-            CO_DATABASE.CONNECTIONSTRING: /opt/core/db/integration_login.db
+            CO_UPLOAD.MAXUPLOADSIZE: 5000000
+            CO_DATABASE.CONNECTIONSTRING: /opt/core/db/integration_core.db
 
     mydms-3002:
         build:
             context: .
             dockerfile: ./mydms.Dockerfile
         image: mydms
-        depends_on:
-            - db
         networks:
             - app-network
         # ports:
@@ -111,6 +86,7 @@ services:
         volumes:
             - ./internal/mydms:/opt/mydms/etc
             - ./_logs:/opt/mydms/logs
+            - ./testdata/sqlite/:/opt/mydms/db
         restart:
             always
         environment:
@@ -125,14 +101,13 @@ services:
             MY_FILESTORE.KEY: $FILESTORE_KEY
             MY_FILESTORE.SECRET: $FILESTORE_SECRET
             MY_UPLOAD.ENDPOINTURL: http://core-3001:3000/api/v1
+            MY_DATABASE.CONNECTIONSTRING: /opt/mydms/db/integration_mydms.db
 
     bookmarks-3003:
         build:
             context: .
             dockerfile: ./bookmarks.Dockerfile
         image: bookmarks
-        depends_on:
-            - db
         networks:
             - app-network
         # ports:
@@ -140,6 +115,7 @@ services:
         volumes:
             - ./internal/bookmarks/etc:/opt/bookmarks/etc
             - ./_logs:/opt/bookmarks/logs
+            - ./testdata/sqlite/:/opt/bookmarks/db
         restart:
             always
         environment:
@@ -149,6 +125,7 @@ services:
             BM_SECURITY.JWTSECRET: $JWTSECRET
             BM_LOGGING.FILEPATH: /opt/bookmarks/logs/bookmarks-api.log
             BM_LOGGING.GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
+            BM_DATABASE.CONNECTIONSTRING: /opt/bookmarks/db/integration_bookmarks.db
 
     caddy-integration-frontend-443:
         build:

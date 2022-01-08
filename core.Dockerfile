@@ -3,8 +3,8 @@
 FROM golang:alpine AS BACKEND-BUILD
 
 ARG buildtime_variable_version=2.0.0
-ARG buildtime_variable_timestamp=YYYYMMDD
-ARG buildtime_variable_commit=local
+ARG buildtime_variable_timestamp=20220101
+ARG buildtime_variable_commit=dev
 ARG buildtime_variable_runtime=golang
 
 ENV VERSION=${buildtime_variable_version}
@@ -22,7 +22,7 @@ COPY ./proto ./proto
 # necessary to build sqlite3
 RUN apk add build-base
 
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${TSTAMP}-${VERSION} -X main.Build=${COMMIT}" -o core.api ./internal/core/server.go
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o core.api ./internal/core/server.go
 ## --------------------------------------------------------------------------
 
 ## runtime

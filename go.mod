@@ -3,7 +3,7 @@ module golang.binggl.net/monorepo
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0 // done
 	github.com/PuerkitoBio/goquery v1.8.0 // done
-	github.com/aws/aws-sdk-go v1.42.28 // done
+	github.com/aws/aws-sdk-go v1.42.30 // done
 	github.com/bihe/go-gelf v1.0.0 // done
 	github.com/coreos/go-oidc/v3 v3.1.0 // done
 	github.com/go-chi/chi/v5 v5.0.7 // done
@@ -11,9 +11,8 @@ require (
 	github.com/go-kit/kit v0.12.0 // done
 	github.com/go-sql-driver/mysql v1.6.0 // done
 	github.com/google/uuid v1.3.0 // done
-	github.com/jinzhu/gorm v1.9.16 // done
 	github.com/jmoiron/sqlx v1.3.4 // done
-	github.com/lestrrat-go/jwx v1.2.14 // done
+	github.com/lestrrat-go/jwx v1.2.15 // done
 	github.com/mattn/go-sqlite3 v1.14.10 // done
 	github.com/microcosm-cc/bluemonday v1.0.17 // done
 	github.com/pdfcpu/pdfcpu v0.3.13 // done
@@ -25,7 +24,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	google.golang.org/grpc v1.43.0 // done
 	google.golang.org/protobuf v1.27.1 // done
-	gorm.io/driver/mysql v1.2.2 // done
+	gorm.io/driver/mysql v1.2.3 // done
 	gorm.io/driver/sqlite v1.2.6 // done
 	gorm.io/gorm v1.22.4 // done
 )
@@ -65,11 +64,11 @@ require (
 	go.uber.org/multierr v1.7.0 // indirect
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
-	golang.org/x/net v0.0.0-20220105145211-5b0dc2dfae98 // indirect
+	golang.org/x/net v0.0.0-20220107192237-5cfca573fb4d // indirect
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20211223182754-3ac035c7e7cb // indirect
+	google.golang.org/genproto v0.0.0-20220107163113-42d7afdf6368 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

@@ -16,7 +16,7 @@ baseconfig:
         jwtIssuer: issuer
         jwtSecret: secret
         cookieName: login_token
-        loginRedirect: "http://localhost:3001/auth/flow?~site=mydms&~url=http%3A%2F%2Flocalhost%3A3002%3Fvalid%3Dtrue"
+        loginRedirect: "http://localhost:3001"
         claim:
             name: mydms
             url: http://localhost:8080
@@ -63,7 +63,7 @@ baseconfig:
         prefix: mydms
 
 database:
-    connectionString: "root:mariadb@tcp(db:3306)/mydms?parseTime=true"
+    connectionString: "DATABASE"
 
 upload:
    endpointURL: http://localhost:3000/

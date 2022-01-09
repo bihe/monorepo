@@ -75,31 +75,3 @@ func Test_Store_Sites_For_User(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, users, 0)
 }
-
-func Test_Store_Login(t *testing.T) {
-	repo := store.NewMock(sites)
-
-	err := repo.StoreLogin(store.LoginsEntity{
-		User:      userName,
-		Type:      store.DIRECT,
-		CreatedAt: time.Now(),
-	})
-	assert.NoError(t, err)
-
-	// second call - existing entry
-	err = repo.StoreLogin(store.LoginsEntity{
-		User:      userName,
-		Type:      store.DIRECT,
-		CreatedAt: time.Now(),
-	})
-	assert.NoError(t, err)
-
-	// std.call
-	count, err := repo.GetLoginsForUser(userName)
-	assert.NoError(t, err)
-	assert.Equal(t, int64(2), count)
-
-	// user without logins
-	count, err = repo.GetLoginsForUser(userName + "1")
-	assert.Error(t, err)
-}

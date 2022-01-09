@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/logging"
@@ -19,7 +18,9 @@ import (
 	"golang.binggl.net/monorepo/internal/bookmarks/server/api"
 	"golang.binggl.net/monorepo/internal/bookmarks/store"
 
-	_ "github.com/jinzhu/gorm/dialects/mysql" // use mysql
+	"gorm.io/gorm"
+
+	"gorm.io/driver/sqlite"
 )
 
 // Server struct defines the basic layout of a HTTP API server
@@ -76,7 +77,8 @@ func Create(basePath string, config config.AppConfig, version bookmarks.VersionI
 
 	// setup repository
 	// ------------------------------------------------------------------
-	con, err := gorm.Open(config.Database.Dialect, config.Database.ConnectionString)
+	// persistence store && application version
+	con, err := gorm.Open(sqlite.Open(config.Database.ConnectionString), &gorm.Config{})
 	if err != nil {
 		panic(fmt.Sprintf("cannot create database connection: %v", err))
 	}

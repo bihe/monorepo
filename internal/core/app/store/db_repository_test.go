@@ -31,12 +31,11 @@ func repo(t *testing.T) (store.Repository, *gorm.DB) {
 	)
 	//if DB, err = gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{}); err != nil {
 	if DB, err = gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{}); err != nil {
-		//if DB, err = gorm.Open(sqlite.Open("/tmp/test.db"), &gorm.Config{}); err != nil {
 		t.Fatalf("cannot create database connection: %v", err)
 	}
 	// Migrate the schema
-	DB.AutoMigrate(&store.UserSiteEntity{}, &store.LoginsEntity{})
-	return store.NewDBStore(DB, logger), DB
+	DB.AutoMigrate(&store.UserSiteEntity{})
+	return store.NewDBStore(DB), DB
 }
 
 func mockRepo(t *testing.T, useTx bool) (store.Repository, *gorm.DB, sqlmock.Sqlmock) {
@@ -56,7 +55,7 @@ func mockRepo(t *testing.T, useTx bool) (store.Repository, *gorm.DB, sqlmock.Sql
 	}); err != nil {
 		t.Fatalf("cannot create database connection: %v", err)
 	}
-	return store.NewDBStore(DB, logger), DB, mock
+	return store.NewDBStore(DB), DB, mock
 }
 
 func closeRepo(db *gorm.DB, t *testing.T) {
@@ -72,39 +71,6 @@ func Test_New_Repository(t *testing.T) {
 	defer closeRepo(DB, t)
 	if repo == nil {
 		t.Errorf("cannot create a new repository")
-	}
-}
-
-func Test_Create_Login(t *testing.T) {
-	repo, DB := repo(t)
-	defer closeRepo(DB, t)
-
-	login := store.LoginsEntity{
-		User: "test",
-		Type: store.DIRECT,
-	}
-	err := repo.StoreLogin(login)
-	if err != nil {
-		t.Errorf("could not store login for user; %v", err)
-	}
-	c, err := repo.GetLoginsForUser("test")
-	if err != nil {
-		t.Errorf("could not get logins for user; %v", err)
-	}
-	assert.Equal(t, int64(1), c)
-}
-
-func Test_Create_Login_Error(t *testing.T) {
-	repo, DB := repo(t)
-	defer closeRepo(DB, t)
-
-	err := repo.StoreLogin(store.LoginsEntity{
-		User: "",
-		Type: store.DIRECT,
-	})
-
-	if err == nil {
-		t.Errorf(errExpected)
 	}
 }
 
@@ -188,17 +154,6 @@ func Test_Errors_Using_Mock(t *testing.T) {
 	repo, DB, mock := mockRepo(t, skipTransactionUsage)
 	defer closeRepo(DB, t)
 
-	// -- wrong number of results after insert for LOGINS
-	// ------------------------------------------------------------------------------------------------------------
-	mock.ExpectExec("INSERT INTO `LOGINS` \\(`user`,`created`,`type`\\)").WillReturnResult(sqlmock.NewResult(1, 0))
-	err := repo.StoreLogin(store.LoginsEntity{
-		User: "test",
-		Type: store.DIRECT,
-	})
-	if err == nil {
-		t.Errorf(errExpected)
-	}
-
 	// -- wrong number of results after insert for USERSITES
 	// ------------------------------------------------------------------------------------------------------------
 	mock.ExpectExec("DELETE FROM `USERSITE`").WillReturnResult(sqlmock.NewResult(1, 1))
@@ -211,7 +166,7 @@ func Test_Errors_Using_Mock(t *testing.T) {
 		URL:      "url",
 		PermList: "perm",
 	})
-	err = repo.StoreSiteForUser(sites)
+	err := repo.StoreSiteForUser(sites)
 	if err == nil {
 		t.Errorf(errExpected)
 	}

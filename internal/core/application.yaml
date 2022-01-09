@@ -44,7 +44,7 @@ baseconfig:
         prefix: core
 
 database:
-    connectionString: "root:mariadb@tcp(db:3306)/login?parseTime=true"
+    connectionString: "DATABASE"
 
 # configuration for JWT authentication
 security:

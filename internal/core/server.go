@@ -16,7 +16,7 @@ import (
 	"google.golang.org/grpc"
 	"gorm.io/gorm"
 
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/sqlite"
 )
 
 var (
@@ -54,7 +54,7 @@ func run(version, build string) error {
 	defer logger.Close()
 
 	// persistence store && application version
-	con, err := gorm.Open(mysql.Open(appCfg.Database.ConnectionString), &gorm.Config{})
+	con, err := gorm.Open(sqlite.Open(appCfg.Database.ConnectionString), &gorm.Config{})
 	if err != nil {
 		panic(fmt.Sprintf("cannot create database connection: %v", err))
 	}
@@ -75,7 +75,7 @@ func run(version, build string) error {
 	}
 
 	var (
-		repo                     = store.NewDBStore(con, logger)
+		repo                     = store.NewDBStore(con)
 		oidcConfig, oidcVerifier = oidc.NewConfigAndVerifier(appCfg.OIDC)
 		oidcSvc                  = oidc.New(oidcConfig, oidcVerifier, appCfg.Security, repo)
 		siteSvc                  = sites.New(appCfg.Security.Claim.Roles[0], repo)

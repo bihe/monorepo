@@ -8,7 +8,5 @@ package store
 type Repository interface {
 	GetSitesForUser(user string) ([]UserSiteEntity, error)
 	GetUsersForSite(site string) ([]string, error)
-	GetLoginsForUser(user string) (int64, error)
 	StoreSiteForUser(sites []UserSiteEntity) (err error)
-	StoreLogin(login LoginsEntity) (err error)
 }

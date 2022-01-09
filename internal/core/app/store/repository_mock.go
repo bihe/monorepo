@@ -1,7 +1,5 @@
 package store
 
-import "fmt"
-
 // MockRepo implements the repository but holds entries only in memory
 // this is a defaulf implementation which can be used for testing
 type MockRepo struct {
@@ -17,10 +15,6 @@ func NewMock(sites map[string][]UserSiteEntity) Repository {
 		sites:  sites,
 		logins: make(map[string]int64),
 	}
-}
-
-func (m *MockRepo) InUnitOfWork(fn func(repo Repository) error) error {
-	return fn(m)
 }
 
 func (m *MockRepo) GetSitesForUser(user string) ([]UserSiteEntity, error) {
@@ -47,24 +41,6 @@ func (m *MockRepo) GetUsersForSite(site string) ([]string, error) {
 		users = make([]string, 0)
 	}
 	return users, nil
-}
-
-func (m *MockRepo) GetLoginsForUser(user string) (int64, error) {
-	if _, ok := m.logins[user]; !ok {
-		return 0, fmt.Errorf("no login for user available")
-	}
-	return m.logins[user], nil
-}
-
-func (m *MockRepo) StoreLogin(login LoginsEntity) (err error) {
-	var loginCount int64
-
-	if _, ok := m.logins[login.User]; ok {
-		loginCount = m.logins[login.User]
-	}
-	loginCount += 1
-	m.logins[login.User] = loginCount
-	return nil
 }
 
 func (m *MockRepo) StoreSiteForUser(sites []UserSiteEntity) (err error) {

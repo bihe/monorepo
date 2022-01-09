@@ -5,23 +5,20 @@ import (
 	"fmt"
 	"strings"
 
-	"golang.binggl.net/monorepo/pkg/logging"
 	"gorm.io/gorm"
 )
 
 var _ Repository = &dbRepository{} // compile time interface check
 
 // NewDBStore creates a new DB repository intance
-func NewDBStore(db *gorm.DB, logger logging.Logger) *dbRepository {
+func NewDBStore(db *gorm.DB) *dbRepository {
 	return &dbRepository{
-		db:     db,
-		logger: logger,
+		db: db,
 	}
 }
 
 type dbRepository struct {
-	db     *gorm.DB
-	logger logging.Logger
+	db *gorm.DB
 }
 
 func (r *dbRepository) GetSitesForUser(user string) ([]UserSiteEntity, error) {
@@ -34,12 +31,6 @@ func (r *dbRepository) GetUsersForSite(site string) ([]string, error) {
 	var users []string
 	h := r.con().Model(&UserSiteEntity{}).Where("lower(name) = @site", sql.Named("site", strings.ToLower(site))).Pluck("user", &users)
 	return users, h.Error
-}
-
-func (r *dbRepository) GetLoginsForUser(user string) (int64, error) {
-	var c int64
-	h := r.con().Model(&LoginsEntity{}).Where("lower(user) = @user", sql.Named("user", strings.ToLower(user))).Count(&c)
-	return c, h.Error
 }
 
 func (r *dbRepository) StoreSiteForUser(sites []UserSiteEntity) (err error) {
@@ -56,18 +47,6 @@ func (r *dbRepository) StoreSiteForUser(sites []UserSiteEntity) (err error) {
 		return h.Error
 	}
 	if h.RowsAffected != int64(len(sites)) {
-		err = fmt.Errorf("invalid number of rows affected, got %d", h.RowsAffected)
-		return
-	}
-	return nil
-}
-
-func (r *dbRepository) StoreLogin(login LoginsEntity) (err error) {
-	h := r.con().Create(&login)
-	if h.Error != nil {
-		return h.Error
-	}
-	if h.RowsAffected != 1 {
 		err = fmt.Errorf("invalid number of rows affected, got %d", h.RowsAffected)
 		return
 	}

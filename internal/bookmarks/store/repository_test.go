@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/pkg/logging"
-
-	_ "github.com/mattn/go-sqlite3" // use sqlite for testing
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 const expectations = "there were unfulfilled expectations: %s"
@@ -29,23 +29,27 @@ func mockRepository() (Repository, sqlmock.Sqlmock, error) {
 	if db, mock, err = sqlmock.New(); err != nil {
 		return nil, nil, err
 	}
-	if DB, err = gorm.Open("mysql", db); err != nil {
+	if DB, err = gorm.Open(mysql.New(mysql.Config{Conn: db, SkipInitializeWithVersion: true}), &gorm.Config{}); err != nil {
 		return nil, nil, err
 	}
 	return Create(DB, logger), mock, nil
 }
 
-func repository(t *testing.T) (Repository, *gorm.DB) {
+func repository(t *testing.T) (Repository, *sql.DB) {
 	var (
 		DB  *gorm.DB
 		err error
 	)
-	if DB, err = gorm.Open("sqlite3", ":memory:"); err != nil {
+	if DB, err = gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{}); err != nil {
 		t.Fatalf("cannot create database connection: %v", err)
 	}
 	// Migrate the schema
 	DB.AutoMigrate(&Bookmark{})
-	return Create(DB, logger), DB
+	db, err := DB.DB()
+	if err != nil {
+		t.Fatalf("could not get DB handle; %v", err)
+	}
+	return Create(DB, logger), db
 }
 
 func Test_Mock_GetAllBookmarks(t *testing.T) {

@@ -15,13 +15,6 @@ type Connection struct {
 	Active bool
 }
 
-// NewConn creates a connection to a store/repository
-func NewConn(connstr string) Connection {
-	// dialect is specifically set to "mysql"
-	db := sqlx.MustConnect("mysql", connstr)
-	return Connection{DB: db, Active: true}
-}
-
 // NewConnForDb creates a connection to a store/repository
 func NewConnForDb(dbType, connstr string) Connection {
 	db := sqlx.MustConnect(dbType, connstr)

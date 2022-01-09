@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"golang.binggl.net/monorepo/internal/core/app/conf"
 	"golang.binggl.net/monorepo/internal/core/app/shared"
@@ -345,21 +344,6 @@ func (o *oidcService) performOIDCLogin(state, oidcState, oidcCode, site, redirec
 	token, err = security.CreateToken(o.jwtConfig.JwtIssuer, []byte(o.jwtConfig.JwtSecret), o.jwtConfig.Expiry, claims)
 	if err != nil {
 		err = fmt.Errorf("could not create a JWT: %v", err)
-		return
-	}
-
-	var t store.Logintype
-	t = store.DIRECT
-	if siteLogin {
-		t = store.FLOW
-	}
-	err = o.repo.StoreLogin(store.LoginsEntity{
-		User:      oidcClaims.Email,
-		CreatedAt: time.Now().UTC(),
-		Type:      t,
-	})
-	if err != nil {
-		err = fmt.Errorf("could not store the login: %v", err)
 		return
 	}
 	url = o.jwtConfig.LoginRedirect

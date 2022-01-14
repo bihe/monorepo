@@ -5,7 +5,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { debounceTime, flatMap, map, switchMap } from 'rxjs/operators';
+import { combineLatest, EMPTY } from 'rxjs';
+import { debounceTime, map, mergeMap, switchMap } from 'rxjs/operators';
 import { AppModules } from 'src/app/app.globals';
 import { AppInfo, WhoAmI } from 'src/app/shared/models/app.info.model';
 import { BookmarkModel, BoomarkSortOrderModel } from 'src/app/shared/models/bookmarks.model';
@@ -35,6 +36,16 @@ function changeFavicon(head: HTMLHeadElement, src: string) {
 }
 
 declare var navigator: any;
+
+enum ParamType {
+  Path,
+  Search
+}
+
+class Param {
+    Type: ParamType
+    Value: string
+}
 
 @Component({
   selector: 'app-bookmarks-home',
@@ -94,27 +105,61 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
     });
   }
 
+
+
   ngOnInit() {
+
+    const urlParameters = combineLatest([this.activeRoute.params, this.activeRoute.queryParams]);
     this.subscriptions.push(
-      this.activeRoute.params
+      urlParameters
         .pipe(
           map(p => {
-            if (p.path) {
+            let param = new Param();
+            param.Type = ParamType.Path;
+            param.Value = '/'; // default
+
+            let folderPath = '';
+            let search = '';
+            p.forEach(e => {
+              if (e.path) {
+                folderPath = e.path;
+              } else if (e.search) {
+                search = e.search;
+              }
+            });
+
+            if (folderPath) {
+              param.Value = '/';
+              param.Type = ParamType.Path;
+
               // we need to have an "absolute" path
-              let path = p.path;
+              let path = folderPath;
               if (!path.startsWith('/')) {
                 path = "/" + path;
               }
-              return path;
+              param.Value = path;
+            } else if (search) {
+              param.Type = ParamType.Search;
+              param.Value = search;
             }
-            return '/';
+
+            return param;
           }),
-          flatMap(path => {
+          mergeMap(param => {
             this.state.setProgress(true);
-            return this.bookmarksService.getBookmarkFolderByPath(path);
+
+            switch(param.Type) {
+              case ParamType.Path: {
+                return this.bookmarksService.getBookmarkFolderByPath(param.Value);
+              }
+              case ParamType.Search: {
+                this.searchBookmarks(param.Value);
+                return EMPTY; // no need to process the following folder action
+              }
+            }
           }),
           switchMap(folderResult => {
-            console.log('here');
+
             // if we have received a folder, we need to get the path!
             if (folderResult.success === true) {
               if (folderResult.value.displayName === 'Root') {
@@ -154,9 +199,10 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
             console.log('currentPath: ' + this.currentPath);
           },
           error => {
-            if (this.authError(error)) {
-              return;
-            }
+            console.log(error);
+            // if (this.authError(error)) {
+            //   return;
+            // }
             this.state.setProgress(false);
             new MessageUtils().showError(this.snackBar, error);
           }

@@ -55,6 +55,7 @@ const routes: Routes = [
   // bookmarks
   // ------------------------------------------------------------------------
   { path: AppModules.Bookmarks, component: BookmarkHomeComponent },
+  { path: AppModules.Bookmarks + '/search', component: BookmarkHomeComponent },
   // use matcher for bookmark-filesystem
   { matcher: matchStartAndSubPath, component: BookmarkHomeComponent },
 

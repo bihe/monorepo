@@ -200,9 +200,9 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
           },
           error => {
             console.log(error);
-            // if (this.authError(error)) {
-            //   return;
-            // }
+            if (this.authError(error)) {
+              return;
+            }
             this.state.setProgress(false);
             new MessageUtils().showError(this.snackBar, error);
           }

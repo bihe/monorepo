@@ -21,6 +21,7 @@ import { ConfirmDialogComponent, ConfirmDialogModel } from '../../confirm-dialog
 import { CreateBookmarksDialog } from './create.dialog';
 
 const bookmarkPath = '/bookmarks'
+const readLaterLPath = '/Read-Later'
 
 // plain javascript logic
 function changeFavicon(head: HTMLHeadElement, src: string) {
@@ -104,8 +105,6 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
       sub.unsubscribe();
     });
   }
-
-
 
   ngOnInit() {
 
@@ -192,7 +191,14 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
           data => {
             this.state.setProgress(false);
             if (data.count > 0) {
-              this.bookmarks = data.value;
+              var items = data.value;
+              if (this.currentPath === readLaterLPath) {
+                console.log('read later');
+                // in the Read-Later folder we sort the items by highlight and date of creationl
+                items.sort(this.fieldSorter(['-highlight', 'created']));
+              }
+
+              this.bookmarks = items;
             } else {
               this.bookmarks = [];
             }
@@ -240,6 +246,26 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
         }
       )
     );
+  }
+
+  // found: https://stackoverflow.com/questions/6913512/how-to-sort-an-array-of-objects-by-multiple-fields
+  private fieldSorter(fields: string[]) {
+    return function (a:any, b:any) {
+        return fields
+            .map(function (o) {
+                var dir = 1;
+                if (o[0] === '-') {
+                   dir = -1;
+                   o=o.substring(1);
+                }
+                if (a[o] > b[o]) return dir;
+                if (a[o] < b[o]) return -(dir);
+                return 0;
+            })
+            .reduce(function firstNonZeroValue (p,n) {
+                return p ? p : n;
+            }, 0);
+    };
   }
 
   gotoPath(path: string) {
@@ -383,6 +409,12 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
       console.log('dialog was closed');
       if (data.result) {
         let bookmark: BookmarkModel = data.model;
+
+        // if the bookmark to save is "under" the path of read-later, then we want to highlight it
+        if (bookmark.path === readLaterLPath) {
+          bookmark.highlight = 1;
+        }
+
         console.log(bookmark);
 
         this.bookmarksService.createBookmark(bookmark).subscribe(

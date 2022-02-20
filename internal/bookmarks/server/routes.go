@@ -60,7 +60,6 @@ func (s *Server) routes() {
 			r.Get("/allpaths", s.bookmarkAPI.Secure(s.bookmarkAPI.GetAllPaths))
 			r.Get("/folder", s.bookmarkAPI.Secure(s.bookmarkAPI.GetBookmarksFolderByPath))
 			r.Get("/byname", s.bookmarkAPI.Secure(s.bookmarkAPI.GetBookmarksByName))
-			r.Get("/mostvisited/{num}", s.bookmarkAPI.Secure(s.bookmarkAPI.GetMostVisited))
 			r.Get("/fetch/{id}", s.bookmarkAPI.Secure(s.bookmarkAPI.FetchAndForward))
 			r.Get("/favicon/{id}", s.bookmarkAPI.Secure(s.bookmarkAPI.GetFavicon))
 		})

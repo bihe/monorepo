@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"golang.binggl.net/monorepo/internal/bookmarks/store"
 	"github.com/go-chi/render"
+	"golang.binggl.net/monorepo/internal/bookmarks/store"
 )
 
 // --------------------------------------------------------------------------
@@ -38,7 +38,7 @@ type Bookmark struct {
 	Created       time.Time  `json:"created"`
 	Modified      *time.Time `json:"modified,omitempty"`
 	ChildCount    int        `json:"childCount"`
-	AccessCount   int        `json:"accessCount"`
+	Highlight     int        `json:"highlight"`
 	Favicon       string     `json:"favicon"`
 	CustomFavicon string     `json:"customFavicon"`
 }
@@ -89,7 +89,7 @@ func entityToModel(b store.Bookmark) *Bookmark {
 		SortOrder:   b.SortOrder,
 		Created:     b.Created,
 		Modified:    b.Modified,
-		AccessCount: b.AccessCount,
+		Highlight:   b.Highlight,
 		ChildCount:  b.ChildCount,
 		Favicon:     b.Favicon,
 	}

@@ -728,66 +728,6 @@ func TestGetBookmarksByName(t *testing.T) {
 	assert.Equal(t, 3, len(bookmarks))
 }
 
-func TestGetMostRecentBookmarks(t *testing.T) {
-	repo, db := repository(t)
-	defer db.Close()
-	errStr := "Could not create bookmarks: %v"
-
-	userName := "userName"
-
-	// create a folder structure
-	_, err := repo.Create(Bookmark{
-		Type:        Node,
-		DisplayName: "Node",
-		UserName:    userName,
-		Path:        "/",
-		AccessCount: 5,
-	})
-	if err != nil {
-		t.Errorf(errStr, err)
-	}
-	_, err = repo.Create(Bookmark{
-		Type:        Node,
-		DisplayName: "Node1",
-		UserName:    userName,
-		Path:        "/",
-		AccessCount: 10,
-	})
-	if err != nil {
-		t.Errorf(errStr, err)
-	}
-	_, err = repo.Create(Bookmark{
-		Type:        Node,
-		DisplayName: "Node2",
-		UserName:    userName,
-		Path:        "/",
-	})
-	if err != nil {
-		t.Errorf(errStr, err)
-	}
-
-	all, err := repo.GetAllBookmarks(userName)
-	if err != nil {
-		t.Errorf("could not get bookmarks: %v", err)
-	}
-	assert.Equal(t, 3, len(all))
-
-	recent, err := repo.GetMostRecentBookmarks(userName, 10)
-	if err != nil {
-		t.Errorf("could not get bookmarks: %v", err)
-	}
-	assert.Equal(t, 2, len(recent))
-	assert.Equal(t, "Node1", recent[0].DisplayName)
-	assert.Equal(t, "Node", recent[1].DisplayName)
-
-	recent, err = repo.GetMostRecentBookmarks(userName, 1)
-	if err != nil {
-		t.Errorf("could not get bookmarks: %v", err)
-	}
-	assert.Equal(t, 1, len(recent))
-	assert.Equal(t, "Node1", recent[0].DisplayName)
-}
-
 func TestGetAllPath(t *testing.T) {
 	repo, db := repository(t)
 	defer db.Close()

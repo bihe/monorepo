@@ -24,7 +24,7 @@ CREATE TABLE `BOOKMARKS` (
   `created` datetime(6) NOT NULL,
   `modified` datetime(6) DEFAULT NULL,
   `child_count` int(11) NOT NULL DEFAULT 0,
-  `access_count` int(11) NOT NULL DEFAULT 0,
+  `highlight` int(11) NOT NULL DEFAULT 0,
   `favicon` varchar(128) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `IX_PATH` (`path`),

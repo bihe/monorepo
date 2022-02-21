@@ -21,7 +21,7 @@ import { ConfirmDialogComponent, ConfirmDialogModel } from '../../confirm-dialog
 import { CreateBookmarksDialog } from './create.dialog';
 
 const bookmarkPath = '/bookmarks'
-const readLaterLPath = '/Read-Later'
+const readLaterPath = '/Read-Later'
 
 // plain javascript logic
 function changeFavicon(head: HTMLHeadElement, src: string) {
@@ -192,12 +192,11 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
             this.state.setProgress(false);
             if (data.count > 0) {
               var items = data.value;
-              if (this.currentPath === readLaterLPath) {
+              if (this.currentPath === readLaterPath) {
                 console.log('read later');
                 // in the Read-Later folder we sort the items by highlight and date of creationl
                 items.sort(this.fieldSorter(['-highlight', 'created']));
               }
-
               this.bookmarks = items;
             } else {
               this.bookmarks = [];
@@ -290,9 +289,15 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
     this.bookmarksService.getBookmarksForPath(path)
       .subscribe(
         data => {
+          var items = data.value;
           this.state.setProgress(false);
           if (data.count > 0) {
-            this.bookmarks = data.value;
+            if (path === readLaterPath) {
+              console.log('read later');
+              // in the Read-Later folder we sort the items by highlight and date of creationl
+              items.sort(this.fieldSorter(['-highlight', 'created']));
+            }
+            this.bookmarks = items;
           } else {
             this.bookmarks = [];
           }
@@ -411,12 +416,9 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
         let bookmark: BookmarkModel = data.model;
 
         // if the bookmark to save is "under" the path of read-later, then we want to highlight it
-        if (bookmark.path === readLaterLPath) {
+        if (bookmark.path === readLaterPath) {
           bookmark.highlight = 1;
         }
-
-        console.log(bookmark);
-
         this.bookmarksService.createBookmark(bookmark).subscribe(
           data => {
             this.state.setProgress(false);

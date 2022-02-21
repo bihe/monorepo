@@ -9,7 +9,7 @@ CREATE TABLE "BOOKMARKS" (
 	"created"	datetime NOT NULL,
 	"modified"	datetime,
 	"child_count"	integer NOT NULL DEFAULT 0,
-	"access_count"	integer NOT NULL DEFAULT 0,
+	"highlight"	integer NOT NULL DEFAULT 0,
 	"favicon"	varchar(128) NOT NULL,
 	PRIMARY KEY("id")
 );

@@ -236,3 +236,14 @@ a.bookmark_actions {
 .add:hover {
   color: blue;
 }
+
+.bookmark_highlight {
+  padding-left: 5px;
+  color: darkred;
+}
+
+.bookmark_highlight_date {
+  font-weight: bold;
+  font-size: smaller;
+  padding-left:4px;
+}

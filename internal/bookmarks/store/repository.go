@@ -27,7 +27,6 @@ type Repository interface {
 	GetBookmarksByPath(path, username string) ([]Bookmark, error)
 	GetBookmarksByPathStart(path, username string) ([]Bookmark, error)
 	GetBookmarksByName(name, username string) ([]Bookmark, error)
-	GetMostRecentBookmarks(username string, limit int) ([]Bookmark, error)
 	GetPathChildCount(path, username string) ([]NodeCount, error)
 	GetAllPaths(username string) ([]string, error)
 
@@ -121,16 +120,6 @@ func (r *dbRepository) GetBookmarksByName(name, username string) ([]Bookmark, er
 	var bookmarks []Bookmark
 	h := r.con().Order("sort_order").Order("display_name").
 		Where("user_name = ? AND lower(display_name) LIKE ?", username, "%"+strings.ToLower(name)+"%").Find(&bookmarks)
-	return bookmarks, h.Error
-}
-
-// GetMostRecentBookmarks returns bookmarks which where recently visited
-func (r *dbRepository) GetMostRecentBookmarks(username string, limit int) ([]Bookmark, error) {
-	var bookmarks []Bookmark
-	h := r.con().
-		Limit(limit).
-		Order("access_count DESC").Order("display_name").
-		Where("user_name = ? AND type = ? AND access_count > 0", username, Node).Find(&bookmarks)
 	return bookmarks, h.Error
 }
 
@@ -302,7 +291,7 @@ func (r *dbRepository) Update(item Bookmark) (Bookmark, error) {
 	bm.SortOrder = item.SortOrder
 	bm.URL = item.URL
 	bm.Favicon = item.Favicon
-	bm.AccessCount = item.AccessCount
+	bm.Highlight = item.Highlight
 	bm.ChildCount = item.ChildCount
 
 	h = r.con().Save(&bm)

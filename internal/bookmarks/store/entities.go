@@ -27,7 +27,7 @@ type Bookmark struct {
 	Created     time.Time  `gorm:"COLUMN:created;NOT NULL"`
 	Modified    *time.Time `gorm:"COLUMN:modified"`
 	ChildCount  int        `gorm:"COLUMN:child_count;DEFAULT:0;NOT NULL"`
-	AccessCount int        `gorm:"COLUMN:access_count;DEFAULT:0;NOT NULL"`
+	Highlight   int        `gorm:"COLUMN:highlight;DEFAULT:0;NOT NULL"`
 	Favicon     string     `gorm:"TYPE:varchar(128);COLUMN:favicon;NOT NULL"`
 }
 

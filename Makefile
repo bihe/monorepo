@@ -49,11 +49,11 @@ dev-frontend: ## start the development angular-frontend
 
 compose-dev: ## start the microservices for development of frontend
 	@echo "  >  Starting docker containers for development..."
-	docker-compose -f compose-dev-frontend.yaml build && docker-compose -f compose-dev-frontend.yaml up
+	docker compose -f compose-dev-frontend.yaml build && docker compose -f compose-dev-frontend.yaml up
 
 compose-int: ## start the whole application for integration testing
 	@echo "  >  Starting docker containers for integration ..."
-	docker-compose -f compose-integration.yaml down --remove-orphans && docker-compose -f compose-integration.yaml build && docker-compose -f compose-integration.yaml up
+	docker compose -f compose-integration.yaml down --remove-orphans && docker compose -f compose-integration.yaml build && docker compose -f compose-integration.yaml up
 
 
 # internal tasks

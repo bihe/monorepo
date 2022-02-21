@@ -66,7 +66,7 @@ func (r *MockRepository) GetBookmarkByID(id, username string) (store.Bookmark, e
 	}
 	return store.Bookmark{
 		DisplayName: "displayname",
-		AccessCount: 1,
+		Highlight:   0,
 		ChildCount:  0,
 		Created:     time.Now().UTC(),
 		ID:          "ID",
@@ -138,7 +138,7 @@ func (r *MockRepository) GetBookmarksByPath(path, username string) ([]store.Book
 
 	bm := store.Bookmark{
 		DisplayName: "displayname",
-		AccessCount: 1,
+		Highlight:   0,
 		ChildCount:  0,
 		Created:     time.Now().UTC(),
 		ID:          "ID",
@@ -217,7 +217,7 @@ func (r *MockRepository) GetFolderByPath(path, username string) (store.Bookmark,
 
 	bm := store.Bookmark{
 		DisplayName: "displayname",
-		AccessCount: 1,
+		Highlight:   0,
 		ChildCount:  0,
 		Created:     time.Now().UTC(),
 		ID:          "ID",
@@ -303,7 +303,7 @@ func (r *MockRepository) GetBookmarksByName(name, username string) ([]store.Book
 
 	bm := store.Bookmark{
 		DisplayName: "displayname",
-		AccessCount: 1,
+		Highlight:   0,
 		ChildCount:  0,
 		Created:     time.Now().UTC(),
 		ID:          "ID",
@@ -382,7 +382,7 @@ func (r *MockRepository) GetMostRecentBookmarks(username string, limit int) ([]s
 
 	bm := store.Bookmark{
 		DisplayName: "displayname",
-		AccessCount: 1,
+		Highlight:   0,
 		ChildCount:  0,
 		Created:     time.Now().UTC(),
 		ID:          "ID",
@@ -393,69 +393,6 @@ func (r *MockRepository) GetMostRecentBookmarks(username string, limit int) ([]s
 	}
 	var bms []store.Bookmark
 	return append(bms, bm), nil
-}
-
-func TestGetMostVisited(t *testing.T) {
-	// arrange
-	r := chi.NewRouter()
-	r.Use(jwtUser)
-	bookmarkAPI := &BookmarksAPI{
-		Handler:    baseHandler,
-		Repository: &MockRepository{},
-	}
-	defURL := "/api/v1/bookmarks/mostvisited/{num}"
-	reqURL := "/api/v1/bookmarks/mostvisited/1"
-	function := bookmarkAPI.Secure(bookmarkAPI.GetMostVisited)
-	rec := httptest.NewRecorder()
-	var bl BookmarkList
-
-	// act
-	r.Get(defURL, function)
-	req, _ := http.NewRequest("GET", reqURL, nil)
-	r.ServeHTTP(rec, req)
-
-	// assert
-	assert.Equal(t, http.StatusOK, rec.Code)
-	if err := json.Unmarshal(rec.Body.Bytes(), &bl); err != nil {
-		t.Errorf("could not unmarshal: %v", err)
-	}
-
-	assert.Equal(t, 1, bl.Count)
-	assert.Equal(t, true, bl.Success)
-
-	// fail repository---------------------------------------------------
-	bookmarkAPI.Repository = &MockRepository{fail: true}
-	rec = httptest.NewRecorder()
-
-	r.Get(defURL, function)
-	req, _ = http.NewRequest("GET", reqURL, nil)
-	r.ServeHTTP(rec, req)
-
-	// assert
-	assert.Equal(t, http.StatusOK, rec.Code)
-	if err := json.Unmarshal(rec.Body.Bytes(), &bl); err != nil {
-		t.Errorf("could not unmarshal: %v", err)
-	}
-
-	assert.Equal(t, 0, bl.Count)
-	assert.Equal(t, true, bl.Success)
-
-	// default num ------------------------------------------------------
-	bookmarkAPI.Repository = &MockRepository{fail: true}
-	rec = httptest.NewRecorder()
-
-	r.Get(defURL, function)
-	req, _ = http.NewRequest("GET", "/api/v1/bookmarks/mostvisited/0", nil)
-	r.ServeHTTP(rec, req)
-
-	// assert
-	assert.Equal(t, http.StatusOK, rec.Code)
-	if err := json.Unmarshal(rec.Body.Bytes(), &bl); err != nil {
-		t.Errorf("could not unmarshal: %v", err)
-	}
-
-	assert.Equal(t, 0, bl.Count)
-	assert.Equal(t, true, bl.Success)
 }
 
 func repository(t *testing.T) (store.Repository, *sql.DB) {
@@ -1258,20 +1195,23 @@ func TestFetchAndForward(t *testing.T) {
 		FaviconPath:    TestFaviconPath,
 		DefaultFavicon: TestDefaultFavicon,
 	}
-	getFavicon := bookmarkAPI.Secure(bookmarkAPI.FetchAndForward)
+	fetchBookmarkUrl := bookmarkAPI.Secure(bookmarkAPI.FetchAndForward)
+	getBookmark := bookmarkAPI.Secure(bookmarkAPI.GetBookmarkByID)
 	create := bookmarkAPI.Secure(bookmarkAPI.Create)
 
 	r := chi.NewRouter()
 	r.Use(jwtUser)
 	r.Post("/", create)
-	r.Get("/", getFavicon)
-	r.Get("/{id}", getFavicon)
+	r.Get("/fetch", fetchBookmarkUrl)
+	r.Get("/fetch/{id}", fetchBookmarkUrl)
+	r.Get("/{id}", getBookmark)
 
 	payload := `{
 		"displayName": "Node",
 		"path": "/",
 		"type": "Node",
-		"url": "http://url"
+		"url": "http://url",
+		"highlight": 1
 	}`
 
 	// create one item
@@ -1287,18 +1227,42 @@ func TestFetchAndForward(t *testing.T) {
 	}
 	id := result.Value
 
-	// fetch the URL
+	// retrieve the created item
 	// ---------------------------------------------------------------
 	rec = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/"+id, nil)
 	r.ServeHTTP(rec, req)
+	var bookmark Bookmark
+	assert.Equal(t, http.StatusOK, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &bookmark); err != nil {
+		t.Errorf("could not unmarshal body: %v", err)
+	}
+	assert.Equal(t, 1, bookmark.Highlight)
+
+	// fetch the URL
+	// ---------------------------------------------------------------
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/fetch/"+id, nil)
+	r.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusFound, rec.Code)
 	assert.Equal(t, "http://url", rec.Header().Get("location"))
+
+	// retrieve the created item again - the highlight should be 0
+	// fetch and forward resets the hightlight value
+	// ---------------------------------------------------------------
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/"+id, nil)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &bookmark); err != nil {
+		t.Errorf("could not unmarshal body: %v", err)
+	}
+	assert.Equal(t, 0, bookmark.Highlight)
 
 	// no ID
 	// ---------------------------------------------------------------
 	rec = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/", nil)
+	req, _ = http.NewRequest("GET", "/fetch", nil)
 	r.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 
@@ -1323,14 +1287,14 @@ func TestFetchAndForward(t *testing.T) {
 	// error folder
 	// ---------------------------------------------------------------
 	rec = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/"+id, nil)
+	req, _ = http.NewRequest("GET", "/fetch/"+id, nil)
 	r.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 
 	// error wrong ID
 	// ---------------------------------------------------------------
 	rec = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/any", nil)
+	req, _ = http.NewRequest("GET", "/fetch/any", nil)
 	r.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 }

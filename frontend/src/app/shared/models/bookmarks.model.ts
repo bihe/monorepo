@@ -15,7 +15,7 @@ export class BookmarkModel {
   public childCount: number;
   public favicon: string;
   public customFavicon: string;
-  public accessCount: number;
+  public highlight: number;
 }
 
 export class BoomarkSortOrderModel {

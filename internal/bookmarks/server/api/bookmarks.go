@@ -27,7 +27,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	er "errors"
@@ -325,57 +324,6 @@ func (b *BookmarksAPI) GetBookmarksByName(user security.User, w http.ResponseWri
 	return render.Render(w, r, BookmarkListResponse{BookmarkList: &result})
 }
 
-// GetMostVisited retrieves recent accessed bookmarks
-// swagger:operation GET /api/v1/bookmarks/mostvisited/{num} bookmarks GetMostVisited
-//
-// get recent accessed bookmarks
-//
-// return the most recently visited bookmarks
-//
-// ---
-// produces:
-// - application/json
-// parameters:
-// - name: num
-//   in: path
-// responses:
-//   '200':
-//     description: BookmarkList
-//     schema:
-//       "$ref": "#/definitions/BookmarkList"
-//   '401':
-//     description: ProblemDetail
-//     schema:
-//       "$ref": "#/definitions/ProblemDetail"
-//   '403':
-//     description: ProblemDetail
-//     schema:
-//       "$ref": "#/definitions/ProblemDetail"
-func (b *BookmarksAPI) GetMostVisited(user security.User, w http.ResponseWriter, r *http.Request) error {
-	n := chi.URLParam(r, "num")
-	num, _ := strconv.Atoi(n)
-	if num < 1 {
-		num = 100
-	}
-
-	b.Log.InfoRequest(fmt.Sprintf("get the most recent, most often visited bookmarks for user: '%s'", user.Username), r)
-	bms, err := b.Repository.GetMostRecentBookmarks(user.Username, num)
-	var bookmarks []Bookmark
-	if err != nil {
-		b.Log.ErrorRequest(fmt.Sprintf("cannot get most visited bookmarks: '%v'", err), r)
-	}
-	bookmarks = entityListToModel(bms)
-	count := len(bookmarks)
-	result := BookmarkList{
-		Success: true,
-		Count:   count,
-		Message: fmt.Sprintf("Found %d items.", count),
-		Value:   bookmarks,
-	}
-
-	return render.Render(w, r, BookmarkListResponse{BookmarkList: &result})
-}
-
 // Create a new bookmark
 // swagger:operation POST /api/v1/bookmarks bookmarks CreateBookmark
 //
@@ -419,7 +367,7 @@ func (b *BookmarksAPI) Create(user security.User, w http.ResponseWriter, r *http
 	}
 
 	if payload.Path == "" || payload.DisplayName == "" {
-		b.Log.ErrorRequest(fmt.Sprintf("required fields of bookmarks missing"), r)
+		b.Log.ErrorRequest("required fields of bookmarks missing", r)
 		return errors.BadRequestError{Err: fmt.Errorf("invalid request data supplied, missing Path or DisplayName"), Request: r}
 	}
 
@@ -439,6 +387,7 @@ func (b *BookmarksAPI) Create(user security.User, w http.ResponseWriter, r *http
 			UserName:    user.Username,
 			Favicon:     payload.Favicon,
 			SortOrder:   payload.SortOrder,
+			Highlight:   payload.Highlight,
 		})
 		if err != nil {
 			return err
@@ -515,7 +464,7 @@ func (b *BookmarksAPI) Update(user security.User, w http.ResponseWriter, r *http
 	}
 
 	if payload.Path == "" || payload.DisplayName == "" || payload.ID == "" {
-		b.Log.ErrorRequest(fmt.Sprintf("required fields of bookmarks missing"), r)
+		b.Log.ErrorRequest("required fields of bookmarks missing", r)
 		return errors.BadRequestError{Err: fmt.Errorf("invalid request data supplied, missing ID, Path or DisplayName"), Request: r}
 
 	}
@@ -571,7 +520,7 @@ func (b *BookmarksAPI) Update(user security.User, w http.ResponseWriter, r *http
 			UserName:    user.Username,
 			ChildCount:  childCount,
 			Favicon:     payload.Favicon,
-			AccessCount: payload.AccessCount,
+			Highlight:   payload.Highlight,
 		})
 		if err != nil {
 			b.Log.ErrorRequest(fmt.Sprintf("could not update bookmark: %v", err), r)
@@ -614,7 +563,7 @@ func (b *BookmarksAPI) Update(user security.User, w http.ResponseWriter, r *http
 					URL:         bm.URL,
 					UserName:    user.Username,
 					ChildCount:  bm.ChildCount,
-					AccessCount: bm.AccessCount,
+					Highlight:   bm.Highlight,
 					Favicon:     bm.Favicon,
 				}); err != nil {
 					b.Log.ErrorRequest(fmt.Sprintf("cannot update bookmark path: %v", err), r)
@@ -660,7 +609,7 @@ func (b *BookmarksAPI) Update(user security.User, w http.ResponseWriter, r *http
 
 func (b *BookmarksAPI) updateChildCountOfPath(r *http.Request, path, username string, repo store.Repository) error {
 	if path == "/" {
-		b.Log.InfoRequest(fmt.Sprintf("skip the ROOT path '/'"), r)
+		b.Log.InfoRequest("skip the ROOT path '/'", r)
 		return nil
 	}
 
@@ -800,7 +749,7 @@ func (b *BookmarksAPI) UpdateSortOrder(user security.User, w http.ResponseWriter
 	}
 
 	if len(payload.IDs) != len(payload.SortOrder) {
-		b.Log.ErrorRequest(fmt.Sprintf("ids and sortorders do not match!"), r)
+		b.Log.ErrorRequest("ids and sortorders do not match!", r)
 		return errors.BadRequestError{Err: fmt.Errorf("invalid request data supplied, IDs and SortOrder do not match"), Request: r}
 	}
 
@@ -889,8 +838,8 @@ func (b *BookmarksAPI) FetchAndForward(user security.User, w http.ResponseWriter
 			return errors.BadRequestError{Err: fmt.Errorf("cannot fetch and forward folder - ID '%s'", id), Request: r}
 		}
 
-		// update the access-count of nodes
-		existing.AccessCount++
+		// once accessed the highlight flag is removed
+		existing.Highlight = 0
 		if _, err := repo.Update(existing); err != nil {
 			b.Log.ErrorRequest(fmt.Sprintf("could not update bookmark '%s': %v", id, err), r)
 			return err

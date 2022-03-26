@@ -17,7 +17,6 @@
 //     - application/json
 //
 // swagger:meta
-//go:generate ../../tools/swagger_linux_amd64 generate spec -o ./assets/swagger/swagger.json -m -w ./ -x handler
 package mydms
 
 import (

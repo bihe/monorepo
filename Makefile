@@ -7,14 +7,14 @@ VERSION="1.0.0-"
 COMMIT=`git rev-parse HEAD | cut -c 1-8`
 BUILD=`date -u +%Y%m%d.%H%M%S`
 
-
 GREEN  := $(shell tput -Txterm setaf 2)
 YELLOW := $(shell tput -Txterm setaf 3)
 WHITE  := $(shell tput -Txterm setaf 7)
 CYAN   := $(shell tput -Txterm setaf 6)
 RESET  := $(shell tput -Txterm sgr0)
 
-.PHONY: all clean mod-update proto swagger build test coverage dev-frontend compose-dev compose-int
+
+.PHONY: all clean mod-update proto build test coverage dev-frontend compose-dev compose-int
 
 all: help
 
@@ -31,9 +31,6 @@ mod-update: ## update to latest compatible packages (yes golang!)
 proto: ## generate protobuf code for grpc
 	@-$(MAKE) -s go-protogen
 
-swagger: ## generate swagger files
-	@-$(MAKE) -s go-swagger
-
 build: ## compile the whole repo
 	@-$(MAKE) -s go-build
 
@@ -49,11 +46,11 @@ dev-frontend: ## start the development angular-frontend
 
 compose-dev: ## start the microservices for development of frontend
 	@echo "  >  Starting docker containers for development..."
-	docker compose -f compose-dev-frontend.yaml build && docker compose -f compose-dev-frontend.yaml up
+	docker compose -f compose-dev-frontend.yaml rm && docker compose -f compose-dev-frontend.yaml up --build
 
 compose-int: ## start the whole application for integration testing
 	@echo "  >  Starting docker containers for integration ..."
-	docker compose -f compose-integration.yaml down --remove-orphans && docker compose -f compose-integration.yaml build && docker compose -f compose-integration.yaml up
+	docker compose -f compose-integration.yaml rm && docker compose -f compose-integration.yaml up --build
 
 
 # internal tasks
@@ -83,11 +80,6 @@ go-proto:
 	# https://grpc.io/docs/languages/go/quickstart/
 	# go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 	protoc --go_out=./proto --go-grpc_out=./proto ./proto/filecrypt.proto
-
-go-swagger:
-	# https://github.com/go-swagger/go-swagger
-	./tools/swagger_linux_amd64 generate spec -o login/web/assets/swagger/swagger.json -m -w ./login/api
-	./tools/swagger_linux_amd64 generate spec -o bookmarks/assets/swagger/swagger.json -m -w ./bookmarks/server/api
 
 go-build:
 	@echo "  >  Building the monorepo ..."

@@ -5,10 +5,12 @@ FROM golang:alpine AS BACKEND-BUILD
 ARG buildtime_variable_version=1.0.0
 ARG buildtime_variable_timestamp=20220101
 ARG buildtime_variable_commit=dev
+ARG buildtime_variable_arch=amd64
 
 ENV VERSION=${buildtime_variable_version}
 ENV TSTAMP=${buildtime_variable_timestamp}
 ENV COMMIT=${buildtime_variable_commit}
+ENV ARCH=${buildtime_variable_arch}
 
 WORKDIR /backend-build
 COPY ./cmd ./cmd
@@ -20,7 +22,7 @@ COPY ./pkg ./pkg
 # necessary to build sqlite3
 RUN apk add build-base
 
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o bookmarks.api ./cmd/bookmarks/server/*.go
+RUN GOOS=linux GOARCH=${ARCH} go build -ldflags="-s -w -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o bookmarks.api ./cmd/bookmarks/server/*.go
 ## --------------------------------------------------------------------------
 
 ## runtime

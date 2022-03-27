@@ -2,12 +2,15 @@
 ## --------------------------------------------------------------------------
 FROM golang:alpine AS BACKEND-BUILD
 
+ARG buildtime_variable_arch=amd64
+ENV ARCH=${buildtime_variable_arch}
+
 WORKDIR /backend-build
 COPY ./cmd ./cmd
 COPY ./go.mod ./
 COPY ./go.sum ./
 COPY ./pkg ./pkg
-RUN GOOS=linux GOARCH=amd64 go build -o tokentest.server ./cmd/login/tokentest/*.go
+RUN GOOS=linux GOARCH=${ARCH} go build -o tokentest.server ./cmd/login/tokentest/*.go
 ## --------------------------------------------------------------------------
 
 ## runtime

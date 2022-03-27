@@ -86,7 +86,6 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
     this.state.setCurrentModule(AppModules.Bookmarks);
     this.subscriptions = [];
 
-
     // https://stackoverflow.com/questions/48628220/using-proper-css-media-queries-in-angular
     this.subscriptions.push(this.breakpointObserver
       .observe(['(min-width: 400px)'])
@@ -97,7 +96,6 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
           this.ellipsisVal = 20;
         }
     }));
-
   }
 
   ngOnDestroy() {

@@ -6,10 +6,12 @@ ARG buildtime_variable_version=2.0.0
 ARG buildtime_variable_timestamp=20220101
 ARG buildtime_variable_commit=dev
 ARG buildtime_variable_runtime=golang
+ARG buildtime_variable_arch=amd64
 
 ENV VERSION=${buildtime_variable_version}
 ENV TSTAMP=${buildtime_variable_timestamp}
 ENV COMMIT=${buildtime_variable_commit}
+ENV ARCH=${buildtime_variable_arch}
 
 WORKDIR /backend-build
 COPY ./go.mod ./
@@ -22,7 +24,7 @@ COPY ./proto ./proto
 # necessary to build sqlite3
 RUN apk add build-base
 
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o core.api ./internal/core/server.go
+RUN GOOS=linux GOARCH=${ARCH} go build -ldflags="-w -s -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o core.api ./internal/core/server.go
 ## --------------------------------------------------------------------------
 
 ## runtime

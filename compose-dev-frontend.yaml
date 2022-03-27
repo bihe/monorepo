@@ -6,11 +6,9 @@ services:
         build:
             context: ./
             dockerfile: ./tokentest.Dockerfile
+            args:
+                buildtime_variable_arch: $ARCH
         image: tokentest
-        networks:
-            - app-network
-        # ports:
-        #     - "4000:3000"
         restart:
             always
         environment:
@@ -26,11 +24,9 @@ services:
         build:
             context: .
             dockerfile: ./crypter.Dockerfile
+            args:
+                buildtime_variable_arch: $ARCH
         image: crypter
-        networks:
-            - app-network
-        #ports:
-        #    - "3333:3000/tcp"
         volumes:
             - ./internal/crypter:/opt/crypter/etc
             - ./_logs:/opt/crypter/logs
@@ -47,11 +43,9 @@ services:
         build:
             context: .
             dockerfile: ./core.Dockerfile
+            args:
+                buildtime_variable_arch: $ARCH
         image: core
-        networks:
-            - app-network
-        # ports:
-        #     - "3001:3000"
         volumes:
             - ./internal/core:/opt/core/etc
             - ./_logs:/opt/core/logs
@@ -78,11 +72,9 @@ services:
         build:
             context: .
             dockerfile: ./mydms.Dockerfile
+            args:
+                buildtime_variable_arch: $ARCH
         image: mydms
-        networks:
-            - app-network
-        # ports:
-        #     - "3002:3000"
         volumes:
             - ./internal/mydms:/opt/mydms/etc
             - ./_logs:/opt/mydms/logs
@@ -107,11 +99,9 @@ services:
         build:
             context: .
             dockerfile: ./bookmarks.Dockerfile
+            args:
+                buildtime_variable_arch: $ARCH
         image: bookmarks
-        networks:
-            - app-network
-        # ports:
-        #     - "3003:3000"
         volumes:
             - ./internal/bookmarks/etc:/opt/bookmarks/etc
             - ./_logs:/opt/bookmarks/logs
@@ -133,20 +123,18 @@ services:
         build:
             context: .
             dockerfile: ./frontend.dev.Dockerfile
+            args:
+                buildtime_variable_arch: $ARCH
         image: frontenddev
         volumes:
             - ./frontend:/opt/onefrontend
         restart:
             always
-        networks:
-            - app-network
 
     ## caddy reverse-proxies the development frontend container-imager
     ## therefor just the one-and-only exposed port (apart from the DB) is the https/443 port of caddy
     caddy-frontend-443:
         image: caddy:2-alpine
-        networks:
-            - app-network
         ports:
             - "443:443"
         volumes:
@@ -154,6 +142,3 @@ services:
             - ./caddy/certs:/opt/caddy/certs
         restart:
             on-failure
-
-networks:
-    app-network: {}

@@ -192,8 +192,9 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
               var items = data.value;
               if (this.currentPath === readLaterPath) {
                 console.log('read later');
-                // in the Read-Later folder we sort the items by highlight and date of creationl
-                items.sort(this.fieldSorter(['-highlight', 'created']));
+                // in the Read-Later folder we sort the items by highlight and date of creation
+                // the "newest" entries should be put on top
+                items.sort(this.fieldSorter(['-highlight', '-created']));
               }
               this.bookmarks = items;
             } else {
@@ -293,7 +294,7 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
             if (path === readLaterPath) {
               console.log('read later');
               // in the Read-Later folder we sort the items by highlight and date of creationl
-              items.sort(this.fieldSorter(['-highlight', 'created']));
+              items.sort(this.fieldSorter(['-highlight', '-created']));
             }
             this.bookmarks = items;
           } else {

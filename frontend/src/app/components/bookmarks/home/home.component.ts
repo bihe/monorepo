@@ -294,7 +294,7 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
             if (path === readLaterPath) {
               console.log('read later');
               // in the Read-Later folder we sort the items by highlight and date of creationl
-              items.sort(this.fieldSorter(['-highlight', 'created']));
+              items.sort(this.fieldSorter(['-highlight', '-created']));
             }
             this.bookmarks = items;
           } else {

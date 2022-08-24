@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"golang.binggl.net/monorepo/pkg/cookies"
@@ -68,6 +69,9 @@ func (h *healthCheck) Check(user security.User) (handler.HealthCheck, error) {
 	}, nil
 }
 
+const journalMode = "_journal_mode"
+const journalModeValue = "WAL"
+
 // Create instantiates a new Server instance
 func Create(basePath string, config config.AppConfig, version bookmarks.VersionInfo, logger logging.Logger) *Server {
 	base, err := filepath.Abs(basePath)
@@ -77,11 +81,32 @@ func Create(basePath string, config config.AppConfig, version bookmarks.VersionI
 
 	// setup repository
 	// ------------------------------------------------------------------
-	// persistence store && application version
-	con, err := gorm.Open(sqlite.Open(config.Database.ConnectionString), &gorm.Config{})
+	// persistence store
+
+	// Documentation for DNS based SQLITE PRAGMAS: https://github.com/mattn/go-sqlite3
+	// add the WAL mode for SQLITE
+	dbConnStr := config.Database.ConnectionString
+	if !strings.Contains(dbConnStr, journalMode) {
+		paramDelim := "?"
+		if strings.Contains(dbConnStr, "?") {
+			paramDelim = "&"
+		}
+		dbConnStr += fmt.Sprintf("%s%s=%s", paramDelim, journalMode, journalModeValue)
+	}
+
+	con, err := gorm.Open(sqlite.Open(dbConnStr), &gorm.Config{})
 	if err != nil {
 		panic(fmt.Sprintf("cannot create database connection: %v", err))
 	}
+
+	db, err := con.DB()
+	if err != nil {
+		panic(fmt.Sprintf("cannot access underlying database: %v", err))
+	}
+	// this is done because of SQLITE WAL
+	// found here: https://stackoverflow.com/questions/35804884/sqlite-concurrent-writing-performance
+	db.SetMaxOpenConns(1)
+
 	repository := store.Create(con, logger)
 
 	// setup handlers for API

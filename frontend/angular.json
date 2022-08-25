@@ -135,7 +135,6 @@
       }
     }
   },
-  "defaultProject": "onefrontend-ui",
   "cli": {
     "analytics": false
   }

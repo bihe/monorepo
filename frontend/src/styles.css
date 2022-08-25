@@ -1,7 +1,6 @@
 /* You can add global styles to this file, and also import other style files */
 @import '@angular/material/prebuilt-themes/deeppurple-amber.css';
-@import 'https://fonts.googleapis.com/icon?family=Material+Icons';
-@import url('https://fonts.googleapis.com/css?family=Roboto+Mono|Source+Code+Pro&display=swap');
+@import url('assets/fonts/local.css');
 
 .success {
   background-color: #27AE60 !important;

@@ -1,6 +1,6 @@
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
@@ -55,11 +55,11 @@ export class MyDmsDocumentComponent implements OnInit, OnDestroy {
   removable = true;
   separatorKeysCodes: number[] = [ENTER, COMMA];
 
-  tagCtrl = new FormControl();
+  tagCtrl = new UntypedFormControl();
   filteredTags: string[];
   @ViewChild('tagInput') tagInput: ElementRef<HTMLInputElement>;
 
-  senderCtrl = new FormControl();
+  senderCtrl = new UntypedFormControl();
   filteredSenders: string[];
   @ViewChild('senderInput') senderInput: ElementRef<HTMLInputElement>;
 
@@ -429,7 +429,7 @@ export class MyDmsDocumentComponent implements OnInit, OnDestroy {
 
 
 
-  private _add(event: MatChipInputEvent, target: string[], form: FormControl): void {
+  private _add(event: MatChipInputEvent, target: string[], form: UntypedFormControl): void {
     const input = event.input;
     const value = event.value;
 
@@ -446,7 +446,7 @@ export class MyDmsDocumentComponent implements OnInit, OnDestroy {
     form.setValue(null);
   }
 
-  private _selected(event: MatAutocompleteSelectedEvent, target: string[], form: FormControl, elem: ElementRef<HTMLInputElement>): void {
+  private _selected(event: MatAutocompleteSelectedEvent, target: string[], form: UntypedFormControl, elem: ElementRef<HTMLInputElement>): void {
     target.push(event.option.viewValue);
     elem.nativeElement.value = '';
     form.setValue(null);

@@ -46,10 +46,12 @@ dev-frontend: ## start the development angular-frontend
 
 compose-dev: ## start the microservices for development of frontend
 	@echo "  >  Starting docker containers for development..."
+	@echo "  >  Remember to set the env-var ARCH. Linux=amd64, MacM1=arm64"
 	docker compose -f compose-dev-frontend.yaml rm && docker compose -f compose-dev-frontend.yaml up --build
 
 compose-int: ## start the whole application for integration testing
 	@echo "  >  Starting docker containers for integration ..."
+	@echo "  >  Remember to set the env-var ARCH. Linux=amd64, MacM1=arm64"
 	docker compose -f compose-integration.yaml rm && docker compose -f compose-integration.yaml up --build
 
 

@@ -2,6 +2,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -43,4 +44,10 @@ func (h *Handler) Call(f func(w http.ResponseWriter, r *http.Request) error) htt
 			return
 		}
 	})
+}
+
+// RespondJSON returns a JSON formatted payload
+func RespondJSON(w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	return json.NewEncoder(w).Encode(response)
 }

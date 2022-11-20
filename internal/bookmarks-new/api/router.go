@@ -39,6 +39,24 @@ func MakeHTTPHandler(store store.Repository, logger logging.Logger, opts HTTPHan
 		r.Get("/whoami", appInfoHandler.handleWhoAmI())
 		return r
 	}())
+
+	// // group API methods together
+	// r.Route("/api/v1/bookmarks", func(r chi.Router) {
+	// 	r.Mount("/hc", s.healthCheck.GetHandler())
+
+	// 	r.Post("/", s.bookmarkAPI.Secure(s.bookmarkAPI.Create))
+	// 	r.Put("/", s.bookmarkAPI.Secure(s.bookmarkAPI.Update))
+	// 	r.Put("/sortorder", s.bookmarkAPI.Secure(s.bookmarkAPI.UpdateSortOrder))
+	// 	r.Delete("/{id}", s.bookmarkAPI.Secure(s.bookmarkAPI.Delete))
+	// 	r.Get("/{id}", s.bookmarkAPI.Secure(s.bookmarkAPI.GetBookmarkByID))
+	// 	r.Get("/bypath", s.bookmarkAPI.Secure(s.bookmarkAPI.GetBookmarksByPath))
+	// 	r.Get("/allpaths", s.bookmarkAPI.Secure(s.bookmarkAPI.GetAllPaths))
+	// 	r.Get("/folder", s.bookmarkAPI.Secure(s.bookmarkAPI.GetBookmarksFolderByPath))
+	// 	r.Get("/byname", s.bookmarkAPI.Secure(s.bookmarkAPI.GetBookmarksByName))
+	// 	r.Get("/fetch/{id}", s.bookmarkAPI.Secure(s.bookmarkAPI.FetchAndForward))
+	// 	r.Get("/favicon/{id}", s.bookmarkAPI.Secure(s.bookmarkAPI.GetFavicon))
+	// })
+
 	// sec.Mount("/sites", func() http.Handler {
 	// 	r := chi.NewRouter()
 	// 	r.Get("/", sitesHandler.handleGetSitesForUser())

@@ -1,8 +1,14 @@
 package bookmarks
 
 import (
+	"crypto/sha1"
 	"fmt"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
 
+	"golang.binggl.net/monorepo/internal/bookmarks-new/app/favicon"
 	"golang.binggl.net/monorepo/internal/bookmarks-new/app/store"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
@@ -10,12 +16,69 @@ import (
 
 // Service implements the bookmarks logic
 type Service struct {
+	// Logger instance to use for structured logging
 	Logger logging.Logger
-	Store  store.Repository
+	// Store defines a repository for persistance
+	Store store.Repository
+	// FaviconPath defines a path on disk to store a favicon
+	FaviconPath string
 }
 
-// GetBookmark retrieves a bookmark for the given user
-func (s *Service) GetBookmark(id string, user security.User) (*Bookmark, error) {
+// CreateBookmark stores a new bookmark
+func (s *Service) CreateBookmark(bm Bookmark, user security.User) (*Bookmark, error) {
+	var (
+		savedItem store.Bookmark
+		t         store.NodeType
+	)
+
+	if bm.Path == "" || bm.DisplayName == "" {
+		s.Logger.Error("required fields of bookmarks missing (Path or DisplayName)")
+		return nil, fmt.Errorf("invalid request data supplied, missing Path or DisplayName")
+	}
+
+	if bm.Type == Folder {
+		t = store.Folder
+	}
+
+	if err := s.Store.InUnitOfWork(func(repo store.Repository) error {
+		item, err := repo.Create(store.Bookmark{
+			DisplayName: bm.DisplayName,
+			Path:        bm.Path,
+			Type:        t,
+			URL:         bm.URL,
+			UserName:    user.Username,
+			Favicon:     bm.Favicon,
+			SortOrder:   bm.SortOrder,
+			Highlight:   bm.Highlight,
+		})
+		if err != nil {
+			return err
+		}
+		savedItem = item
+		return nil
+	}); err != nil {
+		s.Logger.Error(fmt.Sprintf("could not create a new bookmark: %v", err))
+		return nil, fmt.Errorf("error creating a new bookmark: %v", err)
+	}
+
+	if bm.CustomFavicon != "" {
+		// fire&forget, run this in background and do not wait for the result
+		go s.FetchFaviconURL(bm.CustomFavicon, savedItem, user)
+	} else {
+		// if no specific favicon was supplied, immediately fetch one
+		if savedItem.Favicon == "" && savedItem.Type == store.Node {
+			// fire&forget, run this in background and do not wait for the result
+			go s.FetchFavicon(savedItem, user)
+		}
+	}
+
+	id := savedItem.ID
+	s.Logger.Info(fmt.Sprintf("bookmark created with ID: %s", id))
+	return entityToModel(savedItem), nil
+}
+
+// GetBookmarkByID retrieves a bookmark for the given user
+func (s *Service) GetBookmarkByID(id string, user security.User) (*Bookmark, error) {
 	if id == "" {
 		return nil, fmt.Errorf("no id supplied to fetch bookmark")
 	}
@@ -27,77 +90,146 @@ func (s *Service) GetBookmark(id string, user security.User) (*Bookmark, error) 
 	return entityToModel(bm), nil
 }
 
-// func (b *BookmarksAPI) GetBookmarkByID(user security.User, w http.ResponseWriter, r *http.Request) error {
-// 	id := chi.URLParam(r, "id")
+// GetBookmarksByPath retrieves bookmarks by a given path
+func (s *Service) GetBookmarksByPath(path string, user security.User) ([]Bookmark, error) {
+	if path == "" {
+		return nil, fmt.Errorf("missing path")
+	}
 
-// 	if id == "" {
-// 		return errors.BadRequestError{Err: fmt.Errorf("missing id parameter"), Request: r}
-// 	}
-// 	b.Log.InfoRequest(fmt.Sprintf("try to get bookmark by ID: '%s' for user: '%s'", id, user.Username), r)
-// 	bookmark, err := b.Repository.GetBookmarkByID(id, user.Username)
-// 	if err != nil {
-// 		b.Log.InfoRequest(fmt.Sprintf("try to get bookmark by ID: '%s' for user: '%s'", id, user.Username), r)
-// 		return errors.NotFoundError{Err: fmt.Errorf("no bookmark with ID '%s' avaliable", id), Request: r}
-// 	}
+	s.Logger.Info(fmt.Sprintf("get bookmarks by path: '%s' for user: '%s'", path, user.Username))
 
-// 	return render.Render(w, r, BookmarkResponse{Bookmark: entityToModel(bookmark)})
-// }
+	bms, err := s.Store.GetBookmarksByPath(path, user.Username)
+	if err != nil {
+		s.Logger.Error(fmt.Sprintf("cannot get bookmark by path: '%s', %v", path, err))
+	}
+	return entityListToModel(bms), nil
+}
 
-// // GetBookmarksByPath retrieves bookmarks by path
-// // swagger:operation GET /api/v1/bookmarks/bypath bookmarks GetBookmarksByPath
-// //
-// // get bookmarks by path
-// //
-// // returns a list of bookmarks for a given path
-// //
-// // ---
-// // produces:
-// // - application/json
-// // parameters:
-// // - name: path
-// //   in: query
-// // responses:
-// //   '200':
-// //     description: BookmarkList
-// //     schema:
-// //       "$ref": "#/definitions/BookmarkList"
-// //   '400':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// //   '401':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// //   '403':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// func (b *BookmarksAPI) GetBookmarksByPath(user security.User, w http.ResponseWriter, r *http.Request) error {
-// 	path := r.URL.Query().Get("path")
+// ---- Favicon Logic ----
 
-// 	if path == "" {
-// 		return errors.BadRequestError{Err: fmt.Errorf("missing path parameter"), Request: r}
-// 	}
+// FetchFaviconURL retrieves the favicon from the given URL
+func (s *Service) FetchFaviconURL(url string, bm store.Bookmark, user security.User) {
+	payload, err := favicon.FetchURL(url)
+	if err != nil {
+		s.Logger.Error(fmt.Sprintf("cannot fetch favicon from URL '%s': %v", url, err))
+		return
+	}
+	favicon := ""
+	parts := strings.Split(url, "/")
+	if len(parts) > 0 {
+		favicon = parts[len(parts)-1] // last element
+	} else {
+		s.Logger.Error(fmt.Sprintf("cannot get favicon-filename from URL '%s': %v", url, err))
+		return
+	}
 
-// 	b.Log.InfoRequest(fmt.Sprintf("get bookmarks by path: '%s' for user: '%s'", path, user.Username), r)
+	if len(payload) > 0 {
+		s.Logger.Info(fmt.Sprintf("got favicon payload length of '%d' for URL '%s'", len(payload), url))
+		hashPayload, err := hashInput(payload)
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("could not hash payload: '%v'", err))
+			return
+		}
+		hashFilename, err := hashInput([]byte(favicon))
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("could not hash filename: '%v'", err))
+			return
+		}
+		ext := filepath.Ext(favicon)
+		filename := fmt.Sprintf("%s_%s%s", hashFilename, hashPayload, ext)
+		fullPath := path.Join(s.FaviconPath, filename)
 
-// 	bms, err := b.Repository.GetBookmarksByPath(path, user.Username)
-// 	var bookmarks []Bookmark
-// 	if err != nil {
-// 		b.Log.ErrorRequest(fmt.Sprintf("cannot get bookmark by path: '%s', %v", path, err), r)
-// 	}
-// 	bookmarks = entityListToModel(bms)
-// 	count := len(bookmarks)
-// 	result := BookmarkList{
-// 		Success: true,
-// 		Count:   count,
-// 		Message: fmt.Sprintf("Found %d items.", count),
-// 		Value:   bookmarks,
-// 	}
+		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+			if err := os.WriteFile(fullPath, payload, 0644); err != nil {
+				s.Logger.Error(fmt.Sprintf("could not write favicon to file '%s': %v", fullPath, err))
+				return
+			}
+		}
 
-// 	return render.Render(w, r, BookmarkListResponse{BookmarkList: &result})
-// }
+		// also update the favicon for the bookmark
+		if err := s.Store.InUnitOfWork(func(repo store.Repository) error {
+			bm.Favicon = filename
+			_, err := repo.Update(bm)
+			return err
+		}); err != nil {
+			s.Logger.Error(fmt.Sprintf("could not update bookmark with favicon '%s': %v", filename, err))
+		}
+
+	} else {
+		s.Logger.Error(fmt.Sprintf("not payload for favicon from URL '%s'", url))
+	}
+}
+
+// FetchFavicon retrieves the Favicon from the bookmarks URL
+func (s *Service) FetchFavicon(bm store.Bookmark, user security.User) {
+	favicon, payload, err := favicon.GetFaviconFromURL(bm.URL)
+	if err != nil {
+		s.Logger.Error(fmt.Sprintf("cannot fetch favicon from URL '%s': %v", bm.URL, err))
+		return
+	}
+
+	if len(payload) > 0 {
+		s.Logger.Info(fmt.Sprintf("got favicon payload length of '%d' for URL '%s'", len(payload), bm.URL))
+		hashPayload, err := hashInput(payload)
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("could not hash payload: '%v'", err))
+			return
+		}
+		hashFilename, err := hashInput([]byte(favicon))
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("could not hash filename: '%v'", err))
+			return
+		}
+		ext := filepath.Ext(favicon)
+		filename := fmt.Sprintf("%s_%s%s", hashFilename, hashPayload, ext)
+		fullPath := path.Join(s.FaviconPath, filename)
+
+		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+			if err := os.WriteFile(fullPath, payload, 0644); err != nil {
+				s.Logger.Error(fmt.Sprintf("could not write favicon to file '%s': %v", fullPath, err))
+				return
+			}
+		}
+
+		// also update the favicon for the bookmark
+		if err := s.Store.InUnitOfWork(func(repo store.Repository) error {
+			bm.Favicon = filename
+			_, err := repo.Update(bm)
+			return err
+		}); err != nil {
+			s.Logger.Error(fmt.Sprintf("could not update bookmark with favicon '%s': %v", filename, err))
+		}
+
+	} else {
+		s.Logger.Error(fmt.Sprintf("no payload for favicon from URL '%s'", bm.URL))
+	}
+}
+
+// ---- Internals ----
+
+func hashInput(input []byte) (string, error) {
+	hash := sha1.New()
+	if _, err := hash.Write(input); err != nil {
+		return "", fmt.Errorf("could not hash input: %v", err)
+	}
+	bs := hash.Sum(nil)
+	return fmt.Sprintf("%x", bs), nil
+}
+
+// EnsureFolderPath takes care that the supplied path is valid
+// e.g. it does not start with two slashes '//' and that the resulting
+// path is valid, with all necessary delimitors
+func ensureFolderPath(path, displayName string) string {
+	folderPath := path
+	if !strings.HasSuffix(path, "/") {
+		folderPath = path + "/"
+	}
+	if strings.HasPrefix(folderPath, "//") {
+		folderPath = strings.ReplaceAll(folderPath, "//", "/")
+	}
+	folderPath += displayName
+	return folderPath
+}
 
 // // GetBookmarksFolderByPath retrieve bookmark folder by path
 // // swagger:operation GET /api/v1/bookmarks/folder bookmarks GetBookmarksFolderByPath
@@ -266,104 +398,6 @@ func (s *Service) GetBookmark(id string, user security.User) (*Bookmark, error) 
 // 	}
 
 // 	return render.Render(w, r, BookmarkListResponse{BookmarkList: &result})
-// }
-
-// // Create a new bookmark
-// // swagger:operation POST /api/v1/bookmarks bookmarks CreateBookmark
-// //
-// // create a bookmark
-// //
-// // use the supplied payload to create a new bookmark
-// //
-// // ---
-// // consumes:
-// // - application/json
-// // produces:
-// // - application/json
-// // responses:
-// //   '200':
-// //     description: Result
-// //     schema:
-// //       "$ref": "#/definitions/Result"
-// //   '400':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// //   '401':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// //   '403':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// func (b *BookmarksAPI) Create(user security.User, w http.ResponseWriter, r *http.Request) error {
-// 	var (
-// 		savedItem store.Bookmark
-// 		payload   *BookmarkRequest
-// 		t         store.NodeType
-// 	)
-
-// 	payload = &BookmarkRequest{}
-// 	if err := render.Bind(r, payload); err != nil {
-// 		b.Log.ErrorRequest(fmt.Sprintf("cannot bind payload: '%v'", err), r)
-// 		return errors.BadRequestError{Err: fmt.Errorf("invalid request data supplied"), Request: r}
-// 	}
-
-// 	if payload.Path == "" || payload.DisplayName == "" {
-// 		b.Log.ErrorRequest("required fields of bookmarks missing", r)
-// 		return errors.BadRequestError{Err: fmt.Errorf("invalid request data supplied, missing Path or DisplayName"), Request: r}
-// 	}
-
-// 	b.Log.InfoRequest(fmt.Sprintf("will try to create a new bookmark entry: '%s'", payload), r)
-
-// 	t = store.Node
-// 	if payload.Type == Folder {
-// 		t = store.Folder
-// 	}
-
-// 	if err := b.Repository.InUnitOfWork(func(repo store.Repository) error {
-// 		item, err := repo.Create(store.Bookmark{
-// 			DisplayName: payload.DisplayName,
-// 			Path:        payload.Path,
-// 			Type:        t,
-// 			URL:         payload.URL,
-// 			UserName:    user.Username,
-// 			Favicon:     payload.Favicon,
-// 			SortOrder:   payload.SortOrder,
-// 			Highlight:   payload.Highlight,
-// 		})
-// 		if err != nil {
-// 			return err
-// 		}
-// 		savedItem = item
-// 		return nil
-// 	}); err != nil {
-// 		b.Log.ErrorRequest(fmt.Sprintf("could not create a new bookmark: %v", err), r)
-// 		return errors.ServerError{Err: fmt.Errorf("error creating a new bookmark: %v", err), Request: r}
-// 	}
-
-// 	if payload.CustomFavicon != "" {
-// 		// fire&forget, run this in background and do not wait for the result
-// 		go b.FetchFaviconURL(payload.CustomFavicon, savedItem, user)
-// 	} else {
-// 		// if no specific favicon was supplied, immediately fetch one
-// 		if savedItem.Favicon == "" && savedItem.Type == store.Node {
-// 			// fire&forget, run this in background and do not wait for the result
-// 			go b.FetchFavicon(savedItem, user)
-// 		}
-// 	}
-
-// 	id := savedItem.ID
-// 	b.Log.InfoRequest(fmt.Sprintf("bookmark created with ID: %s", id), r)
-// 	return render.Render(w, r, ResultResponse{
-// 		Result: &Result{
-// 			Success: true,
-// 			Message: fmt.Sprintf("Bookmark created with ID '%s'", id),
-// 			Value:   id,
-// 		},
-// 		Status: http.StatusCreated,
-// 	})
 // }
 
 // // Update a bookmark
@@ -861,126 +895,4 @@ func (s *Service) GetBookmark(id string, user security.User) (*Bookmark, error) 
 
 // 	http.ServeFile(w, r, fullPath)
 // 	return nil
-// }
-
-// // FetchFaviconURL retrieves the favicon from the given URL
-// func (b *BookmarksAPI) FetchFaviconURL(url string, bm store.Bookmark, user security.User) {
-// 	payload, err := favicon.FetchURL(url)
-// 	if err != nil {
-// 		b.Log.Error(fmt.Sprintf("cannot fetch favicon from URL '%s': %v", url, err))
-// 		return
-// 	}
-// 	favicon := ""
-// 	parts := strings.Split(url, "/")
-// 	if len(parts) > 0 {
-// 		favicon = parts[len(parts)-1] // last element
-// 	} else {
-// 		b.Log.Error(fmt.Sprintf("cannot get favicon-filname from URL '%s': %v", url, err))
-// 		return
-// 	}
-
-// 	if len(payload) > 0 {
-// 		b.Log.Info(fmt.Sprintf("got favicon payload length of '%d' for URL '%s'", len(payload), url))
-// 		hashPayload, err := hashInput(payload)
-// 		if err != nil {
-// 			b.Log.Error(fmt.Sprintf("could not hash payload: '%v'", err))
-// 			return
-// 		}
-// 		hashFilename, err := hashInput([]byte(favicon))
-// 		if err != nil {
-// 			b.Log.Error(fmt.Sprintf("could not hash filename: '%v'", err))
-// 			return
-// 		}
-// 		ext := filepath.Ext(favicon)
-// 		filename := fmt.Sprintf("%s_%s%s", hashFilename, hashPayload, ext)
-// 		fullPath := path.Join(b.BasePath, b.FaviconPath, filename)
-
-// 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-// 			if err := ioutil.WriteFile(fullPath, payload, 0644); err != nil {
-// 				b.Log.Error(fmt.Sprintf("could not write favicon to file '%s': %v", fullPath, err))
-// 				return
-// 			}
-// 		}
-
-// 		// also update the favicon for the bookmark
-// 		if err := b.Repository.InUnitOfWork(func(repo store.Repository) error {
-// 			bm.Favicon = filename
-// 			_, err := repo.Update(bm)
-// 			return err
-// 		}); err != nil {
-// 			b.Log.Error(fmt.Sprintf("could not update bookmark with favicon '%s': %v", filename, err))
-// 		}
-
-// 	} else {
-// 		b.Log.Error(fmt.Sprintf("not payload for favicon from URL '%s'", url))
-// 	}
-// }
-
-// // FetchFavicon retrieves the Favion from the bookmarks URL
-// func (b *BookmarksAPI) FetchFavicon(bm store.Bookmark, user security.User) {
-// 	favicon, payload, err := favicon.GetFaviconFromURL(bm.URL)
-// 	if err != nil {
-// 		b.Log.Error(fmt.Sprintf("cannot fetch favicon from URL '%s': %v", bm.URL, err))
-// 		return
-// 	}
-
-// 	if len(payload) > 0 {
-// 		b.Log.Info(fmt.Sprintf("got favicon payload length of '%d' for URL '%s'", len(payload), bm.URL))
-// 		hashPayload, err := hashInput(payload)
-// 		if err != nil {
-// 			b.Log.Error(fmt.Sprintf("could not hash payload: '%v'", err))
-// 			return
-// 		}
-// 		hashFilename, err := hashInput([]byte(favicon))
-// 		if err != nil {
-// 			b.Log.Error(fmt.Sprintf("could not hash filename: '%v'", err))
-// 			return
-// 		}
-// 		ext := filepath.Ext(favicon)
-// 		filename := fmt.Sprintf("%s_%s%s", hashFilename, hashPayload, ext)
-// 		fullPath := path.Join(b.BasePath, b.FaviconPath, filename)
-
-// 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-// 			if err := ioutil.WriteFile(fullPath, payload, 0644); err != nil {
-// 				b.Log.Error(fmt.Sprintf("could not write favicon to file '%s': %v", fullPath, err))
-// 				return
-// 			}
-// 		}
-
-// 		// also update the favicon for the bookmark
-// 		if err := b.Repository.InUnitOfWork(func(repo store.Repository) error {
-// 			bm.Favicon = filename
-// 			_, err := repo.Update(bm)
-// 			return err
-// 		}); err != nil {
-// 			b.Log.Error(fmt.Sprintf("could not update bookmark with favicon '%s': %v", filename, err))
-// 		}
-
-// 	} else {
-// 		b.Log.Error(fmt.Sprintf("no payload for favicon from URL '%s'", bm.URL))
-// 	}
-// }
-
-// func hashInput(input []byte) (string, error) {
-// 	hash := sha1.New()
-// 	if _, err := hash.Write(input); err != nil {
-// 		return "", fmt.Errorf("could not hash input: %v", err)
-// 	}
-// 	bs := hash.Sum(nil)
-// 	return fmt.Sprintf("%x", bs), nil
-// }
-
-// // EnsureFolderPath takes care that the supplied path is valid
-// // e.g. it does not start with two slashes '//' and that the resulting
-// // path is valid, with all necessary delimitors
-// func ensureFolderPath(path, displayName string) string {
-// 	folderPath := path
-// 	if !strings.HasSuffix(path, "/") {
-// 		folderPath = path + "/"
-// 	}
-// 	if strings.HasPrefix(folderPath, "//") {
-// 		folderPath = strings.ReplaceAll(folderPath, "//", "/")
-// 	}
-// 	folderPath += displayName
-// 	return folderPath
 // }

@@ -119,9 +119,9 @@ func tryFaviconDefinitions(page []byte) (string, error) {
 		iconUrl string
 		err     error
 	)
-	iconUrl, err = parseFavicon(page, "icon")
+	iconUrl, err = parseFavicon(page, "shortcut icon")
 	if err != nil {
-		iconUrl, err = parseFavicon(page, "shortcut icon")
+		iconUrl, err = parseFavicon(page, "icon")
 	}
 	return iconUrl, err
 }
@@ -139,8 +139,9 @@ func parseFavicon(page []byte, faviconDef string) (string, error) {
 		return "", fmt.Errorf("could not parse page: %v", err)
 	}
 
-	doc.Find(fmt.Sprintf(`link[rel="%s"]`, faviconDef)).Each(func(i int, s *goquery.Selection) {
+	doc.Find(fmt.Sprintf(`link[rel="%s"]`, faviconDef)).EachWithBreak(func(i int, s *goquery.Selection) bool {
 		iconUrl, ok = s.Attr("href")
+		return !ok
 	})
 	if iconUrl == "" || !ok {
 		return "", fmt.Errorf("could not find a favicon definition on page")

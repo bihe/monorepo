@@ -105,6 +105,57 @@ func (s *Service) GetBookmarksByPath(path string, user security.User) ([]Bookmar
 	return entityListToModel(bms), nil
 }
 
+// GetBookmarksFolderByPath returns the folder identified by the given path
+func (s *Service) GetBookmarksFolderByPath(path string, user security.User) (*Bookmark, error) {
+	if path == "" {
+		return nil, fmt.Errorf("missing path parameter")
+	}
+
+	s.Logger.Info(fmt.Sprintf("get bookmarks-folder by path: '%s' for user: '%s'", path, user.Username))
+	if path == "/" {
+		// special treatment for the root path. This path is ALWAYS available
+		// and does not have a specific storage entry - this is by convention
+		return &Bookmark{
+			DisplayName: "Root",
+			Path:        "/",
+			Type:        Folder,
+			ID:          fmt.Sprintf("%s_ROOT", user.Username),
+		}, nil
+	}
+	bm, err := s.Store.GetFolderByPath(path, user.Username)
+	if err != nil {
+		s.Logger.Error(fmt.Sprintf("cannot get bookmark folder by path: '%s', %v", path, err))
+		return nil, fmt.Errorf("no folder for path '%s' found", path)
+	}
+
+	return entityToModel(bm), nil
+}
+
+// GetAllPaths returns all available stored paths
+func (s *Service) GetAllPaths(user security.User) ([]string, error) {
+	paths, err := s.Store.GetAllPaths(user.Username)
+	if err != nil {
+		s.Logger.Error(fmt.Sprintf("cannot get all bookmark paths: %v", err))
+		return make([]string, 0), fmt.Errorf("cannot get all bookmark paths")
+	}
+	return paths, nil
+}
+
+func (s *Service) GetBookmarksByName(name string, user security.User) ([]Bookmark, error) {
+	if name == "" {
+		return make([]Bookmark, 0), fmt.Errorf("missing name parameter")
+	}
+
+	s.Logger.Info(fmt.Sprintf("get bookmarks by name: '%s' for user: '%s'", name, user.Username))
+	bms, err := s.Store.GetBookmarksByName(name, user.Username)
+	var bookmarks []Bookmark
+	if err != nil {
+		s.Logger.Error(fmt.Sprintf("cannot get bookmark by name: '%s', %v", name, err))
+	}
+	bookmarks = entityListToModel(bms)
+	return bookmarks, nil
+}
+
 // ---- Favicon Logic ----
 
 // FetchFaviconURL retrieves the favicon from the given URL
@@ -218,7 +269,7 @@ func hashInput(input []byte) (string, error) {
 
 // EnsureFolderPath takes care that the supplied path is valid
 // e.g. it does not start with two slashes '//' and that the resulting
-// path is valid, with all necessary delimitors
+// path is valid, with all necessary delimiters
 func ensureFolderPath(path, displayName string) string {
 	folderPath := path
 	if !strings.HasSuffix(path, "/") {
@@ -230,175 +281,6 @@ func ensureFolderPath(path, displayName string) string {
 	folderPath += displayName
 	return folderPath
 }
-
-// // GetBookmarksFolderByPath retrieve bookmark folder by path
-// // swagger:operation GET /api/v1/bookmarks/folder bookmarks GetBookmarksFolderByPath
-// //
-// // get bookmark folder by path
-// //
-// // returns the folder identified by the given path
-// //
-// // ---
-// // produces:
-// // - application/json
-// // parameters:
-// // - name: path
-// //   in: query
-// // responses:
-// //   '200':
-// //     description: BookmarkResult
-// //     schema:
-// //       "$ref": "#/definitions/BookmarkResult"
-// //   '400':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// //   '404':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// //   '401':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// //   '403':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// func (b *BookmarksAPI) GetBookmarksFolderByPath(user security.User, w http.ResponseWriter, r *http.Request) error {
-// 	path := r.URL.Query().Get("path")
-
-// 	if path == "" {
-// 		return errors.BadRequestError{Err: fmt.Errorf("missing path parameter"), Request: r}
-// 	}
-
-// 	b.Log.InfoRequest(fmt.Sprintf("get bookmarks-folder by path: '%s' for user: '%s'", path, user.Username), r)
-// 	if path == "/" {
-// 		// special treatment for the root path. This path is ALWAYS available
-// 		// and does not have a specific storage entry - this is by convention
-// 		return render.Render(w, r, BookmarResultResponse{BookmarkResult: &BookmarkResult{
-// 			Success: true,
-// 			Message: fmt.Sprintf("Found bookmark folder for path %s.", path),
-// 			Value: Bookmark{
-// 				DisplayName: "Root",
-// 				Path:        "/",
-// 				Type:        Folder,
-// 				ID:          fmt.Sprintf("%s_ROOT", user.Username),
-// 			},
-// 		}})
-// 	}
-
-// 	bm, err := b.Repository.GetFolderByPath(path, user.Username)
-// 	if err != nil {
-// 		b.Log.ErrorRequest(fmt.Sprintf("cannot get bookmark folder by path: '%s', %v", path, err), r)
-// 		return errors.NotFoundError{Err: fmt.Errorf("no folder for path '%s' found", path), Request: r}
-// 	}
-
-// 	return render.Render(w, r, BookmarResultResponse{BookmarkResult: &BookmarkResult{
-// 		Success: true,
-// 		Message: fmt.Sprintf("Found bookmark folder for path %s.", path),
-// 		Value:   *entityToModel(bm),
-// 	}})
-// }
-
-// // GetAllPaths returns all paths
-// // swagger:operation GET /api/v1/bookmarks/allpaths bookmarks GetAllPaths
-// //
-// // return all paths
-// //
-// // determine all available paths for the given user
-// //
-// // ---
-// // produces:
-// // - application/json
-// // responses:
-// //   '200':
-// //     description: BookmarksPathsResponse
-// //     schema:
-// //       "$ref": "#/definitions/BookmarksPathsResponse"
-// //   '400':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// //   '404':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// //   '401':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// //   '403':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// func (b *BookmarksAPI) GetAllPaths(user security.User, w http.ResponseWriter, r *http.Request) error {
-// 	paths, err := b.Repository.GetAllPaths(user.Username)
-// 	if err != nil {
-// 		b.Log.ErrorRequest(fmt.Sprintf("cannot get all bookmark paths: %v", err), r)
-// 		return errors.ServerError{Err: fmt.Errorf("cannot get all bookmark paths"), Request: r}
-// 	}
-
-// 	return render.Render(w, r, BookmarksPathsResponse{
-// 		Paths: paths,
-// 		Count: len(paths),
-// 	})
-// }
-
-// // GetBookmarksByName retrieve bookmarks by name
-// // swagger:operation GET /api/v1/bookmarks/byname bookmarks GetBookmarksByName
-// //
-// // get bookmarks by name
-// //
-// // search for bookmarks by name and return a list of search-results
-// //
-// // ---
-// // produces:
-// // - application/json
-// // parameters:
-// // - name: name
-// //   in: query
-// // responses:
-// //   '200':
-// //     description: BookmarkList
-// //     schema:
-// //       "$ref": "#/definitions/BookmarkList"
-// //   '400':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// //   '401':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// //   '403':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// func (b *BookmarksAPI) GetBookmarksByName(user security.User, w http.ResponseWriter, r *http.Request) error {
-// 	name := r.URL.Query().Get("name")
-
-// 	if name == "" {
-// 		return errors.BadRequestError{Err: fmt.Errorf("missing name parameter"), Request: r}
-// 	}
-
-// 	b.Log.InfoRequest(fmt.Sprintf("get bookmarks by name: '%s' for user: '%s'", name, user.Username), r)
-// 	bms, err := b.Repository.GetBookmarksByName(name, user.Username)
-// 	var bookmarks []Bookmark
-// 	if err != nil {
-// 		b.Log.ErrorRequest(fmt.Sprintf("cannot get bookmark by name: '%s', %v", name, err), r)
-// 	}
-// 	bookmarks = entityListToModel(bms)
-// 	count := len(bookmarks)
-// 	result := BookmarkList{
-// 		Success: true,
-// 		Count:   count,
-// 		Message: fmt.Sprintf("Found %d items.", count),
-// 		Value:   bookmarks,
-// 	}
-
-// 	return render.Render(w, r, BookmarkListResponse{BookmarkList: &result})
-// }
 
 // // Update a bookmark
 // // swagger:operation PUT /api/v1/bookmarks bookmarks UpdateBookmark

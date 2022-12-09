@@ -149,6 +149,154 @@ func Test_GetBookmarksByPath(t *testing.T) {
 	if len(bms) != 0 {
 		t.Error("there should be no bookmarks found by path")
 	}
+}
+
+func Test_GetBookmarksFolderByPath(t *testing.T) {
+	svc := service(t)
+	// create a bookmark path and retrieve the bookmarks of the given path
+	// Path: /folder/folder1
+	folder := uuid.NewString()
+	svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Folder,
+		DisplayName: folder,
+		Path:        "/",
+	}, user)
+	folder1 := uuid.NewString()
+	svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Folder,
+		DisplayName: folder1,
+		Path:        "/" + folder,
+	}, user)
+
+	// get the folder by path
+	f, err := svc.GetBookmarksFolderByPath("/"+folder+"/"+folder1, user)
+	if err != nil {
+		t.Errorf("did not expect error for GetBookmarksFolderByPath; %v", err)
+	}
+	if f.DisplayName != folder1 {
+		t.Errorf("wrong folder returned; %s", f.DisplayName)
+	}
+
+	// ---- ROOT ----
+	f, err = svc.GetBookmarksFolderByPath("/", user)
+	if err != nil {
+		t.Errorf("did not expect error for GetBookmarksFolderByPath; %v", err)
+	}
+	if f.DisplayName != "Root" {
+		t.Errorf("wrong folder returned; expected Root - got %s", f.DisplayName)
+	}
+
+	// ---- error ----
+	_, err = svc.GetBookmarksFolderByPath("", user)
+	if err == nil {
+		t.Error("error expected for empty path")
+	}
+
+	_, err = svc.GetBookmarksFolderByPath("/unknown", user)
+	if err == nil {
+		t.Error("error expected for unknown path")
+	}
+}
+
+func Test_GetAllPaths(t *testing.T) {
+	svc := service(t)
+	// /folder/folder1
+	// /folder/folder2
+	// /folder3
+	folder := uuid.NewString()
+	svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Folder,
+		DisplayName: folder,
+		Path:        "/",
+	}, user)
+	folder1 := uuid.NewString()
+	svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Folder,
+		DisplayName: folder1,
+		Path:        "/" + folder,
+	}, user)
+	folder2 := uuid.NewString()
+	svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Folder,
+		DisplayName: folder2,
+		Path:        "/" + folder,
+	}, user)
+	folder3 := uuid.NewString()
+	svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Folder,
+		DisplayName: folder3,
+		Path:        "/",
+	}, user)
+
+	paths, err := svc.GetAllPaths(user)
+	if err != nil {
+		t.Errorf("did not expect error for GetAllPaths; %v", err)
+	}
+	if len(paths) < 5 {
+		t.Errorf("expected number of entries but got %d", len(paths))
+	}
+
+	// ---- error ----
+	paths, _ = svc.GetAllPaths(security.User{})
+	if len(paths) != 0 {
+		t.Errorf("expected to get no results for unknown user - god %d!", len(paths))
+	}
+}
+
+func Test_GetBookmarksByName(t *testing.T) {
+	svc := service(t)
+	// /folder
+	// /folder/$aaa
+	// /folder/$bbb
+	// /folder/$aab
+	folder := uuid.NewString()
+	svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Folder,
+		DisplayName: folder,
+		Path:        "/",
+	}, user)
+	aaa := uuid.NewString()
+	svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		DisplayName: "$aaa" + aaa,
+		URL:         "http://www.aaa.com",
+		Path:        "/" + folder,
+	}, user)
+	bbb := uuid.NewString()
+	svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		DisplayName: "$bbb" + bbb,
+		URL:         "http://www.bbb.com",
+		Path:        "/" + folder,
+	}, user)
+	aab := uuid.NewString()
+	svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		DisplayName: "$aab" + aab,
+		URL:         "http://www.aab.com",
+		Path:        "/" + folder,
+	}, user)
+
+	bms, err := svc.GetBookmarksByName("$aa", user)
+	if err != nil {
+		t.Errorf("did not expect an error for GetBookmarksByName; %v", err)
+	}
+	if len(bms) != 2 {
+		t.Errorf("expected 2 entries but got %d", len(bms))
+	}
+	bms, err = svc.GetBookmarksByName("$bbb", user)
+	if err != nil {
+		t.Errorf("did not expect an error for GetBookmarksByName; %v", err)
+	}
+	if len(bms) != 1 {
+		t.Errorf("expected 1 entries but got %d", len(bms))
+	}
+
+	// ---- error ----
+	_, err = svc.GetBookmarksByName("", user)
+	if err == nil {
+		t.Errorf("expected error for empty name")
+	}
 
 }
 

@@ -2,16 +2,16 @@ package favicon
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFetchFavicon(t *testing.T) {
-	favicon, _ := ioutil.ReadFile("../assets/favicon.ico")
+	favicon, _ := os.ReadFile("../assets/favicon.ico")
 
 	// setup a test-server
 	// ------------------------------------------------------------------

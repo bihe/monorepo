@@ -4,7 +4,7 @@ package favicon
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -75,7 +75,7 @@ func FetchURL(url string) ([]byte, error) {
 		return nil, fmt.Errorf("got status %d", resp.StatusCode)
 	}
 
-	content, err := ioutil.ReadAll(resp.Body)
+	content, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("could not read content body: %v", err)
 	}

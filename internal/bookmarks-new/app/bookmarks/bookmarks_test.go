@@ -22,9 +22,10 @@ var user = security.User{
 
 func service(t *testing.T) bookmarks.Service {
 	return bookmarks.Service{
-		Store:       repository(t),
-		Logger:      logging.NewNop(),
-		FaviconPath: faviconPath,
+		Store:          repository(t),
+		Logger:         logging.NewNop(),
+		FaviconPath:    faviconPath,
+		DefaultFavicon: "default.icon",
 	}
 }
 
@@ -237,9 +238,9 @@ func Test_GetAllPaths(t *testing.T) {
 	}
 
 	// ---- error ----
-	paths, _ = svc.GetAllPaths(security.User{})
-	if len(paths) != 0 {
-		t.Errorf("expected to get no results for unknown user - god %d!", len(paths))
+	paths, _ = svc.GetAllPaths(security.User{Username: "unknown"})
+	if len(paths) != 1 { // we always get "/"
+		t.Errorf("expected to get no results for unknown user - got %d!", len(paths))
 	}
 }
 
@@ -336,4 +337,163 @@ func Test_FetchFavicon(t *testing.T) {
 
 	svc.FetchFavicon(bmEntity, user)
 	svc.FetchFaviconURL("https://orf.at/mojo/1_4_1/storyserver//news/news/images/touch-icon-iphone.png", bmEntity, user)
+}
+
+func Test_FetchBookmark(t *testing.T) {
+	svc := service(t)
+	// /folder/bookmark
+
+	folder := uuid.NewString()
+	f, _ := svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Folder,
+		DisplayName: folder,
+		Path:        "/",
+	}, user)
+
+	url := "http://www.example.com"
+	bookmark := uuid.NewString()
+	bm, err := svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		DisplayName: bookmark,
+		URL:         url,
+		Path:        "/" + folder,
+		Highlight:   1,
+	}, user)
+
+	if err != nil {
+		t.Errorf("could not create a bookmark; got error; %v", err)
+	}
+
+	// fetch-and-forward
+	bmURL, err := svc.FetchAndForward(bm.ID, user)
+	if err != nil {
+		t.Errorf("should not return an error for fetching ID: %v", err)
+	}
+	if bmURL != url {
+		t.Errorf("expected the url %s - got url %s", url, bmURL)
+	}
+
+	bm, _ = svc.GetBookmarkByID(bm.ID, user)
+	if bm.Highlight == 1 {
+		t.Errorf("expected the highlight flag to be 0 after a fetch")
+	}
+
+	// ---- error ----
+
+	_, err = svc.FetchAndForward("", user)
+	if err == nil {
+		t.Errorf("expected an error when empty ID supplied")
+	}
+
+	_, err = svc.FetchAndForward("unknown-id", user)
+	if err == nil {
+		t.Errorf("expected an error for unknown ID supplied")
+	}
+
+	_, err = svc.FetchAndForward(f.ID, user)
+	if err == nil {
+		t.Errorf("expected an error for supplied folder ID")
+	}
+}
+
+func Test_GetFavicon(t *testing.T) {
+	svc := service(t)
+	// /folder/bookmark
+
+	folder := uuid.NewString()
+	svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Folder,
+		DisplayName: folder,
+		Path:        "/",
+	}, user)
+
+	url := "http://localhost"
+	bookmark := uuid.NewString()
+	bm, _ := svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		DisplayName: bookmark,
+		URL:         url,
+		Path:        "/" + folder,
+		Favicon:     "unknown.ico",
+	}, user)
+
+	path, err := svc.GetFaviconPath(bm.ID, user)
+	if err != nil {
+		t.Errorf("could not get path of favicon for ID: %s; %v", bm.ID, err)
+	}
+
+	if path == "" {
+		t.Errorf("expected a path for the faviconGetFaviconPath")
+	}
+
+	// ---- error ----
+
+	_, err = svc.GetFaviconPath("", user)
+	if err == nil {
+		t.Errorf("expected error for empty id")
+	}
+
+	_, err = svc.GetFaviconPath("unknown-id", user)
+	if err == nil {
+		t.Errorf("expected error for unknown id")
+	}
+}
+
+func Test_DeleteBookmark(t *testing.T) {
+	svc := service(t)
+	// /folder/bookmark
+
+	folder := uuid.NewString()
+	bmF, _ := svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Folder,
+		DisplayName: folder,
+		Path:        "/",
+	}, user)
+
+	bookmark := uuid.NewString()
+	bm, _ := svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		DisplayName: bookmark,
+		URL:         "http://localhost",
+		Path:        "/" + folder,
+		Favicon:     "unknown.ico",
+	}, user)
+
+	// try to delete the folder which should not work because of the child-node
+	err := svc.Delete(bmF.ID, user)
+	if err == nil {
+		t.Error("expected an error because cannot delete a bookmark with child entries")
+	}
+
+	err = svc.Delete(bm.ID, user)
+	if err != nil {
+		t.Errorf("could not delete bookmark with ID; %s; %v", bm.ID, err)
+	}
+
+	err = svc.Delete(bmF.ID, user)
+	if err != nil {
+		t.Errorf("could not delete bookmark with ID; %s; %v", bmF.ID, err)
+	}
+
+	_, err = svc.GetBookmarkByID(bm.ID, user)
+	if err == nil {
+		t.Errorf("expected an error because deleted bookmark with id %s", bm.ID)
+	}
+
+	_, err = svc.GetBookmarkByID(bmF.ID, user)
+	if err == nil {
+		t.Errorf("expected an error because deleted bookmark with id %s", bmF.ID)
+	}
+
+	// ---- error ----
+
+	err = svc.Delete("", user)
+	if err == nil {
+		t.Errorf("expected error for empty id")
+	}
+
+	err = svc.Delete("unknown-id", user)
+	if err == nil {
+		t.Errorf("expected error for unknown id")
+	}
 }

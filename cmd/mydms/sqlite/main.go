@@ -79,7 +79,6 @@ func main() {
 
 	// Ensure the schema creation for sqlite
 	sqliteCon.AutoMigrate(&documentEntity{})
-
 	var items []documentEntity
 	h := mysqlCon.Raw("SELECT * FROM DOCUMENTS").Scan(&items)
 	if h.Error != nil {

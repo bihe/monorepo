@@ -167,6 +167,8 @@ func (r *dbRepository) GetAllPaths(username string) ([]string, error) {
 // modify data
 // --------------------------------------------------------------------------
 
+// TODO: https://github.com/go-gorm/gorm/issues/3709
+
 // Create is used to save a new bookmark entry
 func (r *dbRepository) Create(item Bookmark) (Bookmark, error) {
 	var (

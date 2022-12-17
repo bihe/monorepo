@@ -497,3 +497,112 @@ func Test_DeleteBookmark(t *testing.T) {
 		t.Errorf("expected error for unknown id")
 	}
 }
+
+func Test_SortOrder(t *testing.T) {
+	svc := service(t)
+	// /sort
+	// /sort/bookmark1
+	// /sort/bookmark2
+	// /sort/bookmark3
+	url := "http://www.example.com"
+
+	sortFolder := uuid.NewString()
+	svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Folder,
+		DisplayName: sortFolder,
+		Path:        "/",
+	}, user)
+	bookmark1 := uuid.NewString()
+	b1, _ := svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		DisplayName: "1_" + bookmark1,
+		Path:        "/" + sortFolder,
+		URL:         url,
+	}, user)
+	bookmark2 := uuid.NewString()
+	b2, _ := svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		DisplayName: "2_" + bookmark2,
+		Path:        "/" + sortFolder,
+		URL:         url,
+	}, user)
+	bookmark3 := uuid.NewString()
+	b3, _ := svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		DisplayName: "3_" + bookmark3,
+		Path:        "/" + sortFolder,
+		URL:         url,
+	}, user)
+
+	// get the initial sort-order
+	bms, err := svc.GetBookmarksByPath("/"+sortFolder, user)
+	if err != nil {
+		t.Errorf("could not get bookmarks unsorted! %v", err)
+	}
+	if len(bms) == 0 {
+		t.Errorf("should have received 3 bookmarks got %d", len(bms))
+	}
+
+	// create the sort-order structure
+	so := bookmarks.BookmarksSortOrder{
+		IDs: []string{b1.ID, b2.ID, b3.ID},
+	}
+
+	// 1) reverse
+	so.SortOrder = []int{2, 1, 0}
+	count, err := svc.UpdateSortOrder(so, user)
+	if err != nil {
+		t.Errorf("could not update the sortorder of bookmarks; %v", err)
+	}
+	if count != 3 {
+		t.Errorf("should have updated 3 bookmarks, but the number was %d", count)
+	}
+	bms, _ = svc.GetBookmarksByPath("/"+sortFolder, user)
+	if len(bms) != 3 {
+		t.Errorf("should have received 3 bookmarks got %d", len(bms))
+	}
+	if bms[0].ID != so.IDs[2] && bms[2].ID != so.IDs[0] {
+		t.Errorf("the update of the sortorder dit not work, got mixed-up results")
+	}
+
+	// 2) other
+	so.SortOrder = []int{0, 2, 1}
+	_, err = svc.UpdateSortOrder(so, user)
+	if err != nil {
+		t.Errorf("could not update the sortorder of bookmarks; %v", err)
+	}
+	bms, _ = svc.GetBookmarksByPath("/"+sortFolder, user)
+	if len(bms) != 3 {
+		t.Errorf("should have received 3 bookmarks got %d", len(bms))
+	}
+	if bms[0].ID != so.IDs[0] && bms[2].ID != so.IDs[1] && bms[1].ID != so.IDs[2] {
+		t.Errorf("the update of the sortorder dit not work, got mixed-up results")
+	}
+
+	// empty slice, no updates
+	so.IDs = make([]string, 0)
+	so.SortOrder = make([]int, 0)
+	count, _ = svc.UpdateSortOrder(so, user)
+	if count != 0 {
+		t.Errorf("expected 0 updates but got %d", count)
+	}
+
+	// ---- error ----
+
+	// unkown ID
+	so.IDs = []string{b1.ID, b2.ID, "unknownd-ID"}
+	so.SortOrder = []int{2, 1, 0}
+	_, err = svc.UpdateSortOrder(so, user)
+	if err == nil {
+		t.Errorf("expected an error for unknown-ID")
+	}
+
+	// unbalanced slices
+	so.IDs = []string{b1.ID, b2.ID, b3.ID}
+	so.SortOrder = []int{2, 1}
+	_, err = svc.UpdateSortOrder(so, user)
+	if err == nil {
+		t.Errorf("expected an error for unknown-ID")
+	}
+
+}

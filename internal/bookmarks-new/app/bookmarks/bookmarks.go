@@ -236,6 +236,37 @@ func (s *Service) Delete(id string, user security.User) error {
 	return nil
 }
 
+// UpdateSortOrder modifies the display sort-order
+func (s *Service) UpdateSortOrder(sort BookmarksSortOrder, user security.User) (int, error) {
+	if len(sort.IDs) != len(sort.SortOrder) {
+		return 0, fmt.Errorf("the number of IDs (%d) does not correspond the number of SortOrder entries (%d)", len(sort.IDs), len(sort.SortOrder))
+	}
+
+	var updates int
+	if err := s.Store.InUnitOfWork(func(repo store.Repository) error {
+		for i, item := range sort.IDs {
+			bm, err := repo.GetBookmarkByID(item, user.Username)
+			if err != nil {
+				s.Logger.Error(fmt.Sprintf("could not get bookmark by id '%s', %v", item, err))
+				return err
+			}
+			s.Logger.Info(fmt.Sprintf("will update sortOrder of bookmark '%s' with value %d", bm.DisplayName, sort.SortOrder[i]))
+			bm.SortOrder = sort.SortOrder[i]
+			_, err = repo.Update(bm)
+			if err != nil {
+				s.Logger.Error(fmt.Sprintf("could not update bookmark: %v", err))
+				return err
+			}
+			updates++
+		}
+		return nil
+	}); err != nil {
+		s.Logger.Error(fmt.Sprintf("could not update the sortorder for bookmark: %v", err))
+		return 0, fmt.Errorf("error updating sortorder of bookmark: %v", err)
+	}
+	return updates, nil
+}
+
 // ---- Favicon Logic ----
 
 // GetFaviconPath for the specified bookmark, return the path to the found favicon or the default favicon
@@ -605,77 +636,4 @@ func ensureFolderPath(path, displayName string) string {
 // 		return err
 // 	}
 // 	return nil
-// }
-
-// // UpdateSortOrder modifies the display sort-order
-// // swagger:operation PUT /api/v1/bookmarks/sortorder bookmarks UpdateSortOrder
-// //
-// // change the sortorder of bookmarks
-// //
-// // provide a new sortorder for a list of IDS
-// //
-// // ---
-// // consumes:
-// // - application/json
-// // produces:
-// // - application/json
-// // responses:
-// //   '200':
-// //     description: Result
-// //     schema:
-// //       "$ref": "#/definitions/Result"
-// //   '400':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// //   '401':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// //   '403':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// func (b *BookmarksAPI) UpdateSortOrder(user security.User, w http.ResponseWriter, r *http.Request) error {
-// 	payload := &BookmarksSortOrderRequest{}
-// 	if err := render.Bind(r, payload); err != nil {
-// 		b.Log.ErrorRequest(fmt.Sprintf("cannot bind payload: '%v'", err), r)
-// 		return errors.BadRequestError{Err: fmt.Errorf("invalid request data supplied"), Request: r}
-// 	}
-
-// 	if len(payload.IDs) != len(payload.SortOrder) {
-// 		b.Log.ErrorRequest("ids and sortorders do not match!", r)
-// 		return errors.BadRequestError{Err: fmt.Errorf("invalid request data supplied, IDs and SortOrder do not match"), Request: r}
-// 	}
-
-// 	var updates int
-// 	if err := b.Repository.InUnitOfWork(func(repo store.Repository) error {
-// 		for i, item := range payload.IDs {
-// 			bm, err := repo.GetBookmarkByID(item, user.Username)
-// 			if err != nil {
-// 				b.Log.ErrorRequest(fmt.Sprintf("could not get bookmark by id '%s', %v", item, err), r)
-// 				return err
-// 			}
-// 			b.Log.InfoRequest(fmt.Sprintf("will update sortOrder of bookmark '%s' with value %d", bm.DisplayName, payload.SortOrder[i]), r)
-// 			bm.SortOrder = payload.SortOrder[i]
-// 			_, err = repo.Update(bm)
-// 			if err != nil {
-// 				b.Log.ErrorRequest(fmt.Sprintf("could not update bookmark: %v", err), r)
-// 				return err
-// 			}
-// 			updates++
-// 		}
-// 		return nil
-// 	}); err != nil {
-// 		b.Log.ErrorRequest(fmt.Sprintf("could not update the sortorder for bookmark: %v", err), r)
-// 		return errors.ServerError{Err: fmt.Errorf("error updating sortorder of bookmark: %v", err), Request: r}
-// 	}
-
-// 	return render.Render(w, r, ResultResponse{
-// 		Result: &Result{
-// 			Success: true,
-// 			Message: fmt.Sprintf("Updated '%d' bookmark items.", updates),
-// 			Value:   fmt.Sprintf("%d", updates),
-// 		},
-// 	})
 // }

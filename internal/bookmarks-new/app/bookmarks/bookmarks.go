@@ -267,6 +267,178 @@ func (s *Service) UpdateSortOrder(sort BookmarksSortOrder, user security.User) (
 	return updates, nil
 }
 
+// Update a bookmark
+func (s *Service) Update(bm Bookmark, user security.User) (*Bookmark, error) {
+	var (
+		id   string
+		item store.Bookmark
+	)
+	if bm.Path == "" || bm.DisplayName == "" || bm.ID == "" {
+		s.Logger.Error("required fields of bookmarks missing")
+		return nil, fmt.Errorf("invalid request data supplied, missing ID, Path or DisplayName")
+
+	}
+
+	s.Logger.Info(fmt.Sprintf("will try to update existing bookmark entry: '%s (%s)'", bm.DisplayName, bm.ID))
+	if err := s.Store.InUnitOfWork(func(repo store.Repository) error {
+		// 1) fetch the existing bookmark by id
+		existing, err := repo.GetBookmarkByID(bm.ID, user.Username)
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("could not find bookmark by id '%s': %v", bm.ID, err))
+			return err
+		}
+		childCount := existing.ChildCount
+		if existing.Type == store.Folder {
+			// 2) ensure that the existing folder is not moved to itself
+			folderPath := ensureFolderPath(existing.Path, existing.DisplayName)
+			if bm.Path == folderPath {
+				s.Logger.Error(fmt.Sprintf("a folder cannot be moved into itself: folder-path: '%s', destination: '%s'", folderPath, bm.Path))
+				return fmt.Errorf("cannot move folder into itself")
+			}
+
+			// 3) get the folder child-count
+			// on save of a folder, update the child-count
+			parentPath := existing.Path
+			path := ensureFolderPath(parentPath, existing.DisplayName)
+			nodeCount, err := repo.GetPathChildCount(path, user.Username)
+			if err != nil {
+				s.Logger.Error(fmt.Sprintf("could not get child-count of path '%s': %v", path, err))
+				return err
+			}
+			if len(nodeCount) > 0 {
+				for _, n := range nodeCount {
+					if n.Path == path {
+						childCount = n.Count
+						break
+					}
+				}
+			}
+		}
+
+		existingDisplayName := existing.DisplayName
+		existingPath := existing.Path
+
+		// 4) update the bookmark
+		item, err = repo.Update(store.Bookmark{
+			ID:          bm.ID,
+			Created:     existing.Created,
+			DisplayName: bm.DisplayName,
+			Path:        bm.Path,
+			Type:        existing.Type, // it does not make any sense to change the type of a bookmark!
+			URL:         bm.URL,
+			SortOrder:   bm.SortOrder,
+			UserName:    user.Username,
+			ChildCount:  childCount,
+			Favicon:     bm.Favicon,
+			Highlight:   bm.Highlight,
+		})
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("could not update bookmark: %v", err))
+			return err
+		}
+		id = item.ID
+
+		// also update the favicon if not available
+		if item.Favicon == "" {
+			// fire&forget, run this in background and do not wait for the result
+			go s.FetchFavicon(item, user)
+		}
+		if bm.CustomFavicon != "" {
+			// fire&forget, run this in background and do not wait for the result
+			go s.FetchFaviconURL(bm.CustomFavicon, item, user)
+		}
+
+		if existing.Type == store.Folder && (existingDisplayName != bm.DisplayName || existingPath != bm.Path) {
+			// if we have a folder and change the displayname or the parent-path, this also affects ALL sub-elements
+			// therefore all paths of sub-elements where this folder-path is present, need to be updated
+			newPath := ensureFolderPath(bm.Path, bm.DisplayName)
+			oldPath := ensureFolderPath(existingPath, existingDisplayName)
+
+			s.Logger.Info(fmt.Sprintf("will update all old paths '%s' to new path '%s'", oldPath, newPath))
+			bookmarks, err := repo.GetBookmarksByPathStart(oldPath, user.Username)
+			if err != nil {
+				s.Logger.Error(fmt.Sprintf("could not get bookmarks by path '%s': %v", oldPath, err))
+				return err
+			}
+
+			for _, bm := range bookmarks {
+				updatePath := strings.ReplaceAll(bm.Path, oldPath, newPath)
+				if _, err := repo.Update(store.Bookmark{
+					ID:          bm.ID,
+					Created:     bm.Created,
+					DisplayName: bm.DisplayName,
+					Path:        updatePath,
+					SortOrder:   bm.SortOrder,
+					Type:        bm.Type,
+					URL:         bm.URL,
+					UserName:    user.Username,
+					ChildCount:  bm.ChildCount,
+					Highlight:   bm.Highlight,
+					Favicon:     bm.Favicon,
+				}); err != nil {
+					s.Logger.Error(fmt.Sprintf("cannot update bookmark path: %v", err))
+					return err
+				}
+			}
+		}
+
+		// if the path has changed - update the childcount of affected paths
+		if existingPath != bm.Path {
+			// the affected paths are the origin-path and the destination-path
+			if err := s.updateChildCountOfPath(existingPath, user.Username, repo); err != nil {
+				s.Logger.Error(fmt.Sprintf("could not update child-count of origin-path '%s': %v", existingPath, err))
+				return err
+			}
+			// and the destination-path
+			if err := s.updateChildCountOfPath(bm.Path, user.Username, repo); err != nil {
+				s.Logger.Error(fmt.Sprintf("could not update child-count of destination-path '%s': %v", bm.Path, err))
+				return err
+			}
+		}
+
+		return nil
+	}); err != nil {
+		s.Logger.Error(fmt.Sprintf("could not update bookmark because of error: %v", err))
+		return nil, fmt.Errorf("error updating bookmark: %v", err)
+	}
+
+	s.Logger.Info(fmt.Sprintf("updated bookmark with ID '%s'", id))
+	return entityToModel(item), nil
+}
+
+func (s *Service) updateChildCountOfPath(path, username string, repo store.Repository) error {
+	if path == "/" {
+		s.Logger.Info("skip the ROOT path '/'")
+		return nil
+	}
+
+	folder, err := repo.GetFolderByPath(path, username)
+	if err != nil {
+		s.Logger.Error(fmt.Sprintf("cannot get the folder for path '%s': %v", path, err))
+		return err
+	}
+
+	nodeCount, err := repo.GetPathChildCount(path, username)
+	if err != nil {
+		s.Logger.Error(fmt.Sprintf("could not get the child-count of the path '%s': %v", path, err))
+		return err
+	}
+
+	var childCount int
+	if len(nodeCount) > 0 {
+		// use the firest element, because the count was queried for a specific path
+		childCount = nodeCount[0].Count
+	}
+
+	folder.ChildCount = childCount
+
+	if _, err := repo.Update(folder); err != nil {
+		s.Logger.Error(fmt.Sprintf("could not update the child-count of folder '%s': %v", path, err))
+		return err
+	}
+	return nil
+}
+
 // ---- Favicon Logic ----
 
 // GetFaviconPath for the specified bookmark, return the path to the found favicon or the default favicon
@@ -419,221 +591,3 @@ func ensureFolderPath(path, displayName string) string {
 	folderPath += displayName
 	return folderPath
 }
-
-// // Update a bookmark
-// // swagger:operation PUT /api/v1/bookmarks bookmarks UpdateBookmark
-// //
-// // update a bookmark
-// //
-// // use the supplied payload to update a existing bookmark
-// //
-// // ---
-// // consumes:
-// // - application/json
-// // produces:
-// // - application/json
-// // responses:
-// //   '200':
-// //     description: Result
-// //     schema:
-// //       "$ref": "#/definitions/Result"
-// //   '400':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// //   '401':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// //   '403':
-// //     description: ProblemDetail
-// //     schema:
-// //       "$ref": "#/definitions/ProblemDetail"
-// func (b *BookmarksAPI) Update(user security.User, w http.ResponseWriter, r *http.Request) error {
-// 	var (
-// 		id      string
-// 		payload *BookmarkRequest
-// 	)
-
-// 	payload = &BookmarkRequest{}
-// 	if err := render.Bind(r, payload); err != nil {
-// 		b.Log.ErrorRequest(fmt.Sprintf("cannot bind payload: '%v'", err), r)
-// 		return errors.BadRequestError{Err: fmt.Errorf("invalid request data supplied"), Request: r}
-// 	}
-
-// 	if payload.Path == "" || payload.DisplayName == "" || payload.ID == "" {
-// 		b.Log.ErrorRequest("required fields of bookmarks missing", r)
-// 		return errors.BadRequestError{Err: fmt.Errorf("invalid request data supplied, missing ID, Path or DisplayName"), Request: r}
-
-// 	}
-
-// 	b.Log.InfoRequest(fmt.Sprintf("will try to update existing bookmark entry: '%s'", payload), r)
-// 	if err := b.Repository.InUnitOfWork(func(repo store.Repository) error {
-// 		// 1) fetch the existing bookmark by id
-// 		existing, err := repo.GetBookmarkByID(payload.ID, user.Username)
-// 		if err != nil {
-// 			b.Log.ErrorRequest(fmt.Sprintf("could not find bookmark by id '%s': %v", payload.ID, err), r)
-// 			return err
-// 		}
-// 		childCount := existing.ChildCount
-// 		if existing.Type == store.Folder {
-// 			// 2) ensure that the existing folder is not moved to itself
-// 			folderPath := ensureFolderPath(existing.Path, existing.DisplayName)
-// 			if payload.Path == folderPath {
-// 				b.Log.ErrorRequest(fmt.Sprintf("a folder cannot be moved into itself: folder-path: '%s', destination: '%s'", folderPath, payload.Path), r)
-// 				return errors.BadRequestError{Err: fmt.Errorf("cannot move folder into itself"), Request: r}
-// 			}
-
-// 			// 3) get the folder child-count
-// 			// on save of a folder, update the child-count
-// 			parentPath := existing.Path
-// 			path := ensureFolderPath(parentPath, existing.DisplayName)
-// 			nodeCount, err := repo.GetPathChildCount(path, user.Username)
-// 			if err != nil {
-// 				b.Log.ErrorRequest(fmt.Sprintf("could not get child-count of path '%s': %v", path, err), r)
-// 				return err
-// 			}
-// 			if len(nodeCount) > 0 {
-// 				for _, n := range nodeCount {
-// 					if n.Path == path {
-// 						childCount = n.Count
-// 						break
-// 					}
-// 				}
-// 			}
-// 		}
-
-// 		existingDisplayName := existing.DisplayName
-// 		existingPath := existing.Path
-
-// 		// 4) update the bookmark
-// 		item, err := repo.Update(store.Bookmark{
-// 			ID:          payload.ID,
-// 			Created:     existing.Created,
-// 			DisplayName: payload.DisplayName,
-// 			Path:        payload.Path,
-// 			Type:        existing.Type, // it does not make any sense to change the type of a bookmark!
-// 			URL:         payload.URL,
-// 			SortOrder:   payload.SortOrder,
-// 			UserName:    user.Username,
-// 			ChildCount:  childCount,
-// 			Favicon:     payload.Favicon,
-// 			Highlight:   payload.Highlight,
-// 		})
-// 		if err != nil {
-// 			b.Log.ErrorRequest(fmt.Sprintf("could not update bookmark: %v", err), r)
-// 			return err
-// 		}
-// 		id = item.ID
-
-// 		// also update the favicon if not available
-// 		if item.Favicon == "" {
-// 			// fire&forget, run this in background and do not wait for the result
-// 			go b.FetchFavicon(item, user)
-// 		}
-// 		if payload.CustomFavicon != "" {
-// 			// fire&forget, run this in background and do not wait for the result
-// 			go b.FetchFaviconURL(payload.CustomFavicon, item, user)
-// 		}
-
-// 		if existing.Type == store.Folder && (existingDisplayName != payload.DisplayName || existingPath != payload.Path) {
-// 			// if we have a folder and change the displayname or the parent-path, this also affects ALL sub-elements
-// 			// therefore all paths of sub-elements where this folder-path is present, need to be updated
-// 			newPath := ensureFolderPath(payload.Path, payload.DisplayName)
-// 			oldPath := ensureFolderPath(existingPath, existingDisplayName)
-
-// 			b.Log.InfoRequest(fmt.Sprintf("will update all old paths '%s' to new path '%s'", oldPath, newPath), r)
-// 			bookmarks, err := repo.GetBookmarksByPathStart(oldPath, user.Username)
-// 			if err != nil {
-// 				b.Log.ErrorRequest(fmt.Sprintf("could not get bookmarks by path '%s': %v", oldPath, err), r)
-// 				return err
-// 			}
-
-// 			for _, bm := range bookmarks {
-// 				updatePath := strings.ReplaceAll(bm.Path, oldPath, newPath)
-// 				if _, err := repo.Update(store.Bookmark{
-// 					ID:          bm.ID,
-// 					Created:     bm.Created,
-// 					DisplayName: bm.DisplayName,
-// 					Path:        updatePath,
-// 					SortOrder:   bm.SortOrder,
-// 					Type:        bm.Type,
-// 					URL:         bm.URL,
-// 					UserName:    user.Username,
-// 					ChildCount:  bm.ChildCount,
-// 					Highlight:   bm.Highlight,
-// 					Favicon:     bm.Favicon,
-// 				}); err != nil {
-// 					b.Log.ErrorRequest(fmt.Sprintf("cannot update bookmark path: %v", err), r)
-// 					return err
-// 				}
-// 			}
-// 		}
-
-// 		// if the path has changed - update the childcount of affected paths
-// 		if existingPath != payload.Path {
-// 			// the affected paths are the origin-path and the destination-path
-// 			if err := b.updateChildCountOfPath(r, existingPath, user.Username, repo); err != nil {
-// 				b.Log.ErrorRequest(fmt.Sprintf("could not update child-count of origin-path '%s': %v", existingPath, err), r)
-// 				return err
-// 			}
-// 			// and the destination-path
-// 			if err := b.updateChildCountOfPath(r, payload.Path, user.Username, repo); err != nil {
-// 				b.Log.ErrorRequest(fmt.Sprintf("could not update child-count of destination-path '%s': %v", payload.Path, err), r)
-// 				return err
-// 			}
-// 		}
-
-// 		return nil
-// 	}); err != nil {
-// 		b.Log.ErrorRequest(fmt.Sprintf("could not update bookmark because of error: %v", err), r)
-
-// 		var badRequest errors.BadRequestError
-// 		if er.As(err, &badRequest) {
-// 			return badRequest
-// 		}
-// 		return errors.ServerError{Err: fmt.Errorf("error updating bookmark: %v", err), Request: r}
-// 	}
-
-// 	b.Log.InfoRequest(fmt.Sprintf("updated bookmark with ID '%s'", id), r)
-// 	return render.Render(w, r, ResultResponse{
-// 		Result: &Result{
-// 			Success: true,
-// 			Message: fmt.Sprintf("Bookmark with ID '%s' was updated", id),
-// 			Value:   id,
-// 		},
-// 	})
-// }
-
-// func (b *BookmarksAPI) updateChildCountOfPath(r *http.Request, path, username string, repo store.Repository) error {
-// 	if path == "/" {
-// 		b.Log.InfoRequest("skip the ROOT path '/'", r)
-// 		return nil
-// 	}
-
-// 	folder, err := repo.GetFolderByPath(path, username)
-// 	if err != nil {
-// 		b.Log.ErrorRequest(fmt.Sprintf("cannot get the folder for path '%s': %v", path, err), r)
-// 		return err
-// 	}
-
-// 	nodeCount, err := repo.GetPathChildCount(path, username)
-// 	if err != nil {
-// 		b.Log.ErrorRequest(fmt.Sprintf("could not get the child-count of the path '%s': %v", path, err), r)
-// 		return err
-// 	}
-
-// 	var childCount int
-// 	if len(nodeCount) > 0 {
-// 		// use the firest element, because the count was queried for a specific path
-// 		childCount = nodeCount[0].Count
-// 	}
-
-// 	folder.ChildCount = childCount
-
-// 	if _, err := repo.Update(folder); err != nil {
-// 		b.Log.ErrorRequest(fmt.Sprintf("could not update the child-count of folder '%s': %v", path, err), r)
-// 		return err
-// 	}
-// 	return nil
-// }

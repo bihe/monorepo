@@ -604,5 +604,93 @@ func Test_SortOrder(t *testing.T) {
 	if err == nil {
 		t.Errorf("expected an error for unknown-ID")
 	}
+}
 
+func Test_UpdateBookmark(t *testing.T) {
+	svc := service(t)
+
+	// /update/bookmark
+	url := "http://www.example.com"
+
+	updateFolder := uuid.NewString()
+	f, _ := svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Folder,
+		DisplayName: updateFolder,
+		Path:        "/",
+	}, user)
+	updateFolder2 := uuid.NewString()
+	svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Folder,
+		DisplayName: updateFolder2,
+		Path:        "/",
+	}, user)
+	bookmark := uuid.NewString()
+	bm, _ := svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		DisplayName: bookmark,
+		Path:        "/" + updateFolder,
+		URL:         url,
+	}, user)
+
+	// get the bookmark
+	b, _ := svc.GetBookmarkByID(bm.ID, user)
+	if b == nil {
+		t.Fatalf("could not get bookmark by id %s", bm.ID)
+	}
+
+	// update the bookmark
+	b.DisplayName = bookmark + "_update"
+	_, err := svc.Update(*b, user)
+	if err != nil {
+		t.Errorf("could not update bookmark, %v", err)
+	}
+	b, _ = svc.GetBookmarkByID(bm.ID, user)
+
+	if b.DisplayName != bookmark+"_update" {
+		t.Errorf("the bookmark was not correctly updated, got %s", b.DisplayName)
+	}
+
+	// update the folder
+	f, _ = svc.GetBookmarkByID(f.ID, user)
+	f.DisplayName = f.DisplayName + "_update"
+	_, err = svc.Update(*f, user)
+	if err != nil {
+		t.Errorf("could not update bookmark, %v", err)
+	}
+
+	// fetch the bookmark again
+	b, _ = svc.GetBookmarkByID(bm.ID, user)
+	if b.Path != "/"+updateFolder+"_update" {
+		t.Errorf("the bookmark-path was not correctly updated; %s", b.Path)
+	}
+
+	// change the path of the bookmark
+	b, _ = svc.GetBookmarkByID(bm.ID, user)
+	b.Path = "/" + updateFolder2
+	_, err = svc.Update(*b, user)
+	if err != nil {
+		t.Errorf("could not update bookmark, %v", err)
+	}
+
+	// ---- error: empty ----
+	_, err = svc.Update(bookmarks.Bookmark{}, user)
+	if err != nil {
+		t.Errorf("could not update bookmark, %v", err)
+	}
+	// ---- error: unknown-id ----
+	_, err = svc.Update(bookmarks.Bookmark{
+		Path:        "/",
+		DisplayName: "abc",
+		ID:          "unknown-ID",
+	}, user)
+	if err == nil {
+		t.Error("expected an error because of unknown-ID")
+	}
+	// ---- error: move folder to self ----
+	f, _ = svc.GetBookmarkByID(f.ID, user)
+	f.Path = f.Path + f.DisplayName
+	_, err = svc.Update(*f, user)
+	if err != nil {
+		t.Errorf("could not update bookmark, %v", err)
+	}
 }

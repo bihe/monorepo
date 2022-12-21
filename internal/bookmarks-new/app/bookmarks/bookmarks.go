@@ -73,7 +73,6 @@ func (s *Service) CreateBookmark(bm Bookmark, user security.User) (*Bookmark, er
 			go s.FetchFavicon(savedItem, user)
 		}
 	}
-
 	id := savedItem.ID
 	s.Logger.Info(fmt.Sprintf("bookmark created with ID: %s", id))
 	return entityToModel(savedItem), nil

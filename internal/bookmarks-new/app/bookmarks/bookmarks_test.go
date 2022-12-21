@@ -674,7 +674,7 @@ func Test_UpdateBookmark(t *testing.T) {
 
 	// ---- error: empty ----
 	_, err = svc.Update(bookmarks.Bookmark{}, user)
-	if err != nil {
+	if err == nil {
 		t.Errorf("could not update bookmark, %v", err)
 	}
 	// ---- error: unknown-id ----
@@ -690,7 +690,7 @@ func Test_UpdateBookmark(t *testing.T) {
 	f, _ = svc.GetBookmarkByID(f.ID, user)
 	f.Path = f.Path + f.DisplayName
 	_, err = svc.Update(*f, user)
-	if err != nil {
+	if err == nil {
 		t.Errorf("could not update bookmark, %v", err)
 	}
 }

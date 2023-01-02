@@ -20,8 +20,8 @@ var user = security.User{
 	DisplayName: "Test",
 }
 
-func service(t *testing.T) bookmarks.Service {
-	return bookmarks.Service{
+func app(t *testing.T) bookmarks.Application {
+	return bookmarks.Application{
 		Store:          repository(t),
 		Logger:         logging.NewNop(),
 		FaviconPath:    faviconPath,
@@ -44,7 +44,7 @@ func repository(t *testing.T) store.Repository {
 }
 
 func Test_GetBookmark_NotFound(t *testing.T) {
-	svc := service(t)
+	svc := app(t)
 
 	_, err := svc.GetBookmarkByID("", security.User{})
 	if err == nil {
@@ -58,7 +58,7 @@ func Test_GetBookmark_NotFound(t *testing.T) {
 }
 
 func Test_CreateBookmark(t *testing.T) {
-	svc := service(t)
+	svc := app(t)
 
 	folder, err := svc.CreateBookmark(bookmarks.Bookmark{
 		Type:        bookmarks.Folder,
@@ -109,7 +109,7 @@ func Test_CreateBookmark(t *testing.T) {
 }
 
 func Test_GetBookmarksByPath(t *testing.T) {
-	svc := service(t)
+	svc := app(t)
 	// create a bookmark path and retrieve the bookmarks of the given path
 	// Path: /a
 	path := uuid.NewString()
@@ -153,7 +153,7 @@ func Test_GetBookmarksByPath(t *testing.T) {
 }
 
 func Test_GetBookmarksFolderByPath(t *testing.T) {
-	svc := service(t)
+	svc := app(t)
 	// create a bookmark path and retrieve the bookmarks of the given path
 	// Path: /folder/folder1
 	folder := uuid.NewString()
@@ -200,7 +200,7 @@ func Test_GetBookmarksFolderByPath(t *testing.T) {
 }
 
 func Test_GetAllPaths(t *testing.T) {
-	svc := service(t)
+	svc := app(t)
 	// /folder/folder1
 	// /folder/folder2
 	// /folder3
@@ -245,7 +245,7 @@ func Test_GetAllPaths(t *testing.T) {
 }
 
 func Test_GetBookmarksByName(t *testing.T) {
-	svc := service(t)
+	svc := app(t)
 	// /folder
 	// /folder/$aaa
 	// /folder/$bbb
@@ -302,7 +302,7 @@ func Test_GetBookmarksByName(t *testing.T) {
 }
 
 func Test_FetchFavicon(t *testing.T) {
-	svc := service(t)
+	svc := app(t)
 
 	// first we need a base-bookmark ;)
 	bm, err := svc.CreateBookmark(bookmarks.Bookmark{
@@ -340,7 +340,7 @@ func Test_FetchFavicon(t *testing.T) {
 }
 
 func Test_FetchBookmark(t *testing.T) {
-	svc := service(t)
+	svc := app(t)
 	// /folder/bookmark
 
 	folder := uuid.NewString()
@@ -397,7 +397,7 @@ func Test_FetchBookmark(t *testing.T) {
 }
 
 func Test_GetFavicon(t *testing.T) {
-	svc := service(t)
+	svc := app(t)
 	// /folder/bookmark
 
 	folder := uuid.NewString()
@@ -440,7 +440,7 @@ func Test_GetFavicon(t *testing.T) {
 }
 
 func Test_DeleteBookmark(t *testing.T) {
-	svc := service(t)
+	svc := app(t)
 	// /folder/bookmark
 
 	folder := uuid.NewString()
@@ -499,7 +499,7 @@ func Test_DeleteBookmark(t *testing.T) {
 }
 
 func Test_SortOrder(t *testing.T) {
-	svc := service(t)
+	svc := app(t)
 	// /sort
 	// /sort/bookmark1
 	// /sort/bookmark2
@@ -607,7 +607,7 @@ func Test_SortOrder(t *testing.T) {
 }
 
 func Test_UpdateBookmark(t *testing.T) {
-	svc := service(t)
+	svc := app(t)
 
 	// /update/bookmark
 	url := "http://www.example.com"

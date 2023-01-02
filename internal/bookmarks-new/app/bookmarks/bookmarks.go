@@ -14,8 +14,8 @@ import (
 	"golang.binggl.net/monorepo/pkg/security"
 )
 
-// Service implements the bookmarks logic
-type Service struct {
+// Application implements the bookmarks logic
+type Application struct {
 	// Logger instance to use for structured logging
 	Logger logging.Logger
 	// Store defines a repository for persistance
@@ -27,7 +27,7 @@ type Service struct {
 }
 
 // CreateBookmark stores a new bookmark
-func (s *Service) CreateBookmark(bm Bookmark, user security.User) (*Bookmark, error) {
+func (s *Application) CreateBookmark(bm Bookmark, user security.User) (*Bookmark, error) {
 	var (
 		savedItem store.Bookmark
 		t         store.NodeType
@@ -79,7 +79,7 @@ func (s *Service) CreateBookmark(bm Bookmark, user security.User) (*Bookmark, er
 }
 
 // GetBookmarkByID retrieves a bookmark for the given user
-func (s *Service) GetBookmarkByID(id string, user security.User) (*Bookmark, error) {
+func (s *Application) GetBookmarkByID(id string, user security.User) (*Bookmark, error) {
 	if id == "" {
 		return nil, fmt.Errorf("no id supplied to fetch bookmark")
 	}
@@ -92,7 +92,7 @@ func (s *Service) GetBookmarkByID(id string, user security.User) (*Bookmark, err
 }
 
 // GetBookmarksByPath retrieves bookmarks by a given path
-func (s *Service) GetBookmarksByPath(path string, user security.User) ([]Bookmark, error) {
+func (s *Application) GetBookmarksByPath(path string, user security.User) ([]Bookmark, error) {
 	if path == "" {
 		return nil, fmt.Errorf("missing path")
 	}
@@ -107,7 +107,7 @@ func (s *Service) GetBookmarksByPath(path string, user security.User) ([]Bookmar
 }
 
 // GetBookmarksFolderByPath returns the folder identified by the given path
-func (s *Service) GetBookmarksFolderByPath(path string, user security.User) (*Bookmark, error) {
+func (s *Application) GetBookmarksFolderByPath(path string, user security.User) (*Bookmark, error) {
 	if path == "" {
 		return nil, fmt.Errorf("missing path parameter")
 	}
@@ -133,7 +133,7 @@ func (s *Service) GetBookmarksFolderByPath(path string, user security.User) (*Bo
 }
 
 // GetAllPaths returns all available stored paths
-func (s *Service) GetAllPaths(user security.User) ([]string, error) {
+func (s *Application) GetAllPaths(user security.User) ([]string, error) {
 	paths, err := s.Store.GetAllPaths(user.Username)
 	if err != nil {
 		s.Logger.Error(fmt.Sprintf("cannot get all bookmark paths: %v", err))
@@ -143,7 +143,7 @@ func (s *Service) GetAllPaths(user security.User) ([]string, error) {
 }
 
 // GetBookmarksByName returns the given bookmark(s) by the supplied name
-func (s *Service) GetBookmarksByName(name string, user security.User) ([]Bookmark, error) {
+func (s *Application) GetBookmarksByName(name string, user security.User) ([]Bookmark, error) {
 	if name == "" {
 		return make([]Bookmark, 0), fmt.Errorf("missing name parameter")
 	}
@@ -159,7 +159,7 @@ func (s *Service) GetBookmarksByName(name string, user security.User) ([]Bookmar
 }
 
 // FetchAndForward retrieves a bookmark by id and forwards to the url of the bookmark
-func (s *Service) FetchAndForward(id string, user security.User) (string, error) {
+func (s *Application) FetchAndForward(id string, user security.User) (string, error) {
 	if id == "" {
 		return "", fmt.Errorf("missing id parameter")
 	}
@@ -201,7 +201,7 @@ func (s *Service) FetchAndForward(id string, user security.User) (string, error)
 }
 
 // Delete a bookmark by id
-func (s *Service) Delete(id string, user security.User) error {
+func (s *Application) Delete(id string, user security.User) error {
 	if id == "" {
 		return fmt.Errorf("missing id parameter")
 	}
@@ -236,7 +236,7 @@ func (s *Service) Delete(id string, user security.User) error {
 }
 
 // UpdateSortOrder modifies the display sort-order
-func (s *Service) UpdateSortOrder(sort BookmarksSortOrder, user security.User) (int, error) {
+func (s *Application) UpdateSortOrder(sort BookmarksSortOrder, user security.User) (int, error) {
 	if len(sort.IDs) != len(sort.SortOrder) {
 		return 0, fmt.Errorf("the number of IDs (%d) does not correspond the number of SortOrder entries (%d)", len(sort.IDs), len(sort.SortOrder))
 	}
@@ -267,7 +267,7 @@ func (s *Service) UpdateSortOrder(sort BookmarksSortOrder, user security.User) (
 }
 
 // Update a bookmark
-func (s *Service) Update(bm Bookmark, user security.User) (*Bookmark, error) {
+func (s *Application) Update(bm Bookmark, user security.User) (*Bookmark, error) {
 	var (
 		id   string
 		item store.Bookmark
@@ -405,7 +405,7 @@ func (s *Service) Update(bm Bookmark, user security.User) (*Bookmark, error) {
 	return entityToModel(item), nil
 }
 
-func (s *Service) updateChildCountOfPath(path, username string, repo store.Repository) error {
+func (s *Application) updateChildCountOfPath(path, username string, repo store.Repository) error {
 	if path == "/" {
 		s.Logger.Info("skip the ROOT path '/'")
 		return nil
@@ -441,7 +441,7 @@ func (s *Service) updateChildCountOfPath(path, username string, repo store.Repos
 // ---- Favicon Logic ----
 
 // GetFaviconPath for the specified bookmark, return the path to the found favicon or the default favicon
-func (s *Service) GetFaviconPath(id string, user security.User) (string, error) {
+func (s *Application) GetFaviconPath(id string, user security.User) (string, error) {
 	if id == "" {
 		return "", fmt.Errorf("missing id parameter")
 	}
@@ -467,7 +467,7 @@ func (s *Service) GetFaviconPath(id string, user security.User) (string, error) 
 }
 
 // FetchFaviconURL retrieves the favicon from the given URL
-func (s *Service) FetchFaviconURL(url string, bm store.Bookmark, user security.User) {
+func (s *Application) FetchFaviconURL(url string, bm store.Bookmark, user security.User) {
 	payload, err := favicon.FetchURL(url)
 	if err != nil {
 		s.Logger.Error(fmt.Sprintf("cannot fetch favicon from URL '%s': %v", url, err))
@@ -520,7 +520,7 @@ func (s *Service) FetchFaviconURL(url string, bm store.Bookmark, user security.U
 }
 
 // FetchFavicon retrieves the Favicon from the bookmarks URL
-func (s *Service) FetchFavicon(bm store.Bookmark, user security.User) {
+func (s *Application) FetchFavicon(bm store.Bookmark, user security.User) {
 	favi, payload, err := favicon.GetFaviconFromURL(bm.URL)
 	if err != nil {
 		s.Logger.Error(fmt.Sprintf("cannot fetch favicon from URL '%s': %v", bm.URL, err))

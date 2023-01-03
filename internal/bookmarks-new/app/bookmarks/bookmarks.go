@@ -127,7 +127,7 @@ func (s *Application) GetBookmarksFolderByPath(path string, user security.User) 
 	bm, err := s.Store.GetFolderByPath(path, user.Username)
 	if err != nil {
 		s.Logger.Error(fmt.Sprintf("cannot get bookmark folder by path: '%s', %v", path, err))
-		return nil, fmt.Errorf("no folder for path '%s' found", path)
+		return nil, app.ErrNotFound(fmt.Sprintf("no folder for path '%s' found", path))
 	}
 
 	return entityToModel(bm), nil

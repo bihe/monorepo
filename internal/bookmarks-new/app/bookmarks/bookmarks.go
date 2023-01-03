@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"golang.binggl.net/monorepo/internal/bookmarks-new/app"
 	"golang.binggl.net/monorepo/internal/bookmarks-new/app/favicon"
 	"golang.binggl.net/monorepo/internal/bookmarks-new/app/store"
 	"golang.binggl.net/monorepo/pkg/logging"
@@ -35,7 +36,7 @@ func (s *Application) CreateBookmark(bm Bookmark, user security.User) (*Bookmark
 
 	if bm.Path == "" || bm.DisplayName == "" {
 		s.Logger.Error("required fields of bookmarks missing (Path or DisplayName)")
-		return nil, fmt.Errorf("invalid request data supplied, missing Path or DisplayName")
+		return nil, app.ErrValidation("invalid request data supplied, missing Path or DisplayName")
 	}
 
 	if bm.Type == Folder {
@@ -81,12 +82,12 @@ func (s *Application) CreateBookmark(bm Bookmark, user security.User) (*Bookmark
 // GetBookmarkByID retrieves a bookmark for the given user
 func (s *Application) GetBookmarkByID(id string, user security.User) (*Bookmark, error) {
 	if id == "" {
-		return nil, fmt.Errorf("no id supplied to fetch bookmark")
+		return nil, app.ErrValidation("no id supplied to fetch bookmark")
 	}
 
 	bm, err := s.Store.GetBookmarkByID(id, user.Username)
 	if err != nil {
-		return nil, fmt.Errorf("could not fetch bookmark; %v", err)
+		return nil, app.ErrNotFound(fmt.Sprintf("could not fetch bookmark; %v", err))
 	}
 	return entityToModel(bm), nil
 }
@@ -94,7 +95,7 @@ func (s *Application) GetBookmarkByID(id string, user security.User) (*Bookmark,
 // GetBookmarksByPath retrieves bookmarks by a given path
 func (s *Application) GetBookmarksByPath(path string, user security.User) ([]Bookmark, error) {
 	if path == "" {
-		return nil, fmt.Errorf("missing path")
+		return nil, app.ErrValidation("missing path")
 	}
 
 	s.Logger.Info(fmt.Sprintf("get bookmarks by path: '%s' for user: '%s'", path, user.Username))
@@ -109,7 +110,7 @@ func (s *Application) GetBookmarksByPath(path string, user security.User) ([]Boo
 // GetBookmarksFolderByPath returns the folder identified by the given path
 func (s *Application) GetBookmarksFolderByPath(path string, user security.User) (*Bookmark, error) {
 	if path == "" {
-		return nil, fmt.Errorf("missing path parameter")
+		return nil, app.ErrValidation("missing path parameter")
 	}
 
 	s.Logger.Info(fmt.Sprintf("get bookmarks-folder by path: '%s' for user: '%s'", path, user.Username))
@@ -145,7 +146,7 @@ func (s *Application) GetAllPaths(user security.User) ([]string, error) {
 // GetBookmarksByName returns the given bookmark(s) by the supplied name
 func (s *Application) GetBookmarksByName(name string, user security.User) ([]Bookmark, error) {
 	if name == "" {
-		return make([]Bookmark, 0), fmt.Errorf("missing name parameter")
+		return make([]Bookmark, 0), app.ErrValidation("missing name parameter")
 	}
 
 	s.Logger.Info(fmt.Sprintf("get bookmarks by name: '%s' for user: '%s'", name, user.Username))
@@ -161,7 +162,7 @@ func (s *Application) GetBookmarksByName(name string, user security.User) ([]Boo
 // FetchAndForward retrieves a bookmark by id and forwards to the url of the bookmark
 func (s *Application) FetchAndForward(id string, user security.User) (string, error) {
 	if id == "" {
-		return "", fmt.Errorf("missing id parameter")
+		return "", app.ErrValidation("missing id parameter")
 	}
 
 	s.Logger.Info(fmt.Sprintf("try to fetch bookmark with ID '%s'", id))
@@ -203,7 +204,7 @@ func (s *Application) FetchAndForward(id string, user security.User) (string, er
 // Delete a bookmark by id
 func (s *Application) Delete(id string, user security.User) error {
 	if id == "" {
-		return fmt.Errorf("missing id parameter")
+		return app.ErrValidation("missing id parameter")
 	}
 
 	s.Logger.Info(fmt.Sprintf("will try to delete bookmark with ID '%s'", id))
@@ -238,7 +239,7 @@ func (s *Application) Delete(id string, user security.User) error {
 // UpdateSortOrder modifies the display sort-order
 func (s *Application) UpdateSortOrder(sort BookmarksSortOrder, user security.User) (int, error) {
 	if len(sort.IDs) != len(sort.SortOrder) {
-		return 0, fmt.Errorf("the number of IDs (%d) does not correspond the number of SortOrder entries (%d)", len(sort.IDs), len(sort.SortOrder))
+		return 0, app.ErrValidation(fmt.Sprintf("the number of IDs (%d) does not correspond the number of SortOrder entries (%d)", len(sort.IDs), len(sort.SortOrder)))
 	}
 
 	var updates int
@@ -274,7 +275,7 @@ func (s *Application) Update(bm Bookmark, user security.User) (*Bookmark, error)
 	)
 	if bm.Path == "" || bm.DisplayName == "" || bm.ID == "" {
 		s.Logger.Error("required fields of bookmarks missing")
-		return nil, fmt.Errorf("invalid request data supplied, missing ID, Path or DisplayName")
+		return nil, app.ErrValidation("invalid request data supplied, missing ID, Path or DisplayName")
 
 	}
 
@@ -443,14 +444,14 @@ func (s *Application) updateChildCountOfPath(path, username string, repo store.R
 // GetFaviconPath for the specified bookmark, return the path to the found favicon or the default favicon
 func (s *Application) GetFaviconPath(id string, user security.User) (string, error) {
 	if id == "" {
-		return "", fmt.Errorf("missing id parameter")
+		return "", app.ErrValidation("missing id parameter")
 	}
 
 	s.Logger.Info(fmt.Sprintf("try to fetch bookmark with ID '%s'", id))
 	existing, err := s.Store.GetBookmarkByID(id, user.Username)
 	if err != nil {
 		s.Logger.Error(fmt.Sprintf("could not find bookmark by id '%s': %v", id, err))
-		return "", fmt.Errorf("could not find bookmark with ID '%s'", id)
+		return "", app.ErrNotFound(fmt.Sprintf("could not find bookmark with ID '%s'", id))
 	}
 
 	if existing.Favicon == "" {

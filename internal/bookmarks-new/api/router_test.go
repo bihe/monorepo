@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"golang.binggl.net/monorepo/internal/bookmarks-new/api"
+	"golang.binggl.net/monorepo/internal/bookmarks-new/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks-new/app/conf"
-	"golang.binggl.net/monorepo/internal/bookmarks-new/app/store"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/logging"
 )
@@ -21,11 +21,11 @@ var logger = logging.NewNop()
 type handlerOps struct {
 	version string
 	build   string
-	repo    store.Repository
+	app     *bookmarks.Application
 }
 
 func handlerWith(ops *handlerOps) http.Handler {
-	return api.MakeHTTPHandler(ops.repo, logger, api.HTTPHandlerOptions{
+	return api.MakeHTTPHandler(ops.app, logger, api.HTTPHandlerOptions{
 		BasePath:  "./",
 		ErrorPath: "/error",
 		Config: conf.AppConfig{

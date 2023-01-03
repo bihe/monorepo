@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
+	"path"
 	"strings"
 
 	"golang.binggl.net/monorepo/internal/bookmarks-new/api"
+	"golang.binggl.net/monorepo/internal/bookmarks-new/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks-new/app/conf"
 	"golang.binggl.net/monorepo/internal/bookmarks-new/app/store"
 	"golang.binggl.net/monorepo/pkg/logging"
@@ -50,8 +52,14 @@ func run(version, build string) error {
 	defer logger.Close()
 
 	var (
-		repo    = setupRepository(appCfg, logger)
-		handler = api.MakeHTTPHandler(repo, logger, api.HTTPHandlerOptions{
+		repo = setupRepository(appCfg, logger)
+		app  = &bookmarks.Application{
+			Logger:         logger,
+			Store:          repo,
+			FaviconPath:    path.Join(basePath, appCfg.FaviconUploadPath),
+			DefaultFavicon: path.Join(basePath, appCfg.DefaultFavicon),
+		}
+		handler = api.MakeHTTPHandler(app, logger, api.HTTPHandlerOptions{
 			BasePath:  basePath,
 			ErrorPath: appCfg.ErrorPath,
 			Config:    *appCfg,

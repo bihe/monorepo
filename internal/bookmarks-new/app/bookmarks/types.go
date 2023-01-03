@@ -37,31 +37,6 @@ type Bookmark struct {
 	CustomFavicon string     `json:"customFavicon"`
 }
 
-// BookmarkList is a collection of Bookmarks
-// swagger:model
-type BookmarkList struct {
-	Success bool       `json:"success"`
-	Count   int        `json:"count"`
-	Message string     `json:"message"`
-	Value   []Bookmark `json:"value"`
-}
-
-// BookmarkResult has additional information about a Bookmark
-// swagger:model
-type BookmarkResult struct {
-	Success bool     `json:"success"`
-	Message string   `json:"message"`
-	Value   Bookmark `json:"value"`
-}
-
-// Result is a generic response with a string value
-// swagger:model
-type Result struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Value   string `json:"value"`
-}
-
 // BookmarksSortOrder contains a sorting for a list of ids
 // swagger:model
 type BookmarksSortOrder struct {

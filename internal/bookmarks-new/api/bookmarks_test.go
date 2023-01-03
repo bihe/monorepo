@@ -1,6 +1,7 @@
 package api_test
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -53,6 +54,10 @@ func bookmarkHandler(repo store.Repository) http.Handler {
 	})
 }
 
+func addJwtAuth(req *http.Request) {
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
+}
+
 // A MockRepository which provides functions for the specific test-case
 type MockRepository struct {
 	// the default implementation is available below
@@ -84,7 +89,7 @@ func Test_GetBookmarkByID(t *testing.T) {
 	url := "/api/v1/bookmarks/ID"
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
+	addJwtAuth(req)
 
 	// act
 	bookmarkHandlerMock(pass).ServeHTTP(rec, req)
@@ -105,7 +110,7 @@ func Test_GetBookmarkByID(t *testing.T) {
 	// fail -------------------------------------------------------------
 	rec = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", url, nil)
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
+	addJwtAuth(req)
 
 	// act
 	bookmarkHandlerMock(failRepository).ServeHTTP(rec, req)
@@ -116,7 +121,7 @@ func Test_GetBookmarkByID(t *testing.T) {
 	// fail no id--------------------------------------------------------
 	rec = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/api/v1/bookmarks/", nil)
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
+	addJwtAuth(req)
 
 	// act
 	bookmarkHandlerMock(pass).ServeHTTP(rec, req)
@@ -152,7 +157,7 @@ func Test_GetBookmarkByPath(t *testing.T) {
 	q.Set("path", "/")
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", reqURL+"?"+q.Encode(), nil)
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
+	addJwtAuth(req)
 
 	// act
 	bookmarkHandlerMock(pass).ServeHTTP(rec, req)
@@ -171,7 +176,7 @@ func Test_GetBookmarkByPath(t *testing.T) {
 	// if there is an error an empty list is returned
 	rec = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", reqURL+"?"+q.Encode(), nil)
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
+	addJwtAuth(req)
 
 	// act
 	bookmarkHandlerMock(failRepository).ServeHTTP(rec, req)
@@ -188,7 +193,7 @@ func Test_GetBookmarkByPath(t *testing.T) {
 	// fail no path------------------------------------------------------
 	rec = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", reqURL, nil)
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
+	addJwtAuth(req)
 
 	// act
 	bookmarkHandlerMock(failRepository).ServeHTTP(rec, req)
@@ -223,8 +228,8 @@ func Test_GetBookmarkFolderBypath(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", reqURL+"?"+q.Encode(), nil)
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
-	var br api.BookmarkResult
+	addJwtAuth(req)
+	var br api.BookmarkFolderResult
 
 	// act
 	bookmarkHandlerMock(pass).ServeHTTP(rec, req)
@@ -242,7 +247,7 @@ func Test_GetBookmarkFolderBypath(t *testing.T) {
 	// other folder -----------------------------------------------------
 	rec = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", reqURL+"?"+q.Encode(), nil)
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
+	addJwtAuth(req)
 	q = make(url.Values)
 	q.Set("path", "/Folder")
 
@@ -255,7 +260,7 @@ func Test_GetBookmarkFolderBypath(t *testing.T) {
 	// fail repository---------------------------------------------------
 	rec = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", reqURL+"?"+q.Encode(), nil)
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
+	addJwtAuth(req)
 	q = make(url.Values)
 	q.Set("path", "/Folder")
 
@@ -268,7 +273,7 @@ func Test_GetBookmarkFolderBypath(t *testing.T) {
 	// fail no path------------------------------------------------------
 	rec = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", reqURL, nil)
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
+	addJwtAuth(req)
 
 	// act
 	bookmarkHandlerMock(pass).ServeHTTP(rec, req)
@@ -305,7 +310,7 @@ func Test_GetBookmarkByName(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", reqURL+"?"+q.Encode(), nil)
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
+	addJwtAuth(req)
 	var bl api.BookmarkList
 
 	// act
@@ -323,7 +328,7 @@ func Test_GetBookmarkByName(t *testing.T) {
 	// fail repository---------------------------------------------------
 	rec = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", reqURL+"?"+q.Encode(), nil)
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
+	addJwtAuth(req)
 
 	// act
 	bookmarkHandlerMock(failRepository).ServeHTTP(rec, req)
@@ -340,13 +345,50 @@ func Test_GetBookmarkByName(t *testing.T) {
 	// fail no name -----------------------------------------------------
 	rec = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", reqURL, nil)
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
+	addJwtAuth(req)
 
 	// act
 	bookmarkHandlerMock(pass).ServeHTTP(rec, req)
 
 	// assert
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
+func (r *MockRepository) GetAllPaths(username string) ([]string, error) {
+	if r.fail {
+		return nil, errRaised
+	}
+
+	return []string{"/", "/a", "/b"}, nil
+}
+
+func Test_BookmarkAllPaths(t *testing.T) {
+	reqURL := "/api/v1/bookmarks/allpaths"
+
+	// get the paths
+	// ---------------------------------------------------------------
+	r := bookmarkHandlerMock(pass)
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", reqURL, nil)
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	var result api.BookmarksPaths
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Errorf("could not unmarshal body: %v", err)
+	}
+
+	assert.Equal(t, 3, result.Count)
+	assert.Equal(t, "/", result.Paths[0])
+
+	// fail
+	// ---------------------------------------------------------------
+	r = bookmarkHandlerMock(failRepository)
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", reqURL, nil)
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 }
 
 func repository(t *testing.T) (store.Repository, *sql.DB) {
@@ -450,7 +492,7 @@ func Test_CreateBookmark(t *testing.T) {
 			var result api.Result
 			rec := httptest.NewRecorder()
 			req, _ := http.NewRequest("POST", reqURL, strings.NewReader(tc.payload))
-			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
+			addJwtAuth(req)
 			req.Header.Add("Content-Type", "application/json")
 
 			// act
@@ -515,7 +557,7 @@ func Test_UpdateBookmark(t *testing.T) {
 			var result api.Result
 			rec := httptest.NewRecorder()
 			req, _ := http.NewRequest("PUT", reqURL, strings.NewReader(tc.payload))
-			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
+			addJwtAuth(req)
 			req.Header.Add("Content-Type", "application/json")
 
 			// act
@@ -546,7 +588,7 @@ func Test_UpdateBookmark(t *testing.T) {
 	// arrange
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", reqURL, strings.NewReader(payload))
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
+	addJwtAuth(req)
 	req.Header.Add("Content-Type", "application/json")
 
 	// act
@@ -572,7 +614,7 @@ func Test_UpdateBookmark(t *testing.T) {
 	// arrange
 	rec = httptest.NewRecorder()
 	req, _ = http.NewRequest("PUT", reqURL, strings.NewReader(fmt.Sprintf(payload, id)))
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
+	addJwtAuth(req)
 	req.Header.Add("Content-Type", "application/json")
 
 	// act
@@ -593,7 +635,7 @@ func Test_UpdateBookmark(t *testing.T) {
 	// arrange
 	rec = httptest.NewRecorder()
 	req, _ = http.NewRequest("PUT", reqURL, strings.NewReader(payload))
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
+	addJwtAuth(req)
 	req.Header.Add("Content-Type", "application/json")
 
 	// act
@@ -608,7 +650,7 @@ func Test_UpdateBookmark(t *testing.T) {
 	reqURL = "/api/v1/bookmarks/" + id
 	rec = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", reqURL, nil)
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
+	addJwtAuth(req)
 
 	// act
 	bookmarkHandler(repo).ServeHTTP(rec, req)
@@ -620,6 +662,381 @@ func Test_UpdateBookmark(t *testing.T) {
 	}
 
 	assert.Equal(t, "Node_updated", bm.DisplayName)
+}
+
+func Test_UpdateBookmarkHierarchy(t *testing.T) {
+	repo, db := repository(t)
+	defer db.Close()
+
+	url := "/api/v1/bookmarks"
+
+	payload := `{
+		"displayName": "%s",
+		"path": "%s",
+		"type": "Folder"
+	}`
+
+	// create folder hierarchy
+	// /Folder
+	//     /Folder1
+	//     /folder2
+	// ---------------------------------------------------------------
+
+	// /Folder
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", url, strings.NewReader(fmt.Sprintf(payload, "Folder", "/")))
+	addJwtAuth(req)
+	req.Header.Add("Content-Type", "application/json")
+	bookmarkHandler(repo).ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusCreated, rec.Code)
+
+	// /Folder/Folder1
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", url, strings.NewReader(fmt.Sprintf(payload, "Folder1", "/Folder")))
+	addJwtAuth(req)
+	req.Header.Add("Content-Type", "application/json")
+	bookmarkHandler(repo).ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusCreated, rec.Code)
+
+	// /Folder/Folder2
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", url, strings.NewReader(fmt.Sprintf(payload, "Folder2", "/Folder")))
+	addJwtAuth(req)
+	req.Header.Add("Content-Type", "application/json")
+	bookmarkHandler(repo).ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusCreated, rec.Code)
+
+	// get the folder /Folder
+	// ---------------------------------------------------------------
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", url+"/folder?path="+"/Folder", nil)
+	addJwtAuth(req)
+	bookmarkHandler(repo).ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	var bookmarkFolder api.BookmarkFolderResult
+	if err := json.Unmarshal(rec.Body.Bytes(), &bookmarkFolder); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+
+	// update the folder
+	// ---------------------------------------------------------------
+	bm := bookmarkFolder.Value
+	bm.DisplayName = bm.DisplayName + "_updated"
+	id := bm.ID
+
+	payloadBytes, err := json.Marshal(bm)
+	if err != nil {
+		t.Errorf("cannot marshall payload: %v", err)
+	}
+
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("PUT", url, bytes.NewReader(payloadBytes))
+	addJwtAuth(req)
+	req.Header.Add("Content-Type", "application/json")
+	bookmarkHandler(repo).ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+	var response api.Result
+	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+	assert.Equal(t, id, response.Value)
+
+	// check that the path of the child-folders has changed as well
+	// ---------------------------------------------------------------
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", url+"/bypath?path="+"/Folder_updated", nil)
+	addJwtAuth(req)
+	bookmarkHandler(repo).ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	var bookmarkList api.BookmarkList
+	if err := json.Unmarshal(rec.Body.Bytes(), &bookmarkList); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+	assert.Equal(t, 2, len(bookmarkList.Value))
+	assert.Equal(t, "/Folder_updated", bookmarkList.Value[0].Path)
+}
+
+func Test_DeleteBookmark(t *testing.T) {
+	repo, db := repository(t)
+	defer db.Close()
+
+	url := "/api/v1/bookmarks"
+
+	// validation of standard logic
+	// ---------------------------------------------------------------
+	tt := []struct {
+		name     string
+		status   int
+		id       string
+		function http.Handler
+	}{
+		{
+			name:     "no id",
+			status:   http.StatusMethodNotAllowed,
+			function: bookmarkHandler(repo),
+		},
+		{
+			name:     "repository error",
+			id:       "id",
+			status:   http.StatusInternalServerError,
+			function: bookmarkHandlerMock(failRepository),
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			req, _ := http.NewRequest("DELETE", url+"/"+tc.id, nil)
+			addJwtAuth(req)
+			req.Header.Add("Content-Type", "application/json")
+
+			tc.function.ServeHTTP(rec, req)
+			// assert
+			assert.Equal(t, tc.status, rec.Code)
+		})
+	}
+
+	payload := `{
+		"displayName": "Node",
+		"path": "/",
+		"type": "Node",
+		"url": "http://url"
+	}`
+
+	// create one item
+	// ---------------------------------------------------------------
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", url, strings.NewReader(payload))
+	addJwtAuth(req)
+	req.Header.Add("Content-Type", "application/json")
+	bookmarkHandler(repo).ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusCreated, rec.Code)
+	var result api.Result
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+	id := result.Value
+
+	// delete the created item
+	// ---------------------------------------------------------------
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("DELETE", url+"/"+id, nil)
+	addJwtAuth(req)
+	bookmarkHandler(repo).ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
+func Test_DeleteBookmarkHierarchy(t *testing.T) {
+	repo, db := repository(t)
+	defer db.Close()
+
+	url := "/api/v1/bookmarks"
+	r := bookmarkHandler(repo)
+
+	// create folder hierarchy
+	// /Folder
+	//     /Folder1
+	// ---------------------------------------------------------------
+
+	payload := `{
+		"displayName": "%s",
+		"path": "%s",
+		"type": "Folder"
+	}`
+
+	// /Folder
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", url, strings.NewReader(fmt.Sprintf(payload, "Folder", "/")))
+	req.Header.Add("Content-Type", "application/json")
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusCreated, rec.Code)
+
+	// /Folder/Folder1
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", url, strings.NewReader(fmt.Sprintf(payload, "Folder1", "/Folder")))
+	req.Header.Add("Content-Type", "application/json")
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusCreated, rec.Code)
+
+	// get the folder /Folder
+	// ---------------------------------------------------------------
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", url+"/folder?path="+"/Folder", nil)
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	var bookmarkFolder api.BookmarkFolderResult
+	if err := json.Unmarshal(rec.Body.Bytes(), &bookmarkFolder); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+	id := bookmarkFolder.Value.ID
+
+	// delete the created item
+	// ---------------------------------------------------------------
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("DELETE", url+"/"+id, nil)
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func Test_UpdateSortOrder(t *testing.T) {
+	repo, db := repository(t)
+	defer db.Close()
+
+	url := "/api/v1/bookmarks"
+
+	// validation of basic logic
+	// ---------------------------------------------------------------
+	tt := []struct {
+		name     string
+		payload  string
+		status   int
+		function http.Handler
+	}{
+		{
+			name:     "invalid",
+			payload:  "{}",
+			status:   http.StatusBadRequest,
+			function: bookmarkHandlerMock(pass),
+		},
+		{
+			name: "unbalanced",
+			payload: `{
+				"ids": ["1","2"],
+				"sortOrder": [1,2,3]
+			}`,
+			status:   http.StatusBadRequest,
+			function: bookmarkHandlerMock(pass),
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			var result api.Result
+
+			// act
+			req, _ := http.NewRequest("PUT", url+"/sortorder", strings.NewReader(tc.payload))
+			req.Header.Add("Content-Type", "application/json")
+			addJwtAuth(req)
+			tc.function.ServeHTTP(rec, req)
+
+			// assert
+			assert.Equal(t, tc.status, rec.Code)
+			if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+				t.Errorf("could not unmarshal: %v", err)
+			}
+		})
+	}
+
+	payload := `{
+		"displayName": "%s",
+		"path": "/",
+		"type": "Node",
+		"url": "http://url"
+	}`
+
+	var result api.Result
+	r := bookmarkHandler(repo)
+
+	// create A
+	// ---------------------------------------------------------------
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", url, strings.NewReader(fmt.Sprintf(payload, "A")))
+	req.Header.Add("Content-Type", "application/json")
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusCreated, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+	id1 := result.Value
+
+	// create B
+	// ---------------------------------------------------------------
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", url, strings.NewReader(fmt.Sprintf(payload, "B")))
+	req.Header.Add("Content-Type", "application/json")
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusCreated, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+	id2 := result.Value
+
+	// get the bookmarks
+	// ---------------------------------------------------------------
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", url+"/bypath?path=/", nil)
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	var list api.BookmarkList
+	if err := json.Unmarshal(rec.Body.Bytes(), &list); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+
+	assert.Equal(t, 2, len(list.Value))
+	assert.Equal(t, "A", list.Value[0].DisplayName)
+	assert.Equal(t, "B", list.Value[1].DisplayName)
+
+	// change the sorting
+	// ---------------------------------------------------------------
+	newOrder := api.BookmarksSortOrderRequest{
+		BookmarksSortOrder: &bookmarks.BookmarksSortOrder{
+			IDs:       []string{id1, id2},
+			SortOrder: []int{10, 1},
+		},
+	}
+	bytesPayload, _ := json.Marshal(newOrder)
+
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("PUT", url+"/sortorder", bytes.NewReader(bytesPayload))
+	req.Header.Add("Content-Type", "application/json")
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+
+	// get the bookmarks again
+	// ---------------------------------------------------------------
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", url+"/bypath?path=/", nil)
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &list); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+
+	assert.Equal(t, 2, len(list.Value))
+	assert.Equal(t, "B", list.Value[0].DisplayName)
+	assert.Equal(t, "A", list.Value[1].DisplayName)
+
+	// change the sorting, but with wrong ID
+	// ---------------------------------------------------------------
+	newOrder = api.BookmarksSortOrderRequest{
+		BookmarksSortOrder: &bookmarks.BookmarksSortOrder{
+			IDs:       []string{"A"},
+			SortOrder: []int{1},
+		},
+	}
+	bytesPayload, _ = json.Marshal(newOrder)
+
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("PUT", url+"/sortorder", bytes.NewReader(bytesPayload))
+	req.Header.Add("Content-Type", "application/json")
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 }
 
 // --------------------------------------------------------------------------

@@ -9,8 +9,8 @@ import (
 	"golang.binggl.net/monorepo/internal/bookmarks-new/app/bookmarks"
 )
 
-// BookmarkResult has additional information about a Bookmark
-type BookmarkResult struct {
+// BookmarkFolderResult has additional information about a Bookmark
+type BookmarkFolderResult struct {
 	Success bool               `json:"success"`
 	Message string             `json:"message"`
 	Value   bookmarks.Bookmark `json:"value"`
@@ -29,6 +29,12 @@ type Result struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
 	Value   string `json:"value"`
+}
+
+// BookmarksPaths encapsulates the available bookmarks paths
+type BookmarksPaths struct {
+	Paths []string `json:"paths"`
+	Count int      `json:"count"`
 }
 
 // --------------------------------------------------------------------------

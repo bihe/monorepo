@@ -66,7 +66,7 @@ func (b *BookmarksHandler) GetBookmarksFolderByPath() http.HandlerFunc {
 			encodeError(err, b.App.Logger, w, r)
 			return
 		}
-		respondJSON(w, BookmarkResult{
+		respondJSON(w, BookmarkFolderResult{
 			Success: true,
 			Message: fmt.Sprintf("Found bookmark folder for path %s.", path),
 			Value:   *bm,
@@ -77,11 +77,6 @@ func (b *BookmarksHandler) GetBookmarksFolderByPath() http.HandlerFunc {
 // GetAllPaths returns all paths
 func (b *BookmarksHandler) GetAllPaths() http.HandlerFunc {
 
-	type BookmarksPathsResponse struct {
-		Paths []string `json:"paths"`
-		Count int      `json:"count"`
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := ensureUser(r)
 
@@ -90,7 +85,7 @@ func (b *BookmarksHandler) GetAllPaths() http.HandlerFunc {
 			encodeError(err, b.App.Logger, w, r)
 			return
 		}
-		respondJSON(w, BookmarksPathsResponse{
+		respondJSON(w, BookmarksPaths{
 			Paths: paths,
 			Count: len(paths),
 		})

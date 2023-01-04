@@ -22,10 +22,9 @@ var user = security.User{
 
 func app(t *testing.T) bookmarks.Application {
 	return bookmarks.Application{
-		Store:          repository(t),
-		Logger:         logging.NewNop(),
-		FaviconPath:    faviconPath,
-		DefaultFavicon: "default.icon",
+		Store:       repository(t),
+		Logger:      logging.NewNop(),
+		FaviconPath: faviconPath,
 	}
 }
 
@@ -417,23 +416,23 @@ func Test_GetFavicon(t *testing.T) {
 		Favicon:     "unknown.ico",
 	}, user)
 
-	path, err := svc.GetFaviconPath(bm.ID, user)
+	favicon, err := svc.GetFavicon(bm.ID, user)
 	if err != nil {
 		t.Errorf("could not get path of favicon for ID: %s; %v", bm.ID, err)
 	}
 
-	if path == "" {
+	if len(favicon.Payload) == 0 {
 		t.Errorf("expected a path for the faviconGetFaviconPath")
 	}
 
 	// ---- error ----
 
-	_, err = svc.GetFaviconPath("", user)
+	_, err = svc.GetFavicon("", user)
 	if err == nil {
 		t.Errorf("expected error for empty id")
 	}
 
-	_, err = svc.GetFaviconPath("unknown-id", user)
+	_, err = svc.GetFavicon("unknown-id", user)
 	if err == nil {
 		t.Errorf("expected error for unknown id")
 	}

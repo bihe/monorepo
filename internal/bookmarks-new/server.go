@@ -54,10 +54,9 @@ func run(version, build string) error {
 	var (
 		repo = setupRepository(appCfg, logger)
 		app  = &bookmarks.Application{
-			Logger:         logger,
-			Store:          repo,
-			FaviconPath:    path.Join(basePath, appCfg.FaviconUploadPath),
-			DefaultFavicon: path.Join(basePath, appCfg.DefaultFavicon),
+			Logger:      logger,
+			Store:       repo,
+			FaviconPath: path.Join(basePath, appCfg.FaviconUploadPath),
 		}
 		handler = api.MakeHTTPHandler(app, logger, api.HTTPHandlerOptions{
 			BasePath:  basePath,

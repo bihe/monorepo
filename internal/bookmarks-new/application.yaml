@@ -60,4 +60,3 @@ database:
 
 # place to store the downloaded favicons
 faviconUploadPath: "./uploads/"
-defaultFavicon: "./assets/favicon.ico"

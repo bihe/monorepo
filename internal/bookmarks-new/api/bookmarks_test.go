@@ -26,16 +26,17 @@ var errRaised = fmt.Errorf("error")
 const failRepository = true
 const pass = false
 
+const TestFaviconPath = "./assets"
+
 // the bookmarkHandlerMock is the api-logic for bookmarks
 func bookmarkHandlerMock(fail bool) http.Handler {
 	return handlerWith(&handlerOps{
 		version: "1.0",
 		build:   "today",
 		app: &bookmarks.Application{
-			Logger:         logger,
-			Store:          &MockRepository{fail: fail},
-			FaviconPath:    "",
-			DefaultFavicon: "",
+			Logger:      logger,
+			Store:       &MockRepository{fail: fail},
+			FaviconPath: "",
 		},
 	})
 }
@@ -46,10 +47,9 @@ func bookmarkHandler(repo store.Repository) http.Handler {
 		version: "1.0",
 		build:   "today",
 		app: &bookmarks.Application{
-			Logger:         logger,
-			Store:          repo,
-			FaviconPath:    "",
-			DefaultFavicon: "",
+			Logger:      logger,
+			Store:       repo,
+			FaviconPath: "",
 		},
 	})
 }
@@ -1034,6 +1034,145 @@ func Test_UpdateSortOrder(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req, _ = http.NewRequest("PUT", url+"/sortorder", bytes.NewReader(bytesPayload))
 	req.Header.Add("Content-Type", "application/json")
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func Test_GetFavicon(t *testing.T) {
+	url := "/api/v1/bookmarks/favicon/"
+	r := bookmarkHandlerMock(pass)
+
+	// get the default favicon
+	// ---------------------------------------------------------------
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", url+"ID", nil)
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.True(t, len(rec.Body.Bytes()) > 0)
+
+	// no ID
+	// ---------------------------------------------------------------
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", url, nil)
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+
+	// fail lookup
+	// ---------------------------------------------------------------
+	r = bookmarkHandlerMock(failRepository)
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", url+"ID", nil)
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+}
+
+func Test_FetchAndForward(t *testing.T) {
+	repo, db := repository(t)
+	defer db.Close()
+
+	r := bookmarkHandler(repo)
+	url := "/api/v1/bookmarks"
+
+	payload := `{
+		"displayName": "Node",
+		"path": "/",
+		"type": "Node",
+		"url": "http://url",
+		"highlight": 1
+	}`
+
+	// create one item
+	// ---------------------------------------------------------------
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", url, strings.NewReader(payload))
+	req.Header.Add("Content-Type", "application/json")
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusCreated, rec.Code)
+	var result api.Result
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Errorf("could not unmarshal body: %v", err)
+	}
+	id := result.Value
+
+	// retrieve the created item
+	// ---------------------------------------------------------------
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", url+"/"+id, nil)
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	var bookmark bookmarks.Bookmark
+	assert.Equal(t, http.StatusOK, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &bookmark); err != nil {
+		t.Errorf("could not unmarshal body: %v", err)
+	}
+	assert.Equal(t, 1, bookmark.Highlight)
+
+	// fetch the URL
+	// ---------------------------------------------------------------
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", url+"/fetch/"+id, nil)
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusFound, rec.Code)
+	assert.Equal(t, "http://url", rec.Header().Get("location"))
+
+	// retrieve the created item again - the highlight should be 0
+	// fetch and forward resets the highlight value
+	// ---------------------------------------------------------------
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", url+"/"+id, nil)
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &bookmark); err != nil {
+		t.Errorf("could not unmarshal body: %v", err)
+	}
+	assert.Equal(t, 0, bookmark.Highlight)
+
+	// no ID
+	// ---------------------------------------------------------------
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", url+"/fetch", nil)
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+
+	// create a folder
+	// ---------------------------------------------------------------
+	payload = `{
+		"displayName": "Node",
+		"path": "/",
+		"type": "Folder"
+	}`
+
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", url, strings.NewReader(payload))
+	req.Header.Add("Content-Type", "application/json")
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusCreated, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Errorf("could not unmarshal body: %v", err)
+	}
+	id = result.Value
+
+	// error folder
+	// ---------------------------------------------------------------
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", url+"/fetch/"+id, nil)
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+
+	// error wrong ID
+	// ---------------------------------------------------------------
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", url+"/fetch/any", nil)
 	addJwtAuth(req)
 	r.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)

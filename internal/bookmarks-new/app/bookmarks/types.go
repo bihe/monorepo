@@ -21,7 +21,6 @@ const (
 )
 
 // Bookmark is the model provided via the REST API
-// swagger:model
 type Bookmark struct {
 	ID            string     `json:"id"`
 	Path          string     `json:"path"`
@@ -38,10 +37,16 @@ type Bookmark struct {
 }
 
 // BookmarksSortOrder contains a sorting for a list of ids
-// swagger:model
 type BookmarksSortOrder struct {
 	IDs       []string `json:"ids"`
 	SortOrder []int    `json:"sortOrder"`
+}
+
+// FileInfo is used to encapsulate information about a file
+type FileInfo struct {
+	Payload  []byte
+	Name     string
+	Modified time.Time
 }
 
 // --------------------------------------------------------------------------

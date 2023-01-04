@@ -2,11 +2,13 @@ package bookmarks
 
 import (
 	"crypto/sha1"
+	_ "embed"
 	"fmt"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"golang.binggl.net/monorepo/internal/bookmarks-new/app"
 	"golang.binggl.net/monorepo/internal/bookmarks-new/app/favicon"
@@ -23,8 +25,6 @@ type Application struct {
 	Store store.Repository
 	// FaviconPath defines a path on disk to store a favicon
 	FaviconPath string
-	// DefaultFavicon is used if the bookmark item does not have a favicon
-	DefaultFavicon string
 }
 
 // CreateBookmark stores a new bookmark
@@ -441,30 +441,51 @@ func (s *Application) updateChildCountOfPath(path, username string, repo store.R
 
 // ---- Favicon Logic ----
 
-// GetFaviconPath for the specified bookmark, return the path to the found favicon or the default favicon
-func (s *Application) GetFaviconPath(id string, user security.User) (string, error) {
+//go:embed favicon.ico
+var defaultFavicon []byte
+var defaultFaviconModTime = time.Date(2022, 12, 31, 0, 0, 0, 0, time.UTC)
+
+const defaultFaviconName = "favicon.ico"
+
+// GetFavicon returns returns the payload of to the found favicon or the default favicon
+func (s *Application) GetFavicon(id string, user security.User) (*FileInfo, error) {
 	if id == "" {
-		return "", app.ErrValidation("missing id parameter")
+		return nil, app.ErrValidation("missing id parameter")
 	}
 
 	s.Logger.Info(fmt.Sprintf("try to fetch bookmark with ID '%s'", id))
 	existing, err := s.Store.GetBookmarkByID(id, user.Username)
 	if err != nil {
 		s.Logger.Error(fmt.Sprintf("could not find bookmark by id '%s': %v", id, err))
-		return "", app.ErrNotFound(fmt.Sprintf("could not find bookmark with ID '%s'", id))
+		return nil, app.ErrNotFound(fmt.Sprintf("could not find bookmark with ID '%s'", id))
+	}
+
+	fi := FileInfo{
+		Payload:  defaultFavicon,
+		Name:     defaultFaviconName,
+		Modified: defaultFaviconModTime,
 	}
 
 	if existing.Favicon == "" {
-		return path.Join(s.FaviconPath, s.DefaultFavicon), nil
+		return &fi, nil
 	}
 
 	fullPath := path.Join(s.FaviconPath, existing.Favicon)
-	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+	meta, err := os.Stat(fullPath)
+	if err != nil {
 		s.Logger.Error(fmt.Sprintf("the specified favicon '%s' is not available", fullPath))
-		// not found - use default
-		fullPath = path.Join(s.FaviconPath, s.DefaultFavicon)
+		return &fi, nil
 	}
-	return fullPath, nil
+	payload, err := os.ReadFile(fullPath)
+	if err != nil {
+		s.Logger.Error(fmt.Sprintf("the specified favicon '%s' could not be read, %v", fullPath, err))
+		return &fi, nil
+	}
+	fi.Name = meta.Name()
+	fi.Modified = meta.ModTime()
+	fi.Payload = payload
+
+	return &fi, nil
 }
 
 // FetchFaviconURL retrieves the favicon from the given URL

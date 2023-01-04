@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 
@@ -122,14 +123,12 @@ func (b *BookmarksHandler) GetFavicon() http.HandlerFunc {
 		id := chi.URLParam(r, "id")
 
 		b.App.Logger.InfoRequest(fmt.Sprintf("try to fetch bookmark with ID '%s'", id), r)
-
-		fullPath, err := b.App.GetFaviconPath(id, *user)
+		favicon, err := b.App.GetFavicon(id, *user)
 		if err != nil {
 			encodeError(err, b.App.Logger, w, r)
 			return
 		}
-
-		http.ServeFile(w, r, fullPath)
+		http.ServeContent(w, r, favicon.Name, favicon.Modified, bytes.NewReader(favicon.Payload))
 	}
 }
 

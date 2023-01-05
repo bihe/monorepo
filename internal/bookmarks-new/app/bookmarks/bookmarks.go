@@ -176,7 +176,7 @@ func (s *Application) FetchAndForward(id string, user security.User) (string, er
 
 		if existing.Type == store.Folder {
 			s.Logger.Error(fmt.Sprintf("accessCount and redirect only valid for Nodes: ID '%s'", id))
-			return fmt.Errorf("cannot fetch and forward folder - ID '%s'", id)
+			return app.ErrValidation(fmt.Sprintf("cannot fetch and forward folder - ID '%s'", id))
 		}
 
 		// once accessed the highlight flag is removed
@@ -194,7 +194,7 @@ func (s *Application) FetchAndForward(id string, user security.User) (string, er
 		return nil
 	}); err != nil {
 		s.Logger.Error(fmt.Sprintf("could not fetch and update bookmark by ID '%s': %v", id, err))
-		return "", fmt.Errorf("error fetching and updating bookmark: %v", err)
+		return "", fmt.Errorf("error fetching and updating bookmark: %w", err)
 	}
 
 	s.Logger.Info(fmt.Sprintf("will redirect to bookmark URL '%s'", redirectURL))
@@ -293,7 +293,7 @@ func (s *Application) Update(bm Bookmark, user security.User) (*Bookmark, error)
 			folderPath := ensureFolderPath(existing.Path, existing.DisplayName)
 			if bm.Path == folderPath {
 				s.Logger.Error(fmt.Sprintf("a folder cannot be moved into itself: folder-path: '%s', destination: '%s'", folderPath, bm.Path))
-				return fmt.Errorf("cannot move folder into itself")
+				return app.ErrValidation(fmt.Sprintf("cannot move folder into itself"))
 			}
 
 			// 3) get the folder child-count
@@ -399,7 +399,7 @@ func (s *Application) Update(bm Bookmark, user security.User) (*Bookmark, error)
 		return nil
 	}); err != nil {
 		s.Logger.Error(fmt.Sprintf("could not update bookmark because of error: %v", err))
-		return nil, fmt.Errorf("error updating bookmark: %v", err)
+		return nil, fmt.Errorf("error updating bookmark: %w", err)
 	}
 
 	s.Logger.Info(fmt.Sprintf("updated bookmark with ID '%s'", id))

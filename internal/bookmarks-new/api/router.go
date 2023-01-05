@@ -44,7 +44,6 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 	// base routes
 	sec.Mount("/", func() http.Handler {
 		r := chi.NewRouter()
-		r.Get("/appinfo", appInfoHandler.handleGetAppInfo())
 		r.Get("/whoami", appInfoHandler.handleWhoAmI())
 		return r
 	}())
@@ -52,6 +51,9 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 	// the bookmarks routes
 	sec.Mount("/bookmarks", func() http.Handler {
 		r := chi.NewRouter()
+		// information about the app itself
+		r.Get("/appinfo", appInfoHandler.handleGetAppInfo())
+		// the real bookmark paths
 		r.Put("/sortorder", bookmarksHandler.UpdateSortOrder())
 		r.Delete("/{id}", bookmarksHandler.Delete())
 		r.Get("/{id}", bookmarksHandler.GetBookmarkByID())

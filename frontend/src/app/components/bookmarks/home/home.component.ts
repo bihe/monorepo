@@ -366,10 +366,10 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
                     if (this.authError(error)) {
                       return;
                     }
-                    const errorDetail: ProblemDetail = error;
+                    const errorDetail: ErrorModel = error;
                     this.state.setProgress(false);
                     console.log(errorDetail);
-                    new MessageUtils().showError(this.snackBar, errorDetail.title);
+                    new MessageUtils().showError(this.snackBar, errorDetail.message);
                   }
                 );
               }
@@ -379,10 +379,10 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
             if (this.authError(error)) {
               return;
             }
-            const errorDetail: ProblemDetail = error;
+            const errorDetail: ErrorModel = error;
             this.state.setProgress(false);
             console.log(errorDetail);
-            new MessageUtils().showError(this.snackBar, errorDetail.title);
+            new MessageUtils().showError(this.snackBar, errorDetail.message);
           }
         );
       },
@@ -390,10 +390,10 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
         if (this.authError(error)) {
           return;
         }
-        const errorDetail: ProblemDetail = error;
+        const errorDetail: ErrorModel = error;
         this.state.setProgress(false);
         console.log(errorDetail);
-        new MessageUtils().showError(this.snackBar, errorDetail.title);
+        new MessageUtils().showError(this.snackBar, errorDetail.message);
       }
     );
   }
@@ -431,10 +431,10 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
             if (this.authError(error)) {
               return;
             }
-            const errorDetail: ProblemDetail = error;
+            const errorDetail: ErrorModel = error;
             this.state.setProgress(false);
             console.log(errorDetail);
-            new MessageUtils().showError(this.snackBar, errorDetail.title);
+            new MessageUtils().showError(this.snackBar, errorDetail.message);
           }
         );
       }
@@ -467,10 +467,10 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
             if (this.authError(error)) {
               return;
             }
-            const errorDetail: ProblemDetail = error;
+            const errorDetail: ErrorModel = error;
             this.state.setProgress(false);
             console.log(errorDetail);
-            new MessageUtils().showError(this.snackBar, errorDetail.title);
+            new MessageUtils().showError(this.snackBar, errorDetail.message);
           }
         );
       }

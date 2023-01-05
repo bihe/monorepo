@@ -13,16 +13,15 @@ ENV COMMIT=${buildtime_variable_commit}
 ENV ARCH=${buildtime_variable_arch}
 
 WORKDIR /backend-build
-COPY ./cmd ./cmd
 COPY ./go.mod ./
 COPY ./go.sum ./
-COPY ./internal/bookmarks  ./internal/bookmarks
+COPY ./internal/bookmarks-new  ./internal/bookmarks-new
 COPY ./pkg ./pkg
 
 # necessary to build sqlite3
 RUN apk add build-base
 
-RUN GOOS=linux GOARCH=${ARCH} go build -ldflags="-s -w -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o bookmarks.api ./cmd/bookmarks/server/*.go
+RUN GOOS=linux GOARCH=${ARCH} go build -ldflags="-s -w -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o bookmarks.api ./internal/bookmarks-new/server.go
 ## --------------------------------------------------------------------------
 
 ## runtime
@@ -30,10 +29,7 @@ RUN GOOS=linux GOARCH=${ARCH} go build -ldflags="-s -w -X main.Version=${TSTAMP}
 FROM alpine:latest
 LABEL author="henrik@binggl.net"
 WORKDIR /opt/bookmarks
-RUN mkdir -p /opt/bookmarks/etc && mkdir -p /opt/bookmarks/logs && mkdir -p /opt/bookmarks/templates && mkdir -p /opt/bookmarks/uploads && mkdir -p /opt/bookmarks/db
-## required folders assets && templates
-COPY --from=BACKEND-BUILD /backend-build/internal/bookmarks/assets /opt/bookmarks/assets
-COPY --from=BACKEND-BUILD /backend-build/internal/bookmarks/templates /opt/bookmarks/templates
+RUN mkdir -p /opt/bookmarks/etc && mkdir -p /opt/bookmarks/logs && mkdir -p /opt/bookmarks/uploads && mkdir -p /opt/bookmarks/db
 ## the executable
 COPY --from=BACKEND-BUILD /backend-build/bookmarks.api /opt/bookmarks
 EXPOSE 3000

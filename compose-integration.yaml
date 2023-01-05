@@ -103,18 +103,17 @@ services:
                 buildtime_variable_arch: $ARCH
         image: bookmarks
         volumes:
-            - ./internal/bookmarks/etc:/opt/bookmarks/etc
+            - ./internal/bookmarks-new:/opt/bookmarks/etc
             - ./_logs:/opt/bookmarks/logs
             - ./testdata/sqlite/:/opt/bookmarks/db
         restart:
             always
         environment:
-            FRONTEND_MODE: integration
-            BM_ENVIRONMENT: Development
-            BM_SECURITY.JWTISSUER: $JWTISSUER
-            BM_SECURITY.JWTSECRET: $JWTSECRET
-            BM_LOGGING.FILEPATH: /opt/bookmarks/logs/bookmarks-api.log
-            BM_LOGGING.GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
+            BM_BASECONFIG.ENVIRONMENT: Development
+            BM_BASECONFIG.SECURITY.JWTISSUER: $JWTISSUER
+            BM_BASECONFIG.SECURITY.JWTSECRET: $JWTSECRET
+            BM_BASECONFIG.LOGGING.FILEPATH: /opt/bookmarks/logs/bookmarks-api.log
+            BM_BASECONFIG.LOGGING.GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
             BM_DATABASE.CONNECTIONSTRING: /opt/bookmarks/db/integration_bookmarks.db
 
     caddy-integration-frontend-443:

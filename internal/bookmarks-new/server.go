@@ -41,7 +41,7 @@ func main() {
 // where initialization, setup and execution is done
 func run(version, build string) error {
 	//hostname, port, _, config := readConfig()
-	hostname, port, basePath, config := server.ReadConfig("BO", func() interface{} {
+	hostname, port, basePath, config := server.ReadConfig("BM", func() interface{} {
 		return &conf.AppConfig{} // use the correct object to deserialize the configuration
 	})
 	var appCfg = config.(*conf.AppConfig)

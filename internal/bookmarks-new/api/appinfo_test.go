@@ -22,7 +22,7 @@ func appinfoHandler() http.Handler {
 func Test_GetAppInfo(t *testing.T) {
 	// arrange
 	rec := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/v1/appinfo", nil)
+	req, _ := http.NewRequest("GET", "/api/v1/bookmarks/appinfo", nil)
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
 
 	// act

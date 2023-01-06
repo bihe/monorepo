@@ -3,7 +3,7 @@ package bookmarks
 import (
 	"time"
 
-	"golang.binggl.net/monorepo/internal/bookmarks-new/app/store"
+	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
 )
 
 // --------------------------------------------------------------------------

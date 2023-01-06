@@ -103,7 +103,7 @@ services:
                 buildtime_variable_arch: $ARCH
         image: bookmarks
         volumes:
-            - ./internal/bookmarks-new:/opt/bookmarks/etc
+            - ./internal/bookmarks:/opt/bookmarks/etc
             - ./_logs:/opt/bookmarks/logs
             - ./testdata/sqlite/:/opt/bookmarks/db
         restart:

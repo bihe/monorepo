@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"golang.binggl.net/monorepo/internal/bookmarks-new/api"
-	"golang.binggl.net/monorepo/internal/bookmarks-new/app/bookmarks"
-	"golang.binggl.net/monorepo/internal/bookmarks-new/app/store"
+	"golang.binggl.net/monorepo/internal/bookmarks/api"
+	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
+	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"

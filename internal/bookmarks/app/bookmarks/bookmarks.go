@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"golang.binggl.net/monorepo/internal/bookmarks-new/app"
-	"golang.binggl.net/monorepo/internal/bookmarks-new/app/favicon"
-	"golang.binggl.net/monorepo/internal/bookmarks-new/app/store"
+	"golang.binggl.net/monorepo/internal/bookmarks/app"
+	"golang.binggl.net/monorepo/internal/bookmarks/app/favicon"
+	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )

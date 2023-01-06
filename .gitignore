@@ -28,3 +28,5 @@ _logs/
 upload/
 caddy/Caddyfile.prod
 proddb/
+
+.DS_Store

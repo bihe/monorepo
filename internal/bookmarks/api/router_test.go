@@ -3,9 +3,9 @@ package api_test
 import (
 	"net/http"
 
-	"golang.binggl.net/monorepo/internal/bookmarks-new/api"
-	"golang.binggl.net/monorepo/internal/bookmarks-new/app/bookmarks"
-	"golang.binggl.net/monorepo/internal/bookmarks-new/app/conf"
+	"golang.binggl.net/monorepo/internal/bookmarks/api"
+	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
+	"golang.binggl.net/monorepo/internal/bookmarks/app/conf"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/logging"
 )

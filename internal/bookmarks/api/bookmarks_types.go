@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"golang.binggl.net/monorepo/internal/bookmarks-new/app/bookmarks"
+	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 )
 
 // BookmarkFolderResult has additional information about a Bookmark

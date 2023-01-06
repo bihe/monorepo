@@ -15,13 +15,13 @@ ENV ARCH=${buildtime_variable_arch}
 WORKDIR /backend-build
 COPY ./go.mod ./
 COPY ./go.sum ./
-COPY ./internal/bookmarks-new  ./internal/bookmarks-new
+COPY ./internal/bookmarks  ./internal/bookmarks
 COPY ./pkg ./pkg
 
 # necessary to build sqlite3
 RUN apk add build-base
 
-RUN GOOS=linux GOARCH=${ARCH} go build -ldflags="-s -w -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o bookmarks.api ./internal/bookmarks-new/server.go
+RUN GOOS=linux GOARCH=${ARCH} go build -ldflags="-s -w -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o bookmarks.api ./internal/bookmarks/server.go
 ## --------------------------------------------------------------------------
 
 ## runtime

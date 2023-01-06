@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"golang.binggl.net/monorepo/internal/bookmarks-new/app/bookmarks"
-	"golang.binggl.net/monorepo/internal/bookmarks-new/app/store"
+	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
+	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 	"gorm.io/driver/sqlite"

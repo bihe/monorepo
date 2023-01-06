@@ -7,8 +7,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	"golang.binggl.net/monorepo/internal/bookmarks-new/app"
-	"golang.binggl.net/monorepo/internal/bookmarks-new/app/bookmarks"
+	"golang.binggl.net/monorepo/internal/bookmarks/app"
+	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 )
 
 // BookmarksHandlers implements the API used for bookmarks

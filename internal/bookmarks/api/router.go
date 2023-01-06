@@ -7,9 +7,9 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"golang.binggl.net/monorepo/internal/bookmarks-new/app"
-	"golang.binggl.net/monorepo/internal/bookmarks-new/app/bookmarks"
-	"golang.binggl.net/monorepo/internal/bookmarks-new/app/conf"
+	"golang.binggl.net/monorepo/internal/bookmarks/app"
+	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
+	"golang.binggl.net/monorepo/internal/bookmarks/app/conf"
 	"golang.binggl.net/monorepo/pkg/config"
 	pkgerr "golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/logging"

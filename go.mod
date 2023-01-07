@@ -9,7 +9,6 @@ require (
 	github.com/go-chi/chi/v5 v5.0.8 // done
 	github.com/go-chi/render v1.0.2 // done
 	github.com/go-kit/kit v0.12.0 // done
-	github.com/go-sql-driver/mysql v1.7.0 // indirect; done
 	github.com/google/uuid v1.3.0 // done
 	github.com/jmoiron/sqlx v1.3.5 // done
 	github.com/lestrrat-go/jwx v1.2.25 // done
@@ -27,9 +26,11 @@ require (
 	gorm.io/driver/mysql v1.4.5 // done
 	gorm.io/driver/sqlite v1.4.4 // done
 	gorm.io/gorm v1.24.3 // done
+	github.com/playwright-community/playwright-go v0.2000.1 // done
 )
 
 require (
+	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
@@ -60,7 +61,6 @@ require (
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/playwright-community/playwright-go v0.2000.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect

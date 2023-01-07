@@ -25,7 +25,7 @@ ifeq ($(UNAME_M), arm64)
 	ARCH = arm64
 endif
 
-.PHONY: all clean mod-update proto build test coverage dev-frontend compose-dev compose-int
+.PHONY: all clean mod-update proto build test coverage dev-frontend compose-dev compose-int integration
 
 all: help
 
@@ -65,6 +65,9 @@ compose-int: ## start the whole application for integration testing
 	@echo "  >  Remember to set the env-var ARCH. Linux=amd64, MacM1=arm64"
 	docker compose -f compose-integration.yaml rm && docker compose -f compose-integration.yaml up --build
 
+integration: ## run the integration test with playwright. NOTE: the compose setup needs to be running
+	@echo "  >  Starting integration tests ..."
+	go run ./cmd/integration/*.go
 
 # internal tasks
 

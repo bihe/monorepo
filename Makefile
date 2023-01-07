@@ -14,6 +14,17 @@ CYAN   := $(shell tput -Txterm setaf 6)
 RESET  := $(shell tput -Txterm sgr0)
 
 
+## set the default architecture should work for most Linux systems
+ARCH := amd64
+
+UNAME_M := $(shell uname -m)
+ifeq ($(UNAME_M), x86_64)
+	ARCH = amd64
+endif
+ifeq ($(UNAME_M), arm64)
+	ARCH = arm64
+endif
+
 .PHONY: all clean mod-update proto build test coverage dev-frontend compose-dev compose-int
 
 all: help

@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"reflect"
+	"time"
 
 	"github.com/playwright-community/playwright-go"
 )
@@ -16,10 +18,10 @@ const startupURL = "https://dev.binggl.net"
 const workHeadless = false
 
 func main() {
+	rand.Seed(time.Now().Unix())
 	pw, browser, page := startUp()
-	navigation := &navigationTest{
-		page: page,
-	}
+	navigation := &navigationTest{page: page}
+	bookmarks := bookmarksTest{page: page}
 
 	_, err := page.Goto(startupURL)
 	assertError("could not goto: %v", err)
@@ -43,6 +45,7 @@ func main() {
 
 	// start the individual tests
 	navigation.validate()
+	bookmarks.validate()
 
 	// make clean house and close everything
 	shutDown(pw, browser)
@@ -58,6 +61,16 @@ func assertEqual(expected, actual interface{}) {
 	if !reflect.DeepEqual(expected, actual) {
 		panic(fmt.Sprintf("%v does not equal %v", actual, expected))
 	}
+}
+
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func randStr(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
 }
 
 func startUp() (*playwright.Playwright, playwright.Browser, playwright.Page) {

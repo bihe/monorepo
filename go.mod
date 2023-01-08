@@ -26,7 +26,6 @@ require (
 	gorm.io/driver/mysql v1.4.5 // done
 	gorm.io/driver/sqlite v1.4.4 // done
 	gorm.io/gorm v1.24.3 // done
-	github.com/playwright-community/playwright-go v0.2000.1 // done
 )
 
 require (

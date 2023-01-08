@@ -25,7 +25,7 @@
 
           </div>
           <div class=" ms-auto">
-            <a id="link-add-bookmark" *ngIf="isAdmin || isUser" class="add" (click)="addBookmark('')"><i class="bi bi-plus-circle"></i> Add</a>
+            <a data-testid="link-add-bookmark" *ngIf="isAdmin || isUser" class="add" (click)="addBookmark('')"><i class="bi bi-plus-circle"></i> Add</a>
           </div>
           <div class="font-monospace fw-lighter d-none d-sm-block">{{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}</div>
         </div>

@@ -67,7 +67,7 @@ compose-int: ## start the whole application for integration testing
 
 integration: ## run the integration test with playwright. NOTE: the compose setup needs to be running
 	@echo "  >  Starting integration tests ..."
-	go run ./cmd/integration/*.go
+	python3 ./testdata/integration/test_application.py
 
 # internal tasks
 

@@ -9,25 +9,28 @@
     >
 
       <div>
-        <div class="hstack gap-3">
-          <div class="">
+        <div>
+          <div>
             <span *ngFor="let p of pathElemets; let i = index">
               <span *ngIf="p === '/'">
-                bookmarks:/ <a class="rootroot" (click)="gotoPath('/')">root</a>
+                 &nbsp;&nbsp;~ <a class="rootroot" mat-stroked-button color="primary" (click)="gotoPath('/')">root</a>
               </span>
               <span *ngIf="p !== '/' && i &lt; pathElemets.length - 1">
-                / <a class="root" (click)="gotoPath(absolutePaths[i])">{{ p }}</a>
+                / <a class="root" mat-stroked-button color="primary" (click)="gotoPath(absolutePaths[i])">{{ p }}</a>
               </span>
               <span *ngIf="p !== '/' && i === pathElemets.length - 1 ">
-                / {{ p }}
+                / <a mat-stroked-button color="primary" >{{ p }}</a>
               </span>
             </span>
 
+            <span class="font-monospace version_1">{{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}</span>
           </div>
           <div class=" ms-auto">
             <a data-testid="link-add-bookmark" *ngIf="isAdmin || isUser" class="add" (click)="addBookmark('')"><i class="bi bi-plus-circle"></i> Add</a>
           </div>
-          <div class="font-monospace fw-lighter d-none d-sm-block">{{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}</div>
+
+
+
         </div>
       </div>
     </div>
@@ -92,6 +95,7 @@
             <i class="fa fa-clipboard" aria-hidden="true"></i>
           </span>
 
+
           <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="edit bookmark items">
             <mat-icon>more_vert</mat-icon>
           </button>
@@ -106,7 +110,9 @@
               <span>edit</span>
             </button>
           </mat-menu>
+
         </span>
+
 
       </div>
     </div>

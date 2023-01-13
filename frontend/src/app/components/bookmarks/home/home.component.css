@@ -4,9 +4,9 @@
 
 .bookmarks_breadcrumb {
   display: block;
-  padding-top: 0px;
-  padding-left: 10px;
-  padding-right: 10px;
+  padding-top: 10px;
+  padding-left: 5px;
+  padding-right: 5px;
   padding-bottom: 10px;
   font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
 }
@@ -246,4 +246,11 @@ a.bookmark_actions {
   font-weight: bold;
   font-size: smaller;
   padding-left:4px;
+}
+
+.version_1 {
+  position: absolute;
+  right: 15px;
+  margin-top:10px;
+  font-weight: bold;
 }

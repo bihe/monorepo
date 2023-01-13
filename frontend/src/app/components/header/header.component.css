@@ -6,6 +6,25 @@
 }
 
 .selected {
-  border-bottom: #C62828 3px solid;
+  font-weight: bold;
 }
 
+.toolbar-spacer {
+  flex: 1 1 auto;
+}
+
+.search-field {
+  position: relative;
+  top: 11px;
+}
+
+.profile_picture {
+  margin-left: 10px;
+}
+
+.avatar {
+  vertical-align: middle;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+}

@@ -48,22 +48,3 @@
   color: black;
   font-family: 'Roboto Mono', monospace;
 }
-
-
-.application_title {
-  display: block;
-  padding-top: 0px;
-  padding-left: 10px;
-  padding-right: 10px;
-  padding-bottom: 10px;
-  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
-  /* background-color: #eeeeee; */
-  border-bottom: dotted 1px #cccccc;
-  margin-bottom: 19px;
-}
-
-.version_info {
-  position: relative;
-  top: -18px;
-  font-size: 0.9em;
-}

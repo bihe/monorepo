@@ -1,5 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
-@import '@angular/material/prebuilt-themes/deeppurple-amber.css';
+@import '@angular/material/prebuilt-themes/pink-bluegrey.css';
 @import url('assets/fonts/local.css');
 
 .success {
@@ -53,4 +53,21 @@ button:focus {
   }
 }
 
+.version {
+  position: absolute;
+  right: 15px;
+  font-weight: bold;
+}
+
+.application_title {
+  display: block;
+  padding-top: 15px;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-bottom: 10px;
+  border-bottom: darkgray dashed 1px;
+  font-size: small;
+  font-weight: bold;
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+}
 

@@ -4,11 +4,14 @@
 
 .bookmarks_breadcrumb {
   display: block;
-  padding-top: 10px;
-  padding-left: 5px;
-  padding-right: 5px;
-  padding-bottom: 10px;
-  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+    padding-top: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-bottom: 5px;
+    border-bottom: darkgray dashed 1px;
+    font-size: small;
+    font-weight: bold;
+    font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
 }
 
 .drop_highlight {
@@ -253,4 +256,10 @@ a.bookmark_actions {
   right: 15px;
   margin-top:10px;
   font-weight: bold;
+}
+
+.float_button {
+  position: absolute;
+  top: -12px;
+  right: 160px;
 }

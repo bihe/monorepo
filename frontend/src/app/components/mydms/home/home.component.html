@@ -3,13 +3,23 @@
     <div class="application_title">
       <div>
         &nbsp;&nbsp;~ documents
-        <span class="font-monospace version">{{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}</span>
 
+        <span class="version">
+
+            <label class="label_switch_amount">Show Amount</label>&nbsp;<mat-slide-toggle (change)="onShowAmountChanged($event)" [(ngModel)]="showAmount" color="primary"></mat-slide-toggle>&nbsp;
+
+            <button class="float_button" mat-mini-fab color="primary" aria-label="Add document" (click)="addDocument()">
+                <mat-icon>add</mat-icon>
+            </button>
+
+            <span class="font-monospace">{{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}</span>
+
+        </span>
         <!-- <div class="ms-auto">
-            <mat-slide-toggle (change)="onShowAmountChanged($event)" [(ngModel)]="showAmount">Show Amount</mat-slide-toggle>&nbsp;
-            <a class="add" (click)="addDocument()"><i class="bi bi-plus-circle"></i> Add</a>
 
         </div> -->
+
+
 
       </div>
     </div>

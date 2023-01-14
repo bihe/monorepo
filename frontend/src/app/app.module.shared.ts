@@ -17,6 +17,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -43,8 +44,8 @@ import { ApiSiteService } from './shared/service/api.sites.service';
 import { ApplicationState } from './shared/service/application.state';
 
 @NgModule({
-  imports: [ MatProgressSpinnerModule, MatTooltipModule, MatSnackBarModule, MatButtonModule, MatDialogModule, MatInputModule, MatFormFieldModule, MatRadioModule, MatOptionModule, MatSelectModule, MatMenuModule, MatIconModule, MatBadgeModule, DragDropModule, MatCheckboxModule, MatCardModule, MatChipsModule, MatSlideToggleModule, MatExpansionModule, MatChipsModule, MatAutocompleteModule, MatProgressBarModule, MatToolbarModule ],
-  exports: [ MatProgressSpinnerModule, MatTooltipModule, MatSnackBarModule, MatButtonModule, MatDialogModule, MatInputModule, MatFormFieldModule, MatRadioModule, MatOptionModule, MatSelectModule, MatMenuModule, MatIconModule, MatBadgeModule, DragDropModule, MatCheckboxModule, MatCardModule, MatChipsModule, MatSlideToggleModule, MatExpansionModule, MatChipsModule, MatAutocompleteModule, MatProgressBarModule, MatToolbarModule ],
+  imports: [ MatProgressSpinnerModule, MatTooltipModule, MatSnackBarModule, MatButtonModule, MatDialogModule, MatInputModule, MatFormFieldModule, MatRadioModule, MatOptionModule, MatSelectModule, MatMenuModule, MatIconModule, MatBadgeModule, DragDropModule, MatCheckboxModule, MatCardModule, MatChipsModule, MatSlideToggleModule, MatExpansionModule, MatChipsModule, MatAutocompleteModule, MatProgressBarModule, MatToolbarModule, MatSidenavModule ],
+  exports: [ MatProgressSpinnerModule, MatTooltipModule, MatSnackBarModule, MatButtonModule, MatDialogModule, MatInputModule, MatFormFieldModule, MatRadioModule, MatOptionModule, MatSelectModule, MatMenuModule, MatIconModule, MatBadgeModule, DragDropModule, MatCheckboxModule, MatCardModule, MatChipsModule, MatSlideToggleModule, MatExpansionModule, MatChipsModule, MatAutocompleteModule, MatProgressBarModule, MatToolbarModule, MatSidenavModule ],
 })
 export class AppMaterialModule { }
 

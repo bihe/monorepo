@@ -141,3 +141,14 @@
   background-color:plum;
   padding: 2px;
 }
+
+
+.float_button {
+  position: absolute;
+  top: -12px;
+  right: 280px;
+}
+
+.label_switch_amount {
+  color: black;
+}

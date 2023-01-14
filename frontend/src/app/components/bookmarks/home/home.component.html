@@ -15,21 +15,23 @@
               <span *ngIf="p === '/'">
                  &nbsp;&nbsp;~ <a class="rootroot" mat-stroked-button color="primary" (click)="gotoPath('/')">root</a>
               </span>
-              <span *ngIf="p !== '/' && i &lt; pathElemets.length - 1">
-                / <a class="root" mat-stroked-button color="primary" (click)="gotoPath(absolutePaths[i])">{{ p }}</a>
+              <span *ngIf="p !== '/' && i &lt; pathElemets.length - 1"><strong>&gt;</strong><a class="root" mat-stroked-button color="primary" (click)="gotoPath(absolutePaths[i])">{{ p }}</a>
               </span>
-              <span *ngIf="p !== '/' && i === pathElemets.length - 1 ">
-                / <a mat-stroked-button color="primary" >{{ p }}</a>
+              <span *ngIf="p !== '/' && i === pathElemets.length - 1 "><strong>&gt;</strong><a mat-stroked-button color="primary" >{{ p }}</a>
               </span>
             </span>
 
-            <span class="font-monospace version_1">{{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}</span>
-          </div>
-          <div class=" ms-auto">
-            <a data-testid="link-add-bookmark" *ngIf="isAdmin || isUser" class="add" (click)="addBookmark('')"><i class="bi bi-plus-circle"></i> Add</a>
-          </div>
+            <span class="version_1">
 
+              <button class="float_button" *ngIf="isAdmin || isUser" data-testid="link-add-bookmark" mat-mini-fab color="primary" aria-label="Add bookmark" (click)="addBookmark('')">
+                <mat-icon>add</mat-icon>
+              </button>
 
+              <span class="font-monospace">
+              {{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}
+              </span>
+            </span>
+          </div>
 
         </div>
       </div>

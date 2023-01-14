@@ -7,16 +7,16 @@
 
 .selected {
   font-weight: bold;
+  color: yellow !important;
 }
 
 .toolbar-spacer {
   flex: 1 1 auto;
 }
 
-.search-field {
-  position: relative;
-  top: 11px;
-}
+
+
+
 
 .profile_picture {
   margin-left: 10px;
@@ -27,4 +27,36 @@
   width: 35px;
   height: 35px;
   border-radius: 50%;
+}
+
+
+.menu-responsive {
+  display: none;
+}
+
+.search-field {
+  position: relative;
+  top: 11px;
+}
+
+.hide_mobile {
+  display: inline;
+}
+
+@media (max-width: 540px) {
+  .search-field {
+    display: none;
+  }
+
+  .menu-responsive {
+    display: inline;
+  }
+
+  .profile_picture {
+    display: none;
+  }
+
+  .hide_mobile {
+    display: none !important;
+  }
 }

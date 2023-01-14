@@ -1,8 +1,13 @@
-<mat-toolbar color="accent" *ngIf="whoAmI?.authenticated === true">
+<mat-toolbar color="primary" *ngIf="whoAmI?.authenticated === true">
+
+  <button mat-icon-button class="menu-responsive" aria-label="menu for mobile use">
+    <mat-icon>menu</mat-icon>
+  </button>
+
   <a mat-button routerLink="/bookmarks" routerLinkActive="active" title="Bookmarks" [class.selected]="isCurrentRoute('/bookmarks')">
-    <mat-icon aria-hidden="false" aria-label="bookmarks icon" fontIcon="bookmarks"></mat-icon> Bookmarks</a>
-  <a mat-button routerLink="/mydms" routerLinkActive="active" title="Documents" [class.selected]="isCurrentRoute('/mydms')"><mat-icon aria-hidden="false" aria-label="documents" fontIcon="description"></mat-icon> Documents</a>
-  <a mat-button routerLink="/sites" routerLinkActive="active" title="Sites" [class.selected]="isCurrentRoute('/sites')"><mat-icon aria-hidden="false" aria-label="sites security" fontIcon="security"></mat-icon> Sites</a>
+    <mat-icon class="hide_mobile" aria-hidden="false" aria-label="bookmarks icon" fontIcon="bookmarks"></mat-icon> Bookmarks</a>
+  <a mat-button routerLink="/mydms" routerLinkActive="active" title="Documents" [class.selected]="isCurrentRoute('/mydms')"><mat-icon class="hide_mobile" aria-hidden="false" aria-label="documents" fontIcon="description"></mat-icon> Documents</a>
+  <a mat-button routerLink="/sites" routerLinkActive="active" title="Sites" [class.selected]="isCurrentRoute('/sites')"><mat-icon class="hide_mobile" aria-hidden="false" aria-label="sites security" fontIcon="security"></mat-icon> Sites</a>
   <span class="toolbar-spacer"></span>
 
 
@@ -15,6 +20,10 @@
     <img src="{{ whoAmI?.pictureUrl + '=s35'}}" alt="{{ whoAmI?.displayName }}" class="avatar" matTooltip="{{ whoAmI?.displayName }}">
   </span>
 
+
+
 </mat-toolbar>
+
+
 
 <mat-progress-bar *ngIf="showProgress" class="progress" mode="indeterminate" color="warn"></mat-progress-bar>

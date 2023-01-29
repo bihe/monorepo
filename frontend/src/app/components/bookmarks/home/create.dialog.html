@@ -1,6 +1,6 @@
 <div class="edit_bookmark_layout">
   <h1 mat-dialog-title *ngIf="bookmark.id === ''">Create a new bookmark</h1>
-  <h1 mat-dialog-title *ngIf="bookmark.id !== ''">Update bookmark</h1>
+  <h1 mat-dialog-title *ngIf="bookmark.id !== ''">Update bookmark '{{ bookmark.displayName }}'</h1>
   <form class="bookmark-form" #bookmarkForm="ngForm" name="bookmarkForm">
     <div class="edit_bookmark_container">
       <div>

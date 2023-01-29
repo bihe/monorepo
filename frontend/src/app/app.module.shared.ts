@@ -43,9 +43,17 @@ import { ApiMydmsService } from './shared/service/api.mydms.service';
 import { ApiSiteService } from './shared/service/api.sites.service';
 import { ApplicationState } from './shared/service/application.state';
 
+const ImportAngularElements = [
+  MatProgressSpinnerModule, MatTooltipModule, MatSnackBarModule, MatButtonModule,
+  MatDialogModule, MatInputModule, MatFormFieldModule, MatRadioModule, MatOptionModule,
+  MatSelectModule, MatMenuModule, MatIconModule, MatBadgeModule, DragDropModule, MatCheckboxModule,
+  MatCardModule, MatChipsModule, MatSlideToggleModule, MatExpansionModule, MatChipsModule,
+  MatAutocompleteModule, MatProgressBarModule, MatToolbarModule, MatSidenavModule, MatBadgeModule
+];
+
 @NgModule({
-  imports: [ MatProgressSpinnerModule, MatTooltipModule, MatSnackBarModule, MatButtonModule, MatDialogModule, MatInputModule, MatFormFieldModule, MatRadioModule, MatOptionModule, MatSelectModule, MatMenuModule, MatIconModule, MatBadgeModule, DragDropModule, MatCheckboxModule, MatCardModule, MatChipsModule, MatSlideToggleModule, MatExpansionModule, MatChipsModule, MatAutocompleteModule, MatProgressBarModule, MatToolbarModule, MatSidenavModule ],
-  exports: [ MatProgressSpinnerModule, MatTooltipModule, MatSnackBarModule, MatButtonModule, MatDialogModule, MatInputModule, MatFormFieldModule, MatRadioModule, MatOptionModule, MatSelectModule, MatMenuModule, MatIconModule, MatBadgeModule, DragDropModule, MatCheckboxModule, MatCardModule, MatChipsModule, MatSlideToggleModule, MatExpansionModule, MatChipsModule, MatAutocompleteModule, MatProgressBarModule, MatToolbarModule, MatSidenavModule ],
+  imports: ImportAngularElements,
+  exports: ImportAngularElements,
 })
 export class AppMaterialModule { }
 

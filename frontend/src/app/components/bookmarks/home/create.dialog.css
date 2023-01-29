@@ -1,6 +1,6 @@
-.edit_bookmark_layout {
+.bookmark-form {
   padding: 10px;
-  width: 100%;
+  /* width: 100%; */
 }
 
 .edit_bookmark_container {
@@ -20,7 +20,6 @@
 .create_bookmark_layout {
   display: flex;
   justify-content: space-between;
-  padding-bottom: 30px;
 }
 
 .dialog-form-input {

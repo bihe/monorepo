@@ -85,7 +85,7 @@ button:focus {
 
 .bg-dark {
   color: #fff!important;
-  background-color: RGBA(33,37,41,var(--bs-bg-opacity,1))!important;
+  background-color: #777777 !important;
 }
 
 .badge {
@@ -108,4 +108,8 @@ button:focus {
   border-radius: var(--bs-badge-border-radius);
   position: relative;
   top: 7px;
+}
+
+.mat-mdc-progress-bar.mat-accent {
+  --mdc-linear-progress-active-indicator-color: cyan;
 }

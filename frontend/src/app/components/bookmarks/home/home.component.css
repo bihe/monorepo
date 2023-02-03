@@ -19,7 +19,7 @@
 }
 
 .drop_highlight_not {
-  background-color: white;
+  background-color: #303030;
 }
 
 .bookmarks_breadcrumb a.root {
@@ -50,7 +50,6 @@
   padding-top: 10px;
   padding-bottom: 10px;
   border-top: dotted 1px #cccccc;
-  background-color: #ffffff;
   cursor: move;
   height: 35px;
   min-height: 35px;
@@ -58,7 +57,7 @@
 }
 
 .bookmark_item:hover {
-  background-color: #f5f5f5;
+  background-color: #555555;
 }
 
 .bookmark_item:last-child {
@@ -76,7 +75,7 @@
     padding-right: 10px;
     padding-top: 10px;
     padding-bottom: 10px;
-    background-color: #ffffff;
+
     cursor: default;
   }
 }
@@ -86,8 +85,14 @@ a.bookmark_name {
   font-weight: bold;
   font-family: 'Source Code Pro', monospace;
   font-size: 1.2em;
-
+  color: #cccccc;
+  text-decoration: none;
 }
+
+a.bookmark_name:hover {
+  text-decoration: underline;
+}
+
 
 a.bookmark_folder {
   font-weight: bold;
@@ -141,10 +146,6 @@ a.bookmark_actions {
 
 .bookmark_path_info:hover {
   text-decoration: underline;
-}
-
-.bookmark_folder_icon {
-  vertical-align: middle;
 }
 
 .bookmark_search {
@@ -231,10 +232,27 @@ a.bookmark_actions {
   top: -6px;
 }
 
+.show_url {
+  cursor: pointer;
+  position: relative;
+  top: -6px;
+  font-size: 1.3em;
+  padding-right: 15px;
+}
+
+.show_url:hover {
+  cursor: hand;
+}
+
+.bookmark_show_url {
+  display: inherit;
+}
+
 
 .bookmark_folder_icon {
-  color:black;
+  color: #cccccc;
   font-size: x-large;
+  vertical-align: middle;
 }
 
 .badge-text {

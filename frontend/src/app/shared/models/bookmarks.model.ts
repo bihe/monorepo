@@ -17,6 +17,7 @@ export class BookmarkModel {
   public favicon: string;
   public customFavicon: string;
   public highlight: number;
+  public showUrl: string;
 }
 
 export class BoomarkSortOrderModel {

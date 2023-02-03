@@ -612,6 +612,15 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
     });
   }
 
+  ToggleShowItemUrl(item: BookmarkModel) {
+    console.log(item.url);
+    if ((!item.showUrl) || item.showUrl === '') {
+      item.showUrl = item.url;
+    } else {
+      item.showUrl = '';
+    }
+  }
+
   private splitPathElements(path: string): string[] {
     let parts = path.split('/');
     if (parts && parts.length > 0) {

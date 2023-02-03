@@ -60,12 +60,14 @@
             alt="favicon"/>
 
           <span class="badge bg-dark bookmark_path_info" *ngIf="searchMode" (click)="gotoPath(item.path)">{{ item.path }}</span>&nbsp;
-          <a href="{{baseApiURL}}/api/v1/bookmarks/fetch/{{ item.id}}" class="class-bookmark-item bookmark_name">{{ item.displayName | ellipsis:ellipsisVal}}</a>
+          <a href="{{baseApiURL}}/api/v1/bookmarks/fetch/{{ item.id}}" class="bookmark_name">{{ item.displayName | ellipsis:ellipsisVal}}</a>
 
           <i *ngIf="item.highlight === 1" class="bi bi-bookmark-plus-fill bookmark_highlight"></i>
           <span *ngIf="item.highlight === 1" class="bookmark_highlight_date">({{ item.created | dfmt:'YYYY-MM-DD'}})</span>
 
-          <span class="d-none d-sm-inline">
+          <span class="bookmark_show_url">
+            <span *ngIf="item.showUrl">&nbsp;&nbsp;&gt;&gt;</span>
+            {{ item.showUrl }}
           </span>
 
         </span>
@@ -98,10 +100,15 @@
 
           <span *ngIf="searchMode">&nbsp;</span>
           <span class="badge bg-dark bookmark_path_info" *ngIf="searchMode" (click)="gotoPath(item.path)">{{ item.path }}</span>&nbsp;
-          <a class="class-bookmark-item bookmark_folder" (click)="gotoPath(item.path + '/' + item.displayName)">{{ item.displayName }}</a>
+          <a class="bookmark_folder" (click)="gotoPath(item.path + '/' + item.displayName)">{{ item.displayName }}</a>
         </span>
 
         <span class="bookmark_actions">
+
+          <span class="show_url" *ngIf="item.type === 'Node'" (click)="ToggleShowItemUrl(item)">
+            <i class="fa fa-eye" aria-hidden="true"></i>
+          </span>
+
 
           <span class="copy_url" *ngIf="item.type === 'Node'" (click)="copyUrlToClipboard(item.url)">
             <i class="fa fa-clipboard" aria-hidden="true"></i>

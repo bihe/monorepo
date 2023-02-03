@@ -23,20 +23,44 @@
 }
 
 .dashboard_card_title {
-  color: black;
+  display: inherit;
+  color:white;
+  text-decoration: none;
 }
 
 .dashboard_card_title:hover {
+  text-decoration: underline;
+  cursor: hand;
+}
+
+.dashboard_card_content {
+  font-weight: normal;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 1.2em;
+  height: 50px;
+  line-height: 50px;
+}
+
+.dashboard_site_link {
+  color: white;
   text-decoration: none;
+}
+
+.dashboard_site_link:hover {
+  text-decoration: underline;
+}
+
+.dashboard_site_link_icon {
+  vertical-align: text-bottom;
 }
 
 .dashboard_card_footer {
   font-weight: normal;
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.8em;
+  font-size: 1.0em;
   padding: 5px;
   text-align: right;
-  color: #999999;
+  color: #777777;
   position: absolute;
   bottom: 15px;
   right: 15px;
@@ -45,6 +69,10 @@
 .permission {
   padding: 2px;
   margin-right: 2px;
-  color: black;
+  color: #eeeeee;
   font-family: 'Roboto Mono', monospace;
+}
+
+.tag {
+  color: #999999;
 }

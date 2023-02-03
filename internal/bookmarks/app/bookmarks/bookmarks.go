@@ -293,7 +293,7 @@ func (s *Application) Update(bm Bookmark, user security.User) (*Bookmark, error)
 			folderPath := ensureFolderPath(existing.Path, existing.DisplayName)
 			if bm.Path == folderPath {
 				s.Logger.Error(fmt.Sprintf("a folder cannot be moved into itself: folder-path: '%s', destination: '%s'", folderPath, bm.Path))
-				return app.ErrValidation(fmt.Sprintf("cannot move folder into itself"))
+				return app.ErrValidation("cannot move folder into itself")
 			}
 
 			// 3) get the folder child-count
@@ -441,11 +441,11 @@ func (s *Application) updateChildCountOfPath(path, username string, repo store.R
 
 // ---- Favicon Logic ----
 
-//go:embed favicon.ico
+//go:embed bookmark.svg
 var defaultFavicon []byte
 var defaultFaviconModTime = time.Date(2022, 12, 31, 0, 0, 0, 0, time.UTC)
 
-const defaultFaviconName = "favicon.ico"
+const defaultFaviconName = "bookmark.svg"
 
 // GetFavicon returns returns the payload of to the found favicon or the default favicon
 func (s *Application) GetFavicon(id string, user security.User) (*FileInfo, error) {

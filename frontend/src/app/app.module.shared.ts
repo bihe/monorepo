@@ -27,7 +27,6 @@ import { LazyLoadImageModule } from 'ng-lazyload-image';
 import { AppComponent } from './components/app/app.component';
 import { CreateBookmarksDialog } from './components/bookmarks/home/create.dialog';
 import { BookmarkHomeComponent } from './components/bookmarks/home/home.component';
-import { ConfirmDeleteDialogComponent } from './components/confirm-delete-dialog/confirmation.component';
 import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
 import { HeaderComponent } from './components/header/header.component';
 import { EditSitesComponent } from './components/login/edit/edit.component';
@@ -70,7 +69,6 @@ export const sharedConfig: NgModule = {
       MyDmsHomeComponent,
       SiteHomeComponent,
       EditSitesComponent,
-      ConfirmDeleteDialogComponent,
       MyDmsDocumentComponent
     ],
     imports: [

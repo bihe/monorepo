@@ -1,6 +1,5 @@
 .documents {
   display: block;
-  margin-bottom: 30px;
 }
 
 .document {
@@ -15,11 +14,11 @@
 .download {
   top: 7px;
   position: absolute;
-  left: 3px;
+  left: 10px;
 }
 
 .download_icon {
-  color: #999999;
+  color: #dddddd;
 }
 
 
@@ -54,29 +53,27 @@
 }
 
 .sender-tag {
-  font-size: 1.2em;
-  color: #D28140;
+  font-size: 1.6em;
+  color: #e89c5f;
 }
 
 .tag {
-  font-size: 1.2em;
-  color: #495F75;
+  font-size: 1.6em;
+  color: #7c98b4;
 }
 
 
 .document_card {
-  max-width: 400px;
-  display: inline-block;
-  margin: 10px;
-  margin-left: 20px;
-  margin-right: 20px;
-  min-width: 320px;
-  min-height: 170px;
-  text-align: left;
+  margin-top: 10px;
+  margin-right: 10px;
+  margin-left: 10px;
+  margin-bottom: 10px;
+  min-width: 500px;
+  max-width: 500px;
+  display: inline-flex;
 }
 
 .document_card_title {
-  color: black;
   font-size: 20px;
   margin-left: 40px;
   top: -6px;
@@ -102,19 +99,21 @@
 
 .senders {
  padding-bottom: 2px;
+ text-align: left;
 }
 
 .tags {
+  text-align: left;
   padding-bottom: 2px;
 }
 
 
 .amount {
   position: absolute;
-  left: 9px;
-  bottom: 5px;
+  right: 15px;
+  top: 10px;
   font-weight: bold;
-  font-size: 1.3em;
+  font-size: 1.6em;
   color: #3AA677;
 }
 
@@ -126,20 +125,20 @@
 
 .invoice-number-element {
   position: absolute;
-  right: 10px;
-  bottom: 20px;
+  right: 15px;
+  /* bottom: 20px; */
 }
 
 .invoice-number {
   font-size: 1.0em;
   font-weight: bold;
-  color: #333333;
+  color: #FF9800;
   font-style: italic;
   font-family: 'Roboto Mono', monospace;
 }
+
 .invoice-number:hover {
-  background-color:plum;
-  padding: 2px;
+  text-decoration: underline;
 }
 
 
@@ -150,5 +149,24 @@
 }
 
 .label_switch_amount {
-  color: black;
+  display: inline;
 }
+
+
+.dimmed {
+  color:#999;
+}
+
+
+
+@media (max-width: 390px) {
+  .document_card {
+    margin: 0px;
+    margin-bottom: 5px;
+    min-width: 380px;
+    max-width: 380px;
+    display: inline-flex;
+  }
+
+}
+

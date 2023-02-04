@@ -76,3 +76,17 @@
 .tag {
   color: #999999;
 }
+
+
+
+@media (max-width: 390px) {
+  .dashboard_card {
+    max-width: 400px;
+    display: block;
+    margin: 20px;
+    min-width: 280px;
+    min-height: 150px;
+  }
+
+}
+

@@ -27,13 +27,13 @@
     <div class="document_cards">
 
         <mat-card class="document_card" *ngFor="let item of documents; let i = index" id="{{ item.id }}" >
-            <mat-card-title>
-            <span class="document_card_title" matTooltip="{{ item.title }}" matTooltipPosition="below" (click)="editDocument(item)">{{ item.title | ellipsis:30 }}</span>
-            </mat-card-title>
+            <mat-card-header>
+                <mat-card-title>
+                    <span class="document_card_title" matTooltip="{{ item.title }}" matTooltipPosition="below" (click)="editDocument(item)">{{ item.title | ellipsis:30 }}</span>
+                </mat-card-title>
+            </mat-card-header>
             <mat-card-content>
-                <span class="invoice-number-element">
-                    <span *ngIf="item.invoiceNumber != null">Nbr:&nbsp;</span><span class="invoice-number">{{ item.invoiceNumber }}</span>
-                </span>
+
 
                 <div class="senders">
                     <span class="sender-tag" *ngFor="let sender of item.senders">
@@ -46,19 +46,26 @@
                     </span>
 
                     <span class="tag" *ngFor="let tag of item.tags">
-                        <i *ngIf="tag != ''" class="fa fa-hashtag" aria-hidden="true"></i>{{ tag | ellipsis: 25 }}
+                        <i *ngIf="tag != ''" class="fa fa-hashtag" aria-hidden="true"></i>&nbsp;{{ tag | ellipsis: 25 }}
                     </span>
                 </div>
 
                 <div class="download">
                     <a href="{{ baseApiUrl }}/api/v1/mydms/file/?path={{ item.previewLink }}" target="_blank" class="download_cloud"><i class="fa fa-cloud-download fa-3x download_icon" aria-hidden="true"></i></a>
                 </div>
-
             </mat-card-content>
-            <mat-card-footer class="document_card_footer">
-                <strong>{{ item.created | dfmt:"YYYY-MM-DD" }}</strong>
-                <span *ngIf="item.modified !=  null"> / m:<strong>{{ item.modified | dfmt:"YYYY-MM-DD" }}</strong></span>
-            </mat-card-footer>
+
+            <mat-card-actions>
+                <div>
+                    <span class="dimmed">c:</span><strong>{{ item.created | dfmt:"YYYY-MM-DD" }}</strong>
+                    <span *ngIf="item.modified !=  null"><span class="dimmed">&nbsp;m:</span><strong>{{ item.modified | dfmt:"YYYY-MM-DD" }}</strong></span>
+
+                    <span class="invoice-number-element" *ngIf="item.invoiceNumber != null">
+                        <span class="dimmed">Nbr:</span>
+                        <span class="invoice-number">{{ item.invoiceNumber }}</span>
+                    </span>
+                </div>
+            </mat-card-actions>
 
             <div *ngIf="item.amount > 0 && showAmount === true" class="amount">&euro; {{ item.amount }}</div>
 

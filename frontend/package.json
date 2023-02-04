@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --proxy-config proxy.conf.json",
-    "dev-integration": "ng serve --configuration integration --proxy-config proxy.conf.json",
+    "start": "ng serve",
+    "dev-integration": "ng serve --configuration integration",
     "build": "ng build --configuration production",
-    "integration": "ng build --configuration production --configuration integration",
+    "integration": "ng build --configuration integration",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"

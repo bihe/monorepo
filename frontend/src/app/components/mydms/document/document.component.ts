@@ -1,6 +1,6 @@
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { UntypedFormControl } from '@angular/forms';
+import { FormControl, UntypedFormControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
@@ -15,7 +15,7 @@ import { ApiMydmsService } from 'src/app/shared/service/api.mydms.service';
 import { ApplicationState } from 'src/app/shared/service/application.state';
 import { MessageUtils } from 'src/app/shared/utils/message.utils';
 import { environment } from 'src/environments/environment';
-import { ConfirmDeleteDialogComponent } from '../../confirm-delete-dialog/confirmation.component';
+import { ConfirmDialogComponent, ConfirmDialogModel } from '../../confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-mydms-document',
@@ -55,11 +55,11 @@ export class MyDmsDocumentComponent implements OnInit, OnDestroy {
   removable = true;
   separatorKeysCodes: number[] = [ENTER, COMMA];
 
-  tagCtrl = new UntypedFormControl();
+  tagCtrl = new FormControl();
   filteredTags: string[];
   @ViewChild('tagInput') tagInput: ElementRef<HTMLInputElement>;
 
-  senderCtrl = new UntypedFormControl();
+  senderCtrl = new FormControl('');
   filteredSenders: string[];
   @ViewChild('senderInput') senderInput: ElementRef<HTMLInputElement>;
 
@@ -279,7 +279,11 @@ export class MyDmsDocumentComponent implements OnInit, OnDestroy {
   }
 
   public onDelete() {
-    const dialogRef = this.dialog.open(ConfirmDeleteDialogComponent, ConfirmDeleteDialogComponent.getDialogConfig(this.documentTitle));
+    const dialogData = new ConfirmDialogModel('Please confirm!', `Do you really want to delete '${this.documentTitle}'?`);
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      panelClass: 'modal-dialog-delete',
+      data: dialogData
+    });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result === true) {

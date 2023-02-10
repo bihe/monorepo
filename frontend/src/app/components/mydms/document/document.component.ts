@@ -55,7 +55,7 @@ export class MyDmsDocumentComponent implements OnInit, OnDestroy {
   removable = true;
   separatorKeysCodes: number[] = [ENTER, COMMA];
 
-  tagCtrl = new FormControl();
+  tagCtrl = new UntypedFormControl();
   filteredTags: string[];
   @ViewChild('tagInput') tagInput: ElementRef<HTMLInputElement>;
 

@@ -1,20 +1,20 @@
 <div class="edit_bookmark_layout">
   <h1 mat-dialog-title *ngIf="bookmark.id === ''">Create a new bookmark</h1>
-  <h1 mat-dialog-title *ngIf="bookmark.id !== ''">Update bookmark</h1>
+  <h1 mat-dialog-title *ngIf="bookmark.id !== ''">Update bookmark '{{ bookmark.displayName }}'</h1>
   <form class="bookmark-form" #bookmarkForm="ngForm" name="bookmarkForm">
     <div class="edit_bookmark_container">
       <div>
-        <mat-radio-group [(ngModel)]="type" name="type" [disabled]="bookmark.id !== ''" class="dialog-form-input">
-          <mat-radio-button value="Node" class="radio">Bookmark</mat-radio-button>
-          <mat-radio-button value="Folder">Folder</mat-radio-button>
+        <mat-radio-group id="rd-bookmark-type" [(ngModel)]="type" name="type" [disabled]="bookmark.id !== ''" class="dialog-form-input">
+          <mat-radio-button id="rd-bookmark-node" value="Node" class="radio">Bookmark</mat-radio-button>
+          <mat-radio-button id="rd-bookmark-folder" value="Folder">Folder</mat-radio-button>
         </mat-radio-group>
       </div>
 
       <mat-form-field>
-        <input class="dialog-form-input" matInput placeholder="Name" name="displayName" [(ngModel)]="bookmark.displayName" required>
+        <input id="txt-bookmark-displaName" class="dialog-form-input" matInput placeholder="Name" name="displayName" [(ngModel)]="bookmark.displayName" required>
       </mat-form-field>
       <mat-form-field *ngIf="type !== 'Folder'">
-        <input class="dialog-form-input" matInput placeholder="URL" name="url" [(ngModel)]="bookmark.url" [required]="type !== 'folder'">
+        <input id="txt-bookmark-url" class="dialog-form-input" matInput placeholder="URL" name="url" [(ngModel)]="bookmark.url" [required]="type !== 'folder'">
       </mat-form-field>
       <mat-form-field>
         <mat-label>Path</mat-label>
@@ -35,7 +35,7 @@
 
       <div mat-dialog-actions class="create_bookmark_layout">
         <button mat-raised-button (click)="onNoClick()">Cancel</button>
-        <button mat-raised-button color="primary"
+        <button mat-raised-button color="primary" id="btn-bookmark-save"
           (click)="onSave()"
           [disabled]="!bookmarkForm.form.valid"
           >Save</button>

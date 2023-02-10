@@ -9,25 +9,30 @@
     >
 
       <div>
-        <div class="hstack gap-3">
-          <div class="">
+        <div>
+          <div>
             <span *ngFor="let p of pathElemets; let i = index">
               <span *ngIf="p === '/'">
-                bookmarks:/ <a class="rootroot" (click)="gotoPath('/')">root</a>
+                 &nbsp;&nbsp;~ <button class="rootroot" mat-flat-button color="default" (click)="gotoPath('/')">root</button>
               </span>
-              <span *ngIf="p !== '/' && i &lt; pathElemets.length - 1">
-                / <a class="root" (click)="gotoPath(absolutePaths[i])">{{ p }}</a>
+              <span *ngIf="p !== '/' && i &lt; pathElemets.length - 1"><strong>&gt;</strong><a class="root" mat-stroked-button color="primary" (click)="gotoPath(absolutePaths[i])">{{ p }}</a>
               </span>
-              <span *ngIf="p !== '/' && i === pathElemets.length - 1 ">
-                / {{ p }}
+              <span *ngIf="p !== '/' && i === pathElemets.length - 1 "><strong>&gt;</strong><a mat-stroked-button color="primary" >{{ p }}</a>
               </span>
             </span>
 
+            <span class="version_1">
+
+              <button class="float_button" *ngIf="isAdmin || isUser" data-testid="link-add-bookmark" mat-mini-fab color="primary" aria-label="Add bookmark" (click)="addBookmark('')">
+                <mat-icon>add</mat-icon>
+              </button>
+
+              <span class="font-monospace">
+              {{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}
+              </span>
+            </span>
           </div>
-          <div class=" ms-auto">
-            <a *ngIf="isAdmin || isUser" class="add" (click)="addBookmark('')"><i class="bi bi-plus-circle"></i> Add</a>
-          </div>
-          <div class="font-monospace fw-lighter d-none d-sm-block">{{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}</div>
+
         </div>
       </div>
     </div>
@@ -38,19 +43,20 @@
         <i>no entries available</i>
       </div>
 
+
       <div cdkDrag [cdkDragStartDelay]="600" class="bookmark_item" *ngFor="let item of bookmarks; let i = index" id="{{ item.id }}">
 
+        <!-- bookmark node -->
         <span *ngIf="item.type === 'Node'" class="bookmark_node">
-          <img *ngIf="item.favicon === null || item.favicon === ''" src="assets/favicon.ico"
-            class="bookmark_favicon"
-            width="16px" height="16px"
-            alt="favicon"/>
+
+          <mat-icon class="bookmark_favicon" aria-hidden="false" aria-label="bookmark"
+            fontIcon="bookmark" *ngIf="item.favicon === null || item.favicon === ''"></mat-icon>
 
           <img *ngIf="item.favicon !== null && item.favicon !== ''"
             [defaultImage]="defaultFavicon"
             [lazyLoad]="customFavicon(item.id)"
             class="bookmark_favicon"
-            width="16px" height="16px"
+            width="24px" height="24px"
             alt="favicon"/>
 
           <span class="badge bg-dark bookmark_path_info" *ngIf="searchMode" (click)="gotoPath(item.path)">{{ item.path }}</span>&nbsp;
@@ -59,24 +65,37 @@
           <i *ngIf="item.highlight === 1" class="bi bi-bookmark-plus-fill bookmark_highlight"></i>
           <span *ngIf="item.highlight === 1" class="bookmark_highlight_date">({{ item.created | dfmt:'YYYY-MM-DD'}})</span>
 
-          <span class="d-none d-sm-inline">
+          <span class="bookmark_show_url">
+            <span *ngIf="item.showUrl">&nbsp;&nbsp;&gt;&gt;</span>
+            {{ item.showUrl }}
           </span>
 
         </span>
 
-        <span *ngIf="item.type === 'Folder'" class="position-relative">
+        <!-- bookmark folder -->
+        <span *ngIf="item.type === 'Folder'" class="bookmark_element">
           <a class="bookmark_folder" (click)="gotoPath(item.path + '/' + item.displayName)">
 
-          <i class="bi bi-folder2 bookmark_folder_icon" *ngIf="(item.favicon === null || item.favicon === '')">
-          </i>
+            <!-- standard folder icon -->
+            <mat-icon class="bookmark_folder_icon" aria-hidden="false" aria-label="folder"
+              fontIcon="folder" *ngIf="(item.favicon === null || item.favicon === '')"
+              matBadge="{{ item.childCount }}" matBadgeColor="warn"
+              [matBadgeHidden]="item.childCount === 0"
+              ></mat-icon>
 
-            <img *ngIf="item.favicon !== null && item.favicon !== ''"
-            [defaultImage]="defaultFavicon"
-            [lazyLoad]="customFavicon(item.id)"
-            class="bookmark_favicon"
-            width="16px" height="16px"
-            alt="favicon"/>
-            <span *ngIf="item.childCount > 0" class="badge-text position-absolute top-0 start-20 translate-middle badge rounded-pill bg-danger">{{ item.childCount }}</span>
+            <!-- custom icon-->
+            <span
+              matBadge="{{ item.childCount }}" matBadgeColor="warn"
+              [matBadgeHidden]="item.childCount === 0"
+            >
+              <img *ngIf="item.favicon !== null && item.favicon !== ''"
+              [defaultImage]="defaultFavicon"
+              [lazyLoad]="customFavicon(item.id)"
+              class="bookmark_favicon"
+              width="32px" height="32px"
+              alt="favicon"/>
+            </span>
+
           </a>
 
           <span *ngIf="searchMode">&nbsp;</span>
@@ -84,29 +103,35 @@
           <a class="bookmark_folder" (click)="gotoPath(item.path + '/' + item.displayName)">{{ item.displayName }}</a>
         </span>
 
-
-
         <span class="bookmark_actions">
+
+          <span class="show_url" *ngIf="item.type === 'Node'" (click)="ToggleShowItemUrl(item)">
+            <i class="fa fa-eye" aria-hidden="true"></i>
+          </span>
+
 
           <span class="copy_url" *ngIf="item.type === 'Node'" (click)="copyUrlToClipboard(item.url)">
             <i class="fa fa-clipboard" aria-hidden="true"></i>
           </span>
+
 
           <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="edit bookmark items">
             <mat-icon>more_vert</mat-icon>
           </button>
 
           <mat-menu #menu="matMenu">
-            <button mat-menu-item (click)="deleteBookmark(item.id)">
+            <button mat-menu-item (click)="deleteBookmark(item.id, item.displayName)" id="btn-bookmark-delete">
               <mat-icon>delete</mat-icon>
               <span>Delete</span>
             </button>
-            <button mat-menu-item (click)="editBookmark(item.id)">
+            <button mat-menu-item (click)="editBookmark(item.id)" id="btn-bookmark-edit">
               <mat-icon>create</mat-icon>
               <span>edit</span>
             </button>
           </mat-menu>
+
         </span>
+
 
       </div>
     </div>

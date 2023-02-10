@@ -1,45 +1,29 @@
-<header class="p-3 mb-3 border-bottom" *ngIf="whoAmI?.authenticated === true">
-  <div class="container">
-    <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+<mat-toolbar color="primary" *ngIf="whoAmI?.authenticated === true">
 
-      <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
-        <li >
-          <a class="nav-link px-2 link-dark" routerLink="/bookmarks" routerLinkActive="active" title="Bookmarks" [class.selected]="isCurrentRoute('/bookmarks')">
-            <i class="bi bi-bookmark-star"></i> Bookmarks
-          </a>
-        </li>
-        <li>
-          <a class="nav-link px-2 link-dark" routerLink="/mydms" routerLinkActive="active" title="Documents" [class.selected]="isCurrentRoute('/mydms')">
-            <i class="bi bi-file-earmark-pdf"></i> Documents
-          </a>
-        </li>
-        <li>
-          <a class="nav-link px-2 link-dark" routerLink="/sites" routerLinkActive="active" title="Documents" [class.selected]="isCurrentRoute('/sites')">
-            <i class="bi bi-diagram-3"></i> Sites
-          </a>
-        </li>
-      </ul>
+  <button mat-icon-button class="menu-responsive" aria-label="menu for mobile use">
+    <mat-icon>menu</mat-icon>
+  </button>
 
-      <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" name="search">
-        <input type="search" class="form-control" placeholder="Search..." aria-label="Search" [(ngModel)]="searchText" #search (ngModelChange)="onFieldChange($event)" [ngModelOptions]="{standalone: true}">
-
-      </form>
-
-      <div class="dropdown text-end">
-        <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-          <img src="{{ whoAmI?.pictureUrl + '=s32'}}" alt="{{ whoAmI?.displayName }}" width="32" height="32" class="rounded-circle">
-        </a>
-        <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1" style="">
-          <li><span class="dropdown-item"><strong>{{ whoAmI?.displayName }}</strong></span></li>
-          <!--<li><a class="dropdown-item" href="#">Settings</a></li>
-          <li><a class="dropdown-item" href="#">Profile</a></li>
-          <li><hr class="dropdown-divider"></li>-->
-          <!--<li><span class="dropdown-item">{{ coreInfo?.versionInfo?.version }} / {{ coreInfo?.versionInfo?.buildNumber }}</span></li>-->
-        </ul>
-      </div>
-    </div>
-  </div>
-</header>
-<mat-progress-bar *ngIf="showProgress" class="progress" mode="query" color="warn"></mat-progress-bar>
+  <a mat-button routerLink="/bookmarks" routerLinkActive="active" title="Bookmarks" [class.selected]="isCurrentRoute('/bookmarks')">
+    <mat-icon class="hide_mobile" aria-hidden="false" aria-label="bookmarks icon" fontIcon="bookmarks"></mat-icon> Bookmarks</a>
+  <a mat-button routerLink="/mydms" routerLinkActive="active" title="Documents" [class.selected]="isCurrentRoute('/mydms')"><mat-icon class="hide_mobile" aria-hidden="false" aria-label="documents" fontIcon="description"></mat-icon> Documents</a>
+  <a mat-button routerLink="/sites" routerLinkActive="active" title="Sites" [class.selected]="isCurrentRoute('/sites')"><mat-icon class="hide_mobile" aria-hidden="false" aria-label="sites security" fontIcon="security"></mat-icon> Sites</a>
+  <span class="toolbar-spacer"></span>
 
 
+  <mat-form-field class="search-field">
+    <input type="search" matInput placeholder="Search..." aria-label="Search" [(ngModel)]="searchText" #search (ngModelChange)="onFieldChange($event)" [ngModelOptions]="{standalone: true}">
+    <mat-icon matSuffix>search</mat-icon>
+  </mat-form-field>
+
+  <span class="profile_picture">
+    <img src="{{ whoAmI?.pictureUrl + '=s35'}}" alt="{{ whoAmI?.displayName }}" class="avatar" matTooltip="{{ whoAmI?.displayName }}">
+  </span>
+
+
+
+</mat-toolbar>
+
+
+
+<mat-progress-bar *ngIf="showProgress" class="progress" mode="indeterminate" color="accent"></mat-progress-bar>

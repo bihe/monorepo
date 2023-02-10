@@ -17,15 +17,16 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Title } from '@angular/platform-browser';
 import { LazyLoadImageModule } from 'ng-lazyload-image';
 import { AppComponent } from './components/app/app.component';
 import { CreateBookmarksDialog } from './components/bookmarks/home/create.dialog';
 import { BookmarkHomeComponent } from './components/bookmarks/home/home.component';
-import { ConfirmDeleteDialogComponent } from './components/confirm-delete-dialog/confirmation.component';
 import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
 import { HeaderComponent } from './components/header/header.component';
 import { EditSitesComponent } from './components/login/edit/edit.component';
@@ -41,9 +42,17 @@ import { ApiMydmsService } from './shared/service/api.mydms.service';
 import { ApiSiteService } from './shared/service/api.sites.service';
 import { ApplicationState } from './shared/service/application.state';
 
+const ImportAngularElements = [
+  MatProgressSpinnerModule, MatTooltipModule, MatSnackBarModule, MatButtonModule,
+  MatDialogModule, MatInputModule, MatFormFieldModule, MatRadioModule, MatOptionModule,
+  MatSelectModule, MatMenuModule, MatIconModule, MatBadgeModule, DragDropModule, MatCheckboxModule,
+  MatCardModule, MatChipsModule, MatSlideToggleModule, MatExpansionModule, MatChipsModule,
+  MatAutocompleteModule, MatProgressBarModule, MatToolbarModule, MatSidenavModule, MatBadgeModule
+];
+
 @NgModule({
-  imports: [ MatProgressSpinnerModule, MatTooltipModule, MatSnackBarModule, MatButtonModule, MatDialogModule, MatInputModule, MatFormFieldModule, MatRadioModule, MatOptionModule, MatSelectModule, MatMenuModule, MatIconModule, MatBadgeModule, DragDropModule, MatCheckboxModule, MatCardModule, MatChipsModule, MatSlideToggleModule, MatExpansionModule, MatChipsModule, MatAutocompleteModule, MatProgressBarModule ],
-  exports: [ MatProgressSpinnerModule, MatTooltipModule, MatSnackBarModule, MatButtonModule, MatDialogModule, MatInputModule, MatFormFieldModule, MatRadioModule, MatOptionModule, MatSelectModule, MatMenuModule, MatIconModule, MatBadgeModule, DragDropModule, MatCheckboxModule, MatCardModule, MatChipsModule, MatSlideToggleModule, MatExpansionModule, MatChipsModule, MatAutocompleteModule, MatProgressBarModule ],
+  imports: ImportAngularElements,
+  exports: ImportAngularElements,
 })
 export class AppMaterialModule { }
 
@@ -60,7 +69,6 @@ export const sharedConfig: NgModule = {
       MyDmsHomeComponent,
       SiteHomeComponent,
       EditSitesComponent,
-      ConfirmDeleteDialogComponent,
       MyDmsDocumentComponent
     ],
     imports: [

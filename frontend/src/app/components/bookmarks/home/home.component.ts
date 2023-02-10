@@ -68,6 +68,9 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
   ellipsisVal: number = 60;
   readonly baseApiURL = environment.apiBaseURL;
 
+  // the table columns
+  displayedColumns: string[] = ['position', 'displayName'];
+
   // all subscriptions are held in this array, on destroy all active subscriptions are unsubscribed
   subscriptions: any[];
 
@@ -196,6 +199,10 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
                 // the "newest" entries should be put on top
                 items.sort(this.fieldSorter(['-highlight', '-created']));
               }
+              var bookmarkItems = [];
+              items.forEach((e, index) => {
+                e.position = (index+1);
+              });
               this.bookmarks = items;
             } else {
               this.bookmarks = [];
@@ -325,7 +332,7 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
             console.log(allPaths);
 
             const dialogRef = this.dialog.open(CreateBookmarksDialog, {
-              panelClass: 'my-full-screen-dialog',
+              panelClass: 'modal-dialog',
               data: {
                 absolutePaths: allPaths.paths,
                 currentPath: this.currentPath,
@@ -366,10 +373,10 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
                     if (this.authError(error)) {
                       return;
                     }
-                    const errorDetail: ProblemDetail = error;
+                    const errorDetail: ErrorModel = error;
                     this.state.setProgress(false);
                     console.log(errorDetail);
-                    new MessageUtils().showError(this.snackBar, errorDetail.title);
+                    new MessageUtils().showError(this.snackBar, errorDetail.message);
                   }
                 );
               }
@@ -379,10 +386,10 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
             if (this.authError(error)) {
               return;
             }
-            const errorDetail: ProblemDetail = error;
+            const errorDetail: ErrorModel = error;
             this.state.setProgress(false);
             console.log(errorDetail);
-            new MessageUtils().showError(this.snackBar, errorDetail.title);
+            new MessageUtils().showError(this.snackBar, errorDetail.message);
           }
         );
       },
@@ -390,10 +397,10 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
         if (this.authError(error)) {
           return;
         }
-        const errorDetail: ProblemDetail = error;
+        const errorDetail: ErrorModel = error;
         this.state.setProgress(false);
         console.log(errorDetail);
-        new MessageUtils().showError(this.snackBar, errorDetail.title);
+        new MessageUtils().showError(this.snackBar, errorDetail.message);
       }
     );
   }
@@ -401,7 +408,7 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
   addBookmark(url: string) {
     console.log('add bookmark!');
     const dialogRef = this.dialog.open(CreateBookmarksDialog, {
-      panelClass: 'my-full-screen-dialog',
+      panelClass: 'modal-dialog',
       data: {
         absolutePaths: this.absolutePaths,
         currentPath: this.currentPath,
@@ -431,21 +438,21 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
             if (this.authError(error)) {
               return;
             }
-            const errorDetail: ProblemDetail = error;
+            const errorDetail: ErrorModel = error;
             this.state.setProgress(false);
             console.log(errorDetail);
-            new MessageUtils().showError(this.snackBar, errorDetail.title);
+            new MessageUtils().showError(this.snackBar, errorDetail.message);
           }
         );
       }
     });
   }
 
-  deleteBookmark(id: string) {
-    const dialogData = new ConfirmDialogModel('Confirm delete!', 'Really delete bookmark?');
+  deleteBookmark(id: string, name: string) {
+    const dialogData = new ConfirmDialogModel('Please confirm!', `Do you really want to delete the entry '${name}'?`);
 
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      maxWidth: "400px",
+      panelClass: 'modal-dialog-delete',
       data: dialogData
     });
 
@@ -467,10 +474,10 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
             if (this.authError(error)) {
               return;
             }
-            const errorDetail: ProblemDetail = error;
+            const errorDetail: ErrorModel = error;
             this.state.setProgress(false);
             console.log(errorDetail);
-            new MessageUtils().showError(this.snackBar, errorDetail.title);
+            new MessageUtils().showError(this.snackBar, errorDetail.message);
           }
         );
       }
@@ -603,6 +610,15 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
     }, (err) => {
       new MessageUtils().showError(this.snackBar, 'Could not copy ULR: ' + err);
     });
+  }
+
+  ToggleShowItemUrl(item: BookmarkModel) {
+    console.log(item.url);
+    if ((!item.showUrl) || item.showUrl === '') {
+      item.showUrl = item.url;
+    } else {
+      item.showUrl = '';
+    }
   }
 
   private splitPathElements(path: string): string[] {

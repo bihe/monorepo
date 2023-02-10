@@ -33,6 +33,10 @@ div.tags {
     border-radius: 5px;
 }
 
+.uploadfile {
+    text-align: left;
+}
+
 .upload__zone {
     text-align: center;
 }
@@ -40,6 +44,15 @@ div.tags {
 .upload__zone_dd_text {
     font-style: italic;
     font-size: 1.2em;
+}
+
+.upload_file_link {
+    color:white;
+    text-decoration: none;
+}
+
+.upload_file_link:hover {
+    text-decoration: underline;
 }
 
 .upload__file {
@@ -54,18 +67,6 @@ div.tags {
     display: none;
 }
 
-.document_heading {
-  width: 100%;
-}
-
-.document_title {
-  width: 100%;
-}
-
-.document_invoicenumber {
-    color: darkred;
-}
-
 .upload_section {
   padding-top: 25px;
   padding-bottom: 15px;
@@ -73,24 +74,6 @@ div.tags {
 
 .upload_link {
   font-size: 1.3em;
-}
-
-.application_title {
-    display: block;
-  padding-top: 0px;
-  padding-left: 10px;
-  padding-right: 10px;
-  padding-bottom: 10px;
-  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
-  /* background-color: #eeeeee; */
-  border-bottom: dotted 1px #cccccc;
-  margin-bottom: 19px;
-  }
-
-.version_info {
-position: relative;
-top: -18px;
-font-size: 0.9em;
 }
 
 .encpass_set {
@@ -106,3 +89,25 @@ font-size: 0.9em;
 .file-input {
     display: none;
   }
+
+.download_icon {
+    font-size: xx-large;
+    vertical-align: sub;
+}
+
+.clear_download_icon {
+    padding-left: 10px;
+    vertical-align: text-bottom;
+}
+
+.clear_upload_link {
+    color: #999;
+}
+
+.upload_button{
+    font-size: x-large;
+}
+
+.document_title {
+    width: 90vw;
+}

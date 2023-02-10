@@ -1,31 +1,30 @@
 <div class="dashboard">
 
   <div class="application_title">
-    <div class="hstack gap-3">
-      <div class=""> sites:/</div>
-      <div class=" ms-auto"></div>
-      <div class="font-monospace fw-lighter d-none d-sm-block">{{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}</div>
+    <div>
+      &nbsp;&nbsp;~ sites
+      <span class="font-monospace version">{{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}</span>
     </div>
   </div>
 
   <mat-card class="dashboard_card" *ngFor="let item of userInfo?.userSites; let i = index" id="{{ item.id }}" >
-    <mat-card-title>
-      <a class="dashboard_card_title" href="{{ item.url }}" target="_blank">{{ item.name | ellipsis: 20}}</a>
-    </mat-card-title>
+    <mat-card-header>
+      <mat-card-title>
+        <a class="dashboard_card_title" href="{{ item.url }}" target="_blank">{{ item.name | ellipsis: 20}}</a>
+      </mat-card-title>
+    </mat-card-header>
     <mat-card-content>
-      <img src="assets/favicon.ico"
-        class="bookmark_favicon"
-        loading="lazy"
-        width="16px" height="16px"
-        alt="favicon"/>
-      &nbsp;
-      <a href="{{ item.url }}" target="_blank">{{ item.url | ellipsis:25 }}</a>
+      <div class="dashboard_card_content">
+        <mat-icon class="dashboard_site_link_icon">link</mat-icon>
+        &nbsp;<a class="dashboard_site_link" href="{{ item.url }}" target="_blank">{{ item.url | ellipsis:25 }}</a>
+      </div>
     </mat-card-content>
     <mat-card-footer class="dashboard_card_footer">
-      roles: <span class="permission" *ngFor="let perm of item?.permissions"><i class="fa fa-hashtag" aria-hidden="true"></i>{{ perm | ellipsis: 15 }}</span>
+      <span>
+        <span class="permission" *ngFor="let perm of item?.permissions"><i class="fa fa-hashtag tag" aria-hidden="true"></i>{{ perm | ellipsis: 15 }}</span>
+      </span>
     </mat-card-footer>
   </mat-card>
-
 
   <button *ngIf="userInfo?.editable" mat-fab color="accent" class="edit" (click)="edit()"><i class="fa fa-cogs fa-2x" aria-hidden="true"></i></button>
 </div>

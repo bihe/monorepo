@@ -5,6 +5,7 @@ export enum ItemType {
 
 export class BookmarkModel {
   public id: string;
+  public position: number;
   public path: string;
   public displayName: string;
   public url: string;
@@ -16,6 +17,7 @@ export class BookmarkModel {
   public favicon: string;
   public customFavicon: string;
   public highlight: number;
+  public showUrl: string;
 }
 
 export class BoomarkSortOrderModel {

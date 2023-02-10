@@ -39,7 +39,7 @@ func main() {
 	}
 }
 
-// run is the entry-point for the mydms service
+// run is the entry-point for the core/auth service
 // where initialization, setup and execution is done
 func run(version, build string) error {
 	//hostname, port, _, config := readConfig()

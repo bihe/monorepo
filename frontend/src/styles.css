@@ -1,5 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
-@import '@angular/material/prebuilt-themes/deeppurple-amber.css';
+@import '@angular/material/prebuilt-themes/pink-bluegrey.css';
 @import url('assets/fonts/local.css');
 
 .success {
@@ -41,16 +41,75 @@ button:focus {
 }
 
 
-.my-full-screen-dialog {
+.modal-dialog {
+  width: 75vw !important;
+}
+
+.modal-dialog-delete {
   width: 50vw !important;
 }
 
 @media (max-width: 575.98px) {
-  .my-full-screen-dialog {
+  .modal-dialog {
     height: 100vh;
     width: 100vw !important;
     max-width: none !important;
   }
 }
 
+.version {
+  position: absolute;
+  right: 15px;
+  font-weight: bold;
+}
 
+.application_title {
+  display: block;
+  padding-top: 15px;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-bottom: 15px;
+  border-bottom: darkgray dashed 1px;
+  font-size: small;
+  font-weight: bold;
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+}
+
+.mdc-dialog__title {
+  padding-left: 10px !important;
+  padding-bottom: 20px !important;
+  border-bottom: solid 1px #9999;
+  margin-bottom: 10px !important;
+  background-color: #333333;
+}
+
+.bg-dark {
+  color: #fff!important;
+  background-color: #777777 !important;
+}
+
+.badge {
+  --bs-badge-padding-x: 0.65em;
+  --bs-badge-padding-y: 0.35em;
+  --bs-badge-font-size: 0.75em;
+  --bs-badge-font-weight: 700;
+  --bs-badge-color: #fff;
+  --bs-badge-border-radius: 0.375rem;
+
+  display: inline-block;
+  padding: var(--bs-badge-padding-y) var(--bs-badge-padding-x);
+  font-size: var(--bs-badge-font-size);
+  font-weight: var(--bs-badge-font-weight);
+  line-height: 1;
+  color: var(--bs-badge-color);
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: var(--bs-badge-border-radius);
+  position: relative;
+  top: 7px;
+}
+
+.mat-mdc-progress-bar.mat-accent {
+  --mdc-linear-progress-active-indicator-color: cyan;
+}

@@ -3,6 +3,7 @@ import string
 
 from playwright.sync_api import Page, expect
 
+class_trigger_menu = '.mat-mdc-menu-trigger'
 
 # validate the basic features of the bookmarks logic
 def validate(baseURL: str, page: Page):
@@ -28,10 +29,10 @@ def validate(baseURL: str, page: Page):
 
     # find the newly created item
     expect(page.get_by_text(prefix+'__BOOKMARK')).to_be_visible()
-    expect(page.locator('.mat-menu-trigger')).to_be_visible()
+    expect(page.locator(class_trigger_menu)).to_be_visible()
 
     # edit the bookmark
-    page.locator('.mat-menu-trigger').click()
+    page.locator(class_trigger_menu).click()
     page.locator('id=btn-bookmark-edit').click()
     page.locator('id=txt-bookmark-displaName').fill(prefix+'__BOOKMARK-UPDATE')
     page.locator('id=btn-bookmark-save').click()
@@ -39,10 +40,10 @@ def validate(baseURL: str, page: Page):
 
     # again find the updated item in the list
     expect(page.get_by_text(prefix+'__BOOKMARK-UPDATE')).to_be_visible()
-    expect(page.locator('.mat-menu-trigger')).to_be_visible()
+    expect(page.locator(class_trigger_menu)).to_be_visible()
 
     # delete the created bookmark
-    page.locator('.mat-menu-trigger').click()
+    page.locator(class_trigger_menu).click()
     page.locator('id=btn-bookmark-delete').click()
     page.locator('id=btn-confirm').click()
     page.wait_for_timeout(500)
@@ -55,7 +56,7 @@ def validate(baseURL: str, page: Page):
     page.wait_for_url(baseURL + '/bookmarks')
     page.wait_for_timeout(500)
     # find the create item
-    page.locator('.bookmark_item').filter(has_text=prefix+'__FOLDER').locator('.mat-menu-trigger').click()
+    page.locator('.bookmark_item').filter(has_text=prefix+'__FOLDER').locator(class_trigger_menu).click()
     page.locator('id=btn-bookmark-delete').click()
     page.locator('id=btn-confirm').click()
     page.wait_for_timeout(500)

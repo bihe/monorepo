@@ -8,33 +8,29 @@
         [ngClass]="highlightDropZone ? 'drop_highlight' : 'drop_highlight_not'"
     >
 
-      <div>
-        <div>
+    <div class="application_header">
           <div>
             <span *ngFor="let p of pathElemets; let i = index">
               <span *ngIf="p === '/'">
-                 &nbsp;&nbsp;~ <button class="rootroot" mat-flat-button color="default" (click)="gotoPath('/')">root</button>
+                 &nbsp;&nbsp;~ <button class="rootroot" mat-button color="default" (click)="gotoPath('/')">root</button>
               </span>
-              <span *ngIf="p !== '/' && i &lt; pathElemets.length - 1"><strong>&gt;</strong><a class="root" mat-stroked-button color="primary" (click)="gotoPath(absolutePaths[i])">{{ p }}</a>
+              <span *ngIf="p !== '/' && i &lt; pathElemets.length - 1"><strong>&gt;</strong><a class="root" mat-button color="accent" (click)="gotoPath(absolutePaths[i])">{{ p }}</a>
               </span>
-              <span *ngIf="p !== '/' && i === pathElemets.length - 1 "><strong>&gt;</strong><a mat-stroked-button color="primary" >{{ p }}</a>
-              </span>
-            </span>
-
-            <span class="version_1">
-
-              <button class="float_button" *ngIf="isAdmin || isUser" data-testid="link-add-bookmark" mat-mini-fab color="primary" aria-label="Add bookmark" (click)="addBookmark('')">
-                <mat-icon>add</mat-icon>
-              </button>
-
-              <span class="font-monospace">
-              {{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}
+              <span *ngIf="p !== '/' && i === pathElemets.length - 1 "><strong>&gt;</strong><a mat-button color="accent" >{{ p }}</a>
               </span>
             </span>
           </div>
+          <div class="action_version">
 
+              <button class="add_button" *ngIf="isAdmin || isUser" data-testid="link-add-bookmark" mat-mini-fab color="primary" aria-label="Add bookmark" (click)="addBookmark('')">
+                <mat-icon>add</mat-icon>
+              </button>
+
+              <span class="font-monospace version-align">
+              {{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}
+              </span>
+          </div>
         </div>
-      </div>
     </div>
 
     <div class="bookmarks_list" cdkDropList (cdkDropListDropped)="drop($event)">

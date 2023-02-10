@@ -142,10 +142,11 @@
 }
 
 
-.float_button {
-  position: absolute;
-  top: -12px;
-  right: 280px;
+.add_button {
+  position: relative;
+  top: 7px;
+  right: 7px;
+  /* right: 280px; */
 }
 
 .label_switch_amount {

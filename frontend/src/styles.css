@@ -57,23 +57,7 @@ button:focus {
   }
 }
 
-.version {
-  position: absolute;
-  right: 15px;
-  font-weight: bold;
-}
 
-.application_title {
-  display: block;
-  padding-top: 15px;
-  padding-left: 5px;
-  padding-right: 5px;
-  padding-bottom: 15px;
-  border-bottom: darkgray dashed 1px;
-  font-size: small;
-  font-weight: bold;
-  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
-}
 
 .mdc-dialog__title {
   padding-left: 10px !important;
@@ -112,4 +96,48 @@ button:focus {
 
 .mat-mdc-progress-bar.mat-accent {
   --mdc-linear-progress-active-indicator-color: cyan;
+}
+
+
+:root {
+  --lh: 50px;
+}
+
+
+.version {
+  position: absolute;
+  right: 15px;
+  font-weight: bold;
+}
+
+.application_title {
+  border-bottom: darkgray dashed 1px;
+  font-size: small;
+  font-weight: bold;
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+}
+
+.application_header {
+  width: 100vw;
+  height: var(--lh);
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.application_name {
+  line-height: var(--lh);
+  margin-left: 20px;
+}
+
+.action_version {
+  align-self: end;
+  width: 300px;
+  text-align: right;
+  margin-right: 20px;
+  line-height: var(--lh);
+}
+
+.version-align {
+  line-height: var(--lh);
 }

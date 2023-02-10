@@ -1,9 +1,13 @@
 <div class="dashboard">
 
-  <div class="application_title">
-    <div>
-      &nbsp;&nbsp;~ sites
-      <span class="font-monospace version">{{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}</span>
+  <div class="application_header application_title">
+    <div class="application_name">
+      ~ sites
+    </div>
+    <div class="action_version">
+        <span class="font-monospace version-align">
+        {{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}
+        </span>
     </div>
   </div>
 

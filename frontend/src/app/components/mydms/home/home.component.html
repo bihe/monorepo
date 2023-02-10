@@ -1,27 +1,22 @@
 <div class="documents">
 
-    <div class="application_title">
-      <div>
-        &nbsp;&nbsp;~ documents
 
-        <span class="version">
+    <div class="application_header application_title">
+        <div class="application_name">
+        ~ documents
+        </div>
+        <div class="action_version">
 
-            <label class="label_switch_amount">Show Amount</label>&nbsp;<mat-slide-toggle (change)="onShowAmountChanged($event)" [(ngModel)]="showAmount" color="primary"></mat-slide-toggle>&nbsp;
-
-            <button class="float_button" mat-mini-fab color="primary" aria-label="Add document" (click)="addDocument()">
+            <button class="add_button" mat-mini-fab color="primary" aria-label="Add document" (click)="addDocument()">
                 <mat-icon>add</mat-icon>
             </button>
 
-            <span class="font-monospace">{{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}</span>
+            <label class="label_switch_amount">Show Amount</label>&nbsp;<mat-slide-toggle (change)="onShowAmountChanged($event)" [(ngModel)]="showAmount" color="primary"></mat-slide-toggle>&nbsp;
 
-        </span>
-        <!-- <div class="ms-auto">
-
-        </div> -->
-
-
-
-      </div>
+            <span class="font-monospace version-align">
+            {{ appInfo?.versionInfo?.version }}-{{ appInfo?.versionInfo?.buildNumber }}
+            </span>
+        </div>
     </div>
 
     <div class="document_cards">

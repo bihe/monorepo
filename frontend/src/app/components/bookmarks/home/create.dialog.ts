@@ -16,6 +16,7 @@ export class CreateBookmarksDialog implements OnInit {
   reloadFavicon = false;
   toggleCustomFavicon = false;
   customFavicon = '';
+  invertFaviconColor = false;
 
   constructor(public dialogRef: MatDialogRef<CreateBookmarksDialog>,
     @Inject(MAT_DIALOG_DATA) public data: CreateBookmarkModel)
@@ -26,6 +27,7 @@ export class CreateBookmarksDialog implements OnInit {
       this.bookmark = this.data.existingBookmark;
       this.type = this.bookmark.type.toString();
       this.selectedPath = this.bookmark.path;
+      this.invertFaviconColor = this.bookmark.invertFaviconColor === 1 ? true : false;
     } else {
       this.bookmark = new BookmarkModel();
       this.bookmark.id = '';
@@ -57,6 +59,7 @@ export class CreateBookmarksDialog implements OnInit {
     this.bookmark.path = this.selectedPath;
     this.bookmark.favicon = this.reloadFavicon ? '' : this.bookmark.favicon;
     this.bookmark.customFavicon = this.customFavicon;
+    this.bookmark.invertFaviconColor = this.invertFaviconColor ? 1 : 0;
     this.dialogRef.close({
       result: true,
       model: this.bookmark

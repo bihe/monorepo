@@ -292,5 +292,6 @@ a.bookmark_actions {
   right: 7px;
 }
 
-
-
+.invert {
+  filter: invert(100%);
+}

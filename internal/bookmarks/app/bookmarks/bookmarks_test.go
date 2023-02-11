@@ -69,10 +69,11 @@ func Test_CreateBookmark(t *testing.T) {
 	}
 
 	bm, err := svc.CreateBookmark(bookmarks.Bookmark{
-		Type:        bookmarks.Node,
-		Path:        "/" + folder.DisplayName,
-		DisplayName: "test",
-		URL:         "https://www.orf.at",
+		Type:               bookmarks.Node,
+		Path:               "/" + folder.DisplayName,
+		DisplayName:        "test",
+		URL:                "https://www.orf.at",
+		InvertFaviconColor: 1,
 	}, user)
 	if err != nil {
 		t.Errorf("could not create bookmark; %v", err)
@@ -85,6 +86,9 @@ func Test_CreateBookmark(t *testing.T) {
 
 	if fetched.DisplayName != bm.DisplayName {
 		t.Errorf("the fetched bookmark is not the requested one")
+	}
+	if fetched.InvertFaviconColor != bm.InvertFaviconColor {
+		t.Errorf("the fetched bookmark does not have the flag InvertFaviconColor set")
 	}
 
 	// ---- error case ----
@@ -639,6 +643,7 @@ func Test_UpdateBookmark(t *testing.T) {
 
 	// update the bookmark
 	b.DisplayName = bookmark + "_update"
+	b.InvertFaviconColor = 1
 	_, err := svc.Update(*b, user)
 	if err != nil {
 		t.Errorf("could not update bookmark, %v", err)
@@ -647,6 +652,9 @@ func Test_UpdateBookmark(t *testing.T) {
 
 	if b.DisplayName != bookmark+"_update" {
 		t.Errorf("the bookmark was not correctly updated, got %s", b.DisplayName)
+	}
+	if b.InvertFaviconColor != 1 {
+		t.Errorf("the bookmark was not correctly updated, got %d", b.InvertFaviconColor)
 	}
 
 	// update the folder

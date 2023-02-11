@@ -11,6 +11,7 @@ CREATE TABLE "BOOKMARKS" (
 	"child_count"	integer NOT NULL DEFAULT 0,
 	"highlight"	integer NOT NULL DEFAULT 0,
 	"favicon"	varchar(128) NOT NULL,
+	"invert_favicon_color" integer NOT NULL DEFAULT 0,
 	PRIMARY KEY("id")
 );
 

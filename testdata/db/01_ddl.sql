@@ -26,6 +26,7 @@ CREATE TABLE `BOOKMARKS` (
   `child_count` int(11) NOT NULL DEFAULT 0,
   `highlight` int(11) NOT NULL DEFAULT 0,
   `favicon` varchar(128) DEFAULT NULL,
+  `invert_favicon_color` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `IX_PATH` (`path`),
   KEY `IX_SORT_ORDER` (`sort_order`),

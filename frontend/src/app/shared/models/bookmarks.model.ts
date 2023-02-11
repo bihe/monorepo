@@ -18,6 +18,7 @@ export class BookmarkModel {
   public customFavicon: string;
   public highlight: number;
   public showUrl: string;
+  public invertFaviconColor: number;
 }
 
 export class BoomarkSortOrderModel {

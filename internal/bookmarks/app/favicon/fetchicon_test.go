@@ -1,17 +1,22 @@
 package favicon
 
 import (
+	_ "embed"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
+//go:embed favicon.png
+var pngFavicon []byte
+
+//go:embed favicon.ico
+var icoFavicon []byte
+
 func TestFetchFavicon(t *testing.T) {
-	favicon, _ := os.ReadFile("../assets/favicon.ico")
 
 	// setup a test-server
 	// ------------------------------------------------------------------
@@ -33,28 +38,28 @@ func TestFetchFavicon(t *testing.T) {
 		}
 	})
 	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(favicon)))
-		if _, err := w.Write(favicon); err != nil {
+		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(icoFavicon)))
+		if _, err := w.Write(icoFavicon); err != nil {
 			t.Fatalf("%v", err)
 		}
 
 	})
 	mux.HandleFunc("/singleFile/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(favicon)))
-		if _, err := w.Write(favicon); err != nil {
+		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(icoFavicon)))
+		if _, err := w.Write(icoFavicon); err != nil {
 			t.Fatalf("%v", err)
 		}
 
 	})
 	mux.HandleFunc("/img/favicon.png", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(favicon)))
-		if _, err := w.Write(favicon); err != nil {
+		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(pngFavicon)))
+		if _, err := w.Write(pngFavicon); err != nil {
 			t.Fatalf("%v", err)
 		}
 	})
 	mux.HandleFunc("/pageRel/img/favicon32x32.png", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(favicon)))
-		if _, err := w.Write(favicon); err != nil {
+		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(pngFavicon)))
+		if _, err := w.Write(pngFavicon); err != nil {
 			t.Fatalf("%v", err)
 		}
 	})
@@ -132,7 +137,8 @@ func TestFetchFavicon(t *testing.T) {
 		t.Errorf("could not get default favicon: %v", err)
 	}
 	assert.Equal(t, "favicon.ico", fileName)
-	assert.Equal(t, len(favicon), len(payload))
+	assert.True(t, len(payload) > 0)
+	assert.Equal(t, len(icoFavicon), len(payload))
 
 	// use html content1
 	// ------------------------------------------------------------------
@@ -141,7 +147,8 @@ func TestFetchFavicon(t *testing.T) {
 		t.Errorf("could not get favicon: %v", err)
 	}
 	assert.Equal(t, "favicon.png", fileName)
-	assert.Equal(t, len(favicon), len(payload))
+	assert.True(t, len(payload) > 0)
+	assert.Equal(t, len(pngFavicon), len(payload))
 
 	// use html content2
 	// ------------------------------------------------------------------
@@ -150,7 +157,8 @@ func TestFetchFavicon(t *testing.T) {
 		t.Errorf("could not get favicon: %v", err)
 	}
 	assert.Equal(t, "favicon32x32.png", fileName)
-	assert.Equal(t, len(favicon), len(payload))
+	assert.True(t, len(payload) > 0)
+	assert.Equal(t, len(pngFavicon), len(payload))
 
 	// use html content3
 	// ------------------------------------------------------------------
@@ -159,7 +167,8 @@ func TestFetchFavicon(t *testing.T) {
 		t.Errorf("could not get favicon: %v", err)
 	}
 	assert.Equal(t, "favicon.png", fileName)
-	assert.Equal(t, len(favicon), len(payload))
+	assert.True(t, len(payload) > 0)
+	assert.Equal(t, len(pngFavicon), len(payload))
 
 	// single file
 	// ------------------------------------------------------------------
@@ -168,7 +177,8 @@ func TestFetchFavicon(t *testing.T) {
 		t.Errorf("could not get favicon: %v", err)
 	}
 	assert.Equal(t, "favicon.ico", fileName)
-	assert.Equal(t, len(favicon), len(payload))
+	assert.True(t, len(payload) > 0)
+	assert.Equal(t, len(icoFavicon), len(payload))
 
 	// html parse error
 	// ------------------------------------------------------------------
@@ -177,7 +187,8 @@ func TestFetchFavicon(t *testing.T) {
 		t.Errorf("could not get default favicon: %v", err)
 	}
 	assert.Equal(t, "favicon.ico", fileName)
-	assert.Equal(t, len(favicon), len(payload))
+	assert.True(t, len(payload) > 0)
+	assert.Equal(t, len(icoFavicon), len(payload))
 
 	// http error
 	// ------------------------------------------------------------------

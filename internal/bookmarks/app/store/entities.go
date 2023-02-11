@@ -17,18 +17,19 @@ const (
 
 // Bookmark maps the database table to a struct
 type Bookmark struct {
-	ID          string     `gorm:"primary_key;TYPE:varchar(255);COLUMN:id"`
-	Path        string     `gorm:"TYPE:varchar(255);COLUMN:path;NOT NULL;INDEX:IX_PATH;INDEX:IX_PATH_USER"`
-	DisplayName string     `gorm:"TYPE:varchar(128);COLUMN:display_name;NOT NULL"`
-	URL         string     `gorm:"TYPE:varchar(512);COLUMN:url;NOT NULL;INDEX:IX_SORT_ORDER"`
-	SortOrder   int        `gorm:"COLUMN:sort_order;DEFAULT:0;NOT NULL"`
-	Type        NodeType   `gorm:"COLUMN:type;DEFAULT:0;NOT NULL"`
-	UserName    string     `gorm:"TYPE:varchar(128);COLUMN:user_name;NOT NULL;INDEX:IX_USER;INDEX:IX_PATH_USER"`
-	Created     time.Time  `gorm:"COLUMN:created;NOT NULL"`
-	Modified    *time.Time `gorm:"COLUMN:modified"`
-	ChildCount  int        `gorm:"COLUMN:child_count;DEFAULT:0;NOT NULL"`
-	Highlight   int        `gorm:"COLUMN:highlight;DEFAULT:0;NOT NULL"`
-	Favicon     string     `gorm:"TYPE:varchar(128);COLUMN:favicon;NOT NULL"`
+	ID                 string     `gorm:"primary_key;TYPE:varchar(255);COLUMN:id"`
+	Path               string     `gorm:"TYPE:varchar(255);COLUMN:path;NOT NULL;INDEX:IX_PATH;INDEX:IX_PATH_USER"`
+	DisplayName        string     `gorm:"TYPE:varchar(128);COLUMN:display_name;NOT NULL"`
+	URL                string     `gorm:"TYPE:varchar(512);COLUMN:url;NOT NULL;INDEX:IX_SORT_ORDER"`
+	SortOrder          int        `gorm:"COLUMN:sort_order;DEFAULT:0;NOT NULL"`
+	Type               NodeType   `gorm:"COLUMN:type;DEFAULT:0;NOT NULL"`
+	UserName           string     `gorm:"TYPE:varchar(128);COLUMN:user_name;NOT NULL;INDEX:IX_USER;INDEX:IX_PATH_USER"`
+	Created            time.Time  `gorm:"COLUMN:created;NOT NULL"`
+	Modified           *time.Time `gorm:"COLUMN:modified"`
+	ChildCount         int        `gorm:"COLUMN:child_count;DEFAULT:0;NOT NULL"`
+	Highlight          int        `gorm:"COLUMN:highlight;DEFAULT:0;NOT NULL"`
+	Favicon            string     `gorm:"TYPE:varchar(128);COLUMN:favicon;NOT NULL"`
+	InvertFaviconColor int        `gorm:"COLUMN:invert_favicon_color;DEFAULT:0;NOT NULL"`
 }
 
 func (b Bookmark) String() string {

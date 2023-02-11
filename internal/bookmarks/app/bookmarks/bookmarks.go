@@ -45,14 +45,15 @@ func (s *Application) CreateBookmark(bm Bookmark, user security.User) (*Bookmark
 
 	if err := s.Store.InUnitOfWork(func(repo store.Repository) error {
 		item, err := repo.Create(store.Bookmark{
-			DisplayName: bm.DisplayName,
-			Path:        bm.Path,
-			Type:        t,
-			URL:         bm.URL,
-			UserName:    user.Username,
-			Favicon:     bm.Favicon,
-			SortOrder:   bm.SortOrder,
-			Highlight:   bm.Highlight,
+			DisplayName:        bm.DisplayName,
+			Path:               bm.Path,
+			Type:               t,
+			URL:                bm.URL,
+			UserName:           user.Username,
+			Favicon:            bm.Favicon,
+			SortOrder:          bm.SortOrder,
+			Highlight:          bm.Highlight,
+			InvertFaviconColor: bm.InvertFaviconColor,
 		})
 		if err != nil {
 			return err
@@ -320,17 +321,18 @@ func (s *Application) Update(bm Bookmark, user security.User) (*Bookmark, error)
 
 		// 4) update the bookmark
 		item, err = repo.Update(store.Bookmark{
-			ID:          bm.ID,
-			Created:     existing.Created,
-			DisplayName: bm.DisplayName,
-			Path:        bm.Path,
-			Type:        existing.Type, // it does not make any sense to change the type of a bookmark!
-			URL:         bm.URL,
-			SortOrder:   bm.SortOrder,
-			UserName:    user.Username,
-			ChildCount:  childCount,
-			Favicon:     bm.Favicon,
-			Highlight:   bm.Highlight,
+			ID:                 bm.ID,
+			Created:            existing.Created,
+			DisplayName:        bm.DisplayName,
+			Path:               bm.Path,
+			Type:               existing.Type, // it does not make any sense to change the type of a bookmark!
+			URL:                bm.URL,
+			SortOrder:          bm.SortOrder,
+			UserName:           user.Username,
+			ChildCount:         childCount,
+			Favicon:            bm.Favicon,
+			Highlight:          bm.Highlight,
+			InvertFaviconColor: bm.InvertFaviconColor,
 		})
 		if err != nil {
 			s.Logger.Error(fmt.Sprintf("could not update bookmark: %v", err))
@@ -364,17 +366,18 @@ func (s *Application) Update(bm Bookmark, user security.User) (*Bookmark, error)
 			for _, bm := range bookmarks {
 				updatePath := strings.ReplaceAll(bm.Path, oldPath, newPath)
 				if _, err := repo.Update(store.Bookmark{
-					ID:          bm.ID,
-					Created:     bm.Created,
-					DisplayName: bm.DisplayName,
-					Path:        updatePath,
-					SortOrder:   bm.SortOrder,
-					Type:        bm.Type,
-					URL:         bm.URL,
-					UserName:    user.Username,
-					ChildCount:  bm.ChildCount,
-					Highlight:   bm.Highlight,
-					Favicon:     bm.Favicon,
+					ID:                 bm.ID,
+					Created:            bm.Created,
+					DisplayName:        bm.DisplayName,
+					Path:               updatePath,
+					SortOrder:          bm.SortOrder,
+					Type:               bm.Type,
+					URL:                bm.URL,
+					UserName:           user.Username,
+					ChildCount:         bm.ChildCount,
+					Highlight:          bm.Highlight,
+					Favicon:            bm.Favicon,
+					InvertFaviconColor: bm.InvertFaviconColor,
 				}); err != nil {
 					s.Logger.Error(fmt.Sprintf("cannot update bookmark path: %v", err))
 					return err
@@ -447,7 +450,7 @@ var defaultFaviconModTime = time.Date(2022, 12, 31, 0, 0, 0, 0, time.UTC)
 
 const defaultFaviconName = "bookmark.svg"
 
-// GetFavicon returns returns the payload of to the found favicon or the default favicon
+// GetFavicon returns the payload of the found favicon or the default favicon
 func (s *Application) GetFavicon(id string, user security.User) (*FileInfo, error) {
 	if id == "" {
 		return nil, app.ErrValidation("missing id parameter")

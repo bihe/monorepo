@@ -101,12 +101,13 @@ func TestCreateBookmark(t *testing.T) {
 
 	userName := "username"
 	item := Bookmark{
-		DisplayName: "displayName",
-		Path:        "/",
-		SortOrder:   0,
-		Type:        Node,
-		URL:         "http://url",
-		UserName:    userName,
+		DisplayName:        "displayName",
+		Path:               "/",
+		SortOrder:          0,
+		Type:               Node,
+		URL:                "http://url",
+		UserName:           userName,
+		InvertFaviconColor: 1,
 	}
 	bm, err := repo.Create(item)
 	if err != nil {
@@ -116,6 +117,7 @@ func TestCreateBookmark(t *testing.T) {
 	assert.NotEmpty(t, bm.ID)
 	assert.Equal(t, "displayName", bm.DisplayName)
 	assert.Equal(t, "http://url", bm.URL)
+	assert.Equal(t, 1, bm.InvertFaviconColor)
 
 	// check item.Path empty error
 	item.Path = ""

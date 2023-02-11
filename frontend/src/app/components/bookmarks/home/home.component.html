@@ -91,7 +91,9 @@
               [lazyLoad]="customFavicon(item.id)"
               class="bookmark_favicon"
               width="32px" height="32px"
-              alt="favicon"/>
+              alt="favicon"
+              [class.invert] = "item.invertFaviconColor === 1"
+              />
             </span>
 
           </a>

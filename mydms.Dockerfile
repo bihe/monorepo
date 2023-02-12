@@ -33,9 +33,6 @@ FROM alpine:latest
 LABEL author="henrik@binggl.net"
 WORKDIR /opt/mydms
 RUN mkdir -p /opt/mydms/uploads && mkdir -p /opt/mydms/etc && mkdir -p /opt/mydms/logs && mkdir -p /opt/mydms/db
-COPY --from=BACKEND-BUILD /backend-build/mydms.api /opt/mydms
-COPY --from=BACKEND-BUILD /backend-build/internal/mydms/assets /opt/mydms/assets
-
 EXPOSE 3000
 
 # Do not run as root user
@@ -43,7 +40,14 @@ EXPOSE 3000
 RUN addgroup -g 1000 -S mydms && \
     adduser -u 1000 -S mydms -G mydms
 
-RUN chown -R mydms:mydms /opt/mydms
+COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/mydms.api /opt/mydms
+COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/internal/mydms/assets /opt/mydms/assets
+
+RUN chown mydms:mydms /opt/mydms/etc \
+    && chown mydms:mydms /opt/mydms/logs \
+    &&  chown mydms:mydms /opt/mydms/uploads \
+    &&  chown mydms:mydms /opt/mydms/db
+
 USER mydms
 
 CMD ["/opt/mydms/mydms.api","--basepath=/opt/mydms","--port=3000", "--hostname=0.0.0.0"]

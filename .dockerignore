@@ -1,12 +1,3 @@
-
-internal/mydms/logs
-
-internal/login/logs
-
-internal/bookmarks/_logs
-internal/bookmarks/postman
-internal/bookmarks/uploads
-
 _logs/
 .git/
 .github/
@@ -17,6 +8,8 @@ dist/
 testdata/
 
 frontend/node_modules
+frontend/.angular
+frontned/onefrontend-ui
 frontend/dist
 .build/
 .vscode/
@@ -25,3 +18,4 @@ db/
 doc/
 testdata/
 upload/
+_logs/

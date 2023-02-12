@@ -20,6 +20,7 @@ COPY ./internal/crypter  ./internal/crypter
 COPY ./pkg ./pkg
 COPY ./proto ./proto
 RUN GOOS=linux GOARCH=${ARCH} go build -ldflags="-s -w -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o crypter.api ./cmd/crypter/server/*.go
+
 ## --------------------------------------------------------------------------
 
 ## runtime
@@ -28,7 +29,6 @@ FROM alpine:latest
 LABEL author="henrik@binggl.net"
 WORKDIR /opt/crypter
 RUN mkdir -p /opt/crypter/etc && mkdir -p /opt/crypter/logs
-COPY --from=BACKEND-BUILD /backend-build/crypter.api /opt/crypter
 EXPOSE 3000
 
 # Do not run as root user
@@ -36,7 +36,9 @@ EXPOSE 3000
 RUN addgroup -g 1000 -S crypter && \
     adduser -u 1000 -S crypter -G crypter
 
-RUN chown -R crypter:crypter /opt/crypter
+COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/crypter.api /opt/crypter
+RUN chown -R crypter:crypter /opt/crypter/etc \
+    && chown -R crypter:crypter /opt/crypter/logs
 USER crypter
 
 CMD ["/opt/crypter/crypter.api","--basepath=/opt/crypter","--port=3000", "--hostname=0.0.0.0"]

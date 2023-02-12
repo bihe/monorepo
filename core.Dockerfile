@@ -33,7 +33,6 @@ FROM alpine:latest
 LABEL author="henrik@binggl.net"
 WORKDIR /opt/core
 RUN mkdir -p /opt/core/etc && mkdir -p /opt/core/logs && mkdir -p /opt/core/uploads && mkdir -p /opt/core/db
-COPY --from=BACKEND-BUILD /backend-build/core.api /opt/core
 EXPOSE 3000
 
 # Do not run as root user
@@ -41,7 +40,11 @@ EXPOSE 3000
 RUN addgroup -g 1000 -S coreapp && \
     adduser -u 1000 -S coreapp -G coreapp
 
-RUN chown -R coreapp:coreapp /opt/core
+COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/core.api /opt/core
+RUN chown coreapp:coreapp /opt/core/etc \
+    && chown coreapp:coreapp /opt/core/logs \
+    &&  chown coreapp:coreapp /opt/core/uploads \
+    &&  chown coreapp:coreapp /opt/core/db
 USER coreapp
 
 CMD ["/opt/core/core.api","--basepath=/opt/core","--port=3000", "--hostname=0.0.0.0"]

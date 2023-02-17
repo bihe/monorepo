@@ -1,8 +1,6 @@
-name: "Container: Build and publish"
+name: "Container: ALL // Build and publish"
 
-on:
-  push:
-    branches: ['main']
+on: workflow_dispatch
 
 env:
   REGISTRY: ghcr.io
@@ -44,7 +42,8 @@ jobs:
 
       - name: Get current date
         id: date
-        run: echo "::set-output name=date::$(date +'%Y%m%d')"
+        #run: echo "::set-output name=date::$(date +'%Y%m%d')"
+        run: echo "{date}={$(date +'%Y%m%d')}" >> $GITHUB_OUTPUT
 
       # ---------------------------------------------------------------------
 

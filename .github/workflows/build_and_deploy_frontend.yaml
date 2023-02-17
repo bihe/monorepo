@@ -1,0 +1,63 @@
+name: "Container: Frontend // Build and publish"
+
+on: workflow_dispatch
+
+env:
+  REGISTRY: ghcr.io
+  REPOSITORY: bihe/monorepo
+  GIT_COMMIT_SHA: ${{ github.sha }}
+  BUILD_ID: ${{ github.run_id }}
+  FRONTEND_MODE: build
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Ghcr login
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Provide the abbrev git-commit-hash
+        id: githash
+        run: |
+          export GIT_HASH="${GIT_COMMIT_SHA:0:7}"
+          echo "GIT_HASH=${GIT_HASH}" >> $GITHUB_ENV
+
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y%m%d')"
+
+      # ---------------------------------------------------------------------
+
+      - name: "Build :: frontend"
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: caddy.Dockerfile
+          build-args: |
+            buildtime_variable_version=${{ env.BUILD_ID }}
+            buildtime_variable_timestamp=${{steps.date.outputs.date}}
+            buildtime_variable_commit=${{ env.GIT_HASH }}
+            FRONTEND_MODE=${{ env.FRONTEND_MODE }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/frontend:latest
+            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/frontend:${{ env.GIT_HASH }}
+

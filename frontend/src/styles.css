@@ -132,7 +132,6 @@ button:focus {
 
 .action_version {
   align-self: end;
-  width: 300px;
   text-align: right;
   margin-right: 20px;
   line-height: var(--lh);

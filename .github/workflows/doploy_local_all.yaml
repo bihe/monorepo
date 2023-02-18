@@ -1,0 +1,17 @@
+name: "Deploy: ALL @ local"
+
+on: workflow_dispatch
+
+env:
+  REGISTRY: ghcr.io
+  REPOSITORY: bihe/monorepo
+
+jobs:
+  deploy-latest-frontend:
+    runs-on: self-hosted
+
+    steps:
+      - name: Deploy ALL Containers
+        run: |
+              sudo /var/www/docker/renew-all.sh
+        working-directory: /var/www/docker

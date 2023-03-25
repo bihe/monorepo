@@ -118,7 +118,6 @@ button:focus {
 }
 
 .application_header {
-  width: 100vw;
   height: var(--lh);
   display: flex;
   flex-direction: row;

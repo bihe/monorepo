@@ -42,8 +42,9 @@ jobs:
 
       - name: Get current date
         id: date
-        #run: echo "::set-output name=date::$(date +'%Y%m%d')"
-        run: echo "{date}={$(date +'%Y%m%d')}" >> $GITHUB_OUTPUT
+        run: |
+          export BUILD_DATE="$(date +'%Y%m%d')"
+          echo "BUILD_DATE=${BUILD_DATE}" >> $GITHUB_ENV
 
       # ---------------------------------------------------------------------
 
@@ -54,7 +55,7 @@ jobs:
           file: bookmarks.Dockerfile
           build-args: |
             buildtime_variable_version=${{ env.BUILD_ID }}
-            buildtime_variable_timestamp=${{steps.date.outputs.date}}
+            buildtime_variable_timestamp=${{ env.BUILD_DATE }}
             buildtime_variable_commit=${{ env.GIT_HASH }}
           push: true
           tags: |
@@ -70,7 +71,7 @@ jobs:
           file: core.Dockerfile
           build-args: |
             buildtime_variable_version=${{ env.BUILD_ID }}
-            buildtime_variable_timestamp=${{steps.date.outputs.date}}
+            buildtime_variable_timestamp=${{ env.BUILD_DATE }}
             buildtime_variable_commit=${{ env.GIT_HASH }}
           push: true
           tags: |
@@ -86,7 +87,7 @@ jobs:
           file: mydms.Dockerfile
           build-args: |
             buildtime_variable_version=${{ env.BUILD_ID }}
-            buildtime_variable_timestamp=${{steps.date.outputs.date}}
+            buildtime_variable_timestamp=${{ env.BUILD_DATE }}
             buildtime_variable_commit=${{ env.GIT_HASH }}
           push: true
           tags: |
@@ -102,7 +103,7 @@ jobs:
           file: crypter.Dockerfile
           build-args: |
             buildtime_variable_version=${{ env.BUILD_ID }}
-            buildtime_variable_timestamp=${{steps.date.outputs.date}}
+            buildtime_variable_timestamp=${{ env.BUILD_DATE }}
             buildtime_variable_commit=${{ env.GIT_HASH }}
           push: true
           tags: |
@@ -118,7 +119,7 @@ jobs:
           file: caddy.Dockerfile
           build-args: |
             buildtime_variable_version=${{ env.BUILD_ID }}
-            buildtime_variable_timestamp=${{steps.date.outputs.date}}
+            buildtime_variable_timestamp=${{ env.BUILD_DATE }}
             buildtime_variable_commit=${{ env.GIT_HASH }}
             FRONTEND_MODE=${{ env.FRONTEND_MODE }}
           push: true

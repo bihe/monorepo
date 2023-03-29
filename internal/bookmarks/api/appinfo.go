@@ -20,7 +20,7 @@ func (s AppInfoHandler) handleGetAppInfo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := ensureUser(r)
 		s.Logger.Debug("get application info", logging.LogV("username", user.DisplayName))
-		handler.RespondJSON(w, handler.Meta{
+		respondJSON(w, handler.Meta{
 			UserInfo: handler.UserInfo{
 				DisplayName: user.DisplayName,
 				UserID:      user.UserID,
@@ -52,7 +52,7 @@ func (s AppInfoHandler) handleWhoAmI() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := ensureUser(r)
 		s.Logger.Debug("get information about the user", logging.LogV("username", user.DisplayName))
-		handler.RespondJSON(w, WhoAmIResponse{
+		respondJSON(w, WhoAmIResponse{
 			DisplayName: user.DisplayName,
 			UserID:      user.UserID,
 			UserName:    user.Username,

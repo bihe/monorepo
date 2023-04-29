@@ -103,11 +103,12 @@ go-build:
 
 go-test:
 	@echo "  >  Testing the monorepo ..."
-	go test -v -race -count=1 ./...
+	# tparse: https://github.com/mfridman/tparse
+	go test -v -race -count=1 -json ./... | tparse -all
 
 go-coverage:
 	@echo "  >  Testing the monorepo (coverage) ..."
-	go test -race -coverprofile="coverage.txt" -covermode atomic -count=1 ./...
+	go test -race -coverprofile="coverage.txt" -covermode atomic -count=1 -json ./... | tparse -all
 
 
 ## Help:

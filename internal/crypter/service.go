@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	pdfApi "github.com/pdfcpu/pdfcpu/pkg/api"
-	pdf "github.com/pdfcpu/pdfcpu/pkg/pdfcpu"
+	pdfModel "github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
@@ -141,12 +141,12 @@ func validateEncryptionRequest(authToken, newPwd string, payload []byte) error {
 // encrypt pdf or change password of pdf
 func encryptPdfPayload(payload []byte, initPass, newPass string) ([]byte, error) {
 	var (
-		conf *pdf.Configuration
+		conf *pdfModel.Configuration
 		err  error
 	)
 
-	conf = pdf.NewRC4Configuration(initPass, initPass, 40)
-	conf.Cmd = pdf.CHANGEUPW
+	conf = pdfModel.NewRC4Configuration(initPass, initPass, 40)
+	conf.Cmd = pdfModel.CHANGEUPW
 	conf.UserPW = initPass
 	conf.UserPWNew = &newPass
 	conf.OwnerPWNew = &newPass
@@ -154,8 +154,8 @@ func encryptPdfPayload(payload []byte, initPass, newPass string) ([]byte, error)
 	// if no initial password is supplied the api does not change the
 	// password but sets a password via the ENCRYPT command
 	if initPass == "" && newPass != "" {
-		conf = pdf.NewRC4Configuration(newPass, newPass, 40)
-		conf.Cmd = pdf.ENCRYPT
+		conf = pdfModel.NewRC4Configuration(newPass, newPass, 40)
+		conf.Cmd = pdfModel.ENCRYPT
 		conf.UserPWNew = &newPass
 	}
 

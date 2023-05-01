@@ -57,12 +57,14 @@ dev-frontend: ## start the development angular-frontend
 
 compose-dev: ## start the microservices for development of frontend
 	@echo "  >  Starting docker containers for development..."
-	@echo "  >  Remember to set the env-var ARCH. Linux=amd64, MacM1=arm64"
+	@echo "  >  Remember to set the env-var **ARCH**. Linux=amd64, MacM1=arm64"
+	@echo "  >  Remember to set the hostname **dev.binggl.net** locally or via DNS"
 	docker compose -f compose-dev-frontend.yaml rm && docker compose -f compose-dev-frontend.yaml up --build
 
 compose-int: ## start the whole application for integration testing
 	@echo "  >  Starting docker containers for integration ..."
-	@echo "  >  Remember to set the env-var ARCH. Linux=amd64, MacM1=arm64"
+	@echo "  >  Remember to set the env-var **ARCH**. Linux=amd64, MacM1=arm64"
+	@echo "  >  Remember to set the hostname **dev.binggl.net** locally or via DNS"
 	docker compose -f compose-integration.yaml rm && docker compose -f compose-integration.yaml up --build
 
 integration: ## run the integration test with playwright. NOTE: the compose setup needs to be running
@@ -85,9 +87,12 @@ go-update:
 	go get -d -u -t ./...
 	go mod tidy -compat=1.17
 
-go-proto:
+go-protogen:
 	@echo "  >  Compiline protobuf files ..."
 	rm -f ./proto/*pb.go
+	## protoc
+	# Install protoc: https://protobuf.dev/downloads/
+	#
 	## Protobuf
 	# https://developers.google.com/protocol-buffers/docs/gotutorial
 	# go install google.golang.org/protobuf/cmd/protoc-gen-go@latest

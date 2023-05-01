@@ -22,7 +22,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version-file: $GITHUB_WORKSPACE/go.mod
+          go-version-file: "$GITHUB_WORKSPACE/go.mod"
       - run: go version
 
       - name: Check out code
@@ -44,7 +44,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version-file: $GITHUB_WORKSPACE/go.mod
+          go-version-file: "$GITHUB_WORKSPACE/go.mod"
       - run: go version
 
       - name: Check out code

@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -50,6 +51,7 @@ type dbRepository struct {
 	transient *gorm.DB
 	shared    *gorm.DB
 	logger    logging.Logger
+	sync.Mutex
 }
 
 // InUnitOfWork uses a transaction to execute the supplied function
@@ -167,14 +169,19 @@ func (r *dbRepository) GetAllPaths(username string) ([]string, error) {
 // modify data
 // --------------------------------------------------------------------------
 
-// TODO: https://github.com/go-gorm/gorm/issues/3709
-
 // Create is used to save a new bookmark entry
 func (r *dbRepository) Create(item Bookmark) (Bookmark, error) {
 	var (
 		err       error
 		hierarchy []string
 	)
+
+	defer func() {
+		// release any previously created locks
+		r.Unlock()
+	}()
+	// block concurrent requests
+	r.Lock()
 
 	if item.Path == "" {
 		return Bookmark{}, fmt.Errorf("path is empty")
@@ -236,6 +243,13 @@ func (r *dbRepository) Update(item Bookmark) (Bookmark, error) {
 		bm        Bookmark
 	)
 
+	defer func() {
+		// release any previously created locks
+		r.Unlock()
+	}()
+	// block concurrent requests
+	r.Lock()
+
 	if item.Path == "" {
 		return Bookmark{}, fmt.Errorf("path is empty")
 	}
@@ -294,6 +308,13 @@ func (r *dbRepository) Delete(item Bookmark) error {
 		err error
 	)
 
+	defer func() {
+		// release any previously created locks
+		r.Unlock()
+	}()
+	// block concurrent requests
+	r.Lock()
+
 	h := r.con().Where(&Bookmark{ID: item.ID, UserName: item.UserName}).First(&bm)
 	if h.Error != nil {
 		return fmt.Errorf("cannot get bookmark by id '%s': %v", item.ID, h.Error)
@@ -328,6 +349,13 @@ func (r *dbRepository) DeletePath(path, username string) error {
 	if path == "/" {
 		return fmt.Errorf("cannot delete the root path")
 	}
+
+	defer func() {
+		// release any previously created locks
+		r.Unlock()
+	}()
+	// block concurrent requests
+	r.Lock()
 
 	h := r.con().Where("user_name = ? AND path LIKE ?", username, path+"%").Delete(Bookmark{})
 	if h.Error != nil {

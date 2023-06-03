@@ -330,7 +330,7 @@ func (s *Application) Update(bm Bookmark, user security.User) (*Bookmark, error)
 			SortOrder:          bm.SortOrder,
 			UserName:           user.Username,
 			ChildCount:         childCount,
-			Favicon:            bm.Favicon,
+			Favicon:            existing.Favicon,
 			Highlight:          bm.Highlight,
 			InvertFaviconColor: bm.InvertFaviconColor,
 		})

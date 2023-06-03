@@ -1,7 +1,10 @@
 package bookmarks_test
 
 import (
+	"os"
+	"path"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
@@ -699,5 +702,56 @@ func Test_UpdateBookmark(t *testing.T) {
 	_, err = svc.Update(*f, user)
 	if err == nil {
 		t.Errorf("could not update bookmark, %v", err)
+	}
+}
+
+func Test_UpdateBookmark_CustomFavicon(t *testing.T) {
+	svc := app(t)
+
+	// /update/bookmark
+	url := "http://www.example.com"
+
+	bookmark := uuid.NewString()
+	bm, _ := svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		DisplayName: bookmark,
+		Path:        "/",
+		URL:         url,
+		Favicon:     "./bookmark.svg",
+	}, user)
+
+	// get the bookmark
+	b, _ := svc.GetBookmarkByID(bm.ID, user)
+	if b == nil {
+		t.Fatalf("could not get bookmark by id %s", bm.ID)
+	}
+	if b.Favicon != "./bookmark.svg" {
+		t.Errorf("the bookmark did not save the favicon '%s'", "./bookmark.svg")
+	}
+
+	// update the bookmark
+	b.DisplayName = bookmark + "_update"
+	b.CustomFavicon = "https://upload.wikimedia.org/wikipedia/commons/7/70/Example.png"
+	_, err := svc.Update(*b, user)
+	if err != nil {
+		t.Errorf("could not update bookmark, %v", err)
+	}
+
+	// wait until the goroutine did it's work for the custom favicon
+	time.Sleep(5 * time.Second)
+
+	b, _ = svc.GetBookmarkByID(bm.ID, user)
+	if b.DisplayName != bookmark+"_update" {
+		t.Errorf("the bookmark was not correctly updated, got %s", b.DisplayName)
+	}
+	meta, err := os.Stat(path.Join(svc.FaviconPath, b.Favicon))
+	if err != nil {
+		t.Errorf("could not open the custom favicon; %v", err)
+	}
+	if path.Ext(meta.Name()) != ".png" {
+		t.Errorf("the favicon should have a png extension")
+	}
+	if meta.Size() <= 2300 {
+		t.Errorf("the file should be around 2.3kB but got '%d'", meta.Size())
 	}
 }

@@ -23,7 +23,7 @@ var (
 	// Build provides information about the application build
 	Build = "localbuild"
 	// AppName specifies the application itself
-	AppName = "core"
+	AppName = "bookmarks"
 	// ApplicationNameKey identifies the application in structured logging
 	ApplicationNameKey = "appName"
 	// HostIDKey identifies the host in structured logging

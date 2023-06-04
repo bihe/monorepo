@@ -40,7 +40,7 @@ RUN tar -C /backend-build -xzf /backend-build/litestream.tar.gz
 FROM alpine:latest
 LABEL author="henrik@binggl.net"
 WORKDIR /opt/core
-RUN mkdir -p /opt/core/etc && mkdir -p /opt/core/logs && mkdir -p /opt/core/uploads && mkdir -p /opt/core/db
+RUN mkdir -p /opt/litestream && mkdir -p /opt/core/etc && mkdir -p /opt/core/logs && mkdir -p /opt/core/uploads && mkdir -p /opt/core/db
 EXPOSE 3000
 
 RUN apk add bash
@@ -51,12 +51,12 @@ RUN addgroup -g 1000 -S coreapp && \
     adduser -u 1000 -S coreapp -G coreapp
 
 COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/core.api /opt/core
-COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/litestream /opt/core
-COPY --chown=1000:1000 ./litestream/run_core.sh /opt/core
+COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/litestream /opt/litestream
+COPY --chown=1000:1000 ./litestream/run_litestream.sh /opt/core
 RUN chown coreapp:coreapp /opt/core/etc \
     && chown coreapp:coreapp /opt/core/logs \
     &&  chown coreapp:coreapp /opt/core/uploads \
     &&  chown coreapp:coreapp /opt/core/db
 USER coreapp
 
-CMD [ "/opt/core/run_core.sh" ]
+CMD [ "/opt/core/run_litestream.sh" ]

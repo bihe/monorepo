@@ -39,7 +39,7 @@ RUN tar -C /backend-build -xzf /backend-build/litestream.tar.gz
 FROM alpine:latest
 LABEL author="henrik@binggl.net"
 WORKDIR /opt/bookmarks
-RUN mkdir -p /opt/bookmarks/etc && mkdir -p /opt/bookmarks/logs && mkdir -p /opt/bookmarks/uploads && mkdir -p /opt/bookmarks/db
+RUN mkdir -p /opt/litestream && mkdir -p /opt/bookmarks/etc && mkdir -p /opt/bookmarks/logs && mkdir -p /opt/bookmarks/uploads && mkdir -p /opt/bookmarks/db
 EXPOSE 3000
 
 RUN apk add bash
@@ -49,12 +49,12 @@ RUN apk add bash
 RUN addgroup -g 1000 -S bookmarks && \
     adduser -u 1000 -S bookmarks -G bookmarks
 COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/bookmarks.api /opt/bookmarks
-COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/litestream /opt/bookmarks
-COPY --chown=1000:1000 ./litestream/run_bookmarks.sh /opt/bookmarks
+COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/litestream /opt/litestream
+COPY --chown=1000:1000 ./litestream/run_litestream.sh /opt/bookmarks
 RUN chown bookmarks:bookmarks /opt/bookmarks/etc \
     && chown bookmarks:bookmarks /opt/bookmarks/logs \
     && chown bookmarks:bookmarks /opt/bookmarks/uploads \
     && chown bookmarks:bookmarks /opt/bookmarks/db
 USER bookmarks
 
-CMD [ "/opt/bookmarks/run_bookmarks.sh" ]
+CMD [ "/opt/bookmarks/run_litestream.sh" ]

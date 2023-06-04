@@ -42,7 +42,7 @@ RUN tar -C /backend-build -xzf /backend-build/litestream.tar.gz
 FROM alpine:latest
 LABEL author="henrik@binggl.net"
 WORKDIR /opt/mydms
-RUN mkdir -p /opt/mydms/uploads && mkdir -p /opt/mydms/etc && mkdir -p /opt/mydms/logs && mkdir -p /opt/mydms/db
+RUN mkdir -p /opt/litestream && mkdir -p /opt/mydms/uploads && mkdir -p /opt/mydms/etc && mkdir -p /opt/mydms/logs && mkdir -p /opt/mydms/db
 EXPOSE 3000
 
 RUN apk add bash
@@ -54,8 +54,8 @@ RUN addgroup -g 1000 -S mydms && \
 
 COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/mydms.api /opt/mydms
 COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/internal/mydms/assets /opt/mydms/assets
-COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/litestream /opt/mydms
-COPY --chown=1000:1000 ./litestream/run_mydms.sh /opt/mydms
+COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/litestream /opt/litestream
+COPY --chown=1000:1000 ./litestream/run_litestream.sh /opt/mydms
 RUN chown mydms:mydms /opt/mydms/etc \
     && chown mydms:mydms /opt/mydms/logs \
     &&  chown mydms:mydms /opt/mydms/uploads \
@@ -63,4 +63,4 @@ RUN chown mydms:mydms /opt/mydms/etc \
 
 USER mydms
 
-CMD [ "/opt/mydms/run_mydms.sh" ]
+CMD [ "/opt/mydms/run_litestream.sh" ]

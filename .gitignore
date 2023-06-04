@@ -30,3 +30,5 @@ caddy/Caddyfile.prod
 proddb/
 
 .DS_Store
+litestream/litestream-integration.yml
+litestream/litestream.yml

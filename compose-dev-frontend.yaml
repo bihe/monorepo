@@ -44,11 +44,14 @@ services:
             args:
                 buildtime_variable_arch: $ARCH
         image: core
+        ports:
+            - "3001:3000"
         volumes:
             - ./internal/core:/opt/core/etc
             - ./_logs:/opt/core/logs
             - ./upload:/opt/core/uploads
-            - ./testdata/sqlite/:/opt/core/db
+            - ./testdata/sqlite/dev:/opt/core/db
+            - ./litestream/litestream.yml:/etc/litestream.yml
         restart:
             always
         environment:
@@ -64,7 +67,11 @@ services:
             CO_UPLOAD.UPLOADPATH: /opt/core/uploads
             CO_UPLOAD.ENCGRPCCONN: crypter:3000
             CO_UPLOAD.MAXUPLOADSIZE: 5000000
-            CO_DATABASE.CONNECTIONSTRING: /opt/core/db/integration_core.db
+            CO_DATABASE.CONNECTIONSTRING: /opt/core/db/core.db
+            CONNECTIONSTRING: /opt/core/db/core.db
+            REPLICA_URL: $CORE_REPLICA_URL
+            LITESTREAM_ACCESS_KEY_ID: $LITESTREAM_ACCESS_KEY_ID
+            LITESTREAM_SECRET_ACCESS_KEY: $LITESTREAM_SECRET_ACCESS_KEY
 
     mydms-3002:
         build:
@@ -73,10 +80,13 @@ services:
             args:
                 buildtime_variable_arch: $ARCH
         image: mydms
+        ports:
+            - "3002:3000"
         volumes:
             - ./internal/mydms:/opt/mydms/etc
             - ./_logs:/opt/mydms/logs
-            - ./testdata/sqlite/:/opt/mydms/db
+            - ./testdata/sqlite/dev:/opt/mydms/db
+            - ./litestream/litestream.yml:/etc/litestream.yml
         restart:
             always
         environment:
@@ -91,7 +101,11 @@ services:
             MY_FILESTORE.KEY: $FILESTORE_KEY
             MY_FILESTORE.SECRET: $FILESTORE_SECRET
             MY_UPLOAD.ENDPOINTURL: http://core-3001:3000/api/v1
-            MY_DATABASE.CONNECTIONSTRING: /opt/mydms/db/integration_mydms.db
+            MY_DATABASE.CONNECTIONSTRING: /opt/mydms/db/mydms.db
+            CONNECTIONSTRING: /opt/mydms/db/mydms.db
+            REPLICA_URL: $MYDMS_REPLICA_URL
+            LITESTREAM_ACCESS_KEY_ID: $LITESTREAM_ACCESS_KEY_ID
+            LITESTREAM_SECRET_ACCESS_KEY: $LITESTREAM_SECRET_ACCESS_KEY
 
     bookmarks-3003:
         build:
@@ -100,10 +114,13 @@ services:
             args:
                 buildtime_variable_arch: $ARCH
         image: bookmarks
+        ports:
+            - "3003:3000"
         volumes:
             - ./internal/bookmarks:/opt/bookmarks/etc
             - ./_logs:/opt/bookmarks/logs
-            - ./testdata/sqlite/:/opt/bookmarks/db
+            - ./testdata/sqlite/dev:/opt/bookmarks/db
+            - ./litestream/litestream.yml:/etc/litestream.yml
         restart:
             always
         environment:
@@ -112,7 +129,11 @@ services:
             BM_BASECONFIG.SECURITY.JWTSECRET: $JWTSECRET
             BM_BASECONFIG.LOGGING.FILEPATH: /opt/bookmarks/logs/bookmarks-api.log
             BM_BASECONFIG.LOGGING.GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
-            BM_DATABASE.CONNECTIONSTRING: /opt/bookmarks/db/integration_bookmarks.db
+            BM_DATABASE.CONNECTIONSTRING: /opt/bookmarks/db/bookmarks.db
+            CONNECTIONSTRING: /opt/bookmarks/db/bookmarks.db
+            REPLICA_URL: $BOOKMARKS_REPLICA_URL
+            LITESTREAM_ACCESS_KEY_ID: $LITESTREAM_ACCESS_KEY_ID
+            LITESTREAM_SECRET_ACCESS_KEY: $LITESTREAM_SECRET_ACCESS_KEY
 
     ## the frontend-dev is a simple docker-image which just executes the angular stuff
     ## the local development folder is mounted into the image, giving it access to the necessary files

@@ -1,2 +1,4 @@
 dev_*.db
 litestream_use.txt
+dev/
+integration/

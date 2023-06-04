@@ -69,7 +69,7 @@ func Graceful(s *http.Server, timeout time.Duration, logger logging.Logger) erro
 	if err := s.Shutdown(ctx); err != nil {
 		return err
 	}
-	logger.Info(fmt.Sprintf("Server stopped"))
+	logger.Info("Server stopped")
 	return nil
 }
 

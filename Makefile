@@ -16,6 +16,8 @@ RESET  := $(shell tput -Txterm sgr0)
 
 ## set the default architecture should work for most Linux systems
 ARCH := amd64
+## we use litestream to sync databases, specify the version to use
+LITESTREAM_V := v0.3.9
 
 UNAME_M := $(shell uname -m)
 ifeq ($(UNAME_M), x86_64)
@@ -24,6 +26,7 @@ endif
 ifeq ($(UNAME_M), arm64)
 	ARCH = arm64
 endif
+
 
 .PHONY: all clean mod-update proto build test coverage dev-frontend compose-dev compose-int integration
 
@@ -57,15 +60,15 @@ dev-frontend: ## start the development angular-frontend
 
 compose-dev: ## start the microservices for development of frontend
 	@echo "  >  Starting docker containers for development..."
-	@echo "  >  Remember to set the env-var **ARCH**. Linux=amd64, MacM1=arm64"
 	@echo "  >  Remember to set the hostname **dev.binggl.net** locally or via DNS"
-	docker compose -f compose-dev-frontend.yaml rm && docker compose -f compose-dev-frontend.yaml up --build
+	@echo "  >> use arch: 		[${ARCH}]"
+	@echo "  >> use litestream:	[${LITESTREAM_V}/litestream-${LITESTREAM_V}-linux-${ARCH}-static.tar.gz]"
+	ARCH=${ARCH} LSV="${LITESTREAM_V}/litestream-${LITESTREAM_V}-linux-${ARCH}-static.tar.gz" docker compose -f compose-dev-frontend.yaml rm && ARCH=${ARCH} LSV="${LITESTREAM_V}/litestream-${LITESTREAM_V}-linux-${ARCH}-static.tar.gz" docker compose -f compose-dev-frontend.yaml up --build
 
 compose-int: ## start the whole application for integration testing
 	@echo "  >  Starting docker containers for integration ..."
-	@echo "  >  Remember to set the env-var **ARCH**. Linux=amd64, MacM1=arm64"
 	@echo "  >  Remember to set the hostname **dev.binggl.net** locally or via DNS"
-	docker compose -f compose-integration.yaml rm && docker compose -f compose-integration.yaml up --build
+	ARCH=${ARCH} LSV="${LITESTREAM_V}/litestream-${LITESTREAM_V}-linux-${ARCH}-static.tar.gz" docker compose -f compose-integration.yaml rm && ARCH=${ARCH} LSV="${LITESTREAM_V}/litestream-${LITESTREAM_V}-linux-${ARCH}-static.tar.gz" docker compose -f compose-integration.yaml up --build
 
 integration: ## run the integration test with playwright. NOTE: the compose setup needs to be running
 	@echo "  >  Starting integration tests ..."

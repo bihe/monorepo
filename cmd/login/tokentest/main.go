@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"golang.binggl.net/monorepo/pkg/security"
+	"golang.binggl.net/monorepo/pkg/server"
 )
 
 // the only purpose of this server is to write a cookie with the JWT token-payload
@@ -29,6 +30,8 @@ func main() {
 		http.SetCookie(w, &cookie)
 		http.Redirect(w, r, getEnvOrDefault("REDIRECT_URL", "http://localhost:3000/redirect"), http.StatusFound)
 	})
+
+	server.PrintServerBanner("tokentest", "1.0.0", "local", "localhost", "localhost:3000")
 	http.ListenAndServe(":"+getEnvOrDefault("PORT", "3000"), r)
 }
 

@@ -1,0 +1,12 @@
+dbs:
+  - path: /opt/core/db/core.db
+    replicas:
+      - url: s3://<bucket-name>/core.db
+
+  - path: /opt/bookmarks/db/bookmarks.db
+    replicas:
+      - url: s3://<bucket-name>/bookmarks.db
+
+  - path: /opt/mydms/db/mydms.db
+    replicas:
+      - url: s3://<bucket-name>/mydms.db

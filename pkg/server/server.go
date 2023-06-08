@@ -69,7 +69,7 @@ func Graceful(s *http.Server, timeout time.Duration, logger logging.Logger) erro
 	if err := s.Shutdown(ctx); err != nil {
 		return err
 	}
-	logger.Info(fmt.Sprintf("Server stopped"))
+	logger.Info("Server stopped")
 	return nil
 }
 
@@ -94,7 +94,7 @@ func ReadConfig(envPrefix string, getCfg func() interface{}) (hostname string, p
 	viper.AddConfigPath(path.Join(basePath, "./_etc/")) // path to look for the config file in
 	viper.AddConfigPath(path.Join(basePath, "./etc/"))  // path to look for the config file in
 	viper.AddConfigPath(path.Join(basePath, "."))       // optionally look for config in the working directory
-	viper.SetEnvPrefix(envPrefix)                       // use this prefix for environment variabls to overwrite
+	viper.SetEnvPrefix(envPrefix)                       // use this prefix for environment variables to overwrite
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
@@ -102,7 +102,7 @@ func ReadConfig(envPrefix string, getCfg func() interface{}) (hostname string, p
 	}
 	c := getCfg()
 	if err := viper.Unmarshal(c); err != nil {
-		panic(fmt.Sprintf("Could not unmarshall server configuration values: %v", err))
+		panic(fmt.Sprintf("Could not unmarshal server configuration values: %v", err))
 	}
 	conf = c
 	return

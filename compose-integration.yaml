@@ -75,7 +75,7 @@ services:
             BASEPATH: /opt/core
             BINARYNAME: core.api
             PORT: 3000
-            HOSTNAME: 0.0.0.0
+            HOST: 0.0.0.0
 
     mydms-3002:
         build:
@@ -111,7 +111,7 @@ services:
             BASEPATH: /opt/mydms
             BINARYNAME: mydms.api
             PORT: 3000
-            HOSTNAME: 0.0.0.0
+            HOST: 0.0.0.0
 
     bookmarks-3003:
         build:
@@ -123,7 +123,7 @@ services:
         volumes:
             - ./internal/bookmarks:/opt/bookmarks/etc
             - ./_logs:/opt/bookmarks/logs
-            - ./testdata/sqlite/dev:/opt/mydms/db
+            - ./testdata/sqlite/integration:/opt/bookmarks/db
             - ./litestream/litestream-integration.yml:/etc/litestream.yml
         restart:
             always
@@ -141,7 +141,7 @@ services:
             BASEPATH: /opt/bookmarks
             BINARYNAME: bookmarks.api
             PORT: 3000
-            HOSTNAME: 0.0.0.0
+            HOST: 0.0.0.0
 
     caddy-integration-frontend-443:
         build:

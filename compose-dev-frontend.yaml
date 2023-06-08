@@ -75,7 +75,7 @@ services:
             BASEPATH: /opt/core
             BINARYNAME: core.api
             PORT: 3000
-            HOSTNAME: 0.0.0.0
+            HOST: 0.0.0.0
 
     mydms-3002:
         build:
@@ -113,7 +113,7 @@ services:
             BASEPATH: /opt/mydms
             BINARYNAME: mydms.api
             PORT: 3000
-            HOSTNAME: 0.0.0.0
+            HOST: 0.0.0.0
 
     bookmarks-3003:
         build:
@@ -145,7 +145,7 @@ services:
             BASEPATH: /opt/bookmarks
             BINARYNAME: bookmarks.api
             PORT: 3000
-            HOSTNAME: 0.0.0.0
+            HOST: 0.0.0.0
 
     ## the frontend-dev is a simple docker-image which just executes the angular stuff
     ## the local development folder is mounted into the image, giving it access to the necessary files

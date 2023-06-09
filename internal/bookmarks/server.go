@@ -95,7 +95,7 @@ const journalMode = "_journal_mode"
 const journalModeValue = "WAL"
 
 // setupRepository enables the SQLITE repository for bookmark storage
-func setupRepository(config *conf.AppConfig, logger logging.Logger) store.Repository {
+func setupRepository(config *conf.AppConfig, logger logging.Logger) store.BookmarkRepository {
 	// Documentation for DNS based SQLITE PRAGMAS: https://github.com/mattn/go-sqlite3
 	// add the WAL mode for SQLITE
 	dbConnStr := config.Database.ConnectionString
@@ -120,5 +120,5 @@ func setupRepository(config *conf.AppConfig, logger logging.Logger) store.Reposi
 	// found here: https://stackoverflow.com/questions/35804884/sqlite-concurrent-writing-performance
 	db.SetMaxOpenConns(1)
 
-	return store.Create(con, logger)
+	return store.CreateBookmarkRepo(con, logger)
 }

@@ -15,9 +15,9 @@ import (
 	"golang.binggl.net/monorepo/pkg/logging"
 )
 
-// Repository defines methods to interact with a store
-type Repository interface {
-	InUnitOfWork(fn func(repo Repository) error) error
+// BookmarkRepository defines methods to interact with a store
+type BookmarkRepository interface {
+	InUnitOfWork(fn func(repo BookmarkRepository) error) error
 	Create(item Bookmark) (Bookmark, error)
 	Update(item Bookmark) (Bookmark, error)
 	Delete(item Bookmark) error
@@ -34,9 +34,9 @@ type Repository interface {
 	GetFolderByPath(path, username string) (Bookmark, error)
 }
 
-// Create a new repository
-func Create(db *gorm.DB, logger logging.Logger) Repository {
-	return &dbRepository{
+// CreateBookmarkRepo a new repository
+func CreateBookmarkRepo(db *gorm.DB, logger logging.Logger) BookmarkRepository {
+	return &dbBookmarkRepository{
 		transient: db,
 		shared:    nil,
 		logger:    logger,
@@ -47,7 +47,7 @@ func Create(db *gorm.DB, logger logging.Logger) Repository {
 // Implementation
 // --------------------------------------------------------------------------
 
-type dbRepository struct {
+type dbBookmarkRepository struct {
 	transient *gorm.DB
 	shared    *gorm.DB
 	logger    logging.Logger
@@ -55,13 +55,13 @@ type dbRepository struct {
 }
 
 // InUnitOfWork uses a transaction to execute the supplied function
-func (r *dbRepository) InUnitOfWork(fn func(repo Repository) error) error {
+func (r *dbBookmarkRepository) InUnitOfWork(fn func(repo BookmarkRepository) error) error {
 	return r.con().Transaction(func(tx *gorm.DB) error {
 		// be sure the stop recursion here
 		if r.shared != nil {
 			return fmt.Errorf("a shared connection/transaction is already available, will not start a new one")
 		}
-		return fn(&dbRepository{
+		return fn(&dbBookmarkRepository{
 			transient: r.transient,
 			shared:    tx, // the transaction is used as the shared connection
 			logger:    r.logger,
@@ -73,14 +73,14 @@ func (r *dbRepository) InUnitOfWork(fn func(repo Repository) error) error {
 // --------------------------------------------------------------------------
 
 // GetAllBookmarks retrieves all available bookmarks for the given user
-func (r *dbRepository) GetAllBookmarks(username string) ([]Bookmark, error) {
+func (r *dbBookmarkRepository) GetAllBookmarks(username string) ([]Bookmark, error) {
 	var bookmarks []Bookmark
 	h := r.con().Order("sort_order").Order("display_name").Where(&Bookmark{UserName: username}).Find(&bookmarks)
 	return bookmarks, h.Error
 }
 
 // GetBookmarksByPath return the bookmark elements which have the given path
-func (r *dbRepository) GetBookmarksByPath(path, username string) ([]Bookmark, error) {
+func (r *dbBookmarkRepository) GetBookmarksByPath(path, username string) ([]Bookmark, error) {
 	var bookmarks []Bookmark
 	h := r.con().Order("sort_order").Order("display_name").Where(&Bookmark{
 		UserName: username,
@@ -90,7 +90,7 @@ func (r *dbRepository) GetBookmarksByPath(path, username string) ([]Bookmark, er
 }
 
 // GetBookmarksByPathStart return the bookmark elements which path starts with
-func (r *dbRepository) GetBookmarksByPathStart(path, username string) ([]Bookmark, error) {
+func (r *dbBookmarkRepository) GetBookmarksByPathStart(path, username string) ([]Bookmark, error) {
 	var bookmarks []Bookmark
 	h := r.con().
 		Order("type desc").
@@ -101,7 +101,7 @@ func (r *dbRepository) GetBookmarksByPathStart(path, username string) ([]Bookmar
 }
 
 // GetBookmarksByName searches for bookmarks by the given name
-func (r *dbRepository) GetBookmarksByName(name, username string) ([]Bookmark, error) {
+func (r *dbBookmarkRepository) GetBookmarksByName(name, username string) ([]Bookmark, error) {
 	var bookmarks []Bookmark
 	h := r.con().Order("sort_order").Order("display_name").
 		Where("user_name = ? AND lower(display_name) LIKE ?", username, "%"+strings.ToLower(name)+"%").Find(&bookmarks)
@@ -109,14 +109,14 @@ func (r *dbRepository) GetBookmarksByName(name, username string) ([]Bookmark, er
 }
 
 // GetBookmarkByID returns the bookmark specified by the given id - for the user
-func (r *dbRepository) GetBookmarkByID(id, username string) (Bookmark, error) {
+func (r *dbBookmarkRepository) GetBookmarkByID(id, username string) (Bookmark, error) {
 	var bookmark Bookmark
 	h := r.con().Where(&Bookmark{ID: id, UserName: username}).First(&bookmark)
 	return bookmark, h.Error
 }
 
 // GetFolderByPath returns the bookmark folder elements specified by path
-func (r *dbRepository) GetFolderByPath(path, username string) (Bookmark, error) {
+func (r *dbBookmarkRepository) GetFolderByPath(path, username string) (Bookmark, error) {
 	var bookmark Bookmark
 
 	// ROOT path is virtual
@@ -140,7 +140,7 @@ func (r *dbRepository) GetFolderByPath(path, username string) (Bookmark, error) 
 }
 
 // GetPathChildCount returns the number of child-elements for a given path
-func (r *dbRepository) GetPathChildCount(path, username string) ([]NodeCount, error) {
+func (r *dbBookmarkRepository) GetPathChildCount(path, username string) ([]NodeCount, error) {
 	if path == "" {
 		return nil, fmt.Errorf("no path supplied")
 	}
@@ -162,7 +162,7 @@ func (r *dbRepository) GetPathChildCount(path, username string) ([]NodeCount, er
 }
 
 // GetAllPaths returns all available paths for the given username
-func (r *dbRepository) GetAllPaths(username string) ([]string, error) {
+func (r *dbBookmarkRepository) GetAllPaths(username string) ([]string, error) {
 	return r.availablePaths(username)
 }
 
@@ -170,7 +170,7 @@ func (r *dbRepository) GetAllPaths(username string) ([]string, error) {
 // --------------------------------------------------------------------------
 
 // Create is used to save a new bookmark entry
-func (r *dbRepository) Create(item Bookmark) (Bookmark, error) {
+func (r *dbBookmarkRepository) Create(item Bookmark) (Bookmark, error) {
 	var (
 		err       error
 		hierarchy []string
@@ -236,7 +236,7 @@ func (r *dbRepository) Create(item Bookmark) (Bookmark, error) {
 }
 
 // Update changes an existing bookmark item
-func (r *dbRepository) Update(item Bookmark) (Bookmark, error) {
+func (r *dbBookmarkRepository) Update(item Bookmark) (Bookmark, error) {
 	var (
 		err       error
 		hierarchy []string
@@ -302,7 +302,7 @@ func (r *dbRepository) Update(item Bookmark) (Bookmark, error) {
 }
 
 // Delete removes the bookmark identified by id
-func (r *dbRepository) Delete(item Bookmark) error {
+func (r *dbBookmarkRepository) Delete(item Bookmark) error {
 	var (
 		bm  Bookmark
 		err error
@@ -341,7 +341,7 @@ func (r *dbRepository) Delete(item Bookmark) error {
 }
 
 // DeletePath removes all bookmarks having the same path
-func (r *dbRepository) DeletePath(path, username string) error {
+func (r *dbBookmarkRepository) DeletePath(path, username string) error {
 
 	if path == "" {
 		return fmt.Errorf("path is empty")
@@ -402,7 +402,7 @@ func (r *dbRepository) DeletePath(path, username string) error {
 // internal logic / helpers
 // --------------------------------------------------------------------------
 
-func (r *dbRepository) con() *gorm.DB {
+func (r *dbBookmarkRepository) con() *gorm.DB {
 	if r.shared != nil {
 		return r.shared
 	}
@@ -412,7 +412,7 @@ func (r *dbRepository) con() *gorm.DB {
 	return r.transient
 }
 
-func (r *dbRepository) updateChildCount(folder *Bookmark, count int) error {
+func (r *dbBookmarkRepository) updateChildCount(folder *Bookmark, count int) error {
 	if h := r.con().Model(folder).Updates(
 		map[string]interface{}{"child_count": count, "modified": time.Now().UTC()}); h.Error != nil {
 		return fmt.Errorf("cannot update item '%+v': %v", *folder, h.Error)
@@ -436,7 +436,7 @@ SELECT a.path || '/' || a.display_name FROM (
 ) a
 GROUP BY a.path || '/' || a.display_name`
 
-func (r *dbRepository) availablePaths(username string) (paths []string, err error) {
+func (r *dbBookmarkRepository) availablePaths(username string) (paths []string, err error) {
 	var (
 		rows *sql.Rows
 	)
@@ -462,7 +462,7 @@ func (r *dbRepository) availablePaths(username string) (paths []string, err erro
 	return paths, nil
 }
 
-func (r *dbRepository) calcChildCount(path, username string, fn func(i int) int) error {
+func (r *dbBookmarkRepository) calcChildCount(path, username string, fn func(i int) int) error {
 	// the supplied path is of the form
 	// /A/B/C => get the entry C (which is a folder) and inc/dec the child-count
 	parentPath, parentName, ok := pathAndFolder(path)

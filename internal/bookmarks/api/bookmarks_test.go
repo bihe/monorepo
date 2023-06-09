@@ -42,7 +42,7 @@ func bookmarkHandlerMock(fail bool) http.Handler {
 }
 
 // the bookmarkHandler uses the supplied repository
-func bookmarkHandler(repo store.Repository) http.Handler {
+func bookmarkHandler(repo store.BookmarkRepository) http.Handler {
 	return handlerWith(&handlerOps{
 		version: "1.0",
 		build:   "today",
@@ -391,7 +391,7 @@ func Test_BookmarkAllPaths(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 }
 
-func repository(t *testing.T) (store.Repository, *sql.DB) {
+func repository(t *testing.T) (store.BookmarkRepository, *sql.DB) {
 	var (
 		DB  *gorm.DB
 		err error
@@ -406,11 +406,11 @@ func repository(t *testing.T) (store.Repository, *sql.DB) {
 		t.Fatalf("cannot access database handle: %v", err)
 	}
 	logger := logging.NewNop()
-	return store.Create(DB, logger), db
+	return store.CreateBookmarkRepo(DB, logger), db
 }
 
 // we need InUnitOfWork to fail the mockRepository
-func (r *MockRepository) InUnitOfWork(fn func(repo store.Repository) error) error {
+func (r *MockRepository) InUnitOfWork(fn func(repo store.BookmarkRepository) error) error {
 	if r.fail {
 		return errRaised
 	}
@@ -1315,13 +1315,13 @@ func Test_MoveBookmarks(t *testing.T) {
 // tests can use the mock to implement their desired behavior
 type mockRepository struct{}
 
-var _ store.Repository = (*mockRepository)(nil)
+var _ store.BookmarkRepository = (*mockRepository)(nil)
 
 func (m *mockRepository) CheckStoreConnectivity(timeOut uint) (err error) {
 	return nil
 }
 
-func (m *mockRepository) InUnitOfWork(fn func(repo store.Repository) error) error {
+func (m *mockRepository) InUnitOfWork(fn func(repo store.BookmarkRepository) error) error {
 	return nil
 }
 

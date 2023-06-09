@@ -31,7 +31,7 @@ func app(t *testing.T) bookmarks.Application {
 	}
 }
 
-func repository(t *testing.T) store.Repository {
+func repository(t *testing.T) store.BookmarkRepository {
 	var (
 		DB  *gorm.DB
 		err error
@@ -42,7 +42,7 @@ func repository(t *testing.T) store.Repository {
 	// Migrate the schema
 	DB.AutoMigrate(&store.Bookmark{})
 	logger := logging.NewNop()
-	return store.Create(DB, logger)
+	return store.CreateBookmarkRepo(DB, logger)
 }
 
 func Test_GetBookmark_NotFound(t *testing.T) {

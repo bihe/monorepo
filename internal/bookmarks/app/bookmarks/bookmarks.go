@@ -22,7 +22,7 @@ type Application struct {
 	// Logger instance to use for structured logging
 	Logger logging.Logger
 	// Store defines a repository for persistance
-	Store store.Repository
+	Store store.BookmarkRepository
 	// FaviconPath defines a path on disk to store a favicon
 	FaviconPath string
 }
@@ -43,7 +43,7 @@ func (s *Application) CreateBookmark(bm Bookmark, user security.User) (*Bookmark
 		t = store.Folder
 	}
 
-	if err := s.Store.InUnitOfWork(func(repo store.Repository) error {
+	if err := s.Store.InUnitOfWork(func(repo store.BookmarkRepository) error {
 		item, err := repo.Create(store.Bookmark{
 			DisplayName:        bm.DisplayName,
 			Path:               bm.Path,
@@ -168,7 +168,7 @@ func (s *Application) FetchAndForward(id string, user security.User) (string, er
 
 	s.Logger.Info(fmt.Sprintf("try to fetch bookmark with ID '%s'", id))
 	redirectURL := ""
-	if err := s.Store.InUnitOfWork(func(repo store.Repository) error {
+	if err := s.Store.InUnitOfWork(func(repo store.BookmarkRepository) error {
 		existing, err := repo.GetBookmarkByID(id, user.Username)
 		if err != nil {
 			s.Logger.Error(fmt.Sprintf("could not find bookmark by id '%s': %v", id, err))
@@ -209,7 +209,7 @@ func (s *Application) Delete(id string, user security.User) error {
 	}
 
 	s.Logger.Info(fmt.Sprintf("will try to delete bookmark with ID '%s'", id))
-	if err := s.Store.InUnitOfWork(func(repo store.Repository) error {
+	if err := s.Store.InUnitOfWork(func(repo store.BookmarkRepository) error {
 		// 1) fetch the existing bookmark by id
 		existing, err := repo.GetBookmarkByID(id, user.Username)
 		if err != nil {
@@ -244,7 +244,7 @@ func (s *Application) UpdateSortOrder(sort BookmarksSortOrder, user security.Use
 	}
 
 	var updates int
-	if err := s.Store.InUnitOfWork(func(repo store.Repository) error {
+	if err := s.Store.InUnitOfWork(func(repo store.BookmarkRepository) error {
 		for i, item := range sort.IDs {
 			bm, err := repo.GetBookmarkByID(item, user.Username)
 			if err != nil {
@@ -281,7 +281,7 @@ func (s *Application) Update(bm Bookmark, user security.User) (*Bookmark, error)
 	}
 
 	s.Logger.Info(fmt.Sprintf("will try to update existing bookmark entry: '%s (%s)'", bm.DisplayName, bm.ID))
-	if err := s.Store.InUnitOfWork(func(repo store.Repository) error {
+	if err := s.Store.InUnitOfWork(func(repo store.BookmarkRepository) error {
 		// 1) fetch the existing bookmark by id
 		existing, err := repo.GetBookmarkByID(bm.ID, user.Username)
 		if err != nil {
@@ -409,7 +409,7 @@ func (s *Application) Update(bm Bookmark, user security.User) (*Bookmark, error)
 	return entityToModel(item), nil
 }
 
-func (s *Application) updateChildCountOfPath(path, username string, repo store.Repository) error {
+func (s *Application) updateChildCountOfPath(path, username string, repo store.BookmarkRepository) error {
 	if path == "/" {
 		s.Logger.Info("skip the ROOT path '/'")
 		return nil
@@ -535,7 +535,7 @@ func (s *Application) FetchFaviconURL(url string, bm store.Bookmark, user securi
 	}
 
 	// also update the favi for the bookmark
-	if err := s.Store.InUnitOfWork(func(repo store.Repository) error {
+	if err := s.Store.InUnitOfWork(func(repo store.BookmarkRepository) error {
 		bm.Favicon = filename
 		_, err := repo.Update(bm)
 		return err
@@ -580,7 +580,7 @@ func (s *Application) FetchFavicon(bm store.Bookmark, user security.User) {
 	}
 
 	// also update the favi for the bookmark
-	if err := s.Store.InUnitOfWork(func(repo store.Repository) error {
+	if err := s.Store.InUnitOfWork(func(repo store.BookmarkRepository) error {
 		bm.Favicon = filename
 		_, err := repo.Update(bm)
 		return err

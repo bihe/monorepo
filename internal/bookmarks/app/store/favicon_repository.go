@@ -44,6 +44,11 @@ func (r *dbFaviconRepository) InUnitOfWork(fn func(repo FaviconRepository) error
 		if r.shared != nil {
 			return fmt.Errorf("a shared connection/transaction is already available, will not start a new one")
 		}
+
+		// lock concurrent access for transactional tasks
+		r.Lock()
+		defer r.Unlock()
+
 		return fn(&dbFaviconRepository{
 			transient: r.transient,
 			shared:    tx, // the transaction is used as the shared connection

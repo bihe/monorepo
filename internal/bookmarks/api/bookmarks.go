@@ -123,7 +123,7 @@ func (b *BookmarksHandler) GetFavicon() http.HandlerFunc {
 		id := chi.URLParam(r, "id")
 
 		b.App.Logger.InfoRequest(fmt.Sprintf("try to fetch bookmark with ID '%s'", id), r)
-		favicon, err := b.App.GetFavicon(id, *user)
+		favicon, err := b.App.GetBookmarkFavicon(id, *user)
 		if err != nil {
 			encodeError(err, b.App.Logger, w, r)
 			return
@@ -177,7 +177,7 @@ func (b *BookmarksHandler) Update() http.HandlerFunc {
 
 		b.App.Logger.InfoRequest(fmt.Sprintf("will try to update existing bookmark entry: '%s'", payload), r)
 
-		bm, err := b.App.Update(*payload.Bookmark, *user)
+		bm, err := b.App.UpdateBookmark(*payload.Bookmark, *user)
 		if err != nil {
 			encodeError(err, b.App.Logger, w, r)
 			return

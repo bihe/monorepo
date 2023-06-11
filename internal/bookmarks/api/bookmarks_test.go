@@ -14,6 +14,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/internal/bookmarks/api"
+	"golang.binggl.net/monorepo/internal/bookmarks/app"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
 	"golang.binggl.net/monorepo/pkg/logging"
@@ -34,9 +35,10 @@ func bookmarkHandlerMock(fail bool) http.Handler {
 		version: "1.0",
 		build:   "today",
 		app: &bookmarks.Application{
-			Logger:      logger,
-			Store:       &MockRepository{fail: fail},
-			FaviconPath: "",
+			Logger:        logger,
+			BookmarkStore: &MockBookmarkRepository{fail: fail},
+			FavStore:      &MockFaviconRepository{fail: fail},
+			FaviconPath:   "",
 		},
 	})
 }
@@ -47,9 +49,9 @@ func bookmarkHandler(repo store.BookmarkRepository) http.Handler {
 		version: "1.0",
 		build:   "today",
 		app: &bookmarks.Application{
-			Logger:      logger,
-			Store:       repo,
-			FaviconPath: "",
+			Logger:        logger,
+			BookmarkStore: repo,
+			FaviconPath:   "",
 		},
 	})
 }
@@ -58,15 +60,23 @@ func addJwtAuth(req *http.Request) {
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", validToken))
 }
 
-// A MockRepository which provides functions for the specific test-case
-type MockRepository struct {
+// A MockBookmarkRepository which provides functions for the specific test-case
+type MockBookmarkRepository struct {
 	// the default implementation is available below
 	// the specific methods are implemented for the test-case
-	mockRepository
+	mockBookmarkRepository
 	fail bool
 }
 
-func (r *MockRepository) GetBookmarkByID(id, username string) (store.Bookmark, error) {
+// A MockFaviconRepository which provides functions for the specific test-case
+type MockFaviconRepository struct {
+	// the default implementation is available below
+	// the specific methods are implemented for the test-case
+	mockFaviconRepository
+	fail bool
+}
+
+func (r *MockBookmarkRepository) GetBookmarkByID(id, username string) (store.Bookmark, error) {
 	if r.fail {
 		return store.Bookmark{}, errRaised
 	}
@@ -130,7 +140,7 @@ func Test_GetBookmarkByID(t *testing.T) {
 	assert.Equal(t, http.StatusMethodNotAllowed, rec.Code)
 }
 
-func (r *MockRepository) GetBookmarksByPath(path, username string) ([]store.Bookmark, error) {
+func (r *MockBookmarkRepository) GetBookmarksByPath(path, username string) ([]store.Bookmark, error) {
 	if r.fail {
 		return make([]store.Bookmark, 0), errRaised
 	}
@@ -202,7 +212,7 @@ func Test_GetBookmarkByPath(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
 
-func (r *MockRepository) GetFolderByPath(path, username string) (store.Bookmark, error) {
+func (r *MockBookmarkRepository) GetFolderByPath(path, username string) (store.Bookmark, error) {
 	if r.fail {
 		return store.Bookmark{}, errRaised
 	}
@@ -282,7 +292,7 @@ func Test_GetBookmarkFolderBypath(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
 
-func (r *MockRepository) GetBookmarksByName(name, username string) ([]store.Bookmark, error) {
+func (r *MockBookmarkRepository) GetBookmarksByName(name, username string) ([]store.Bookmark, error) {
 	if r.fail {
 		return make([]store.Bookmark, 0), errRaised
 	}
@@ -354,7 +364,7 @@ func Test_GetBookmarkByName(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
 
-func (r *MockRepository) GetAllPaths(username string) ([]string, error) {
+func (r *MockBookmarkRepository) GetAllPaths(username string) ([]string, error) {
 	if r.fail {
 		return nil, errRaised
 	}
@@ -410,7 +420,7 @@ func repository(t *testing.T) (store.BookmarkRepository, *sql.DB) {
 }
 
 // we need InUnitOfWork to fail the mockRepository
-func (r *MockRepository) InUnitOfWork(fn func(repo store.BookmarkRepository) error) error {
+func (r *MockBookmarkRepository) InUnitOfWork(fn func(repo store.BookmarkRepository) error) error {
 	if r.fail {
 		return errRaised
 	}
@@ -1039,6 +1049,14 @@ func Test_UpdateSortOrder(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 }
 
+func (m *MockFaviconRepository) Get(fid string) (store.Favicon, error) {
+	return store.Favicon{
+		ID:           "test.png",
+		Payload:      app.DefaultFavicon,
+		LastModified: time.Now(),
+	}, nil
+}
+
 func Test_GetFavicon(t *testing.T) {
 	url := "/api/v1/bookmarks/favicon/"
 	r := bookmarkHandlerMock(pass)
@@ -1305,74 +1323,4 @@ func Test_MoveBookmarks(t *testing.T) {
 	r.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
-}
-
-// --------------------------------------------------------------------------
-// mock repository implementation
-// --------------------------------------------------------------------------
-
-// create a mock implementation of the store repository
-// tests can use the mock to implement their desired behavior
-type mockRepository struct{}
-
-var _ store.BookmarkRepository = (*mockRepository)(nil)
-
-func (m *mockRepository) CheckStoreConnectivity(timeOut uint) (err error) {
-	return nil
-}
-
-func (m *mockRepository) InUnitOfWork(fn func(repo store.BookmarkRepository) error) error {
-	return nil
-}
-
-func (m *mockRepository) Create(item store.Bookmark) (store.Bookmark, error) {
-	return store.Bookmark{}, nil
-}
-
-func (m *mockRepository) Update(item store.Bookmark) (store.Bookmark, error) {
-	return store.Bookmark{}, nil
-}
-
-func (m *mockRepository) Delete(item store.Bookmark) error {
-	return nil
-}
-
-func (m *mockRepository) DeletePath(path, username string) error {
-	return nil
-}
-
-func (m *mockRepository) GetAllBookmarks(username string) ([]store.Bookmark, error) {
-	return nil, nil
-}
-
-func (m *mockRepository) GetBookmarksByPath(path, username string) ([]store.Bookmark, error) {
-	return nil, nil
-}
-
-func (m *mockRepository) GetBookmarksByPathStart(path, username string) ([]store.Bookmark, error) {
-	return nil, nil
-}
-
-func (m *mockRepository) GetBookmarksByName(name, username string) ([]store.Bookmark, error) {
-	return nil, nil
-}
-
-func (m *mockRepository) GetMostRecentBookmarks(username string, limit int) ([]store.Bookmark, error) {
-	return nil, nil
-}
-
-func (m *mockRepository) GetPathChildCount(path, username string) ([]store.NodeCount, error) {
-	return nil, nil
-}
-
-func (m *mockRepository) GetBookmarkByID(id, username string) (store.Bookmark, error) {
-	return store.Bookmark{}, nil
-}
-
-func (m *mockRepository) GetFolderByPath(path, username string) (store.Bookmark, error) {
-	return store.Bookmark{}, nil
-}
-
-func (m *mockRepository) GetAllPaths(username string) ([]string, error) {
-	return nil, nil
 }

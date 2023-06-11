@@ -61,6 +61,11 @@ func (r *dbBookmarkRepository) InUnitOfWork(fn func(repo BookmarkRepository) err
 		if r.shared != nil {
 			return fmt.Errorf("a shared connection/transaction is already available, will not start a new one")
 		}
+
+		// lock concurrent access for transactional tasks
+		r.Lock()
+		defer r.Unlock()
+
 		return fn(&dbBookmarkRepository{
 			transient: r.transient,
 			shared:    tx, // the transaction is used as the shared connection
@@ -176,13 +181,6 @@ func (r *dbBookmarkRepository) Create(item Bookmark) (Bookmark, error) {
 		hierarchy []string
 	)
 
-	defer func() {
-		// release any previously created locks
-		r.Unlock()
-	}()
-	// block concurrent requests
-	r.Lock()
-
 	if item.Path == "" {
 		return Bookmark{}, fmt.Errorf("path is empty")
 	}
@@ -243,13 +241,6 @@ func (r *dbBookmarkRepository) Update(item Bookmark) (Bookmark, error) {
 		bm        Bookmark
 	)
 
-	defer func() {
-		// release any previously created locks
-		r.Unlock()
-	}()
-	// block concurrent requests
-	r.Lock()
-
 	if item.Path == "" {
 		return Bookmark{}, fmt.Errorf("path is empty")
 	}
@@ -308,13 +299,6 @@ func (r *dbBookmarkRepository) Delete(item Bookmark) error {
 		err error
 	)
 
-	defer func() {
-		// release any previously created locks
-		r.Unlock()
-	}()
-	// block concurrent requests
-	r.Lock()
-
 	h := r.con().Where(&Bookmark{ID: item.ID, UserName: item.UserName}).First(&bm)
 	if h.Error != nil {
 		return fmt.Errorf("cannot get bookmark by id '%s': %v", item.ID, h.Error)
@@ -349,13 +333,6 @@ func (r *dbBookmarkRepository) DeletePath(path, username string) error {
 	if path == "/" {
 		return fmt.Errorf("cannot delete the root path")
 	}
-
-	defer func() {
-		// release any previously created locks
-		r.Unlock()
-	}()
-	// block concurrent requests
-	r.Lock()
 
 	h := r.con().Where("user_name = ? AND path LIKE ?", username, path+"%").Delete(Bookmark{})
 	if h.Error != nil {

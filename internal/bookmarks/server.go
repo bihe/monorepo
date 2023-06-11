@@ -52,11 +52,12 @@ func run(version, build string) error {
 	defer logger.Close()
 
 	var (
-		repo = setupRepository(appCfg, logger)
-		app  = &bookmarks.Application{
-			Logger:      logger,
-			Store:       repo,
-			FaviconPath: path.Join(basePath, appCfg.FaviconUploadPath),
+		bRepo, fRepo = setupRepositories(appCfg, logger)
+		app          = &bookmarks.Application{
+			Logger:        logger,
+			BookmarkStore: bRepo,
+			FavStore:      fRepo,
+			FaviconPath:   path.Join(basePath, appCfg.FaviconUploadPath),
 		}
 		handler = api.MakeHTTPHandler(app, logger, api.HTTPHandlerOptions{
 			BasePath:  basePath,
@@ -94,8 +95,8 @@ func logConfig(cfg conf.AppConfig) logging.Logger {
 const journalMode = "_journal_mode"
 const journalModeValue = "WAL"
 
-// setupRepository enables the SQLITE repository for bookmark storage
-func setupRepository(config *conf.AppConfig, logger logging.Logger) store.BookmarkRepository {
+// setupRepositories enables the SQLITE repository for bookmark storage
+func setupRepositories(config *conf.AppConfig, logger logging.Logger) (store.BookmarkRepository, store.FaviconRepository) {
 	// Documentation for DNS based SQLITE PRAGMAS: https://github.com/mattn/go-sqlite3
 	// add the WAL mode for SQLITE
 	dbConnStr := config.Database.ConnectionString
@@ -120,5 +121,5 @@ func setupRepository(config *conf.AppConfig, logger logging.Logger) store.Bookma
 	// found here: https://stackoverflow.com/questions/35804884/sqlite-concurrent-writing-performance
 	db.SetMaxOpenConns(1)
 
-	return store.CreateBookmarkRepo(con, logger)
+	return store.CreateBookmarkRepo(con, logger), store.CreateFaviconRepo(con, logger)
 }

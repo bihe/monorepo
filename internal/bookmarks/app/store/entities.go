@@ -34,7 +34,7 @@ type Bookmark struct {
 	Modified           *time.Time `gorm:"COLUMN:modified"`
 	ChildCount         int        `gorm:"COLUMN:child_count;DEFAULT:0;NOT NULL"`
 	Highlight          int        `gorm:"COLUMN:highlight;DEFAULT:0;NOT NULL"`
-	Favicon            string     `gorm:"TYPE:varchar(128);COLUMN:favicon;NOT NULL"`
+	Favicon            string     `gorm:"TYPE:varchar(128);COLUMN:favicon;"`
 	InvertFaviconColor int        `gorm:"COLUMN:invert_favicon_color;DEFAULT:0;NOT NULL"`
 }
 

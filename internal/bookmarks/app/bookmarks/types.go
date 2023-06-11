@@ -33,7 +33,6 @@ type Bookmark struct {
 	ChildCount         int        `json:"childCount"`
 	Highlight          int        `json:"highlight"`
 	Favicon            string     `json:"favicon"`
-	CustomFavicon      string     `json:"customFavicon"`
 	InvertFaviconColor int        `json:"invertFaviconColor"`
 }
 
@@ -43,8 +42,8 @@ type BookmarksSortOrder struct {
 	SortOrder []int    `json:"sortOrder"`
 }
 
-// FileInfo is used to encapsulate information about a file
-type FileInfo struct {
+// ObjectInfo is used to encapsulate information about a payload/file
+type ObjectInfo struct {
 	Payload  []byte
 	Name     string
 	Modified time.Time

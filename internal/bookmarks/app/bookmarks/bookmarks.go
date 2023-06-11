@@ -2,7 +2,6 @@ package bookmarks
 
 import (
 	"crypto/sha1"
-	_ "embed"
 	"fmt"
 	"os"
 	"path"
@@ -21,8 +20,10 @@ import (
 type Application struct {
 	// Logger instance to use for structured logging
 	Logger logging.Logger
-	// Store defines a repository for persistance
-	Store store.BookmarkRepository
+	// BookmarkStore defines a bookmarks repository
+	BookmarkStore store.BookmarkRepository
+	// FavStore specifies a Favicon repository
+	FavStore store.FaviconRepository
 	// FaviconPath defines a path on disk to store a favicon
 	FaviconPath string
 }
@@ -43,7 +44,38 @@ func (s *Application) CreateBookmark(bm Bookmark, user security.User) (*Bookmark
 		t = store.Folder
 	}
 
-	if err := s.Store.InUnitOfWork(func(repo store.BookmarkRepository) error {
+	// when a favicon is supplied, fetch the local temp favicon with the given id
+	// store the favicon in the repository and remove the old stored favicon
+	if bm.Favicon != "" {
+		obj, err := s.GetLocalFaviconByID(bm.Favicon)
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("wanted to access the provided favicon '%s' but got an error; %v", bm.Favicon, err))
+			return nil, fmt.Errorf("could not access the specified favicon")
+		}
+		// got a payload which should be persisted in the store
+		err = s.FavStore.InUnitOfWork(func(favRepo store.FaviconRepository) error {
+			if _, e := favRepo.Save(store.Favicon{
+				ID:           obj.Name,
+				Payload:      obj.Payload,
+				LastModified: obj.Modified,
+			}); e != nil {
+				return e
+			}
+			// the favicon was saved in the store - we can delete the local one
+			if e := s.RemoveLocalFavicon(obj.Name); e != nil {
+				s.Logger.Error(fmt.Sprintf("could not remove the local favicon; %v", err))
+				// we do not fail here, not worth the fail the overall operation if only the
+				// removal of the local file is not possible
+			}
+			return nil
+		})
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("got an error while trying to store the favicon; %v", err))
+			return nil, fmt.Errorf("could not store the specified favicon; %v", err)
+		}
+	}
+
+	if err := s.BookmarkStore.InUnitOfWork(func(repo store.BookmarkRepository) error {
 		item, err := repo.Create(store.Bookmark{
 			DisplayName:        bm.DisplayName,
 			Path:               bm.Path,
@@ -64,17 +96,6 @@ func (s *Application) CreateBookmark(bm Bookmark, user security.User) (*Bookmark
 		s.Logger.Error(fmt.Sprintf("could not create a new bookmark: %v", err))
 		return nil, fmt.Errorf("error creating a new bookmark: %v", err)
 	}
-
-	if bm.CustomFavicon != "" {
-		// fire&forget, run this in background and do not wait for the result
-		go s.FetchFaviconURL(bm.CustomFavicon, savedItem, user)
-	} else {
-		// if no specific favicon was supplied, immediately fetch one
-		if savedItem.Favicon == "" && savedItem.Type == store.Node {
-			// fire&forget, run this in background and do not wait for the result
-			go s.FetchFavicon(savedItem, user)
-		}
-	}
 	id := savedItem.ID
 	s.Logger.Info(fmt.Sprintf("bookmark created with ID: %s", id))
 	return entityToModel(savedItem), nil
@@ -86,7 +107,7 @@ func (s *Application) GetBookmarkByID(id string, user security.User) (*Bookmark,
 		return nil, app.ErrValidation("no id supplied to fetch bookmark")
 	}
 
-	bm, err := s.Store.GetBookmarkByID(id, user.Username)
+	bm, err := s.BookmarkStore.GetBookmarkByID(id, user.Username)
 	if err != nil {
 		return nil, app.ErrNotFound(fmt.Sprintf("could not fetch bookmark; %v", err))
 	}
@@ -101,7 +122,7 @@ func (s *Application) GetBookmarksByPath(path string, user security.User) ([]Boo
 
 	s.Logger.Info(fmt.Sprintf("get bookmarks by path: '%s' for user: '%s'", path, user.Username))
 
-	bms, err := s.Store.GetBookmarksByPath(path, user.Username)
+	bms, err := s.BookmarkStore.GetBookmarksByPath(path, user.Username)
 	if err != nil {
 		s.Logger.Error(fmt.Sprintf("cannot get bookmark by path: '%s', %v", path, err))
 	}
@@ -125,7 +146,7 @@ func (s *Application) GetBookmarksFolderByPath(path string, user security.User) 
 			ID:          fmt.Sprintf("%s_ROOT", user.Username),
 		}, nil
 	}
-	bm, err := s.Store.GetFolderByPath(path, user.Username)
+	bm, err := s.BookmarkStore.GetFolderByPath(path, user.Username)
 	if err != nil {
 		s.Logger.Error(fmt.Sprintf("cannot get bookmark folder by path: '%s', %v", path, err))
 		return nil, app.ErrNotFound(fmt.Sprintf("no folder for path '%s' found", path))
@@ -136,7 +157,7 @@ func (s *Application) GetBookmarksFolderByPath(path string, user security.User) 
 
 // GetAllPaths returns all available stored paths
 func (s *Application) GetAllPaths(user security.User) ([]string, error) {
-	paths, err := s.Store.GetAllPaths(user.Username)
+	paths, err := s.BookmarkStore.GetAllPaths(user.Username)
 	if err != nil {
 		s.Logger.Error(fmt.Sprintf("cannot get all bookmark paths: %v", err))
 		return make([]string, 0), fmt.Errorf("cannot get all bookmark paths")
@@ -151,7 +172,7 @@ func (s *Application) GetBookmarksByName(name string, user security.User) ([]Boo
 	}
 
 	s.Logger.Info(fmt.Sprintf("get bookmarks by name: '%s' for user: '%s'", name, user.Username))
-	bms, err := s.Store.GetBookmarksByName(name, user.Username)
+	bms, err := s.BookmarkStore.GetBookmarksByName(name, user.Username)
 	var bookmarks []Bookmark
 	if err != nil {
 		s.Logger.Error(fmt.Sprintf("cannot get bookmark by name: '%s', %v", name, err))
@@ -168,7 +189,7 @@ func (s *Application) FetchAndForward(id string, user security.User) (string, er
 
 	s.Logger.Info(fmt.Sprintf("try to fetch bookmark with ID '%s'", id))
 	redirectURL := ""
-	if err := s.Store.InUnitOfWork(func(repo store.BookmarkRepository) error {
+	if err := s.BookmarkStore.InUnitOfWork(func(repo store.BookmarkRepository) error {
 		existing, err := repo.GetBookmarkByID(id, user.Username)
 		if err != nil {
 			s.Logger.Error(fmt.Sprintf("could not find bookmark by id '%s': %v", id, err))
@@ -187,11 +208,6 @@ func (s *Application) FetchAndForward(id string, user security.User) (string, er
 			return err
 		}
 		redirectURL = existing.URL
-
-		if existing.Favicon == "" {
-			// fire&forget, run this in background and do not wait for the result
-			go s.FetchFavicon(existing, user)
-		}
 		return nil
 	}); err != nil {
 		s.Logger.Error(fmt.Sprintf("could not fetch and update bookmark by ID '%s': %v", id, err))
@@ -209,12 +225,29 @@ func (s *Application) Delete(id string, user security.User) error {
 	}
 
 	s.Logger.Info(fmt.Sprintf("will try to delete bookmark with ID '%s'", id))
-	if err := s.Store.InUnitOfWork(func(repo store.BookmarkRepository) error {
+	if err := s.BookmarkStore.InUnitOfWork(func(repo store.BookmarkRepository) error {
 		// 1) fetch the existing bookmark by id
 		existing, err := repo.GetBookmarkByID(id, user.Username)
 		if err != nil {
 			s.Logger.Error(fmt.Sprintf("could not find bookmark by id '%s': %v", id, err))
 			return err
+		}
+
+		// when a favicon is available remove it, if it is the only remaining one
+		if existing.Favicon != "" {
+			err = s.FavStore.InUnitOfWork(func(favRepo store.FaviconRepository) error {
+				obj, e := favRepo.Get(existing.Favicon)
+				if e != nil {
+					s.Logger.Warn(fmt.Sprintf("the specified favicon '%s' was not available in the store", existing.Favicon))
+					// exit here, nothing more to do
+					return nil
+				}
+				return favRepo.Delete(obj)
+			})
+			if err != nil {
+				s.Logger.Error(fmt.Sprintf("got an error while trying to delete the favicon; %v", err))
+				return fmt.Errorf("could not delete the specified favicon; %v", err)
+			}
 		}
 
 		// if the element is a folder and there are child-elements
@@ -244,7 +277,7 @@ func (s *Application) UpdateSortOrder(sort BookmarksSortOrder, user security.Use
 	}
 
 	var updates int
-	if err := s.Store.InUnitOfWork(func(repo store.BookmarkRepository) error {
+	if err := s.BookmarkStore.InUnitOfWork(func(repo store.BookmarkRepository) error {
 		for i, item := range sort.IDs {
 			bm, err := repo.GetBookmarkByID(item, user.Username)
 			if err != nil {
@@ -268,8 +301,8 @@ func (s *Application) UpdateSortOrder(sort BookmarksSortOrder, user security.Use
 	return updates, nil
 }
 
-// Update a bookmark
-func (s *Application) Update(bm Bookmark, user security.User) (*Bookmark, error) {
+// UpdateBookmark a bookmark
+func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark, error) {
 	var (
 		id   string
 		item store.Bookmark
@@ -280,14 +313,46 @@ func (s *Application) Update(bm Bookmark, user security.User) (*Bookmark, error)
 
 	}
 
-	s.Logger.Info(fmt.Sprintf("will try to update existing bookmark entry: '%s (%s)'", bm.DisplayName, bm.ID))
-	if err := s.Store.InUnitOfWork(func(repo store.BookmarkRepository) error {
-		// 1) fetch the existing bookmark by id
-		existing, err := repo.GetBookmarkByID(bm.ID, user.Username)
+	// 1) fetch the existing bookmark by id
+	existing, err := s.BookmarkStore.GetBookmarkByID(bm.ID, user.Username)
+	if err != nil {
+		s.Logger.Error(fmt.Sprintf("could not find bookmark by id '%s': %v", bm.ID, err))
+		return nil, err
+	}
+
+	// when a favicon is supplied, fetch the local temp favicon with the given id
+	// store the favicon in the repository and remove the old stored favicon
+	if bm.Favicon != "" && bm.Favicon != existing.Favicon {
+		obj, err := s.GetLocalFaviconByID(bm.Favicon)
 		if err != nil {
-			s.Logger.Error(fmt.Sprintf("could not find bookmark by id '%s': %v", bm.ID, err))
-			return err
+			s.Logger.Error(fmt.Sprintf("wanted to access the provided favicon '%s' but got an error; %v", bm.Favicon, err))
+			return nil, fmt.Errorf("could not access the specified favicon")
 		}
+		// got a payload which should be persisted in the store
+		err = s.FavStore.InUnitOfWork(func(favRepo store.FaviconRepository) error {
+			if _, e := favRepo.Save(store.Favicon{
+				ID:           obj.Name,
+				Payload:      obj.Payload,
+				LastModified: obj.Modified,
+			}); e != nil {
+				return e
+			}
+			// the favicon was saved in the store - we can delete the local one
+			if e := s.RemoveLocalFavicon(obj.Name); e != nil {
+				s.Logger.Error(fmt.Sprintf("could not remove the local favicon; %v", err))
+				// we do not fail here, not worth the fail the overall operation if only the
+				// removal of the local file is not possible
+			}
+			return nil
+		})
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("got an error while trying to store the favicon; %v", err))
+			return nil, fmt.Errorf("could not store the specified favicon; %v", err)
+		}
+	}
+
+	s.Logger.Info(fmt.Sprintf("will try to update existing bookmark entry: '%s (%s)'", bm.DisplayName, bm.ID))
+	if err := s.BookmarkStore.InUnitOfWork(func(repo store.BookmarkRepository) error {
 		childCount := existing.ChildCount
 		if existing.Type == store.Folder {
 			// 2) ensure that the existing folder is not moved to itself
@@ -330,7 +395,7 @@ func (s *Application) Update(bm Bookmark, user security.User) (*Bookmark, error)
 			SortOrder:          bm.SortOrder,
 			UserName:           user.Username,
 			ChildCount:         childCount,
-			Favicon:            existing.Favicon,
+			Favicon:            bm.Favicon,
 			Highlight:          bm.Highlight,
 			InvertFaviconColor: bm.InvertFaviconColor,
 		})
@@ -339,16 +404,6 @@ func (s *Application) Update(bm Bookmark, user security.User) (*Bookmark, error)
 			return err
 		}
 		id = item.ID
-
-		// also update the favicon if not available
-		if item.Favicon == "" {
-			// fire&forget, run this in background and do not wait for the result
-			go s.FetchFavicon(item, user)
-		}
-		if bm.CustomFavicon != "" {
-			// fire&forget, run this in background and do not wait for the result
-			go s.FetchFaviconURL(bm.CustomFavicon, item, user)
-		}
 
 		if existing.Type == store.Folder && (existingDisplayName != bm.DisplayName || existingPath != bm.Path) {
 			// if we have a folder and change the displayname or the parent-path, this also affects ALL sub-elements
@@ -363,21 +418,21 @@ func (s *Application) Update(bm Bookmark, user security.User) (*Bookmark, error)
 				return err
 			}
 
-			for _, bm := range bookmarks {
-				updatePath := strings.ReplaceAll(bm.Path, oldPath, newPath)
+			for _, updateBm := range bookmarks {
+				updatePath := strings.ReplaceAll(updateBm.Path, oldPath, newPath)
 				if _, err := repo.Update(store.Bookmark{
-					ID:                 bm.ID,
-					Created:            bm.Created,
-					DisplayName:        bm.DisplayName,
+					ID:                 updateBm.ID,
+					Created:            updateBm.Created,
+					DisplayName:        updateBm.DisplayName,
 					Path:               updatePath,
-					SortOrder:          bm.SortOrder,
-					Type:               bm.Type,
-					URL:                bm.URL,
+					SortOrder:          updateBm.SortOrder,
+					Type:               updateBm.Type,
+					URL:                updateBm.URL,
 					UserName:           user.Username,
-					ChildCount:         bm.ChildCount,
-					Highlight:          bm.Highlight,
-					Favicon:            bm.Favicon,
-					InvertFaviconColor: bm.InvertFaviconColor,
+					ChildCount:         updateBm.ChildCount,
+					Highlight:          updateBm.Highlight,
+					Favicon:            updateBm.Favicon,
+					InvertFaviconColor: updateBm.InvertFaviconColor,
 				}); err != nil {
 					s.Logger.Error(fmt.Sprintf("cannot update bookmark path: %v", err))
 					return err
@@ -443,28 +498,25 @@ func (s *Application) updateChildCountOfPath(path, username string, repo store.B
 }
 
 // ---- Favicon Logic ----
-
-//go:embed bookmark.svg
-var defaultFavicon []byte
 var defaultFaviconModTime = time.Date(2022, 12, 31, 0, 0, 0, 0, time.UTC)
 
 const defaultFaviconName = "bookmark.svg"
 
-// GetFavicon returns the payload of the found favicon or the default favicon
-func (s *Application) GetFavicon(id string, user security.User) (*FileInfo, error) {
-	if id == "" {
+// GetBookmarkFavicon returns the payload of the found favicon or the default favicon
+func (s *Application) GetBookmarkFavicon(bookmarkID string, user security.User) (*ObjectInfo, error) {
+	if bookmarkID == "" {
 		return nil, app.ErrValidation("missing id parameter")
 	}
 
-	s.Logger.Info(fmt.Sprintf("try to fetch bookmark with ID '%s'", id))
-	existing, err := s.Store.GetBookmarkByID(id, user.Username)
+	s.Logger.Info(fmt.Sprintf("try to fetch bookmark with ID '%s'", bookmarkID))
+	existing, err := s.BookmarkStore.GetBookmarkByID(bookmarkID, user.Username)
 	if err != nil {
-		s.Logger.Error(fmt.Sprintf("could not find bookmark by id '%s': %v", id, err))
-		return nil, app.ErrNotFound(fmt.Sprintf("could not find bookmark with ID '%s'", id))
+		s.Logger.Error(fmt.Sprintf("could not find bookmark by id '%s': %v", bookmarkID, err))
+		return nil, app.ErrNotFound(fmt.Sprintf("could not find bookmark with ID '%s'", bookmarkID))
 	}
 
-	fi := FileInfo{
-		Payload:  defaultFavicon,
+	fi := ObjectInfo{
+		Payload:  app.DefaultFavicon,
 		Name:     defaultFaviconName,
 		Modified: defaultFaviconModTime,
 	}
@@ -473,121 +525,133 @@ func (s *Application) GetFavicon(id string, user security.User) (*FileInfo, erro
 		return &fi, nil
 	}
 
-	fullPath := path.Join(s.FaviconPath, existing.Favicon)
-	meta, err := os.Stat(fullPath)
+	favicon, err := s.FavStore.Get(existing.Favicon)
 	if err != nil {
-		s.Logger.Error(fmt.Sprintf("the specified favicon '%s' is not available", fullPath))
+		s.Logger.Error(fmt.Sprintf("a favicon was defined '%s' but is not available", existing.Favicon))
 		return &fi, nil
 	}
-	payload, err := os.ReadFile(fullPath)
-	if err != nil {
-		s.Logger.Error(fmt.Sprintf("the specified favicon '%s' could not be read, %v", fullPath, err))
-		return &fi, nil
-	}
-	fi.Name = meta.Name()
-	fi.Modified = meta.ModTime()
-	fi.Payload = payload
+
+	fi.Name = favicon.ID
+	fi.Modified = favicon.LastModified
+	fi.Payload = favicon.Payload
 
 	return &fi, nil
 }
 
-// FetchFaviconURL retrieves the favicon from the given URL
-func (s *Application) FetchFaviconURL(url string, bm store.Bookmark, user security.User) {
+// local favicon handling // store the retrieved favicon on disk
+// --------------------------------------------------------------------------
+
+// GetLocalFaviconByID reads to favicon payload from the local store
+func (s *Application) GetLocalFaviconByID(id string) (*ObjectInfo, error) {
+	if id == "" {
+		return nil, app.ErrValidation("missing id parameter")
+	}
+
+	fullPath := path.Join(s.FaviconPath, id)
+	meta, err := os.Stat(fullPath)
+	if err != nil {
+		s.Logger.Error(fmt.Sprintf("the specified favicon '%s' is not available", fullPath))
+		return nil, fmt.Errorf("no favicon available for id '%s'", id)
+	}
+	payload, err := os.ReadFile(fullPath)
+	if err != nil {
+		s.Logger.Error(fmt.Sprintf("could not read payload for path '%s'", fullPath))
+		return nil, fmt.Errorf("could not read the favicon for id '%s'", id)
+	}
+	if len(payload) == 0 {
+		s.Logger.Error(fmt.Sprintf("got a Zero payload for path '%s'", fullPath))
+		return nil, fmt.Errorf("could not read the favicon for id '%s'", id)
+	}
+
+	fi := ObjectInfo{
+		Name:     meta.Name(),
+		Payload:  payload,
+		Modified: meta.ModTime(),
+	}
+
+	return &fi, nil
+}
+
+// RemoveLocalFavicon is used to delete the locally stored favicon payload if it is no longer needed
+func (s *Application) RemoveLocalFavicon(id string) error {
+	if id == "" {
+		return app.ErrValidation("missing id parameter")
+	}
+
+	fullPath := path.Join(s.FaviconPath, id)
+	if _, err := os.Stat(fullPath); err != nil {
+		return fmt.Errorf("no favicon available for id '%s'", id)
+	}
+	return os.Remove(fullPath)
+}
+
+// LocalFetchFaviconURL retrieves the favicon from the given URL and stores the payload locally
+func (s *Application) LocalFetchFaviconURL(url string) (*ObjectInfo, error) {
+	if url == "" {
+		return nil, app.ErrValidation("empty URL provided")
+	}
+
 	payload, err := favicon.FetchURL(url)
 	if err != nil {
-		s.Logger.Error(fmt.Sprintf("cannot fetch favicon from URL '%s': %v", url, err))
-		return
+		return nil, fmt.Errorf("cannot fetch favicon from URL '%s': %v", url, err)
 	}
+	if len(payload) == 0 {
+		return nil, fmt.Errorf("not payload for favicon from URL '%s'", url)
+	}
+
 	favi := ""
 	parts := strings.Split(url, "/")
 	if len(parts) > 0 {
 		favi = parts[len(parts)-1] // last element
 	} else {
-		s.Logger.Error(fmt.Sprintf("cannot get favicon-filename from URL '%s': %v", url, err))
-		return
-	}
-
-	if len(payload) == 0 {
-		s.Logger.Error(fmt.Sprintf("not payload for favicon from URL '%s'", url))
-		return
+		return nil, fmt.Errorf("cannot get favicon-filename from URL '%s': %v", url, err)
 	}
 
 	s.Logger.Info(fmt.Sprintf("got favicon payload length of '%d' for URL '%s'", len(payload), url))
-	hashPayload, err := hashInput(payload)
-	if err != nil {
-		s.Logger.Error(fmt.Sprintf("could not hash payload: '%v'", err))
-		return
-	}
-	hashFilename, err := hashInput([]byte(favi))
-	if err != nil {
-		s.Logger.Error(fmt.Sprintf("could not hash filename: '%v'", err))
-		return
-	}
-	ext := filepath.Ext(favi)
-	filename := fmt.Sprintf("%s_%s%s", hashFilename, hashPayload, ext)
-	fullPath := path.Join(s.FaviconPath, filename)
-
-	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-		if err := os.WriteFile(fullPath, payload, 0644); err != nil {
-			s.Logger.Error(fmt.Sprintf("could not write favicon to file '%s': %v", fullPath, err))
-			return
-		}
-	}
-
-	// also update the favi for the bookmark
-	if err := s.Store.InUnitOfWork(func(repo store.BookmarkRepository) error {
-		bm.Favicon = filename
-		_, err := repo.Update(bm)
-		return err
-	}); err != nil {
-		s.Logger.Error(fmt.Sprintf("could not update bookmark with favicon '%s': %v", filename, err))
-	}
+	return s.writeLocalFavicon(favi, payload)
 }
 
-// FetchFavicon retrieves the Favicon from the bookmarks URL
-func (s *Application) FetchFavicon(bm store.Bookmark, user security.User) {
-	favi, payload, err := favicon.GetFaviconFromURL(bm.URL)
+// LocalExtractFaviconFromURL retrieves the Favicon from the bookmarks URL and stores the payload locally
+func (s *Application) LocalExtractFaviconFromURL(baseURL string) (*ObjectInfo, error) {
+	if baseURL == "" {
+		return nil, app.ErrValidation("empty URL provided")
+	}
+
+	favi, payload, err := favicon.GetFaviconFromURL(baseURL)
 	if err != nil {
-		s.Logger.Error(fmt.Sprintf("cannot fetch favicon from URL '%s': %v", bm.URL, err))
-		return
+		return nil, fmt.Errorf("cannot fetch favicon from URL '%s': %v", baseURL, err)
 	}
-
 	if len(payload) == 0 {
-		s.Logger.Error(fmt.Sprintf("no payload for favicon from URL '%s'", bm.URL))
-		return
+		return nil, fmt.Errorf("no payload for favicon from URL '%s'", baseURL)
 	}
 
-	s.Logger.Info(fmt.Sprintf("got favicon payload length of '%d' for URL '%s'", len(payload), bm.URL))
+	s.Logger.Info(fmt.Sprintf("got favicon payload length of '%d' for URL '%s'", len(payload), baseURL))
+	return s.writeLocalFavicon(favi, payload)
+}
+
+func (s *Application) writeLocalFavicon(name string, payload []byte) (*ObjectInfo, error) {
 	hashPayload, err := hashInput(payload)
 	if err != nil {
-		s.Logger.Error(fmt.Sprintf("could not hash payload: '%v'", err))
-		return
+		return nil, fmt.Errorf("could not hash payload: '%v'", err)
 	}
-	hashFilename, err := hashInput([]byte(favi))
+	hashFilename, err := hashInput([]byte(name))
 	if err != nil {
-		s.Logger.Error(fmt.Sprintf("could not hash filename: '%v'", err))
-		return
+		return nil, fmt.Errorf("could not hash filename: '%v'", err)
 	}
-	ext := filepath.Ext(favi)
+	ext := filepath.Ext(name)
 	filename := fmt.Sprintf("%s_%s%s", hashFilename, hashPayload, ext)
 	fullPath := path.Join(s.FaviconPath, filename)
 
-	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-		if err := os.WriteFile(fullPath, payload, 0644); err != nil {
-			s.Logger.Error(fmt.Sprintf("could not write favicon to file '%s': %v", fullPath, err))
-			return
-		}
+	if err := os.WriteFile(fullPath, payload, 0644); err != nil {
+		return nil, fmt.Errorf("could not write favicon to file '%s': %v", fullPath, err)
 	}
 
-	// also update the favi for the bookmark
-	if err := s.Store.InUnitOfWork(func(repo store.BookmarkRepository) error {
-		bm.Favicon = filename
-		_, err := repo.Update(bm)
-		return err
-	}); err != nil {
-		s.Logger.Error(fmt.Sprintf("could not update bookmark with favicon '%s': %v", filename, err))
+	fi := ObjectInfo{
+		Name:     filename,
+		Payload:  payload,
+		Modified: time.Now(),
 	}
-
+	return &fi, nil
 }
 
 // ---- Internals ----

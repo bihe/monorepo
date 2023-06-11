@@ -2,11 +2,11 @@ package store_test
 
 import (
 	"database/sql"
-	_ "embed"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"golang.binggl.net/monorepo/internal/bookmarks/app"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"gorm.io/driver/sqlite"
@@ -14,9 +14,6 @@ import (
 )
 
 var logger = logging.NewNop()
-
-//go:embed bookmark_test.svg
-var defaultFavicon []byte
 
 func favRepo(t *testing.T) (store.FaviconRepository, *sql.DB) {
 	var (
@@ -43,14 +40,14 @@ func Test_CRUD_Favicon(t *testing.T) {
 
 	fav, err := repo.Save(store.Favicon{
 		ID:           "favicon_id",
-		Payload:      defaultFavicon,
+		Payload:      app.DefaultFavicon,
 		LastModified: time.Now(),
 	})
 	if err != nil {
 		t.Errorf("could not save favicon; %v", err)
 	}
 
-	if fav.ID != "favicon_id" || len(fav.Payload) != len(defaultFavicon) {
+	if fav.ID != "favicon_id" || len(fav.Payload) != len(app.DefaultFavicon) {
 		t.Errorf("the returned item is not valid")
 	}
 
@@ -62,7 +59,7 @@ func Test_CRUD_Favicon(t *testing.T) {
 	}
 
 	assert.Equal(t, "favicon_id", fav.ID)
-	assert.Equal(t, len(defaultFavicon), len(fav.Payload))
+	assert.Equal(t, len(app.DefaultFavicon), len(fav.Payload))
 	assert.True(t, fav.LastModified.Before(time.Now()))
 
 	_, err = repo.Get("favicon_id_not_found")
@@ -129,7 +126,7 @@ func Test_InUnitOfWork(t *testing.T) {
 
 		fav, err := repo.Save(store.Favicon{
 			ID:           "favicon_id",
-			Payload:      defaultFavicon,
+			Payload:      app.DefaultFavicon,
 			LastModified: time.Now(),
 		})
 		if err != nil {
@@ -137,7 +134,7 @@ func Test_InUnitOfWork(t *testing.T) {
 		}
 
 		assert.Equal(t, "favicon_id", fav.ID)
-		assert.Equal(t, len(defaultFavicon), len(fav.Payload))
+		assert.Equal(t, len(app.DefaultFavicon), len(fav.Payload))
 		assert.True(t, fav.LastModified.Before(time.Now()))
 
 		return nil

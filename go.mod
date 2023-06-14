@@ -11,14 +11,14 @@ require (
 	github.com/go-kit/kit v0.12.0 // done
 	github.com/google/uuid v1.3.0 // done
 	github.com/jmoiron/sqlx v1.3.5 // done
-	github.com/lestrrat-go/jwx v1.2.25 // done
+	github.com/lestrrat-go/jwx v1.2.26 // done
 	github.com/mattn/go-sqlite3 v1.14.16 // done
 	github.com/microcosm-cc/bluemonday v1.0.23 // done
 	github.com/pdfcpu/pdfcpu v0.4.0 // done
 	github.com/rs/cors v1.9.0 // done
 	github.com/spf13/pflag v1.0.5 // done
 	github.com/spf13/viper v1.15.0 // done
-	github.com/stretchr/testify v1.8.2 // done
+	github.com/stretchr/testify v1.8.4 // done
 	go.uber.org/zap v1.24.0 // done
 	golang.org/x/oauth2 v0.7.0
 	google.golang.org/grpc v1.54.0 // done
@@ -66,10 +66,10 @@ require (
 	github.com/subosito/gotenv v1.4.2 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.8.0 // indirect
+	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/image v0.7.0 // indirect
-	golang.org/x/net v0.9.0 // indirect
-	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/net v0.10.0 // indirect
+	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect

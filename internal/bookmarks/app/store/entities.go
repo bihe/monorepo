@@ -15,6 +15,12 @@ const (
 	Folder
 )
 
+// NodeCount displays the number of child-elements for a given path (1 level)
+type NodeCount struct {
+	Path  string
+	Count int
+}
+
 // Bookmark maps the database table to a struct
 type Bookmark struct {
 	ID                 string     `gorm:"primary_key;TYPE:varchar(255);COLUMN:id"`
@@ -28,7 +34,7 @@ type Bookmark struct {
 	Modified           *time.Time `gorm:"COLUMN:modified"`
 	ChildCount         int        `gorm:"COLUMN:child_count;DEFAULT:0;NOT NULL"`
 	Highlight          int        `gorm:"COLUMN:highlight;DEFAULT:0;NOT NULL"`
-	Favicon            string     `gorm:"TYPE:varchar(128);COLUMN:favicon;NOT NULL"`
+	Favicon            string     `gorm:"TYPE:varchar(128);COLUMN:favicon;"`
 	InvertFaviconColor int        `gorm:"COLUMN:invert_favicon_color;DEFAULT:0;NOT NULL"`
 }
 
@@ -41,8 +47,13 @@ func (Bookmark) TableName() string {
 	return "BOOKMARKS"
 }
 
-// NodeCount displays the number of child-elements for a given path (1 level)
-type NodeCount struct {
-	Path  string
-	Count int
+// Favicon stores the fetched favicons as a binary payload
+type Favicon struct {
+	ID           string    `gorm:"primary_key;TYPE:varchar(128);COLUMN:id;NOT NULL"`
+	Payload      []byte    `gorm:"COLUMN:payload;TYPE:bytes;NOT NULL"`
+	LastModified time.Time `gorm:"COLUMN:modified;NOT NULL"`
+}
+
+func (Favicon) TableName() string {
+	return "FAVICONS"
 }

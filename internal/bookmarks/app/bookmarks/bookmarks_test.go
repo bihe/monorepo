@@ -4,9 +4,9 @@ import (
 	"os"
 	"path"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
 	"golang.binggl.net/monorepo/pkg/logging"
@@ -24,14 +24,16 @@ var user = security.User{
 }
 
 func app(t *testing.T) bookmarks.Application {
+	bRepo, fRepo := repositories(t)
 	return bookmarks.Application{
-		Store:       repository(t),
-		Logger:      logging.NewNop(),
-		FaviconPath: faviconPath,
+		BookmarkStore: bRepo,
+		FavStore:      fRepo,
+		Logger:        logging.NewNop(),
+		FaviconPath:   faviconPath,
 	}
 }
 
-func repository(t *testing.T) store.Repository {
+func repositories(t *testing.T) (store.BookmarkRepository, store.FaviconRepository) {
 	var (
 		DB  *gorm.DB
 		err error
@@ -40,9 +42,9 @@ func repository(t *testing.T) store.Repository {
 		t.Fatalf("cannot create database connection: %v", err)
 	}
 	// Migrate the schema
-	DB.AutoMigrate(&store.Bookmark{})
+	DB.AutoMigrate(&store.Bookmark{}, &store.Favicon{})
 	logger := logging.NewNop()
-	return store.Create(DB, logger)
+	return store.CreateBookmarkRepo(DB, logger), store.CreateFaviconRepo(DB, logger)
 }
 
 func Test_GetBookmark_NotFound(t *testing.T) {
@@ -309,40 +311,58 @@ func Test_GetBookmarksByName(t *testing.T) {
 
 func Test_FetchFavicon(t *testing.T) {
 	svc := app(t)
-
-	// first we need a base-bookmark ;)
-	bm, err := svc.CreateBookmark(bookmarks.Bookmark{
-		Type:        bookmarks.Node,
-		Path:        "/",
-		DisplayName: "test",
-		URL:         "https://www.orf.at",
-	}, user)
+	obj, err := svc.LocalFetchFaviconURL("https://upload.wikimedia.org/wikipedia/commons/6/63/Wikipedia-logo.png")
 	if err != nil {
-		t.Errorf("could not create bookmark; %v", err)
+		t.Errorf("error fetching favicon: %v", err)
+	}
+	assert.True(t, len(obj.Payload) > 0)
+
+	obj, err = svc.LocalExtractFaviconFromURL("https://orf.at")
+	if err != nil {
+		t.Errorf("error fetching favicon: %v", err)
+	}
+	assert.True(t, len(obj.Payload) > 0)
+
+	favicon, err := svc.GetLocalFaviconByID(obj.Name)
+	if err != nil {
+		t.Errorf("could not get local favicon; %v", err)
+	}
+	assert.True(t, len(favicon.Payload) > 0)
+
+	svc.RemoveLocalFavicon(obj.Name)
+	_, err = os.Stat(path.Join(faviconPath, obj.Name))
+	if err == nil {
+		t.Errorf("the file should have been deleted")
 	}
 
-	nodeType := store.Node
-	if bm.Type == bookmarks.Folder {
-		nodeType = store.Folder
+	// ---- validation ----
+
+	_, err = svc.GetLocalFaviconByID("")
+	if err == nil {
+		t.Errorf("error expected")
 	}
 
-	bmEntity := store.Bookmark{
-		ID:          bm.ID,
-		Path:        bm.Path,
-		DisplayName: bm.DisplayName,
-		URL:         "https://www.orf.at",
-		SortOrder:   bm.SortOrder,
-		Type:        nodeType,
-		UserName:    user.Username,
-		Created:     bm.Created,
-		Modified:    bm.Modified,
-		ChildCount:  bm.ChildCount,
-		Highlight:   bm.Highlight,
-		Favicon:     bm.Favicon,
+	favicon, err = svc.GetLocalFaviconByID("anyid")
+	if err != nil {
+		t.Errorf("should return the default favicon")
+	}
+	assert.True(t, len(favicon.Payload) > 0)
+
+	_, err = svc.LocalFetchFaviconURL("")
+	if err == nil {
+		t.Errorf("error expected")
 	}
 
-	svc.FetchFavicon(bmEntity, user)
-	svc.FetchFaviconURL("https://orf.at/mojo/1_4_1/storyserver//news/news/images/touch-icon-iphone.png", bmEntity, user)
+	_, err = svc.LocalExtractFaviconFromURL("")
+	if err == nil {
+		t.Errorf("error expected")
+	}
+
+	err = svc.RemoveLocalFavicon("")
+	if err == nil {
+		t.Errorf("error expected")
+	}
+
 }
 
 func Test_FetchBookmark(t *testing.T) {
@@ -404,6 +424,12 @@ func Test_FetchBookmark(t *testing.T) {
 
 func Test_GetFavicon(t *testing.T) {
 	svc := app(t)
+
+	obj, err := svc.LocalFetchFaviconURL("https://upload.wikimedia.org/wikipedia/commons/6/63/Wikipedia-logo.png")
+	if err != nil {
+		t.Errorf("error fetching favicon: %v", err)
+	}
+
 	// /folder/bookmark
 
 	folder := uuid.NewString()
@@ -415,15 +441,18 @@ func Test_GetFavicon(t *testing.T) {
 
 	url := "http://localhost"
 	bookmark := uuid.NewString()
-	bm, _ := svc.CreateBookmark(bookmarks.Bookmark{
+	bm, err := svc.CreateBookmark(bookmarks.Bookmark{
 		Type:        bookmarks.Node,
 		DisplayName: bookmark,
 		URL:         url,
 		Path:        "/" + folder,
-		Favicon:     "unknown.ico",
+		Favicon:     obj.Name,
 	}, user)
+	if err != nil {
+		t.Errorf("could not store bookmark; %v", err)
+	}
 
-	favicon, err := svc.GetFavicon(bm.ID, user)
+	favicon, err := svc.GetBookmarkFavicon(bm.ID, user)
 	if err != nil {
 		t.Errorf("could not get path of favicon for ID: %s; %v", bm.ID, err)
 	}
@@ -434,12 +463,12 @@ func Test_GetFavicon(t *testing.T) {
 
 	// ---- error ----
 
-	_, err = svc.GetFavicon("", user)
+	_, err = svc.GetBookmarkFavicon("", user)
 	if err == nil {
 		t.Errorf("expected error for empty id")
 	}
 
-	_, err = svc.GetFavicon("unknown-id", user)
+	_, err = svc.GetBookmarkFavicon("unknown-id", user)
 	if err == nil {
 		t.Errorf("expected error for unknown id")
 	}
@@ -447,6 +476,12 @@ func Test_GetFavicon(t *testing.T) {
 
 func Test_DeleteBookmark(t *testing.T) {
 	svc := app(t)
+
+	obj, err := svc.LocalFetchFaviconURL("https://upload.wikimedia.org/wikipedia/commons/6/63/Wikipedia-logo.png")
+	if err != nil {
+		t.Errorf("error fetching favicon: %v", err)
+	}
+
 	// /folder/bookmark
 
 	folder := uuid.NewString()
@@ -462,11 +497,11 @@ func Test_DeleteBookmark(t *testing.T) {
 		DisplayName: bookmark,
 		URL:         "http://localhost",
 		Path:        "/" + folder,
-		Favicon:     "unknown.ico",
+		Favicon:     obj.Name,
 	}, user)
 
 	// try to delete the folder which should not work because of the child-node
-	err := svc.Delete(bmF.ID, user)
+	err = svc.Delete(bmF.ID, user)
 	if err == nil {
 		t.Error("expected an error because cannot delete a bookmark with child entries")
 	}
@@ -647,7 +682,7 @@ func Test_UpdateBookmark(t *testing.T) {
 	// update the bookmark
 	b.DisplayName = bookmark + "_update"
 	b.InvertFaviconColor = 1
-	_, err := svc.Update(*b, user)
+	_, err := svc.UpdateBookmark(*b, user)
 	if err != nil {
 		t.Errorf("could not update bookmark, %v", err)
 	}
@@ -663,7 +698,7 @@ func Test_UpdateBookmark(t *testing.T) {
 	// update the folder
 	f, _ = svc.GetBookmarkByID(f.ID, user)
 	f.DisplayName = f.DisplayName + "_update"
-	_, err = svc.Update(*f, user)
+	_, err = svc.UpdateBookmark(*f, user)
 	if err != nil {
 		t.Errorf("could not update bookmark, %v", err)
 	}
@@ -677,18 +712,18 @@ func Test_UpdateBookmark(t *testing.T) {
 	// change the path of the bookmark
 	b, _ = svc.GetBookmarkByID(bm.ID, user)
 	b.Path = "/" + updateFolder2
-	_, err = svc.Update(*b, user)
+	_, err = svc.UpdateBookmark(*b, user)
 	if err != nil {
 		t.Errorf("could not update bookmark, %v", err)
 	}
 
 	// ---- error: empty ----
-	_, err = svc.Update(bookmarks.Bookmark{}, user)
+	_, err = svc.UpdateBookmark(bookmarks.Bookmark{}, user)
 	if err == nil {
 		t.Errorf("could not update bookmark, %v", err)
 	}
 	// ---- error: unknown-id ----
-	_, err = svc.Update(bookmarks.Bookmark{
+	_, err = svc.UpdateBookmark(bookmarks.Bookmark{
 		Path:        "/",
 		DisplayName: "abc",
 		ID:          "unknown-ID",
@@ -699,59 +734,44 @@ func Test_UpdateBookmark(t *testing.T) {
 	// ---- error: move folder to self ----
 	f, _ = svc.GetBookmarkByID(f.ID, user)
 	f.Path = f.Path + f.DisplayName
-	_, err = svc.Update(*f, user)
+	_, err = svc.UpdateBookmark(*f, user)
 	if err == nil {
 		t.Errorf("could not update bookmark, %v", err)
 	}
 }
 
-func Test_UpdateBookmark_CustomFavicon(t *testing.T) {
+func Test_UpateBookmarks_WithFavicons(t *testing.T) {
 	svc := app(t)
 
-	// /update/bookmark
-	url := "http://www.example.com"
+	obj, err := svc.LocalFetchFaviconURL("https://upload.wikimedia.org/wikipedia/commons/6/63/Wikipedia-logo.png")
+	if err != nil {
+		t.Errorf("error fetching favicon: %v", err)
+	}
+
+	// /bookmark
 
 	bookmark := uuid.NewString()
-	bm, _ := svc.CreateBookmark(bookmarks.Bookmark{
+	bm, err := svc.CreateBookmark(bookmarks.Bookmark{
 		Type:        bookmarks.Node,
 		DisplayName: bookmark,
+		URL:         "http://localhost",
 		Path:        "/",
-		URL:         url,
-		Favicon:     "./bookmark.svg",
+		Favicon:     obj.Name,
 	}, user)
-
-	// get the bookmark
-	b, _ := svc.GetBookmarkByID(bm.ID, user)
-	if b == nil {
-		t.Fatalf("could not get bookmark by id %s", bm.ID)
-	}
-	if b.Favicon != "./bookmark.svg" {
-		t.Errorf("the bookmark did not save the favicon '%s'", "./bookmark.svg")
-	}
-
-	// update the bookmark
-	b.DisplayName = bookmark + "_update"
-	b.CustomFavicon = "https://upload.wikimedia.org/wikipedia/commons/7/70/Example.png"
-	_, err := svc.Update(*b, user)
 	if err != nil {
-		t.Errorf("could not update bookmark, %v", err)
+		t.Errorf("could not create bookmark; %v", err)
 	}
 
-	// wait until the goroutine did it's work for the custom favicon
-	time.Sleep(5 * time.Second)
-
-	b, _ = svc.GetBookmarkByID(bm.ID, user)
-	if b.DisplayName != bookmark+"_update" {
-		t.Errorf("the bookmark was not correctly updated, got %s", b.DisplayName)
-	}
-	meta, err := os.Stat(path.Join(svc.FaviconPath, b.Favicon))
+	// fetch a new favicon
+	obj, err = svc.LocalFetchFaviconURL("https://upload.wikimedia.org/wikipedia/commons/7/70/Example.png")
 	if err != nil {
-		t.Errorf("could not open the custom favicon; %v", err)
+		t.Errorf("error fetching favicon: %v", err)
 	}
-	if path.Ext(meta.Name()) != ".png" {
-		t.Errorf("the favicon should have a png extension")
+	bm.Favicon = obj.Name
+
+	bm, err = svc.UpdateBookmark(*bm, user)
+	if err != nil {
+		t.Errorf("could not update bookmark; %v", err)
 	}
-	if meta.Size() <= 2300 {
-		t.Errorf("the file should be around 2.3kB but got '%d'", meta.Size())
-	}
+	assert.Equal(t, obj.Name, bm.Favicon)
 }

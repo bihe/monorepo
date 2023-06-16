@@ -105,4 +105,22 @@ export class ApiBookmarksService extends BaseDataService {
         catchError(this.handleError)
       );
   }
+
+  createBaseURLFavicon(baseUrl: string): Observable<Result<string>> {
+    const url = `${this.Url}/favicon/temp/base`;
+    return this.http.post<Result<string>>(url, baseUrl, this.RequestOptionsPlain)
+      .pipe(
+        timeout(this.RequestTimeOutDefault),
+        catchError(this.handleError)
+      );
+  }
+
+  createFaviconFromCustomURL(customUrl: string): Observable<Result<string>> {
+    const url = `${this.Url}/favicon/temp/url`;
+    return this.http.post<Result<string>>(url, customUrl, this.RequestOptionsPlain)
+      .pipe(
+        timeout(this.RequestTimeOutDefault),
+        catchError(this.handleError)
+      );
+  }
 }

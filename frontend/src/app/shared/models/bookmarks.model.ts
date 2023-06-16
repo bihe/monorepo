@@ -15,7 +15,6 @@ export class BookmarkModel {
   public modified: Date;
   public childCount: number;
   public favicon: string;
-  public customFavicon: string;
   public highlight: number;
   public showUrl: string;
   public invertFaviconColor: number;

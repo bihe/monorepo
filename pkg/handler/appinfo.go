@@ -1,9 +1,5 @@
 package handler
 
-import (
-	"net/http"
-)
-
 // --------------------------------------------------------------------------
 // Objects
 // --------------------------------------------------------------------------
@@ -30,19 +26,4 @@ type UserInfo struct {
 type VersionInfo struct {
 	Version string `json:"version"`
 	Build   string `json:"buildNumber"`
-}
-
-// --------------------------------------------------------------------------
-// Request and Response objects using go-chi render
-// --------------------------------------------------------------------------
-
-// AppInfoResponse wraps the data struct into a framework response
-type AppInfoResponse struct {
-	*Meta
-}
-
-// Render the specific response
-func (a AppInfoResponse) Render(w http.ResponseWriter, r *http.Request) error {
-	// Pre-processing before a response is marshalled and sent across the wire
-	return nil
 }

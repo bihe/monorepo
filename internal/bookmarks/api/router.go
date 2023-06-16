@@ -63,6 +63,10 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 		r.Get("/byname", bookmarksHandler.GetBookmarksByName())
 		r.Get("/fetch/{id}", bookmarksHandler.FetchAndForward())
 		r.Get("/favicon/{id}", bookmarksHandler.GetFavicon())
+		r.Get("/favicon/temp/{id}", bookmarksHandler.GetTempFavicon())
+		r.Post("/favicon/temp/base", bookmarksHandler.CreateBaseURLFavicon())
+		r.Post("/favicon/temp/url", bookmarksHandler.CreateFaviconFromCustomURL())
+
 		r.Post("/", bookmarksHandler.Create())
 		r.Put("/", bookmarksHandler.Update())
 		return r

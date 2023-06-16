@@ -34,3 +34,47 @@
     padding: 5px;
   }
 }
+
+.bookmark_link_prefix {
+  color: white;
+}
+
+.bookmark_edit_layout_name {
+  display: flex;
+}
+.bookmark_edit_layout_name_column1 {
+  flex: 10%;
+}
+
+.bookmark_edit_layout_name_column2 {
+  flex: 90%;
+}
+
+.bookmark_favicon_preview {
+  width: 50px;
+  height: 50px;
+  padding-right: 5px;
+  padding-top: 5px;
+}
+
+.invert {
+  filter: invert(100%);
+}
+
+
+.custom_favicon_section {
+  display: flex;
+}
+.custom_favicon_section_textfield {
+  flex: 95%;
+}
+
+.custom_favicon_section_fetch_url {
+  position: relative;
+  top: 10px;
+}
+
+.progress_dialog_bar {
+  position: relative;
+  top: -10px;
+}

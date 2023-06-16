@@ -120,14 +120,16 @@
           </button>
 
           <mat-menu #menu="matMenu">
-            <button mat-menu-item (click)="deleteBookmark(item.id, item.displayName)" id="btn-bookmark-delete">
-              <mat-icon>delete</mat-icon>
-              <span>Delete</span>
-            </button>
             <button mat-menu-item (click)="editBookmark(item.id)" id="btn-bookmark-edit">
               <mat-icon>create</mat-icon>
               <span>edit</span>
             </button>
+
+            <button mat-menu-item  (click)="deleteBookmark(item.id, item.displayName)" id="btn-bookmark-delete">
+              <mat-icon class="bookmark_delete">delete</mat-icon>
+              <span>Delete</span>
+            </button>
+
           </mat-menu>
 
         </span>

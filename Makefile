@@ -88,7 +88,7 @@ go-clean:
 go-update:
 	@echo "  >  Go update dependencies ..."
 	go get -d -u -t ./...
-	go mod tidy -compat=1.17
+	go mod tidy -compat=1.20
 
 go-protogen:
 	@echo "  >  Compiline protobuf files ..."

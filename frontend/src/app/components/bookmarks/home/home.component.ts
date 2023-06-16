@@ -5,7 +5,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { combineLatest, EMPTY } from 'rxjs';
+import { EMPTY, combineLatest } from 'rxjs';
 import { debounceTime, map, mergeMap, switchMap } from 'rxjs/operators';
 import { AppModules } from 'src/app/app.globals';
 import { AppInfo, WhoAmI } from 'src/app/shared/models/app.info.model';
@@ -336,7 +336,9 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
               data: {
                 absolutePaths: allPaths.paths,
                 currentPath: this.currentPath,
-                existingBookmark: data
+                existingBookmark: data,
+                service: this.bookmarksService,
+                snackBar: this.snackBar
               }
             });
 
@@ -412,7 +414,9 @@ export class BookmarkHomeComponent implements OnInit,OnDestroy  {
       data: {
         absolutePaths: this.absolutePaths,
         currentPath: this.currentPath,
-        url: url
+        url: url,
+        service: this.bookmarksService,
+        snackBar: this.snackBar
       }
     });
 

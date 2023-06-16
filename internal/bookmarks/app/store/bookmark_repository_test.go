@@ -19,7 +19,7 @@ const expectations = "there were unfulfilled expectations: %s"
 
 var logger = logging.NewNop()
 
-func mockRepository() (Repository, sqlmock.Sqlmock, error) {
+func mockRepository() (BookmarkRepository, sqlmock.Sqlmock, error) {
 	var (
 		db   *sql.DB
 		DB   *gorm.DB
@@ -32,10 +32,10 @@ func mockRepository() (Repository, sqlmock.Sqlmock, error) {
 	if DB, err = gorm.Open(mysql.New(mysql.Config{Conn: db, SkipInitializeWithVersion: true}), &gorm.Config{}); err != nil {
 		return nil, nil, err
 	}
-	return Create(DB, logger), mock, nil
+	return CreateBookmarkRepo(DB, logger), mock, nil
 }
 
-func repository(t *testing.T) (Repository, *sql.DB) {
+func repository(t *testing.T) (BookmarkRepository, *sql.DB) {
 	var (
 		DB  *gorm.DB
 		err error
@@ -49,7 +49,7 @@ func repository(t *testing.T) (Repository, *sql.DB) {
 	if err != nil {
 		t.Fatalf("could not get DB handle; %v", err)
 	}
-	return Create(DB, logger), db
+	return CreateBookmarkRepo(DB, logger), db
 }
 
 func Test_Mock_GetAllBookmarks(t *testing.T) {
@@ -203,7 +203,7 @@ func TestCreateBookmarkInUnitOfWork(t *testing.T) {
 	}
 
 	id := ""
-	err := repo.InUnitOfWork(func(r Repository) error {
+	err := repo.InUnitOfWork(func(r BookmarkRepository) error {
 		bm, err := r.Create(folder)
 		if err != nil {
 			return err
@@ -236,7 +236,7 @@ func TestCreateBookmarkInUnitOfWork(t *testing.T) {
 		Type:        Folder,
 		UserName:    userName,
 	}
-	err = repo.InUnitOfWork(func(r Repository) error {
+	err = repo.InUnitOfWork(func(r BookmarkRepository) error {
 		bm, err := r.Create(folderRollback)
 		if err != nil {
 			return err

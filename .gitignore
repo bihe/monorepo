@@ -32,3 +32,5 @@ proddb/
 .DS_Store
 litestream/litestream-integration.yml
 litestream/litestream.yml
+
+internal/crypter/testresult.pdf

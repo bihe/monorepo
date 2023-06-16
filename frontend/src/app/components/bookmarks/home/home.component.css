@@ -295,3 +295,7 @@ a.bookmark_actions {
 .invert {
   filter: invert(100%);
 }
+
+.bookmark_delete {
+  color: red;
+}

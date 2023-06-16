@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -129,6 +130,75 @@ func (b *BookmarksHandler) GetFavicon() http.HandlerFunc {
 			return
 		}
 		http.ServeContent(w, r, favicon.Name, favicon.Modified, bytes.NewReader(favicon.Payload))
+	}
+}
+
+// GetTempFavicon returns a temporary retrieved favicon
+func (b *BookmarksHandler) GetTempFavicon() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		b.App.Logger.InfoRequest(fmt.Sprintf("get the locally fetched favicon with id '%s'", id), r)
+		favicon, err := b.App.GetLocalFaviconByID(id)
+		if err != nil {
+			encodeError(err, b.App.Logger, w, r)
+			return
+		}
+		http.ServeContent(w, r, favicon.Name, favicon.Modified, bytes.NewReader(favicon.Payload))
+	}
+}
+
+// CreateBaseURLFavicon uses the provided URL to determine the favicon
+func (b *BookmarksHandler) CreateBaseURLFavicon() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// the post payload is interpreted as the URL
+		defer r.Body.Close()
+		payload, err := io.ReadAll(r.Body)
+		if err != nil {
+			b.App.Logger.ErrorRequest(fmt.Sprintf("could not read the URL from the body '%v'", err), r)
+			encodeError(app.ErrValidation("could not read URL from request"), b.App.Logger, w, r)
+			return
+		}
+		url := string(payload)
+		b.App.Logger.InfoRequest(fmt.Sprintf("get the favicon from URL '%s'", url), r)
+		favicon, err := b.App.LocalExtractFaviconFromURL(url)
+		if err != nil {
+			encodeError(err, b.App.Logger, w, r)
+			return
+		}
+		w.WriteHeader(http.StatusCreated)
+		respondJSON(w, Result{
+			Success: true,
+			Message: fmt.Sprintf("Favicon fetched '%s'", favicon.Name),
+			Value:   favicon.Name,
+		})
+	}
+}
+
+// CreateFaviconFromCustomURL fetches the provided image URL
+func (b *BookmarksHandler) CreateFaviconFromCustomURL() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// the post payload is interpreted as the URL
+		defer r.Body.Close()
+		payload, err := io.ReadAll(r.Body)
+		if err != nil {
+			b.App.Logger.ErrorRequest(fmt.Sprintf("could not read the URL from the body '%v'", err), r)
+			encodeError(app.ErrValidation("could not read URL from request"), b.App.Logger, w, r)
+			return
+		}
+		url := string(payload)
+		b.App.Logger.InfoRequest(fmt.Sprintf("get the favicon from custom image URL '%s'", url), r)
+		favicon, err := b.App.LocalFetchFaviconURL(url)
+		if err != nil {
+			encodeError(err, b.App.Logger, w, r)
+			return
+		}
+		w.WriteHeader(http.StatusCreated)
+		respondJSON(w, Result{
+			Success: true,
+			Message: fmt.Sprintf("Favicon fetched '%s'", favicon.Name),
+			Value:   favicon.Name,
+		})
 	}
 }
 

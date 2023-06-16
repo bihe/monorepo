@@ -224,6 +224,7 @@ func (s *Application) Delete(id string, user security.User) error {
 		return app.ErrValidation("missing id parameter")
 	}
 
+	faviconId := ""
 	s.Logger.Info(fmt.Sprintf("will try to delete bookmark with ID '%s'", id))
 	if err := s.BookmarkStore.InUnitOfWork(func(repo store.BookmarkRepository) error {
 		// 1) fetch the existing bookmark by id
@@ -232,23 +233,7 @@ func (s *Application) Delete(id string, user security.User) error {
 			s.Logger.Error(fmt.Sprintf("could not find bookmark by id '%s': %v", id, err))
 			return err
 		}
-
-		// when a favicon is available remove it, if it is the only remaining one
-		if existing.Favicon != "" {
-			err = s.FavStore.InUnitOfWork(func(favRepo store.FaviconRepository) error {
-				obj, e := favRepo.Get(existing.Favicon)
-				if e != nil {
-					s.Logger.Warn(fmt.Sprintf("the specified favicon '%s' was not available in the store", existing.Favicon))
-					// exit here, nothing more to do
-					return nil
-				}
-				return favRepo.Delete(obj)
-			})
-			if err != nil {
-				s.Logger.Error(fmt.Sprintf("got an error while trying to delete the favicon; %v", err))
-				return fmt.Errorf("could not delete the specified favicon; %v", err)
-			}
-		}
+		faviconId = existing.Favicon
 
 		// if the element is a folder and there are child-elements
 		// prevent the deletion - this can only be done via a recursive deletion like rm -rf
@@ -265,6 +250,23 @@ func (s *Application) Delete(id string, user security.User) error {
 	}); err != nil {
 		s.Logger.Error(fmt.Sprintf("could not delete bookmark because of error: %v", err))
 		return fmt.Errorf("error deleting bookmark: %v", err)
+	}
+
+	// when a favicon is available remove it, if it is the only remaining one
+	if faviconId != "" {
+		err := s.FavStore.InUnitOfWork(func(favRepo store.FaviconRepository) error {
+			obj, e := favRepo.Get(faviconId)
+			if e != nil {
+				s.Logger.Warn(fmt.Sprintf("the specified favicon '%s' was not available in the store", faviconId))
+				// exit here, nothing more to do
+				return nil
+			}
+			return favRepo.Delete(obj)
+		})
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("got an error while trying to delete the favicon; %v", err))
+			return fmt.Errorf("could not delete the specified favicon; %v", err)
+		}
 	}
 
 	return nil
@@ -500,7 +502,7 @@ func (s *Application) updateChildCountOfPath(path, username string, repo store.B
 // ---- Favicon Logic ----
 var defaultFaviconModTime = time.Date(2022, 12, 31, 0, 0, 0, 0, time.UTC)
 
-const defaultFaviconName = "bookmark.svg"
+const defaultFaviconName = "default_bookmark_favicon.svg"
 
 // GetBookmarkFavicon returns the payload of the found favicon or the default favicon
 func (s *Application) GetBookmarkFavicon(bookmarkID string, user security.User) (*ObjectInfo, error) {
@@ -551,7 +553,12 @@ func (s *Application) GetLocalFaviconByID(id string) (*ObjectInfo, error) {
 	meta, err := os.Stat(fullPath)
 	if err != nil {
 		s.Logger.Error(fmt.Sprintf("the specified favicon '%s' is not available", fullPath))
-		return nil, fmt.Errorf("no favicon available for id '%s'", id)
+		// nevertheless we return a favicon, the standard one
+		return &ObjectInfo{
+			Payload:  app.DefaultFavicon,
+			Name:     defaultFaviconName,
+			Modified: defaultFaviconModTime,
+		}, nil
 	}
 	payload, err := os.ReadFile(fullPath)
 	if err != nil {

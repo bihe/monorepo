@@ -342,10 +342,11 @@ func Test_FetchFavicon(t *testing.T) {
 		t.Errorf("error expected")
 	}
 
-	_, err = svc.GetLocalFaviconByID("anyid")
-	if err == nil {
-		t.Errorf("error expected")
+	favicon, err = svc.GetLocalFaviconByID("anyid")
+	if err != nil {
+		t.Errorf("should return the default favicon")
 	}
+	assert.True(t, len(favicon.Payload) > 0)
 
 	_, err = svc.LocalFetchFaviconURL("")
 	if err == nil {

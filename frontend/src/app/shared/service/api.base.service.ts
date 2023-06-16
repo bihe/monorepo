@@ -39,4 +39,17 @@ export class BaseDataService {
     };
     return httpOptions;
   }
+
+  protected get RequestOptionsPlain() {
+    const httpOptions = {
+      headers: new HttpHeaders({
+        'Content-Type': 'text/plain',
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }),
+      withCredentials: true
+    };
+    return httpOptions;
+  }
 }

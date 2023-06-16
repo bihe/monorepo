@@ -38,7 +38,7 @@ func bookmarkHandlerMock(fail bool) http.Handler {
 			Logger:        logger,
 			BookmarkStore: &MockBookmarkRepository{fail: fail},
 			FavStore:      &MockFaviconRepository{fail: fail},
-			FaviconPath:   "",
+			FaviconPath:   "/tmp",
 		},
 	})
 }
@@ -51,7 +51,7 @@ func bookmarkHandler(repo store.BookmarkRepository) http.Handler {
 		app: &bookmarks.Application{
 			Logger:        logger,
 			BookmarkStore: repo,
-			FaviconPath:   "",
+			FaviconPath:   "/tmp",
 		},
 	})
 }
@@ -1086,6 +1086,109 @@ func Test_GetFavicon(t *testing.T) {
 	addJwtAuth(req)
 	r.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusNotFound, rec.Code)
+}
+
+func Test_GetTempFavicon(t *testing.T) {
+	url := "/api/v1/bookmarks/favicon/temp/"
+	r := bookmarkHandlerMock(pass)
+
+	// get the default favicon
+	// ---------------------------------------------------------------
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", url+"ID", nil)
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.True(t, len(rec.Body.Bytes()) > 0)
+
+	// no ID
+	// ---------------------------------------------------------------
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", url, nil)
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+
+	// fail lookup
+	// ---------------------------------------------------------------
+	r = bookmarkHandlerMock(failRepository)
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", url+"ID", nil)
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
+func Test_CreateBaseURLFavicon(t *testing.T) {
+	url := "/api/v1/bookmarks/favicon/temp/base"
+	r := bookmarkHandlerMock(pass)
+
+	// get the default favicon
+	// ---------------------------------------------------------------
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", url, strings.NewReader("https://en.wikipedia.org/wiki/Main_Page"))
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusCreated, rec.Code)
+	var result api.Result
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Errorf("could not unmarshal body: %v", err)
+	}
+	assert.True(t, result.Success)
+
+	// no favicon
+	// ---------------------------------------------------------------
+	r = bookmarkHandlerMock(failRepository)
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", url, strings.NewReader("http://localhost"))
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+
+	// no URL
+	// ---------------------------------------------------------------
+	r = bookmarkHandlerMock(failRepository)
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", url, strings.NewReader(""))
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
+func Test_CreateFaviconFromCustomURL(t *testing.T) {
+	url := "/api/v1/bookmarks/favicon/temp/url"
+	r := bookmarkHandlerMock(pass)
+
+	// get the default favicon
+	// ---------------------------------------------------------------
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", url, strings.NewReader("https://en.wikipedia.org/static/favicon/wikipedia.ico"))
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusCreated, rec.Code)
+	var result api.Result
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Errorf("could not unmarshal body: %v", err)
+	}
+	assert.True(t, result.Success)
+
+	// no favicon
+	// ---------------------------------------------------------------
+	r = bookmarkHandlerMock(failRepository)
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", url, strings.NewReader("http://localhost"))
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+
+	// no URL
+	// ---------------------------------------------------------------
+	r = bookmarkHandlerMock(failRepository)
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", url, strings.NewReader(""))
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
 
 func Test_FetchAndForward(t *testing.T) {

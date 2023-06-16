@@ -87,8 +87,8 @@ func main() {
 				fullPath = filepath.Join(dirname, fullPath[2:])
 			}
 
-			if err = writeFavicon(b.ID, fullPath, fRepo); err == nil {
-				log.Printf("### the favicon %s was migrated", b.ID)
+			if err = writeFavicon(b.Favicon, fullPath, fRepo); err == nil {
+				log.Printf("### the favicon %s was migrated", b.Favicon)
 			}
 		}
 	}

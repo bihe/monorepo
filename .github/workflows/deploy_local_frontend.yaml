@@ -11,7 +11,7 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Deploy Frontend Container
+      - name: Deploy ALL Container
         run: |
               sudo /var/www/docker/frontend/renew.sh
         working-directory: /var/www/docker/frontend

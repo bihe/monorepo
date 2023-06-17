@@ -354,7 +354,7 @@ func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark
 		}
 	} else {
 		// if no favicon change was found re-use the existing favicon
-		bm.Favicon = existing.Favicon
+		favicon = existing.Favicon
 	}
 
 	s.Logger.Info(fmt.Sprintf("will try to update existing bookmark entry: '%s (%s)'", bm.DisplayName, bm.ID))

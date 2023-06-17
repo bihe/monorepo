@@ -44,13 +44,14 @@ func bookmarkHandlerMock(fail bool) http.Handler {
 }
 
 // the bookmarkHandler uses the supplied repository
-func bookmarkHandler(repo store.BookmarkRepository) http.Handler {
+func bookmarkHandler(bRepo store.BookmarkRepository, fRepo store.FaviconRepository) http.Handler {
 	return handlerWith(&handlerOps{
 		version: "1.0",
 		build:   "today",
 		app: &bookmarks.Application{
 			Logger:        logger,
-			BookmarkStore: repo,
+			BookmarkStore: bRepo,
+			FavStore:      fRepo,
 			FaviconPath:   "/tmp",
 		},
 	})
@@ -401,7 +402,7 @@ func Test_BookmarkAllPaths(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 }
 
-func repository(t *testing.T) (store.BookmarkRepository, *sql.DB) {
+func repositories(t *testing.T) (store.BookmarkRepository, store.FaviconRepository, *sql.DB) {
 	var (
 		DB  *gorm.DB
 		err error
@@ -410,13 +411,13 @@ func repository(t *testing.T) (store.BookmarkRepository, *sql.DB) {
 		t.Fatalf("cannot create database connection: %v", err)
 	}
 	// Migrate the schema
-	DB.AutoMigrate(&store.Bookmark{})
+	DB.AutoMigrate(&store.Bookmark{}, &store.Favicon{})
 	db, err := DB.DB()
 	if err != nil {
 		t.Fatalf("cannot access database handle: %v", err)
 	}
 	logger := logging.NewNop()
-	return store.CreateBookmarkRepo(DB, logger), db
+	return store.CreateBookmarkRepo(DB, logger), store.CreateFaviconRepo(DB, logger), db
 }
 
 // we need InUnitOfWork to fail the mockRepository
@@ -428,7 +429,7 @@ func (r *MockBookmarkRepository) InUnitOfWork(fn func(repo store.BookmarkReposit
 }
 
 func Test_CreateBookmark(t *testing.T) {
-	repo, db := repository(t)
+	repo, fRepo, db := repositories(t)
 	defer db.Close()
 
 	// testcases
@@ -449,19 +450,18 @@ func Test_CreateBookmark(t *testing.T) {
 			}`,
 			status:   http.StatusCreated,
 			response: "",
-			function: bookmarkHandler(repo),
+			function: bookmarkHandler(repo, fRepo),
 		},
 		{
 			name: "create folder",
 			payload: `{
 				"displayName": "Folder",
 				"path": "/",
-				"type": "Folder",
-				"customFavicon": "https://getbootstrap.com/docs/4.5/assets/img/favicons/favicon.ico"
+				"type": "Folder"
 			}`,
 			status:   http.StatusCreated,
 			response: "",
-			function: bookmarkHandler(repo),
+			function: bookmarkHandler(repo, fRepo),
 		},
 		{
 			name: "no path",
@@ -472,14 +472,14 @@ func Test_CreateBookmark(t *testing.T) {
 			}`,
 			status:   http.StatusBadRequest,
 			response: "",
-			function: bookmarkHandler(repo),
+			function: bookmarkHandler(repo, fRepo),
 		},
 		{
 			name:     "invalid",
 			payload:  "{}",
 			status:   http.StatusBadRequest,
 			response: "",
-			function: bookmarkHandler(repo),
+			function: bookmarkHandler(repo, fRepo),
 		},
 		{
 			name: "repository error",
@@ -518,7 +518,7 @@ func Test_CreateBookmark(t *testing.T) {
 }
 
 func Test_UpdateBookmark(t *testing.T) {
-	repo, db := repository(t)
+	repo, fRepo, db := repositories(t)
 	defer db.Close()
 
 	reqURL := "/api/v1/bookmarks"
@@ -540,13 +540,13 @@ func Test_UpdateBookmark(t *testing.T) {
 				"url": "http://url"
 			}`,
 			status:   http.StatusBadRequest,
-			function: bookmarkHandler(repo),
+			function: bookmarkHandler(repo, fRepo),
 		},
 		{
 			name:     "invalid",
 			payload:  "{}",
 			status:   http.StatusBadRequest,
-			function: bookmarkHandler(repo),
+			function: bookmarkHandler(repo, fRepo),
 		},
 		{
 			name: "repository error",
@@ -602,7 +602,7 @@ func Test_UpdateBookmark(t *testing.T) {
 	req.Header.Add("Content-Type", "application/json")
 
 	// act
-	bookmarkHandler(repo).ServeHTTP(rec, req)
+	bookmarkHandler(repo, fRepo).ServeHTTP(rec, req)
 
 	// assert
 	assert.Equal(t, http.StatusCreated, rec.Code)
@@ -628,7 +628,7 @@ func Test_UpdateBookmark(t *testing.T) {
 	req.Header.Add("Content-Type", "application/json")
 
 	// act
-	bookmarkHandler(repo).ServeHTTP(rec, req)
+	bookmarkHandler(repo, fRepo).ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code)
 
@@ -649,7 +649,7 @@ func Test_UpdateBookmark(t *testing.T) {
 	req.Header.Add("Content-Type", "application/json")
 
 	// act
-	bookmarkHandler(repo).ServeHTTP(rec, req)
+	bookmarkHandler(repo, fRepo).ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 
@@ -663,7 +663,7 @@ func Test_UpdateBookmark(t *testing.T) {
 	addJwtAuth(req)
 
 	// act
-	bookmarkHandler(repo).ServeHTTP(rec, req)
+	bookmarkHandler(repo, fRepo).ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code)
 	var bm bookmarks.Bookmark
@@ -675,7 +675,7 @@ func Test_UpdateBookmark(t *testing.T) {
 }
 
 func Test_UpdateBookmarkHierarchy(t *testing.T) {
-	repo, db := repository(t)
+	repo, fRepo, db := repositories(t)
 	defer db.Close()
 
 	url := "/api/v1/bookmarks"
@@ -697,7 +697,7 @@ func Test_UpdateBookmarkHierarchy(t *testing.T) {
 	req, _ := http.NewRequest("POST", url, strings.NewReader(fmt.Sprintf(payload, "Folder", "/")))
 	addJwtAuth(req)
 	req.Header.Add("Content-Type", "application/json")
-	bookmarkHandler(repo).ServeHTTP(rec, req)
+	bookmarkHandler(repo, fRepo).ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusCreated, rec.Code)
 
 	// /Folder/Folder1
@@ -705,7 +705,7 @@ func Test_UpdateBookmarkHierarchy(t *testing.T) {
 	req, _ = http.NewRequest("POST", url, strings.NewReader(fmt.Sprintf(payload, "Folder1", "/Folder")))
 	addJwtAuth(req)
 	req.Header.Add("Content-Type", "application/json")
-	bookmarkHandler(repo).ServeHTTP(rec, req)
+	bookmarkHandler(repo, fRepo).ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusCreated, rec.Code)
 
 	// /Folder/Folder2
@@ -713,7 +713,7 @@ func Test_UpdateBookmarkHierarchy(t *testing.T) {
 	req, _ = http.NewRequest("POST", url, strings.NewReader(fmt.Sprintf(payload, "Folder2", "/Folder")))
 	addJwtAuth(req)
 	req.Header.Add("Content-Type", "application/json")
-	bookmarkHandler(repo).ServeHTTP(rec, req)
+	bookmarkHandler(repo, fRepo).ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusCreated, rec.Code)
 
 	// get the folder /Folder
@@ -721,7 +721,7 @@ func Test_UpdateBookmarkHierarchy(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", url+"/folder?path="+"/Folder", nil)
 	addJwtAuth(req)
-	bookmarkHandler(repo).ServeHTTP(rec, req)
+	bookmarkHandler(repo, fRepo).ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusOK, rec.Code)
 	var bookmarkFolder api.BookmarkFolderResult
 	if err := json.Unmarshal(rec.Body.Bytes(), &bookmarkFolder); err != nil {
@@ -743,7 +743,7 @@ func Test_UpdateBookmarkHierarchy(t *testing.T) {
 	req, _ = http.NewRequest("PUT", url, bytes.NewReader(payloadBytes))
 	addJwtAuth(req)
 	req.Header.Add("Content-Type", "application/json")
-	bookmarkHandler(repo).ServeHTTP(rec, req)
+	bookmarkHandler(repo, fRepo).ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code)
 	var response api.Result
@@ -757,7 +757,7 @@ func Test_UpdateBookmarkHierarchy(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", url+"/bypath?path="+"/Folder_updated", nil)
 	addJwtAuth(req)
-	bookmarkHandler(repo).ServeHTTP(rec, req)
+	bookmarkHandler(repo, fRepo).ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusOK, rec.Code)
 	var bookmarkList api.BookmarkList
 	if err := json.Unmarshal(rec.Body.Bytes(), &bookmarkList); err != nil {
@@ -768,7 +768,7 @@ func Test_UpdateBookmarkHierarchy(t *testing.T) {
 }
 
 func Test_DeleteBookmark(t *testing.T) {
-	repo, db := repository(t)
+	repo, fRepo, db := repositories(t)
 	defer db.Close()
 
 	url := "/api/v1/bookmarks"
@@ -784,7 +784,7 @@ func Test_DeleteBookmark(t *testing.T) {
 		{
 			name:     "no id",
 			status:   http.StatusMethodNotAllowed,
-			function: bookmarkHandler(repo),
+			function: bookmarkHandler(repo, fRepo),
 		},
 		{
 			name:     "repository error",
@@ -819,7 +819,7 @@ func Test_DeleteBookmark(t *testing.T) {
 	req, _ := http.NewRequest("POST", url, strings.NewReader(payload))
 	addJwtAuth(req)
 	req.Header.Add("Content-Type", "application/json")
-	bookmarkHandler(repo).ServeHTTP(rec, req)
+	bookmarkHandler(repo, fRepo).ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusCreated, rec.Code)
 	var result api.Result
@@ -833,17 +833,17 @@ func Test_DeleteBookmark(t *testing.T) {
 	rec = httptest.NewRecorder()
 	req, _ = http.NewRequest("DELETE", url+"/"+id, nil)
 	addJwtAuth(req)
-	bookmarkHandler(repo).ServeHTTP(rec, req)
+	bookmarkHandler(repo, fRepo).ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code)
 }
 
 func Test_DeleteBookmarkHierarchy(t *testing.T) {
-	repo, db := repository(t)
+	repo, fRepo, db := repositories(t)
 	defer db.Close()
 
 	url := "/api/v1/bookmarks"
-	r := bookmarkHandler(repo)
+	r := bookmarkHandler(repo, fRepo)
 
 	// create folder hierarchy
 	// /Folder
@@ -896,7 +896,7 @@ func Test_DeleteBookmarkHierarchy(t *testing.T) {
 }
 
 func Test_UpdateSortOrder(t *testing.T) {
-	repo, db := repository(t)
+	repo, fRepo, db := repositories(t)
 	defer db.Close()
 
 	url := "/api/v1/bookmarks"
@@ -952,7 +952,7 @@ func Test_UpdateSortOrder(t *testing.T) {
 	}`
 
 	var result api.Result
-	r := bookmarkHandler(repo)
+	r := bookmarkHandler(repo, fRepo)
 
 	// create A
 	// ---------------------------------------------------------------
@@ -1092,7 +1092,7 @@ func Test_GetTempFavicon(t *testing.T) {
 	url := "/api/v1/bookmarks/favicon/temp/"
 	r := bookmarkHandlerMock(pass)
 
-	// get the default favicon
+	// get the favicon
 	// ---------------------------------------------------------------
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", url+"ID", nil)
@@ -1123,7 +1123,7 @@ func Test_CreateBaseURLFavicon(t *testing.T) {
 	url := "/api/v1/bookmarks/favicon/temp/base"
 	r := bookmarkHandlerMock(pass)
 
-	// get the default favicon
+	// create the favicon
 	// ---------------------------------------------------------------
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", url, strings.NewReader("https://en.wikipedia.org/wiki/Main_Page"))
@@ -1159,7 +1159,7 @@ func Test_CreateFaviconFromCustomURL(t *testing.T) {
 	url := "/api/v1/bookmarks/favicon/temp/url"
 	r := bookmarkHandlerMock(pass)
 
-	// get the default favicon
+	// create the favicon
 	// ---------------------------------------------------------------
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", url, strings.NewReader("https://en.wikipedia.org/static/favicon/wikipedia.ico"))
@@ -1191,11 +1191,105 @@ func Test_CreateFaviconFromCustomURL(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
 
-func Test_FetchAndForward(t *testing.T) {
-	repo, db := repository(t)
+func Test_CreateBookmarkWithFaviconFromCustomURL(t *testing.T) {
+	bRepo, fRepo, db := repositories(t)
 	defer db.Close()
 
-	r := bookmarkHandler(repo)
+	// create the favicon
+	// ---------------------------------------------------------------
+	url := "/api/v1/bookmarks/favicon/temp/url"
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", url, strings.NewReader("https://en.wikipedia.org/static/favicon/wikipedia.ico"))
+	addJwtAuth(req)
+	bookmarkHandler(bRepo, fRepo).ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusCreated, rec.Code)
+
+	var result api.Result
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Errorf("could not unmarshal body: %v", err)
+	}
+	favicon := result.Value
+	assert.True(t, favicon != "")
+	assert.True(t, result.Success)
+
+	// create the bookmark with the favicon
+	// ---------------------------------------------------------------
+	bmPayload := `{
+			"displayName": "Node",
+			"path": "/",
+			"type": "Node",
+			"url": "http://url",
+			"favicon": "%s"
+		}`
+	bmRequest := fmt.Sprintf(bmPayload, favicon)
+	url = "/api/v1/bookmarks"
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", url, strings.NewReader(bmRequest))
+	addJwtAuth(req)
+	req.Header.Add("Content-Type", "application/json")
+	bookmarkHandler(bRepo, fRepo).ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusCreated, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Errorf("could not unmarshal body: %v", err)
+	}
+	assert.True(t, result.Success)
+
+	// retrieve the bookmark
+	// ---------------------------------------------------------------
+	url = "/api/v1/bookmarks/"
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", url+result.Value, nil)
+	addJwtAuth(req)
+	bookmarkHandler(bRepo, fRepo).ServeHTTP(rec, req)
+
+	var bm bookmarks.Bookmark
+	assert.Equal(t, 200, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &bm); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+	assert.Equal(t, favicon, bm.Favicon)
+
+	// update the bookmark with an empty favicon
+	// this should not overwrite the existing favicon!
+	// ---------------------------------------------------------------
+	bm.Favicon = ""
+	payload, _ := json.Marshal(bm)
+	url = "/api/v1/bookmarks"
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("PUT", url, bytes.NewReader(payload))
+	addJwtAuth(req)
+	req.Header.Add("Content-Type", "application/json")
+	bookmarkHandler(bRepo, fRepo).ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Errorf("could not unmarshal body: %v", err)
+	}
+	assert.True(t, result.Success)
+
+	// retrieve the bookmark again
+	// we should have the original favicon as a result
+	// ---------------------------------------------------------------
+	url = "/api/v1/bookmarks/"
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", url+result.Value, nil)
+	addJwtAuth(req)
+	bookmarkHandler(bRepo, fRepo).ServeHTTP(rec, req)
+
+	assert.Equal(t, 200, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &bm); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+	assert.Equal(t, favicon, bm.Favicon)
+
+}
+
+func Test_FetchAndForward(t *testing.T) {
+	repo, fRepo, db := repositories(t)
+	defer db.Close()
+
+	r := bookmarkHandler(repo, fRepo)
 	url := "/api/v1/bookmarks"
 
 	payload := `{
@@ -1300,9 +1394,9 @@ func Test_FetchAndForward(t *testing.T) {
 }
 
 func Test_MoveBookmarks(t *testing.T) {
-	repo, db := repository(t)
+	repo, fRepo, db := repositories(t)
 	defer db.Close()
-	r := bookmarkHandler(repo)
+	r := bookmarkHandler(repo, fRepo)
 	url := "/api/v1/bookmarks"
 
 	// create folder hierarchy

@@ -1,4 +1,4 @@
-name: "Container: <Specific> // Build and publish"
+name: "Build and publish <specific>"
 
 on:
   workflow_dispatch:

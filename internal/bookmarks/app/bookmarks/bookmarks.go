@@ -324,10 +324,11 @@ func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark
 
 	// when a favicon is supplied, fetch the local temp favicon with the given id
 	// store the favicon in the repository and remove the old stored favicon
-	if bm.Favicon != "" && bm.Favicon != existing.Favicon {
-		obj, err := s.GetLocalFaviconByID(bm.Favicon)
+	favicon := bm.Favicon
+	if favicon != "" && favicon != existing.Favicon {
+		obj, err := s.GetLocalFaviconByID(favicon)
 		if err != nil {
-			s.Logger.Error(fmt.Sprintf("wanted to access the provided favicon '%s' but got an error; %v", bm.Favicon, err))
+			s.Logger.Error(fmt.Sprintf("wanted to access the provided favicon '%s' but got an error; %v", favicon, err))
 			return nil, fmt.Errorf("could not access the specified favicon")
 		}
 		// got a payload which should be persisted in the store
@@ -351,6 +352,9 @@ func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark
 			s.Logger.Error(fmt.Sprintf("got an error while trying to store the favicon; %v", err))
 			return nil, fmt.Errorf("could not store the specified favicon; %v", err)
 		}
+	} else {
+		// if no favicon change was found re-use the existing favicon
+		bm.Favicon = existing.Favicon
 	}
 
 	s.Logger.Info(fmt.Sprintf("will try to update existing bookmark entry: '%s (%s)'", bm.DisplayName, bm.ID))
@@ -397,7 +401,7 @@ func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark
 			SortOrder:          bm.SortOrder,
 			UserName:           user.Username,
 			ChildCount:         childCount,
-			Favicon:            bm.Favicon,
+			Favicon:            favicon,
 			Highlight:          bm.Highlight,
 			InvertFaviconColor: bm.InvertFaviconColor,
 		})

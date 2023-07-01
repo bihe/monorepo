@@ -4,10 +4,9 @@ package config
 type Environment string
 
 const (
-	// Development is used in development
 	Development Environment = "Development"
-	// Production is used for deployments
-	Production Environment = "Production"
+	Production  Environment = "Production"
+	Integration Environment = "Integration"
 )
 
 // BaseConfig holds the application configuration

@@ -103,7 +103,7 @@ go-protogen:
 	## GRPC
 	# https://grpc.io/docs/languages/go/quickstart/
 	# go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-	protoc --go_out=./proto --go-grpc_out=./proto ./proto/filecrypt.proto
+	protoc --go_out=./proto --go-grpc_out=./proto ./proto/*.proto
 
 go-build:
 	@echo "  >  Building the monorepo ..."

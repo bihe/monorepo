@@ -20,7 +20,6 @@ COPY ./go.mod ./
 COPY ./go.sum ./
 COPY ./internal/mydms ./internal/mydms
 COPY ./pkg ./pkg
-COPY ./tools ./tools
 RUN go generate ./...
 
 # necessary to build sqlite3

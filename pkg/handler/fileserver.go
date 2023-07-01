@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"io/fs"
 	"net/http"
 	"os"
 	"path"
@@ -10,9 +11,40 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// found the solution to hide the directory index for http.FileServer
+// https://stackoverflow.com/questions/51169677/http-static-file-handler-keeps-showing-the-directory-list
+var notFoundFile, notFoundErr = http.Dir("dummy").Open("does-not-exist")
+
+// noDirIndex implements the interface https://pkg.go.dev/net/http#FileSystem
+// and prevents the displaying of a whole directory index
+type noDirIndex struct {
+	http.Dir
+}
+
+func (m noDirIndex) Open(name string) (result http.File, err error) {
+	var (
+		f  http.File
+		fi fs.FileInfo
+	)
+
+	if f, err = m.Dir.Open(name); err != nil {
+		return
+	}
+
+	// find out the type to the given file-handle
+	if fi, err = f.Stat(); err != nil {
+		return
+	}
+	if fi.IsDir() {
+		// Return a response that would have been if directory would not exist:
+		return notFoundFile, notFoundErr
+	}
+	return f, nil
+}
+
 // ServeStaticDir acts as a FileServer and serves the contents of the given dir
-func ServeStaticDir(r chi.Router, public string, static http.Dir) {
-	if strings.ContainsAny(public, "{}*") {
+func ServeStaticDir(r chi.Router, pathPrefix string, static http.Dir) {
+	if strings.ContainsAny(pathPrefix, "{}*") {
 		panic("FileServer does not permit URL parameters.")
 	}
 
@@ -21,10 +53,10 @@ func ServeStaticDir(r chi.Router, public string, static http.Dir) {
 		panic("Static Documents Directory Not Found")
 	}
 
-	fs := http.StripPrefix(public, http.FileServer(http.Dir(root)))
+	fs := http.StripPrefix(pathPrefix, http.FileServer(noDirIndex{http.Dir(root)}))
 
-	r.Get(public+"*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		file := strings.Replace(r.RequestURI, public, "", 1)
+	r.Get(pathPrefix+"*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		file := strings.Replace(r.RequestURI, pathPrefix, "", 1)
 		// if the file contains URL params, remove everything after ?
 		if strings.Contains(file, "?") {
 			parts := strings.Split(file, "?")
@@ -41,11 +73,11 @@ func ServeStaticDir(r chi.Router, public string, static http.Dir) {
 }
 
 // ServeStaticFile acts as a FileServer for a single file and serves the specified file
-func ServeStaticFile(r chi.Router, path, filepath string) {
-	if path == "" {
+func ServeStaticFile(r chi.Router, urlPath, filepath string) {
+	if urlPath == "" {
 		panic("no path for fileServer defined!")
 	}
-	if strings.ContainsAny(path, "{}*") {
+	if strings.ContainsAny(urlPath, "{}*") {
 		panic("fileServer does not permit URL parameters.")
 	}
 
@@ -53,6 +85,6 @@ func ServeStaticFile(r chi.Router, path, filepath string) {
 		http.ServeFile(w, r, filepath)
 	})
 
-	r.Get(path, fileHandler)
-	r.Options(path, fileHandler)
+	r.Get(urlPath, fileHandler)
+	r.Options(urlPath, fileHandler)
 }

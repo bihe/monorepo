@@ -43,6 +43,11 @@ baseconfig:
         secure: false
         prefix: core
 
+    # static assets
+    assets:
+        assetDir: "./assets"
+        assetPrefix: "/assets"
+
 database:
     connectionString: "DATABASE"
 
@@ -76,3 +81,6 @@ upload:
     maxUploadSize: 500000
     uploadPath: "/tmp/"
     encGrpcConn: "localhost:3001"
+
+tls:
+    enabled: false

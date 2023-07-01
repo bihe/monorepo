@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Attach to Process",
+            "type": "go",
+            "request": "attach",
+            "mode": "local",
+            "processId": 0
+        },
+        {
             "name": "Run :: crypter (grpc)",
             "type": "go",
             "request": "launch",
@@ -29,14 +36,14 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/internal/core/server.go",
+            "program": "${workspaceFolder}/cmd/core/server/main.go",
             "args": [
                 "--port",
                 "3001",
                 "--basepath",
-                "./"
+                "../../../internal/core"
             ],
-            "envFile": "${workspaceFolder}/.env.monorepo",
+            "envFile": "${workspaceFolder}/internal/core/.env",
             "internalConsoleOptions": "openOnSessionStart",
             "showLog": true,
             "output": "debug"

@@ -1,10 +1,8 @@
-package main
+package core
 
 import (
 	"fmt"
-	"os"
 
-	"golang.binggl.net/monorepo/internal/core/api"
 	"golang.binggl.net/monorepo/internal/core/app/conf"
 	"golang.binggl.net/monorepo/internal/core/app/oidc"
 	"golang.binggl.net/monorepo/internal/core/app/sites"
@@ -19,31 +17,11 @@ import (
 	"gorm.io/driver/sqlite"
 )
 
-var (
-	// Version exports the application version
-	Version = "1.0.0"
-	// Build provides information about the application build
-	Build = "localbuild"
-	// AppName specifies the application itself
-	AppName = "core"
-	// ApplicationNameKey identifies the application in structured logging
-	ApplicationNameKey = "appName"
-	// HostIDKey identifies the host in structured logging
-	HostIDKey = "localhost"
-)
-
-func main() {
-	if err := run(Version, Build); err != nil {
-		fmt.Fprintf(os.Stderr, "<< ERROR-RESULT >> '%s'\n", err)
-		os.Exit(1)
-	}
-}
-
 // run is the entry-point for the core/auth service
 // where initialization, setup and execution is done
-func run(version, build string) error {
+func Run(version, build, appName string) error {
 	//hostname, port, _, config := readConfig()
-	hostname, port, basePath, config := server.ReadConfig("CO", func() interface{} {
+	hostname, port, basePath, config := server.ReadConfig("CO", func() any {
 		return &conf.AppConfig{} // use the correct object to deserialize the configuration
 	})
 	var appCfg = config.(*conf.AppConfig)
@@ -88,19 +66,19 @@ func run(version, build string) error {
 			TimeOut:          "30s",
 		},
 		)
-		handler = api.MakeHTTPHandler(oidcSvc, siteSvc, uploadSvc, logger, api.HTTPHandlerOptions{
+		handler = MakeHTTPHandler(oidcSvc, siteSvc, uploadSvc, logger, HTTPHandlerOptions{
 			BasePath:  basePath,
 			ErrorPath: appCfg.ErrorPath,
 			Config:    *appCfg,
-			Version:   Version,
-			Build:     Build,
+			Version:   version,
+			Build:     build,
 		})
 	)
 
 	return server.Run(server.RunOptions{
-		AppName:       AppName,
-		Version:       Version,
-		Build:         Build,
+		AppName:       appName,
+		Version:       version,
+		Build:         build,
 		HostName:      hostname,
 		Port:          port,
 		Environment:   string(appCfg.Environment),

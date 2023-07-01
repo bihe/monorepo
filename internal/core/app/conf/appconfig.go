@@ -9,6 +9,7 @@ type AppConfig struct {
 	Security Security
 	OIDC     OAuthConfig
 	Upload   UploadSettings
+	TLS      TLSSettings
 }
 
 // Database defines the connection string
@@ -46,4 +47,11 @@ type UploadSettings struct {
 	UploadPath string
 	// EncGrpcConn defines a connection to a encryption GRPC service
 	EncGrpcConn string
+}
+
+// TLSSettings defines the usage of TLS
+type TLSSettings struct {
+	Enabled  bool
+	KeyFile  string
+	CertFile string
 }

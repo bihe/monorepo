@@ -7,6 +7,7 @@ import (
 
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/logging"
+	"golang.binggl.net/monorepo/pkg/security"
 )
 
 //go:embed templates/*
@@ -25,50 +26,74 @@ func init() {
 // a limited amount of javascript is needed to achieve the frontend.
 // As additional benefit the build should be faster, because the nodejs build can be removed
 type TemplateHandler struct {
-	Logger logging.Logger
-	Env    config.Environment
+	Logger     logging.Logger
+	Env        config.Environment
+	SiteApiURL string
 }
 
-type pageContext struct {
-	Development bool
-	Integration bool
-	User        userData
-}
-
-type userData struct {
-	Username    string
-	Email       string
-	UserID      string
-	DisplayName string
-	ProfileURL  string
+// CreateTemplateHandler provides a new instance
+func CreateTemplateHandler(log logging.Logger, env config.Environment, siteApi string) TemplateHandler {
+	return TemplateHandler{
+		Logger:     log,
+		Env:        env,
+		SiteApiURL: siteApi,
+	}
 }
 
 func (t TemplateHandler) Index() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := ensureUser(r)
-		t.Logger.Debug("retrieve the site with name for user", logging.LogV("username", user.DisplayName))
-		data := pageContext{}
-		data.User = userData{
-			Username:    user.Username,
-			Email:       user.Email,
-			UserID:      user.UserID,
-			DisplayName: user.DisplayName,
-			ProfileURL:  user.ProfileURL,
-		}
+		data := t.getPageModel(r)
 		parsedTemplates.ExecuteTemplate(w, "index.html", data)
 	}
 }
 
+// --------------------------------------------------------------------------
+//  Sites
+// --------------------------------------------------------------------------
+
+func (t TemplateHandler) GetSites() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		data := t.getPageModel(r)
+		parsedTemplates.ExecuteTemplate(w, "sites_index.html", data)
+	}
+}
+
+// --------------------------------------------------------------------------
+//  Errors
+// --------------------------------------------------------------------------
+
 // Show403 displays a page which indicates that the given user has no access to the system
 func (t TemplateHandler) Show403() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var data pageContext
-		switch t.Env {
-		case config.Development:
-			data.Development = true
-		case config.Integration:
-			data.Integration = true
-		}
-		parsedTemplates.ExecuteTemplate(w, "403.html", data)
+		parsedTemplates.ExecuteTemplate(w, "403.html", t.getPageModel(r))
 	}
+}
+
+// --------------------------------------------------------------------------
+
+func (t TemplateHandler) getPageModel(r *http.Request) (data PageModel) {
+	switch t.Env {
+	case config.Development:
+		data.Development = true
+	case config.Integration:
+		data.Integration = true
+	}
+	data.CurrPage = r.URL.Path
+
+	user, ok := security.UserFromContext(r.Context())
+	if !ok || user == nil {
+		t.Logger.Error("could not retrieve user from context; user not logged on")
+		return
+	}
+
+	data.Authenticated = true
+	data.User = UserModel{
+		Username:    user.Username,
+		Email:       user.Email,
+		UserID:      user.UserID,
+		DisplayName: user.DisplayName,
+		ProfileURL:  user.ProfileURL,
+		Token:       user.Token,
+	}
+	return data
 }

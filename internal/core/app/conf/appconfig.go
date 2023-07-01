@@ -9,7 +9,7 @@ type AppConfig struct {
 	Security Security
 	OIDC     OAuthConfig
 	Upload   UploadSettings
-	TLS      TLSSettings
+	Service  APIConfig
 }
 
 // Database defines the connection string
@@ -49,9 +49,7 @@ type UploadSettings struct {
 	EncGrpcConn string
 }
 
-// TLSSettings defines the usage of TLS
-type TLSSettings struct {
-	Enabled  bool
-	KeyFile  string
-	CertFile string
+// APIConfig provides settings to interact with available APIs
+type APIConfig struct {
+	SiteApiURL string
 }

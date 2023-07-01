@@ -59,13 +59,11 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, uploadSvc uplo
 		Build:   opts.Build,
 	}
 
-	templateHandler := web.TemplateHandler{
-		Logger: logger,
-		Env:    opts.Config.Environment,
-	}
+	templateHandler := web.CreateTemplateHandler(logger, opts.Config.Environment, opts.Config.Service.SiteApiURL)
 
 	// the page to show that no access is possible
 	std.Get("/403", templateHandler.Show403())
+
 	// use this for development purposes only!
 	if opts.Config.Environment == config.Development {
 		devTokenHandler := web.DevTokenHandler{
@@ -88,6 +86,9 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, uploadSvc uplo
 	sec.Mount("/ui", func() http.Handler {
 		r := chi.NewRouter()
 		r.Get("/", templateHandler.Index())
+
+		// sites
+		r.Get("/sites", templateHandler.GetSites())
 		return r
 	}())
 
@@ -113,7 +114,7 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, uploadSvc uplo
 		return r
 	}())
 
-	std.Mount("/app", sec)
+	std.Mount("/", sec)
 
 	return std
 }
@@ -143,7 +144,7 @@ func setupRouter(opts HTTPHandlerOptions, logger logging.Logger) (router chi.Rou
 	jwtSecurity := security.NewJwtMiddleware(jwtOptions, logger)
 	jwtAuth := security.NewJWTAuthorization(jwtOptions, true)
 
-	jwtMw := secInterceptor{
+	interceptor := secInterceptor{
 		log:     logger,
 		jwt:     jwtSecurity,
 		auth:    jwtAuth,
@@ -151,7 +152,7 @@ func setupRouter(opts HTTPHandlerOptions, logger logging.Logger) (router chi.Rou
 	}
 
 	secureRouter = chi.NewRouter()
-	secureRouter.Use(jwtMw.handleJWT)
+	secureRouter.Use(interceptor.handleJWT)
 
 	return
 }

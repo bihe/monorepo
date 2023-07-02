@@ -1,4 +1,15 @@
 ---
+baseconfig:
+    ## common application properties
+    appName: crypter
+    hostID: localhost-dev
+    environment: Development
+
+    logging:
+        filePath: "../../../_logs/crypter-grpc-api.log"
+        logLevel: debug
+        grayLogServer: ""
+
 tokenSecurity:
     jwtIssuer: issuer
     jwtSecret: secret
@@ -9,12 +20,3 @@ tokenSecurity:
         - User
     cacheDuration: 10m
 
-logging:
-    filePath: "../../../_logs/crypter-grpc-api.log"
-    logLevel: debug
-    grayLogServer: ""
-
-# common application settings
-serviceName: crypter
-hostID: localhost
-environment: Development

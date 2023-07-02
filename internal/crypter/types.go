@@ -3,7 +3,10 @@
 // initial implementation focuses on PDF files
 package crypter
 
-import "github.com/go-kit/kit/endpoint"
+import (
+	"github.com/go-kit/kit/endpoint"
+	"golang.binggl.net/monorepo/pkg/config"
+)
 
 // PayloadType enumerates the available payload types
 type PayloadType string
@@ -44,23 +47,10 @@ func (r Response) Failed() error { return r.Err }
 // Configuration settings
 // --------------------------------------------------------------------------
 
-// Environment specifies operation modes
-type Environment string
-
-const (
-	// Development is used in development
-	Development Environment = "Development"
-	// Production is used for deployments
-	Production Environment = "Production"
-)
-
 // AppConfig holds the application configuration
 type AppConfig struct {
+	config.BaseConfig
 	TokenSecurity TokenSecurity
-	Logging       LogConfig
-	Environment   Environment
-	ServiceName   string
-	HostID        string
 }
 
 // TokenSecurity settings for the application

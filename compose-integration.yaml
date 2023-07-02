@@ -33,11 +33,11 @@ services:
         restart:
             always
         environment:
-            CR_ENVIRONMENT: Production
+            CR_BASECONFIG__ENVIRONMENT: Integration
             CR_TOKENSECURITY__JWTISSUER: $JWTISSUER
             CR_TOKENSECURITY__JWTSECRET: $JWTSECRET
-            CR_LOGGING__FILEPATH: /opt/crypter/logs/crypter-grpc-api.log
-            CR_LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
+            CR_BASECONFIG__LOGGING__FILEPATH: /opt/crypter/logs/crypter-grpc-api.log
+            CR_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
 
     core-3001:
         build:
@@ -55,7 +55,7 @@ services:
         restart:
             always
         environment:
-            CO_BASECONFIG__ENVIRONMENT: Development
+            CO_BASECONFIG__ENVIRONMENT: Integration
             CO_BASECONFIG__LOGGING__FILEPATH: /opt/core/logs/core-api.log
             CO_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
             CO_SECURITY__JWTISSUER: $JWTISSUER
@@ -92,7 +92,7 @@ services:
         restart:
             always
         environment:
-            MY_BASECONFIG__ENVIRONMENT: Development
+            MY_BASECONFIG__ENVIRONMENT: Integration
             MY_BASECONFIG__SECURITY__JWTISSUER: $JWTISSUER
             MY_BASECONFIG__SECURITY__JWTSECRET: $JWTSECRET
             MY_BASECONFIG__SECURITY__CLAIM.URL: http://localhost:3002
@@ -128,7 +128,7 @@ services:
         restart:
             always
         environment:
-            BM_BASECONFIG__ENVIRONMENT: Development
+            BM_BASECONFIG__ENVIRONMENT: Integration
             BM_BASECONFIG__SECURITY__JWTISSUER: $JWTISSUER
             BM_BASECONFIG__SECURITY__JWTSECRET: $JWTSECRET
             BM_BASECONFIG__LOGGING__FILEPATH: /opt/bookmarks/logs/bookmarks-api.log

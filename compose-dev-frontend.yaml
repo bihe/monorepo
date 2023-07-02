@@ -34,48 +34,8 @@ services:
             CR_ENVIRONMENT: Production
             CR_TOKENSECURITY__JWTISSUER: $JWTISSUER
             CR_TOKENSECURITY__JWTSECRET: $JWTSECRET
-            CR_LOGGING__FILEPATH: /opt/crypter/logs/crypter-grpc-api.log
-            CR_LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
-
-    core-3001:
-        build:
-            context: .
-            dockerfile: ./core.Dockerfile
-            args:
-                buildtime_variable_arch: $ARCH
-        image: core
-        ports:
-            - "3001:3000"
-        volumes:
-            - ./internal/core:/opt/core/etc
-            - ./_logs:/opt/core/logs
-            - ./upload:/opt/core/uploads
-            - ./testdata/sqlite/dev:/opt/core/db
-            - ./litestream/litestream.yml:/etc/litestream.yml
-        restart:
-            always
-        environment:
-            CO_BASECONFIG__ENVIRONMENT: Development
-            CO_BASECONFIG__LOGGING__FILEPATH: /opt/core/logs/core-api.log
-            CO_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
-            CO_SECURITY__JWTISSUER: $JWTISSUER
-            CO_SECURITY__JWTSECRET: $JWTSECRET
-            CO_SECURITY__LOGINREDIRECT: https://dev.binggl.net
-            CO_OIDC__REDIRECTURL: "https://dev.binggl.net/oidc/signin"
-            CO_OIDC__CLIENTID: $OIDC_CLIENTID
-            CO_OIDC__CLIENTSECRET: $OIDC_CLIENTSECRET
-            CO_UPLOAD__UPLOADPATH: /opt/core/uploads
-            CO_UPLOAD__ENCGRPCCONN: crypter:3000
-            CO_UPLOAD__MAXUPLOADSIZE: 5000000
-            CO_DATABASE__CONNECTIONSTRING: /opt/core/db/core.db
-            CONNECTIONSTRING: /opt/core/db/core.db
-            REPLICA_URL: $CORE_REPLICA_URL
-            LITESTREAM_ACCESS_KEY_ID: $LITESTREAM_ACCESS_KEY_ID
-            LITESTREAM_SECRET_ACCESS_KEY: $LITESTREAM_SECRET_ACCESS_KEY
-            BASEPATH: /opt/core
-            BINARYNAME: core.api
-            PORT: 3000
-            HOST: 0.0.0.0
+            CR_BASECONFIG__LOGGING__FILEPATH: /opt/crypter/logs/crypter-grpc-api.log
+            CR_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
 
     mydms-3002:
         build:
@@ -147,19 +107,42 @@ services:
             PORT: 3000
             HOST: 0.0.0.0
 
-    ## the frontend-dev is a simple docker-image which just executes the angular stuff
+    ## the frontend-dev is a simple docker-image which enables access to the server-side frontend stuff
     ## the local development folder is mounted into the image, giving it access to the necessary files
-    frontend-dev:
+    core-3001:
         build:
             context: .
-            dockerfile: ./frontend.dev.Dockerfile
+            dockerfile: ./frontend.dev.go.Dockerfile
             args:
                 buildtime_variable_arch: $ARCH
-        image: frontenddev
+        image: core
+        ports:
+            - "3001:3000"
         volumes:
-            - ./frontend:/opt/onefrontend
+            - ./go.mod:/opt/core/go.mod
+            - ./cmd:/opt/core/cmd
+            - ./pkg:/opt/core/pkg
+            - ./proto:/opt/core/proto
+            - ./internal:/opt/core/internal
+            - ./testdata/sqlite/dev:/opt/core/db
+            - ./_logs:/opt/core/logs
         restart:
             always
+        environment:
+            CO_BASECONFIG__ENVIRONMENT: Development
+            CO_BASECONFIG__LOGGING__FILEPATH: /opt/core/logs/core-api.log
+            CO_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
+            CO_SECURITY__JWTISSUER: $JWTISSUER
+            CO_SECURITY__JWTSECRET: $JWTSECRET
+            CO_SECURITY__LOGINREDIRECT: https://dev.binggl.net
+            CO_OIDC__REDIRECTURL: "https://dev.binggl.net/oidc/signin"
+            CO_OIDC__CLIENTID: $OIDC_CLIENTID
+            CO_OIDC__CLIENTSECRET: $OIDC_CLIENTSECRET
+            CO_UPLOAD__UPLOADPATH: /opt/core/uploads
+            CO_UPLOAD__ENCGRPCCONN: crypter:3000
+            CO_UPLOAD__MAXUPLOADSIZE: 5000000
+            CO_DATABASE__CONNECTIONSTRING: /opt/core/db/core.db
+
 
     ## caddy reverse-proxies the development frontend container-imager
     ## therefor just the one-and-only exposed port (apart from the DB) is the https/443 port of caddy

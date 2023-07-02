@@ -7,7 +7,9 @@ tmp_dir = "tmp"
     "--port",
     "3000",
     "--basepath",
-    "./internal/core"
+    "./internal/core",
+    "--hostname",
+    "0.0.0.0"
   ]
   bin = "./tmp/app.dev"
   cmd = "go build -o ./tmp/app.dev ./cmd/core/server/main.go"

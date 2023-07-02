@@ -50,11 +50,11 @@ dev.binggl.net {
         }
     }
 
-    handle_path /gettoken* {
-        reverse_proxy http://tokentest:3000 {
-            import proxy-transport
-        }
-    }
+    # handle_path /gettoken* {
+    #     reverse_proxy http://tokentest:3000 {
+    #         import proxy-transport
+    #     }
+    # }
 
     handle_path /oidc* {
         rewrite * /oidc{path}
@@ -64,7 +64,7 @@ dev.binggl.net {
     }
 
     handle /* {
-        reverse_proxy http://frontend-dev:4200 {
+        reverse_proxy http://core-3001:3000 {
             import proxy-transport
         }
     }

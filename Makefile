@@ -58,13 +58,6 @@ dev-frontend: ## start the development angular-frontend
 	@echo "  >  Starting angular frontend ..."
 	cd ./frontend;	yarn install && yarn start -- --public-host https://dev.binggl.net
 
-compose-dev: ## start the microservices for development of frontend
-	@echo "  >  Starting docker containers for development..."
-	@echo "  >  Remember to set the hostname **dev.binggl.net** locally or via DNS"
-	@echo "  >> use arch: 		[${ARCH}]"
-	@echo "  >> use litestream:	[${LITESTREAM_V}/litestream-${LITESTREAM_V}-linux-${ARCH}-static.tar.gz]"
-	ARCH=${ARCH} LSV="${LITESTREAM_V}/litestream-${LITESTREAM_V}-linux-${ARCH}-static.tar.gz" docker compose -f compose-dev-frontend.yaml rm && ARCH=${ARCH} LSV="${LITESTREAM_V}/litestream-${LITESTREAM_V}-linux-${ARCH}-static.tar.gz" docker compose -f compose-dev-frontend.yaml up --build
-
 compose-int: ## start the whole application for integration testing
 	@echo "  >  Starting docker containers for integration ..."
 	@echo "  >  Remember to set the hostname **dev.binggl.net** locally or via DNS"

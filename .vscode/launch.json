@@ -12,27 +12,7 @@
             "processId": 0
         },
         {
-            "name": "Run :: crypter (grpc)",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${workspaceFolder}/cmd/crypter/server/",
-            "env": {},
-            "args": [
-                "--hostname",
-                "localhost",
-                "--port",
-                "3000",
-                "--basepath",
-                "../../../internal/crypter"
-            ],
-            "envFile": "${workspaceFolder}/.env.monorepo",
-            "internalConsoleOptions": "openOnSessionStart",
-            "showLog": true,
-            "output": "debug"
-        },
-        {
-            "name": "Run :: core (go-chi)",
+            "name": "RUN:: core",
             "type": "go",
             "request": "launch",
             "mode": "auto",
@@ -43,13 +23,13 @@
                 "--basepath",
                 "../../../internal/core"
             ],
-            "envFile": "${workspaceFolder}/internal/core/.env",
+            "envFile": "${workspaceFolder}/.env",
             "internalConsoleOptions": "openOnSessionStart",
             "showLog": true,
-            "output": "debug"
+            "output": "core-debug"
         },
         {
-            "name": "Run :: mydms-go (go-kit)",
+            "name": "RUN:: mydms",
             "type": "go",
             "request": "launch",
             "mode": "auto",
@@ -57,31 +37,54 @@
             "env": {},
 			"args": [
                 "--port",
-                "8080",
+                "3002",
                 "--basepath",
                 "../../../internal/mydms"
             ],
-            "envFile": "${workspaceFolder}/.env.monorepo",
+            "envFile": "${workspaceFolder}/.env",
             "internalConsoleOptions": "openOnSessionStart",
-            "showLog": true
+            "showLog": true,
+            "output": "mydms-debug"
         },
         {
-            "name": "Run :: bookmarks (go-chi)",
+            "name": "RUN:: bookmarks",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/cmd/bookmarks/server/",
+            "program": "${workspaceFolder}/internal/bookmarks/",
             "args": [
                 "--port",
                 "3003",
                 "--basepath",
-                "../../../internal/bookmarks"
+                "./"
             ],
-            "envFile": "${workspaceFolder}/.env.monorepo",
+            "envFile": "${workspaceFolder}/.env",
             "internalConsoleOptions": "openOnSessionStart",
             "showLog": true,
-            "output": "debug"
+            "output": "bookmarks-debug"
         },
+        {
+            "name": "RUN:: crypter",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/crypter/server/",
+            "env": {},
+            "args": [
+                "--port",
+                "3004",
+                "--basepath",
+                "../../../internal/crypter"
+            ],
+            "envFile": "${workspaceFolder}/.env",
+            "internalConsoleOptions": "openOnSessionStart",
+            "showLog": true,
+            "output": "crypter-debug"
+        },
+
+
+
+
         {
             "name": "Run :: CREATE_TOKEN",
             "type": "go",
@@ -95,7 +98,7 @@
             "output": "debug"
         },
         {
-            "name": "Run :: migrate mysql=>sqlite",
+            "name": "MIGRATE:: mysql=>sqlite",
             "type": "go",
             "request": "launch",
             "mode": "auto",
@@ -107,7 +110,7 @@
             "output": "debug"
         },
         {
-            "name": "Run :: migrate favicons",
+            "name": "MIGRATE:: favicons",
             "type": "go",
             "request": "launch",
             "mode": "auto",
@@ -124,5 +127,13 @@
             "showLog": true,
             "output": "debug"
         }
-    ]
+    ],
+
+    "compounds": [
+        {
+          "name": "SERVICES:: core|mydms|bookmarks|crypter",
+          "configurations": ["RUN:: core","RUN:: mydms", "RUN:: bookmarks", "RUN:: crypter"],
+          "stopAll": true
+        }
+      ]
 }

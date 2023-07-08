@@ -1,7 +1,0 @@
-{{template "layout.html" .}}
-
-{{define "title"}}TITLE{{end}}
-
-{{define "content"}}
-    <h3>text</h3>
-{{end}}

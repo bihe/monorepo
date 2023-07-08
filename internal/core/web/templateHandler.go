@@ -13,12 +13,6 @@ import (
 //go:embed templates/*
 var templateFS embed.FS
 
-var parsedTemplates *template.Template
-
-func init() {
-	parsedTemplates = template.Must(template.ParseFS(templateFS, "templates/*.html"))
-}
-
 // TemplateHandler takes care of providing HTML templates.
 // This is the new approach with a template + htmx based UI to replace the angular frontend
 // and have a more go-oriented approach towards UI and user-interaction. This reduces the
@@ -41,9 +35,10 @@ func CreateTemplateHandler(log logging.Logger, env config.Environment, siteApi s
 }
 
 func (t TemplateHandler) Index() http.HandlerFunc {
+	tmpl := template.Must(template.ParseFS(templateFS, "templates/_layout.html", "templates/main.html"))
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := t.getPageModel(r)
-		parsedTemplates.ExecuteTemplate(w, "index.html", data)
+		tmpl.Execute(w, data)
 	}
 }
 
@@ -52,9 +47,10 @@ func (t TemplateHandler) Index() http.HandlerFunc {
 // --------------------------------------------------------------------------
 
 func (t TemplateHandler) GetSites() http.HandlerFunc {
+	tmpl := template.Must(template.ParseFS(templateFS, "templates/_layout.html", "templates/sites.html"))
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := t.getPageModel(r)
-		parsedTemplates.ExecuteTemplate(w, "sites_index.html", data)
+		tmpl.Execute(w, data)
 	}
 }
 
@@ -64,8 +60,9 @@ func (t TemplateHandler) GetSites() http.HandlerFunc {
 
 // Show403 displays a page which indicates that the given user has no access to the system
 func (t TemplateHandler) Show403() http.HandlerFunc {
+	tmpl := template.Must(template.ParseFS(templateFS, "templates/403.html"))
 	return func(w http.ResponseWriter, r *http.Request) {
-		parsedTemplates.ExecuteTemplate(w, "403.html", t.getPageModel(r))
+		tmpl.Execute(w, t.getPageModel(r))
 	}
 }
 

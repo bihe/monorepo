@@ -9,6 +9,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.8 // done
 	github.com/go-chi/render v1.0.2 // done
 	github.com/go-kit/kit v0.12.0 // done
+	github.com/go-resty/resty/v2 v2.7.0 // done
 	github.com/google/uuid v1.3.0 // done
 	github.com/jmoiron/sqlx v1.3.5 // done
 	github.com/lestrrat-go/jwx v1.2.26 // done

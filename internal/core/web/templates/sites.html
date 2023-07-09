@@ -2,10 +2,35 @@
 
 {{define "title"}}Sites{{end}}
 
-{{define "content"}}
-    <h3>Hello, Sites working</h3>
+{{define "application_name"}}~ sites {{end}}
 
+{{define "style"}}
+<style type="text/css">
+.application_card {
+    margin: 10px;
+}
+</style>
+{{end}}
+
+{{define "content"}}
+<div class="row">
     {{range .Sites.UserSites}}
-    <p>{{ . }}</p>
+        <div class="card application_card text-bg-secondary" style="width: 18rem;">
+            <div class="card-header">
+                Application: {{ .Name }}
+              </div>
+            <div class="card-body">
+                <h5 class="card-title">{{ .Name }}</h5>
+                <p class="card-text">{{ .URL }}</p>
+                {{range .Permissions}}
+                    {{if (eq . "Admin")}}
+                    <span class="badge text-bg-danger"><i class="bi bi-key"></i> {{.}}</span>
+                    {{else}}
+                    <span class="badge text-bg-warning"><i class="bi bi-hash"></i> {{.}}</span>
+                    {{end}}
+                {{end}}
+            </div>
+        </div>
     {{end}}
+</div>
 {{end}}

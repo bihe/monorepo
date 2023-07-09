@@ -28,7 +28,10 @@ func (t TemplateHandler) Index() http.HandlerFunc {
 	tmpl := template.Must(template.ParseFS(TemplateFS, "templates/_layout.html", "templates/main.html"))
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := t.GetPageModel(r)
-		tmpl.Execute(w, data)
+		if err := tmpl.Execute(w, data); err != nil {
+			t.Logger.Error("template error", logging.ErrV(err))
+		}
+
 	}
 }
 

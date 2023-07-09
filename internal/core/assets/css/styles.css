@@ -1,5 +1,26 @@
 body {
-    padding-top: 3rem;
-    padding-bottom: 3rem;
-    color: rgb(var(--bs-tertiary-color-rgb));
-  }
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+  color: rgb(var(--bs-tertiary-color-rgb));
+}
+
+:root {
+  --lh: 50px;
+}
+
+
+.sub-navigation {
+  height: var(--lh);
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  border-bottom: darkgray dashed 1px;
+  font-size: small;
+  font-weight: 700;
+  font-family: Roboto Mono,Courier New,Courier,monospace;
+}
+
+.application_name {
+  line-height: var(--lh);
+  margin-left: 20px;
+}

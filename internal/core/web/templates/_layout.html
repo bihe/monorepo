@@ -9,6 +9,7 @@
     <link href="/assets/css/styles.css" rel="stylesheet">
     <link href="/assets/fonts/local.css" rel="stylesheet">
     <link href="/assets/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+    {{template "style" .}}
   </head>
   <body>
 <!-- data-bs-theme="dark" -->
@@ -46,6 +47,12 @@
         </div>
       </nav>
     </header>
+
+    <section class="sub-navigation">
+      <div class="application_name">
+        {{template "application_name" .}}
+      </div>
+    </section>
 
     <main>
       <div class="container">

@@ -11,6 +11,7 @@ import (
 	"golang.binggl.net/monorepo/internal/core/app/sites"
 	"golang.binggl.net/monorepo/internal/core/app/upload"
 	"golang.binggl.net/monorepo/internal/core/web"
+	"golang.binggl.net/monorepo/internal/core/web/site"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/errors"
@@ -59,7 +60,18 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, uploadSvc uplo
 		Build:   opts.Build,
 	}
 
-	templateHandler := web.CreateTemplateHandler(logger, opts.Config.Environment, opts.Config.Service.SiteApiURL)
+	// handlers which work with HTML templates
+	templateHandler := web.TemplateHandler{
+		Logger: logger,
+		Env:    opts.Config.Environment,
+	}
+	siteTemplateHandler := site.TemplateHandler{
+		TemplateHandler: web.TemplateHandler{
+			Logger: logger,
+			Env:    opts.Config.Environment,
+		},
+		ApiEndpoint: opts.Config.Service.SiteApiURL,
+	}
 
 	// the page to show that no access is possible
 	std.Get("/403", templateHandler.Show403())
@@ -88,7 +100,7 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, uploadSvc uplo
 		r.Get("/", templateHandler.Index())
 
 		// sites
-		r.Get("/sites", templateHandler.GetSites())
+		r.Get("/sites", siteTemplateHandler.GetSites())
 		return r
 	}())
 

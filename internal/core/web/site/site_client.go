@@ -1,8 +1,9 @@
-package services
+package site
 
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -52,4 +53,19 @@ func (s *SiteClient) GetSites() (*UserSite, error) {
 	}
 
 	return &sites, nil
+}
+
+// SaveSites saves the given payload
+func (s *SiteClient) SaveSites(data UserSite) error {
+	resp, err := s.client.R().
+		SetAuthToken(s.AuthToken).
+		SetBody(data).
+		Post(s.ApiEndpoint)
+	if err != nil {
+		return fmt.Errorf("could not save sites; %w", err)
+	}
+	if resp.StatusCode() != http.StatusCreated {
+		return fmt.Errorf("wrong status provided: %d", resp.StatusCode())
+	}
+	return nil
 }

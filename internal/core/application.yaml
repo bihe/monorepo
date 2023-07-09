@@ -83,4 +83,4 @@ upload:
     encGrpcConn: "localhost:3001"
 
 service:
-    siteApiURL: http://localhost:3000/api/v1/sites
+    siteApiURL: http://localhost:3001/api/v1/sites

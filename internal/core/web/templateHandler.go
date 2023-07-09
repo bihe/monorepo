@@ -11,7 +11,7 @@ import (
 )
 
 //go:embed templates/*
-var templateFS embed.FS
+var TemplateFS embed.FS
 
 // TemplateHandler takes care of providing HTML templates.
 // This is the new approach with a template + htmx based UI to replace the angular frontend
@@ -20,36 +20,14 @@ var templateFS embed.FS
 // a limited amount of javascript is needed to achieve the frontend.
 // As additional benefit the build should be faster, because the nodejs build can be removed
 type TemplateHandler struct {
-	Logger     logging.Logger
-	Env        config.Environment
-	SiteApiURL string
-}
-
-// CreateTemplateHandler provides a new instance
-func CreateTemplateHandler(log logging.Logger, env config.Environment, siteApi string) TemplateHandler {
-	return TemplateHandler{
-		Logger:     log,
-		Env:        env,
-		SiteApiURL: siteApi,
-	}
+	Logger logging.Logger
+	Env    config.Environment
 }
 
 func (t TemplateHandler) Index() http.HandlerFunc {
-	tmpl := template.Must(template.ParseFS(templateFS, "templates/_layout.html", "templates/main.html"))
+	tmpl := template.Must(template.ParseFS(TemplateFS, "templates/_layout.html", "templates/main.html"))
 	return func(w http.ResponseWriter, r *http.Request) {
-		data := t.getPageModel(r)
-		tmpl.Execute(w, data)
-	}
-}
-
-// --------------------------------------------------------------------------
-//  Sites
-// --------------------------------------------------------------------------
-
-func (t TemplateHandler) GetSites() http.HandlerFunc {
-	tmpl := template.Must(template.ParseFS(templateFS, "templates/_layout.html", "templates/sites.html"))
-	return func(w http.ResponseWriter, r *http.Request) {
-		data := t.getPageModel(r)
+		data := t.GetPageModel(r)
 		tmpl.Execute(w, data)
 	}
 }
@@ -60,15 +38,15 @@ func (t TemplateHandler) GetSites() http.HandlerFunc {
 
 // Show403 displays a page which indicates that the given user has no access to the system
 func (t TemplateHandler) Show403() http.HandlerFunc {
-	tmpl := template.Must(template.ParseFS(templateFS, "templates/403.html"))
+	tmpl := template.Must(template.ParseFS(TemplateFS, "templates/403.html"))
 	return func(w http.ResponseWriter, r *http.Request) {
-		tmpl.Execute(w, t.getPageModel(r))
+		tmpl.Execute(w, t.GetPageModel(r))
 	}
 }
 
 // --------------------------------------------------------------------------
 
-func (t TemplateHandler) getPageModel(r *http.Request) (data PageModel) {
+func (t TemplateHandler) GetPageModel(r *http.Request) (data PageModel) {
 	switch t.Env {
 	case config.Development:
 		data.Development = true

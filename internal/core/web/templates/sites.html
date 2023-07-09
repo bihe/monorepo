@@ -4,4 +4,8 @@
 
 {{define "content"}}
     <h3>Hello, Sites working</h3>
+
+    {{range .Sites.UserSites}}
+    <p>{{ . }}</p>
+    {{end}}
 {{end}}

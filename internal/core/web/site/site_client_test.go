@@ -1,15 +1,16 @@
-package services_test
+package site_test
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"golang.binggl.net/monorepo/internal/core/web/services"
+	services "golang.binggl.net/monorepo/internal/core/web/site"
 )
 
 const token = "token"
-const siteResponse = `{
+const siteDataJson = `{
 	"editable":true,
 	"user":"a.b@cd.de",
 	"userSites":[
@@ -39,7 +40,7 @@ const siteResponse = `{
 	]
 }`
 
-func Test_SiteClient(t *testing.T) {
+func Test_GetSites(t *testing.T) {
 
 	// setup a test-server
 	// ------------------------------------------------------------------
@@ -47,7 +48,7 @@ func Test_SiteClient(t *testing.T) {
 	mux.HandleFunc("/api/v1/sites", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte(siteResponse)); err != nil {
+		if _, err := w.Write([]byte(siteDataJson)); err != nil {
 			t.Fatalf("%v", err)
 		}
 	})
@@ -82,6 +83,54 @@ func Test_SiteClient(t *testing.T) {
 	// ------------------------------------------------------------------
 	client = services.GetSiteClient("http://localhost", token)
 	_, err = client.GetSites()
+	if err == nil {
+		t.Errorf("error expected")
+	}
+}
+
+func Test_SaveSites(t *testing.T) {
+
+	// setup a test-server
+	// ------------------------------------------------------------------
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/sites", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusCreated)
+		if _, err := w.Write([]byte("ok")); err != nil {
+			t.Fatalf("%v", err)
+		}
+	})
+	mux.HandleFunc("/api/v1/sites/status", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write([]byte("ok")); err != nil {
+			t.Fatalf("%v", err)
+		}
+	})
+	ts := httptest.NewServer(mux)
+	defer ts.Close()
+
+	client := services.GetSiteClient(ts.URL+"/api/v1/sites", token)
+	var data services.UserSite
+	if err := json.Unmarshal([]byte(siteDataJson), &data); err != nil {
+		t.Errorf("could not unmarshal json: %v", err)
+	}
+	err := client.SaveSites(data)
+	if err != nil {
+		t.Errorf("could not get sites; %v", err)
+	}
+
+	// wrong endpoint
+	// ------------------------------------------------------------------
+	client = services.GetSiteClient("http://localhost", token)
+	err = client.SaveSites(data)
+	if err == nil {
+		t.Errorf("error expected")
+	}
+	// wrong status
+	// ------------------------------------------------------------------
+	client = services.GetSiteClient(ts.URL+"/api/v1/sites/status", token)
+	err = client.SaveSites(data)
 	if err == nil {
 		t.Errorf("error expected")
 	}

@@ -5,7 +5,7 @@ body {
 }
 
 :root {
-  --lh: 50px;
+  --lh: 55px;
 }
 
 
@@ -18,9 +18,14 @@ body {
   font-size: small;
   font-weight: 700;
   font-family: Roboto Mono,Courier New,Courier,monospace;
+  padding-top: 3px;
 }
 
 .application_name {
   line-height: var(--lh);
   margin-left: 20px;
+}
+
+.justify {
+  justify-content: center;
 }

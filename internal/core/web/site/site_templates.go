@@ -1,6 +1,7 @@
 package site
 
 import (
+	"encoding/json"
 	"html/template"
 	"net/http"
 
@@ -34,5 +35,22 @@ func (t TemplateHandler) GetSites() http.HandlerFunc {
 			Sites:     *sites,
 		}
 		tmpl.Execute(w, model)
+	}
+}
+
+func (t TemplateHandler) GetSitesEdit() http.HandlerFunc {
+	tmpl := template.Must(template.ParseFS(web.TemplateFS, "templates/sites_edit.html"))
+	return func(w http.ResponseWriter, r *http.Request) {
+		data := t.GetPageModel(r)
+		client := GetSiteClient(t.ApiEndpoint, data.User.Token)
+		sites, err := client.GetSites()
+		if err != nil {
+			t.Logger.Error("could not get sites", logging.ErrV(err))
+		}
+		j, err := json.MarshalIndent(sites, "", "  ")
+		if err != nil {
+			t.Logger.Error("could not marshal sites", logging.ErrV(err))
+		}
+		tmpl.Execute(w, string(j))
 	}
 }

@@ -2,23 +2,56 @@
 
 {{define "title"}}Sites{{end}}
 
-{{define "application_name"}}~ sites {{end}}
+{{define "application_navigation"}}
+  <div class="application_name">
+    <span>~ sites</span>
+
+
+
+  </div>
+{{end}}
 
 {{define "style"}}
 <style type="text/css">
 .application_card {
     margin: 10px;
 }
+.edit-area {
+    padding: 5px;
+}
+.edit-sites {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    width: 50px;
+    height: 50px;
+}
+.editjson {
+    font-size: 1.1em;
+    font-family: Source Code Pro,Courier New,Courier,monospace;
+    padding: 10px;
+    width: 100%;
+    border: none;
+    background-color: #2f4f4f;
+    color: #d7dbdd;
+    box-sizing: border-box;
+    height: 75vh;
+}
+.actions {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
 </style>
 {{end}}
 
 {{define "content"}}
-<div class="row">
+<div class="row justify" id="sites-edit">
     {{range .Sites.UserSites}}
         <div class="card application_card text-bg-secondary" style="width: 18rem;">
             <div class="card-header">
                 Application: {{ .Name }}
-              </div>
+            </div>
             <div class="card-body">
                 <h5 class="card-title">{{ .Name }}</h5>
                 <p class="card-text">{{ .URL }}</p>
@@ -32,5 +65,14 @@
             </div>
         </div>
     {{end}}
+
+    <button type="button" class="btn btn-secondary edit-sites" control-id="edit-sites"
+        hx-get="/ui/sites/~edit"
+        hx-target="#sites-edit"
+        >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+            <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z"></path>
+        </svg>
+    </button>
 </div>
 {{end}}

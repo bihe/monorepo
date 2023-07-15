@@ -101,6 +101,7 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, uploadSvc uplo
 
 		// sites
 		r.Get("/sites", siteTemplateHandler.GetSites())
+		r.Get("/sites/~edit", siteTemplateHandler.GetSitesEdit())
 		return r
 	}())
 

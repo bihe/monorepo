@@ -74,34 +74,36 @@ func Graceful(s *http.Server, timeout time.Duration, logger logging.Logger) erro
 }
 
 // ReadConfig parses supplied application parameters and reads the application config file
-func ReadConfig(envPrefix string, getCfg func() interface{}) (hostname string, port int, basePath string, conf interface{}) {
+func ReadConfig[T any](envPrefix string) (hostname string, port int, basePath string, conf T) {
 	flag.String("hostname", "localhost", "the server hostname")
 	flag.Int("port", 3000, "network port to listen")
 	flag.String("basepath", "./", "the base path of the application")
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
-	if err := viper.BindPFlags(pflag.CommandLine); err != nil {
+
+	v := viper.NewWithOptions(viper.KeyDelimiter("__"))
+	if err := v.BindPFlags(pflag.CommandLine); err != nil {
 		panic(fmt.Sprintf("Could not bind to command line: %v", err))
 	}
 
-	basePath = viper.GetString("basepath")
-	hostname = viper.GetString("hostname")
-	port = viper.GetInt("port")
+	basePath = v.GetString("basepath")
+	hostname = v.GetString("hostname")
+	port = v.GetInt("port")
 
-	viper.SetConfigName("application")                  // name of config file (without extension)
-	viper.SetConfigType("yaml")                         // type of the config-file
-	viper.AddConfigPath(path.Join(basePath, "./_etc/")) // path to look for the config file in
-	viper.AddConfigPath(path.Join(basePath, "./etc/"))  // path to look for the config file in
-	viper.AddConfigPath(path.Join(basePath, "."))       // optionally look for config in the working directory
-	viper.SetEnvPrefix(envPrefix)                       // use this prefix for environment variables to overwrite
-	viper.AutomaticEnv()
+	v.SetConfigName("application")                  // name of config file (without extension)
+	v.SetConfigType("yaml")                         // type of the config-file
+	v.AddConfigPath(path.Join(basePath, "./_etc/")) // path to look for the config file in
+	v.AddConfigPath(path.Join(basePath, "./etc/"))  // path to look for the config file in
+	v.AddConfigPath(path.Join(basePath, "."))       // optionally look for config in the working directory
+	v.SetEnvPrefix(envPrefix)                       // use this prefix for environment variables to overwrite
+	v.AutomaticEnv()
 
-	if err := viper.ReadInConfig(); err != nil {
+	if err := v.ReadInConfig(); err != nil {
 		panic(fmt.Sprintf("Could not get server configuration values: %v", err))
 	}
-	c := getCfg()
-	if err := viper.Unmarshal(c); err != nil {
+	var c T
+	if err := v.Unmarshal(&c); err != nil {
 		panic(fmt.Sprintf("Could not unmarshal server configuration values: %v", err))
 	}
 	conf = c

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"golang.binggl.net/monorepo/internal/crypter"
+	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/proto"
 
@@ -26,10 +27,10 @@ func Test_Grpc_Server_Encrypt(t *testing.T) {
 
 	// SERVER
 	var (
-		service = crypter.NewService(log, crypter.TokenSecurity{
+		service = crypter.NewService(log, config.Security{
 			JwtIssuer: "issuer",
 			JwtSecret: "secret",
-			Claim: crypter.Claim{
+			Claim: config.Claim{
 				Name:  "crypter",
 				URL:   "http://localhost:3004",
 				Roles: []string{"User"},

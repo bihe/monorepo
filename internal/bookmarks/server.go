@@ -41,18 +41,14 @@ func main() {
 // where initialization, setup and execution is done
 func run(version, build string) error {
 	//hostname, port, _, config := readConfig()
-	hostname, port, basePath, config := server.ReadConfig("BM", func() interface{} {
-		return &conf.AppConfig{} // use the correct object to deserialize the configuration
-	})
-	var appCfg = config.(*conf.AppConfig)
-
+	hostname, port, basePath, appCfg := server.ReadConfig[conf.AppConfig]("BM")
 	// use the new pkg logger implementation
-	logger := logConfig(*appCfg)
+	logger := logConfig(appCfg)
 	// ensure closing of logfile on exit
 	defer logger.Close()
 
 	var (
-		bRepo, fRepo = setupRepositories(appCfg, logger)
+		bRepo, fRepo = setupRepositories(&appCfg, logger)
 		app          = &bookmarks.Application{
 			Logger:        logger,
 			BookmarkStore: bRepo,
@@ -62,7 +58,7 @@ func run(version, build string) error {
 		handler = api.MakeHTTPHandler(app, logger, api.HTTPHandlerOptions{
 			BasePath:  basePath,
 			ErrorPath: appCfg.ErrorPath,
-			Config:    *appCfg,
+			Config:    appCfg,
 			Version:   Version,
 			Build:     Build,
 		})

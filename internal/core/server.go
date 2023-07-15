@@ -42,14 +42,10 @@ func main() {
 // run is the entry-point for the core/auth service
 // where initialization, setup and execution is done
 func run(version, build string) error {
-	//hostname, port, _, config := readConfig()
-	hostname, port, basePath, config := server.ReadConfig("CO", func() interface{} {
-		return &conf.AppConfig{} // use the correct object to deserialize the configuration
-	})
-	var appCfg = config.(*conf.AppConfig)
+	hostname, port, basePath, appCfg := server.ReadConfig[conf.AppConfig]("CO")
 
 	// use the new pkg logger implementation
-	logger := logConfig(*appCfg)
+	logger := logConfig(appCfg)
 	// ensure closing of logfile on exit
 	defer logger.Close()
 
@@ -91,7 +87,7 @@ func run(version, build string) error {
 		handler = api.MakeHTTPHandler(oidcSvc, siteSvc, uploadSvc, logger, api.HTTPHandlerOptions{
 			BasePath:  basePath,
 			ErrorPath: appCfg.ErrorPath,
-			Config:    *appCfg,
+			Config:    appCfg,
 			Version:   Version,
 			Build:     Build,
 		})

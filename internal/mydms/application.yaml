@@ -19,7 +19,7 @@ baseconfig:
         loginRedirect: "http://localhost:3001"
         claim:
             name: mydms
-            url: http://localhost:8080
+            url: http://localhost:3002
             roles:
             - User
             - Admin

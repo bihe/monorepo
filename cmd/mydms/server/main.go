@@ -41,13 +41,9 @@ func main() {
 // where initialization, setup and execution is done
 func run(version, build string) error {
 	//hostname, port, _, config := readConfig()
-	hostname, port, basePath, conf := server.ReadConfig("my", func() interface{} {
-		return &mydms.AppConfig{} // use the correct object to deserialize the configuration
-	})
-	var appCfg = conf.(*mydms.AppConfig)
-
+	hostname, port, basePath, appCfg := server.ReadConfig[mydms.AppConfig]("my")
 	// use the new pkg logger implementation
-	logger := logConfig(*appCfg)
+	logger := logConfig(appCfg)
 	// ensure closing of logfile on exit
 	defer logger.Close()
 

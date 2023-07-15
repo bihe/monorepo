@@ -11,8 +11,8 @@ services:
             always
         environment:
             JWT_COOKIE_NAME: $JWT_COOKIE_NAME
-            JWT_ISSUER: $JWTISSUER
-            JWT_SECRET: $JWTSECRET
+            JWT_ISSUER: $JWT_ISSUER
+            JWT_SECRET: $JWT_SECRET
             JWT_USER_EMAIL: $JWT_USER_EMAIL
             JWT_COOKIE_DOMAIN: $JWT_COOKIE_DOMAIN
             REDIRECT_URL: https://dev.binggl.net
@@ -31,11 +31,11 @@ services:
         restart:
             always
         environment:
-            CR_ENVIRONMENT: Production
-            CR_TOKENSECURITY.JWTISSUER: $JWTISSUER
-            CR_TOKENSECURITY.JWTSECRET: $JWTSECRET
-            CR_LOGGING.FILEPATH: /opt/crypter/logs/crypter-grpc-api.log
-            CR_LOGGING.GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
+            CR_BASECONFIG__ENVIRONMENT: Production
+            CR_BASECONFIG__SECURITY__JWTISSUER: $JWT_ISSUER
+            CR_BASECONFIG__SECURITY__JWTSECRET: $JWT_SECRET
+            CR_BASECONFIG__LOGGING__FILEPATH: /opt/crypter/logs/crypter-grpc-api.log
+            CR_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
 
     core-3001:
         build:
@@ -55,19 +55,19 @@ services:
         restart:
             always
         environment:
-            CO_BASECONFIG.ENVIRONMENT: Development
-            CO_BASECONFIG.LOGGING.FILEPATH: /opt/core/logs/core-api.log
-            CO_BASECONFIG.LOGGING.GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
-            CO_SECURITY.JWTISSUER: $JWTISSUER
-            CO_SECURITY.JWTSECRET: $JWTSECRET
-            CO_SECURITY.LOGINREDIRECT: https://dev.binggl.net
-            CO_OIDC.REDIRECTURL: "https://dev.binggl.net/oidc/signin"
-            CO_OIDC.CLIENTID: $OIDC_CLIENTID
-            CO_OIDC.CLIENTSECRET: $OIDC_CLIENTSECRET
-            CO_UPLOAD.UPLOADPATH: /opt/core/uploads
-            CO_UPLOAD.ENCGRPCCONN: crypter:3000
-            CO_UPLOAD.MAXUPLOADSIZE: 5000000
-            CO_DATABASE.CONNECTIONSTRING: /opt/core/db/core.db
+            CO_BASECONFIG__ENVIRONMENT: Development
+            CO_BASECONFIG__LOGGING__FILEPATH: /opt/core/logs/core-api.log
+            CO_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
+            CO_SECURITY__JWTISSUER: $JWT_ISSUER
+            CO_SECURITY__JWTSECRET: $JWT_SECRET
+            CO_SECURITY__LOGINREDIRECT: https://dev.binggl.net
+            CO_OIDC__REDIRECTURL: "https://dev.binggl.net/oidc/signin"
+            CO_OIDC__CLIENTID: $OIDC_CLIENTID
+            CO_OIDC__CLIENTSECRET: $OIDC_CLIENTSECRET
+            CO_UPLOAD__UPLOADPATH: /opt/core/uploads
+            CO_UPLOAD__ENCGRPCCONN: crypter:3000
+            CO_UPLOAD__MAXUPLOADSIZE: 5000000
+            CO_DATABASE__CONNECTIONSTRING: /opt/core/db/core.db
             CONNECTIONSTRING: /opt/core/db/core.db
             REPLICA_URL: $CORE_REPLICA_URL
             LITESTREAM_ACCESS_KEY_ID: $LITESTREAM_ACCESS_KEY_ID
@@ -94,18 +94,18 @@ services:
         restart:
             always
         environment:
-            MY_BASECONFIG.ENVIRONMENT: Development
-            MY_BASECONFIG.SECURITY.JWTISSUER: $JWTISSUER
-            MY_BASECONFIG.SECURITY.JWTSECRET: $JWTSECRET
-            MY_BASECONFIG.SECURITY.CLAIM.URL: http://localhost:3002
-            MY_BASECONFIG.LOGGING.FILEPATH: /opt/mydms/logs/mydms-api.log
-            MY_BASECONFIG.LOGGING.GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
-            MY_FILESTORE.REGION: $FILESTORE_REGION
-            MY_FILESTORE.BUCKET: $FILESTORE_BUCKET
-            MY_FILESTORE.KEY: $FILESTORE_KEY
-            MY_FILESTORE.SECRET: $FILESTORE_SECRET
-            MY_UPLOAD.ENDPOINTURL: http://core-3001:3000/api/v1
-            MY_DATABASE.CONNECTIONSTRING: /opt/mydms/db/mydms.db
+            MY_BASECONFIG__ENVIRONMENT: Development
+            MY_BASECONFIG__SECURITY__JWTISSUER: $JWT_ISSUER
+            MY_BASECONFIG__SECURITY__JWTSECRET: $JWT_SECRET
+            MY_BASECONFIG__SECURITY__CLAIM.URL: http://localhost:3002
+            MY_BASECONFIG__LOGGING__FILEPATH: /opt/mydms/logs/mydms-api.log
+            MY_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
+            MY_FILESTORE__REGION: $FILESTORE_REGION
+            MY_FILESTORE__BUCKET: $FILESTORE_BUCKET
+            MY_FILESTORE__KEY: $FILESTORE_KEY
+            MY_FILESTORE__SECRET: $FILESTORE_SECRET
+            MY_UPLOAD__ENDPOINTURL: http://core-3001:3000/api/v1
+            MY_DATABASE__CONNECTIONSTRING: /opt/mydms/db/mydms.db
             CONNECTIONSTRING: /opt/mydms/db/mydms.db
             REPLICA_URL: $MYDMS_REPLICA_URL
             LITESTREAM_ACCESS_KEY_ID: $LITESTREAM_ACCESS_KEY_ID
@@ -132,12 +132,12 @@ services:
         restart:
             always
         environment:
-            BM_BASECONFIG.ENVIRONMENT: Development
-            BM_BASECONFIG.SECURITY.JWTISSUER: $JWTISSUER
-            BM_BASECONFIG.SECURITY.JWTSECRET: $JWTSECRET
-            BM_BASECONFIG.LOGGING.FILEPATH: /opt/bookmarks/logs/bookmarks-api.log
-            BM_BASECONFIG.LOGGING.GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
-            BM_DATABASE.CONNECTIONSTRING: /opt/bookmarks/db/bookmarks.db
+            BM_BASECONFIG__ENVIRONMENT: Development
+            BM_BASECONFIG__SECURITY__JWTISSUER: $JWT_ISSUER
+            BM_BASECONFIG__SECURITY__JWTSECRET: $JWT_SECRET
+            BM_BASECONFIG__LOGGING__FILEPATH: /opt/bookmarks/logs/bookmarks-api.log
+            BM_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
+            BM_DATABASE__CONNECTIONSTRING: /opt/bookmarks/db/bookmarks.db
             CONNECTIONSTRING: /opt/bookmarks/db/bookmarks.db
             REPLICA_URL: $BOOKMARKS_REPLICA_URL
             LITESTREAM_ACCESS_KEY_ID: $LITESTREAM_ACCESS_KEY_ID

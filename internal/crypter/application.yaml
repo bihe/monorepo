@@ -1,20 +1,22 @@
 ---
-tokenSecurity:
-    jwtIssuer: issuer
-    jwtSecret: secret
-    claim:
-        name: crypter
-        url: http://localhost:3004
-        roles:
-        - User
-    cacheDuration: 10m
+baseconfig:
+    ## common application properties
+    appName: crypter
+    hostID: localhost
+    environment: Development
 
-logging:
-    filePath: "../../../_logs/crypter-grpc-api.log"
-    logLevel: debug
-    grayLogServer: ""
+    # configuration for JWT authentication
+    security:
+        jwtIssuer: issuer
+        jwtSecret: secret
+        claim:
+            name: crypter
+            url: http://localhost:3004
+            roles:
+            - User
+        cacheDuration: 10m
 
-# common application settings
-serviceName: crypter
-hostID: localhost
-environment: Development
+    logging:
+        filePath: "../../../_logs/crypter-grpc-api.log"
+        logLevel: debug
+        grayLogServer: ""

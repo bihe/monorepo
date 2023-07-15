@@ -6,13 +6,14 @@ import (
 	"testing"
 
 	"golang.binggl.net/monorepo/internal/crypter"
+	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/logging"
 )
 
-var tokenSecurity = crypter.TokenSecurity{
+var tokenSecurity = config.Security{
 	JwtIssuer: "issuer",
 	JwtSecret: "secret",
-	Claim: crypter.Claim{
+	Claim: config.Claim{
 		Name:  "claim",
 		URL:   "http://localhost:3000",
 		Roles: []string{"role"},
@@ -23,23 +24,23 @@ var tokenSecurity = crypter.TokenSecurity{
 var logger = logging.NewNop()
 
 /*
-{
-  "exp": 1870392647,
-  "jti": "6fad5c00-fee2-459c-abad-20457cff3d8a",
-  "iat": 1559787847,
-  "iss": "issuer",
-  "sub": "user",
-  "Type": "login.User",
-  "DisplayName": "Display Name",
-  "Email": "a.b@c.de",
-  "UserId": "12345",
-  "UserName": "a.b@c.de",
-  "GivenName": "Display",
-  "Surname": "Name",
-  "Claims": [
-    "claim|http://localhost:3000|role"
-  ]
-}
+	{
+	  "exp": 1870392647,
+	  "jti": "6fad5c00-fee2-459c-abad-20457cff3d8a",
+	  "iat": 1559787847,
+	  "iss": "issuer",
+	  "sub": "user",
+	  "Type": "login.User",
+	  "DisplayName": "Display Name",
+	  "Email": "a.b@c.de",
+	  "UserId": "12345",
+	  "UserName": "a.b@c.de",
+	  "GivenName": "Display",
+	  "Surname": "Name",
+	  "Claims": [
+	    "claim|http://localhost:3000|role"
+	  ]
+	}
 */
 const testToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4NzAzOTI2NDcsImp0aSI6IjZmYWQ1YzAwLWZlZTItNDU5Yy1hYmFkLTIwNDU3Y2ZmM2Q4YSIsImlhdCI6MTU1OTc4Nzg0NywiaXNzIjoiaXNzdWVyIiwic3ViIjoidXNlciIsIlR5cGUiOiJsb2dpbi5Vc2VyIiwiRGlzcGxheU5hbWUiOiJEaXNwbGF5IE5hbWUiLCJFbWFpbCI6ImEuYkBjLmRlIiwiVXNlcklkIjoiMTIzNDUiLCJVc2VyTmFtZSI6ImEuYkBjLmRlIiwiR2l2ZW5OYW1lIjoiRGlzcGxheSIsIlN1cm5hbWUiOiJOYW1lIiwiQ2xhaW1zIjpbImNsYWltfGh0dHA6Ly9sb2NhbGhvc3Q6MzAwMHxyb2xlIl19.qUwvHXBmV_FuwLtykOnzu3AMbxSqrg82bQlAi3Nabyo"
 

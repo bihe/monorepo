@@ -8,6 +8,7 @@ import (
 
 	pdfApi "github.com/pdfcpu/pdfcpu/pkg/api"
 	pdfModel "github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
+	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
@@ -29,7 +30,7 @@ var (
 )
 
 // NewService returns a Service with all of the expected middlewares wired in.
-func NewService(logger logging.Logger, tokenSetting TokenSecurity) EncryptionService {
+func NewService(logger logging.Logger, tokenSetting config.Security) EncryptionService {
 	var useCache = tokenSetting.CacheDuration != ""
 	var svc EncryptionService
 	{

@@ -3,7 +3,10 @@
 // initial implementation focuses on PDF files
 package crypter
 
-import "github.com/go-kit/kit/endpoint"
+import (
+	"github.com/go-kit/kit/endpoint"
+	"golang.binggl.net/monorepo/pkg/config"
+)
 
 // PayloadType enumerates the available payload types
 type PayloadType string
@@ -40,48 +43,7 @@ type Response struct {
 // Failed implements endpoint.Failer.
 func (r Response) Failed() error { return r.Err }
 
-// --------------------------------------------------------------------------
-// Configuration settings
-// --------------------------------------------------------------------------
-
-// Environment specifies operation modes
-type Environment string
-
-const (
-	// Development is used in development
-	Development Environment = "Development"
-	// Production is used for deployments
-	Production Environment = "Production"
-)
-
-// AppConfig holds the application configuration
+// AppConfig defines configuration settings of the application
 type AppConfig struct {
-	TokenSecurity TokenSecurity
-	Logging       LogConfig
-	Environment   Environment
-	ServiceName   string
-	HostID        string
-}
-
-// TokenSecurity settings for the application
-type TokenSecurity struct {
-	JwtIssuer     string
-	JwtSecret     string
-	Claim         Claim
-	CacheDuration string
-}
-
-// Claim defines the required claims
-type Claim struct {
-	Name  string
-	URL   string
-	Roles []string
-}
-
-// LogConfig is used to define settings for the logging process
-type LogConfig struct {
-	FilePath string
-	LogLevel string
-	// GrayLogServer defines the address of a log-aggregator using Graylog
-	GrayLogServer string
+	config.BaseConfig
 }

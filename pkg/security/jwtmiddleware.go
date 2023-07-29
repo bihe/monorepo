@@ -36,6 +36,37 @@ func NewJwtMiddleware(options JwtOptions, logger logging.Logger) *JwtMiddleware 
 	return &m
 }
 
+// Validate checks the request if the relevant jwt information is available
+func Validate(r *http.Request, jwtAuth *JWTAuthorization, options JwtOptions, logger logging.Logger) (context.Context, error) {
+	var (
+		err   error
+		token string
+		user  *User
+	)
+	authHeader := r.Header.Get("Authorization")
+	if authHeader != "" {
+		token = strings.Replace(authHeader, "Bearer ", "", 1)
+	}
+	if token == "" {
+		// fallback to get the token via the cookie
+		var cookie *http.Cookie
+		if cookie, err = r.Cookie(options.CookieName); err != nil {
+			logger.Warn("get token failed", logging.ErrV(fmt.Errorf("could not get token from header nor cookie: %v", err)))
+			// neither the header nor the cookie supplied a jwt token
+			return nil, fmt.Errorf("security error because of missing JWT token")
+		}
+
+		token = cookie.Value
+	}
+
+	user, err = jwtAuth.EvaluateToken(token)
+	if err != nil {
+		logger.Warn("token evaluation failed", logging.ErrV(fmt.Errorf("error during JWT token evaluation: %v", err)))
+		return nil, fmt.Errorf("error during token evaluation: %v", err)
+	}
+	return NewContext(r.Context(), user), nil
+}
+
 // JwtContext performs the middleware action
 func (j *JwtMiddleware) JwtContext(next http.Handler) http.Handler {
 	return handleJWT(next, j.jwt, j.log)
@@ -56,43 +87,15 @@ func handleJWT(next http.Handler, options JwtOptions, logger logging.Logger) htt
 	jwtAuth := NewJWTAuthorization(options, true)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var (
-			err   error
-			token string
-			user  *User
-		)
-		authHeader := r.Header.Get("Authorization")
-		if authHeader != "" {
-			token = strings.Replace(authHeader, "Bearer ", "", 1)
-		}
-		if token == "" {
-			// fallback to get the token via the cookie
-			var cookie *http.Cookie
-			if cookie, err = r.Cookie(options.CookieName); err != nil {
-				logger.Warn("get token failed", logging.ErrV(fmt.Errorf("could not get token from header nor cookie: %v", err)))
-				// neither the header nor the cookie supplied a jwt token
-				errors.WriteError(w, r, errors.SecurityError{
-					Err:     fmt.Errorf("security error because of missing JWT token"),
-					Request: r,
-					Status:  http.StatusUnauthorized,
-				})
-				return
-			}
-
-			token = cookie.Value
-		}
-
-		user, err = jwtAuth.EvaluateToken(token)
+		ctx, err := Validate(r, jwtAuth, options, logger)
 		if err != nil {
-			logger.Warn("token evaluation failed", logging.ErrV(fmt.Errorf("error during JWT token evaluation: %v", err)))
 			errors.WriteError(w, r, errors.SecurityError{
-				Err:     fmt.Errorf("error during token evaluation: %v", err),
+				Err:     fmt.Errorf("security error because of missing JWT token"),
 				Request: r,
 				Status:  http.StatusUnauthorized,
 			})
 			return
 		}
-		ctx := NewContext(r.Context(), user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

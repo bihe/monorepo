@@ -17,6 +17,7 @@ ENV LSV=${buildtime_variable_litestream_ver}
 WORKDIR /backend-build
 COPY ./go.mod ./
 COPY ./go.sum ./
+COPY ./cmd/bookmarks/server ./cmd/bookmarks/server
 COPY ./internal/bookmarks  ./internal/bookmarks
 COPY ./pkg ./pkg
 
@@ -25,7 +26,7 @@ RUN apk add build-base
 
 ##
 ## go build
-RUN GOOS=linux GOARCH=${ARCH} go build -ldflags="-s -w -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o bookmarks.api ./internal/bookmarks/server.go
+RUN GOOS=linux GOARCH=${ARCH} go build -ldflags="-s -w -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o bookmarks.api ./cmd/bookmarks/server/main.go
 
 ##
 ## include litestream into the image and use the litestream replication capabilities
@@ -39,7 +40,7 @@ RUN tar -C /backend-build -xzf /backend-build/litestream.tar.gz
 FROM alpine:latest
 LABEL author="henrik@binggl.net"
 WORKDIR /opt/bookmarks
-RUN mkdir -p /opt/litestream && mkdir -p /opt/bookmarks/etc && mkdir -p /opt/bookmarks/logs && mkdir -p /opt/bookmarks/uploads && mkdir -p /opt/bookmarks/db
+RUN mkdir -p /opt/litestream && mkdir -p /opt/bookmarks/etc && mkdir -p /opt/bookmarks/logs && mkdir -p /opt/bookmarks/uploads && mkdir -p /opt/bookmarks/db && mkdir -p /opt/bookmarks/assets
 EXPOSE 3000
 
 RUN apk add bash
@@ -51,6 +52,7 @@ RUN addgroup -g 1000 -S bookmarks && \
 COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/bookmarks.api /opt/bookmarks
 COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/litestream /opt/litestream
 COPY --chown=1000:1000 ./litestream/run_litestream.sh /opt/bookmarks
+COPY --chown=1000:1000 ./internal/bookmarks/assets /opt/bookmarks/assets
 RUN chown bookmarks:bookmarks /opt/bookmarks/etc \
     && chown bookmarks:bookmarks /opt/bookmarks/logs \
     && chown bookmarks:bookmarks /opt/bookmarks/uploads \

@@ -17,6 +17,7 @@ import (
 	"golang.binggl.net/monorepo/internal/bookmarks/app"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
+	"golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -93,6 +94,37 @@ func (r *MockBookmarkRepository) GetBookmarkByID(id, username string) (store.Boo
 		UserName:    username,
 		Favicon:     "favicon.ico",
 	}, nil
+}
+
+func Test_GetBookmarkByID_No_Auth(t *testing.T) {
+	// arrange
+	url := "/api/v1/bookmarks/ID"
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Add("Accept", "application/json")
+
+	// act
+	bookmarkHandlerMock(pass).ServeHTTP(rec, req)
+
+	// assert
+	var pd errors.ProblemDetail
+	assert.Equal(t, 401, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &pd); err != nil {
+		t.Errorf("could not unmarshal: %v", err)
+	}
+	if pd.Status != 401 {
+		t.Errorf("the problem-detail returned the wrong error; wanted '401' got '%d'", pd.Status)
+	}
+
+	// do the same without application/json
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", url, nil)
+
+	// act
+	bookmarkHandlerMock(pass).ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, 302, rec.Code)
 }
 
 func Test_GetBookmarkByID(t *testing.T) {

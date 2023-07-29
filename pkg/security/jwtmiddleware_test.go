@@ -95,6 +95,10 @@ func TestJWTMiddlewareBearer(t *testing.T) {
 	req.Header.Add("Authorization", "Bearer "+token)
 	r.Use(jwt.JwtContext)
 	r.Get(path, func(w http.ResponseWriter, r *http.Request) {
+		_, ok := UserFromContext(r.Context())
+		if !ok {
+			t.Errorf("could not get user from context")
+		}
 	})
 
 	r.ServeHTTP(rec, req)

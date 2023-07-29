@@ -55,6 +55,11 @@ baseconfig:
             - User
         cacheDuration: 10m
 
+    # static assets
+    assets:
+        assetDir: "./assets"
+        assetPrefix: "/public"
+
 database:
     connectionString: "DATABASE"
 

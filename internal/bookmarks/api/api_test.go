@@ -3,7 +3,7 @@ package api_test
 import (
 	"net/http"
 
-	"golang.binggl.net/monorepo/internal/bookmarks/api"
+	bm "golang.binggl.net/monorepo/internal/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/conf"
 	"golang.binggl.net/monorepo/pkg/config"
@@ -25,7 +25,7 @@ type handlerOps struct {
 }
 
 func handlerWith(ops *handlerOps) http.Handler {
-	return api.MakeHTTPHandler(ops.app, logger, api.HTTPHandlerOptions{
+	return bm.MakeHTTPHandler(ops.app, logger, bm.HTTPHandlerOptions{
 		BasePath:  "./",
 		ErrorPath: "/error",
 		Config: conf.AppConfig{

@@ -1,0 +1,100 @@
+body {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+  font-family: Roboto Mono,monospace;
+  font-size: .9em;
+  background-color: #303030;
+  color: white;
+}
+
+:root {
+  --lh: 55px;
+}
+
+.header {
+  background: #c2185b;
+}
+
+.sub-navigation {
+  height: var(--lh);
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  border-bottom: darkgray dashed 1px;
+  font-size: small;
+  font-weight: 700;
+  font-family: Roboto Mono,Courier New,Courier,monospace;
+  padding-top: 3px;
+}
+
+.application_name {
+  line-height: var(--lh);
+  margin-left: 20px;
+}
+
+.application_version {
+  line-height: var(--lh);
+  margin-right: 20px;
+  font-size: medium;
+}
+
+.justify {
+  justify-content: center;
+}
+
+.bookmark_favicon {
+  width: 24px;
+  height: 24px;
+  vertical-align: text-top;
+}
+
+.bookmark-path {
+  font-size: medium;
+}
+
+.bookmarks_list {
+  display: block;
+  /* padding-bottom: 35px; */
+}
+
+.bookmark_item {
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-top: dotted 1px #cccccc;
+  cursor: move;
+  height: 56px;
+  min-height: 56px;
+  line-height: 37px;
+}
+
+.bookmark_item:hover {
+  background-color: #555555;
+}
+
+.bookmark_item:last-child {
+  border-bottom: dotted 1px #cccccc;
+
+}
+
+a.bookmark_name {
+  font-weight: 700;
+  font-family: Source Code Pro,monospace;
+  font-size: 1.2em;
+  color: #ccc;
+  text-decoration: none;
+}
+
+a.bookmark_name:hover {
+  text-decoration: underline;
+}
+
+.invert {
+  filter: invert(100%);
+}
+
+a.bookmark_path {
+  color: #ffffff;
+  text-decoration: none;
+}

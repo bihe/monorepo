@@ -51,12 +51,12 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/internal/bookmarks/",
+            "program": "${workspaceFolder}/cmd/bookmarks/server",
             "args": [
                 "--port",
                 "3003",
                 "--basepath",
-                "./"
+                "../../../internal/bookmarks"
             ],
             "envFile": "${workspaceFolder}/.env",
             "internalConsoleOptions": "openOnSessionStart",

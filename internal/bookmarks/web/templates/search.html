@@ -18,15 +18,28 @@
     <div class="bookmark_list">
         {{range .Bookmarks}}
         <div class="bookmark_item">
+            <span>
             {{ if .InvertFaviconColor }}
             <img width="24px" height="24px" alt="favicon" class="bookmark_favicon invert" src="/api/v1/bookmarks/favicon/{{ .ID }}">
             {{ else }}
             <img width="24px" height="24px" alt="favicon" class="bookmark_favicon" src="/api/v1/bookmarks/favicon/{{ .ID }}">
             {{ end }}
+            {{ if (gt .ChildCount 0) }}
+                <span class="top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    {{ .ChildCount}}
+                </span>
+            </span>
+            {{ end }}
+
             <span class="badge rounded-pill text-bg-secondary bookmark-path">
                 <a class="bookmark_path" href="/bookmarks{{ .Path }}">{{ .Path }}</a>
             </span>
-            <a class="bookmark_name" href="{{ .URL }}">{{ .DisplayName }}</a>
+            {{ if (eq .Type "Node") }}
+            <a class="bookmark_name" href="{{ .URL }}">
+            {{ else }}
+            <a class="bookmark_name" href="/bookmarks{{ .Path }}{{ .DisplayName }}">
+            {{ end }}
+            {{ .DisplayName }}</a>
         </div>
         {{end}}
     </div>

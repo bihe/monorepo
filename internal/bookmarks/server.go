@@ -1,12 +1,10 @@
-package main
+package bookmarks
 
 import (
 	"fmt"
-	"os"
 	"path"
 	"strings"
 
-	"golang.binggl.net/monorepo/internal/bookmarks/api"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/conf"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
@@ -17,29 +15,9 @@ import (
 	"gorm.io/driver/sqlite"
 )
 
-var (
-	// Version exports the application version
-	Version = "1.0.0"
-	// Build provides information about the application build
-	Build = "localbuild"
-	// AppName specifies the application itself
-	AppName = "bookmarks"
-	// ApplicationNameKey identifies the application in structured logging
-	ApplicationNameKey = "appName"
-	// HostIDKey identifies the host in structured logging
-	HostIDKey = "localhost"
-)
-
-func main() {
-	if err := run(Version, Build); err != nil {
-		fmt.Fprintf(os.Stderr, "<< ERROR-RESULT >> '%s'\n", err)
-		os.Exit(1)
-	}
-}
-
 // run is the entry-point for the bookmarks service
 // where initialization, setup and execution is done
-func run(version, build string) error {
+func Run(version, build, appName string) error {
 	//hostname, port, _, config := readConfig()
 	hostname, port, basePath, appCfg := server.ReadConfig[conf.AppConfig]("BM")
 	// use the new pkg logger implementation
@@ -55,19 +33,19 @@ func run(version, build string) error {
 			FavStore:      fRepo,
 			FaviconPath:   path.Join(basePath, appCfg.FaviconUploadPath),
 		}
-		handler = api.MakeHTTPHandler(app, logger, api.HTTPHandlerOptions{
+		handler = MakeHTTPHandler(app, logger, HTTPHandlerOptions{
 			BasePath:  basePath,
 			ErrorPath: appCfg.ErrorPath,
 			Config:    appCfg,
-			Version:   Version,
-			Build:     Build,
+			Version:   version,
+			Build:     build,
 		})
 	)
 
 	return server.Run(server.RunOptions{
-		AppName:       AppName,
-		Version:       Version,
-		Build:         Build,
+		AppName:       appName,
+		Version:       version,
+		Build:         build,
 		HostName:      hostname,
 		Port:          port,
 		Environment:   string(appCfg.Environment),

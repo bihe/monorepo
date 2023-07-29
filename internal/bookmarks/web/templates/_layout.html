@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" id="site-favicon" type="image/x-icon" href="public/folder.svg">
+    <title>{{template "title" .}}</title>
+    <link href="public/bootstrap/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM">
+    <link href="public/css/styles.css" rel="stylesheet">
+    <link href="public/fonts/local.css" rel="stylesheet">
+    <link href="public/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+    {{template "style" .}}
+  </head>
+  <body>
+<!-- data-bs-theme="dark" -->
+    <header >
+      <nav class="navbar navbar-expand-md navbar-dark fixed-top header">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="/bookmarks/search"><i class="bi-house-heart"></i> {{template "title" .}}</a>
+
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav me-auto mb-2 mb-md-0">
+
+            </ul>
+            <form class="d-flex" role="search">
+
+            </form>
+            &nbsp;
+            <span class="badge d-flex align-items-center p-1 pe-2 text-dark-emphasis bg-light-subtle border border-dark-subtle rounded-pill">
+              <img class="rounded-circle me-1" width="24" height="24" src="{{ .User.ProfileURL}}" alt="">{{ .User.DisplayName}}
+            </span>
+
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <section class="sub-navigation">
+      {{template "application_navigation" .}}
+    </section>
+
+    <main>
+      <div>
+        <!-- content goes here-->
+        {{template "content" .}}
+        <!-- /content -->
+      </div>
+    </main>
+
+    <script src="public/bootstrap/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"></script>
+    <script src="public/js/htmx.min.js"></script>
+  </body>
+</html>

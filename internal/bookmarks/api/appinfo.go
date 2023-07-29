@@ -16,7 +16,7 @@ type AppInfoHandler struct {
 }
 
 // handleGetAppInfo returns metadata about the application and the current available user
-func (s AppInfoHandler) handleGetAppInfo() http.HandlerFunc {
+func (s AppInfoHandler) HandleGetAppInfo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := ensureUser(r)
 		s.Logger.Debug("get application info", logging.LogV("username", user.DisplayName))
@@ -48,7 +48,7 @@ type WhoAmIResponse struct {
 }
 
 // handleGetAppInfo returns metadata about the application and the current available user
-func (s AppInfoHandler) handleWhoAmI() http.HandlerFunc {
+func (s AppInfoHandler) HandleWhoAmI() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := ensureUser(r)
 		s.Logger.Debug("get information about the user", logging.LogV("username", user.DisplayName))

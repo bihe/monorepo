@@ -1,0 +1,33 @@
+{{template "_layout.html" .}}
+
+{{define "title"}}Search Bookmarks!{{end}}
+
+{{define "application_navigation"}}
+    <div class="application_name">
+        <div>~ searching for: <span class="badge text-bg-success" style="font-size:small">{{ .Search }}</span></div>
+    </div>
+    <div class="application_version">
+        <span class="badge text-bg-info"><i class="bi bi-git"></i> {{ .VersionString }}</span>
+
+    </div>
+{{end}}
+
+{{define "style"}}{{end}}
+
+{{define "content"}}
+    <div class="bookmark_list">
+        {{range .Bookmarks}}
+        <div class="bookmark_item">
+            {{ if .InvertFaviconColor }}
+            <img width="24px" height="24px" alt="favicon" class="bookmark_favicon invert" src="/api/v1/bookmarks/favicon/{{ .ID }}">
+            {{ else }}
+            <img width="24px" height="24px" alt="favicon" class="bookmark_favicon" src="/api/v1/bookmarks/favicon/{{ .ID }}">
+            {{ end }}
+            <span class="badge rounded-pill text-bg-secondary bookmark-path">
+                <a class="bookmark_path" href="/bookmarks{{ .Path }}">{{ .Path }}</a>
+            </span>
+            <a class="bookmark_name" href="{{ .URL }}">{{ .DisplayName }}</a>
+        </div>
+        {{end}}
+    </div>
+{{end}}

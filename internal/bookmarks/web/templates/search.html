@@ -37,7 +37,7 @@
             {{ if (eq .Type "Node") }}
             <a class="bookmark_name" href="{{ .URL }}">
             {{ else }}
-            <a class="bookmark_name" href="/bookmarks{{ .Path }}{{ .DisplayName }}">
+            <a class="bookmark_name" href="/bookmarks{{ .Path }}/{{ .DisplayName }}">
             {{ end }}
             {{ .DisplayName }}</a>
         </div>

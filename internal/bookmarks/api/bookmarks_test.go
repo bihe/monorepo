@@ -1553,3 +1553,67 @@ func Test_MoveBookmarks(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
+
+func Test_FaviconUpdate_ModifiedDate(t *testing.T) {
+	bRepo, fRepo, db := repositories(t)
+	defer db.Close()
+	r := bookmarkHandler(bRepo, fRepo)
+
+	start := time.Now().UTC().Add(-1 * time.Hour)
+
+	// create a favicon
+	url := "/api/v1/bookmarks/favicon/temp/url"
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", url, strings.NewReader("https://en.wikipedia.org/static/favicon/wikipedia.ico"))
+	addJwtAuth(req)
+	bookmarkHandler(bRepo, fRepo).ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusCreated, rec.Code)
+
+	var result api.Result
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Errorf("could not unmarshal body: %v", err)
+	}
+	favicon := result.Value
+	assert.True(t, favicon != "")
+	assert.True(t, result.Success)
+
+	// create the bookmark
+	payload := `{
+		"displayName": "Node",
+		"path": "/",
+		"type": "Node",
+		"url": "http://url",
+		"favicon": "%s"
+	}`
+	url = "/api/v1/bookmarks"
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", url, strings.NewReader(fmt.Sprintf(payload, favicon)))
+	req.Header.Add("Content-Type", "application/json")
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusCreated, rec.Code)
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Errorf("could not unmarshal body: %v", err)
+	}
+	assert.True(t, result.Success)
+
+	// retrieve the favicon bookmark
+	url = "/api/v1/bookmarks/favicon/"
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", url+result.Value, nil)
+	addJwtAuth(req)
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.True(t, len(rec.Body.Bytes()) > 0)
+	mod := rec.Header().Get("Last-Modified")
+	modDate, err := time.Parse(time.RFC1123, mod)
+	if err != nil {
+		t.Errorf("could not parse modified date")
+	}
+	fmt.Println(start)
+	fmt.Println(modDate)
+	if !modDate.After(start) {
+		t.Errorf("the modified-date of the favicon should be later")
+	}
+
+}

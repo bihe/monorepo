@@ -23,16 +23,16 @@
           </button>
 
           <div class="collapse navbar-collapse" id="navbarCollapse">
-            <ul class="navbar-nav me-auto mb-2 mb-md-0">
 
-            </ul>
-            <form class="d-flex" role="search">
+                {{template "application_search_field" .}}
 
-            </form>
-            &nbsp;
-            <span class="badge d-flex align-items-center p-1 pe-2 text-dark-emphasis bg-light-subtle border border-dark-subtle rounded-pill">
-              <img class="rounded-circle me-1" width="24" height="24" src="{{ .User.ProfileURL}}" alt="">{{ .User.DisplayName}}
-            </span>
+
+
+                &nbsp;
+                <span class="badge d-flex align-items-center p-1 pe-2 text-dark-emphasis bg-light-subtle border border-dark-subtle rounded-pill">
+                  <img class="rounded-circle me-1" width="24" height="24" src="{{ .User.ProfileURL}}" alt="">{{ .User.DisplayName}}
+                </span>
+
 
           </div>
         </div>

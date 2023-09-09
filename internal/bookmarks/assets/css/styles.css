@@ -33,7 +33,6 @@ body {
 }
 
 .application_version {
-  line-height: var(--lh);
   margin-right: 20px;
   font-size: medium;
 }

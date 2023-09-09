@@ -7,6 +7,7 @@ type PageModel struct {
 	Development   bool
 	Authenticated bool
 	User          UserModel
+	VersionString string
 }
 
 // UserModel provides user information for pages
@@ -19,11 +20,22 @@ type UserModel struct {
 	Token       string
 }
 
+// BookmarkResultModel holds results from a bookmark operation
+type BookmarkResultModel struct {
+	Error     string
+	Bookmarks []bookmarks.Bookmark
+}
+
+// BookmarkPathModel is used to get bookmarks for a given path
+type BookmarkPathModel struct {
+	PageModel
+	BookmarkResultModel
+	Path string
+}
+
 // BookmarksSearchModel holds the search-results for bookmarks
 type BookmarksSearchModel struct {
 	PageModel
-	Search        string
-	Error         string
-	VersionString string
-	Bookmarks     []bookmarks.Bookmark
+	BookmarkResultModel
+	Search string
 }

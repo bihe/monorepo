@@ -37,9 +37,8 @@ func (t TemplateHandler) SearchBookmarks() http.HandlerFunc {
 		user := ensureUser(r)
 		data := t.getPageModel(r)
 		model := BookmarksSearchModel{
-			PageModel:     data,
-			Search:        name,
-			VersionString: fmt.Sprintf("%s-%s", t.Version, t.Build),
+			PageModel: data,
+			Search:    name,
 		}
 
 		t.Logger.InfoRequest(fmt.Sprintf("get bookmarks by name: '%s' for user: '%s'", name, user.Username), r)
@@ -47,6 +46,32 @@ func (t TemplateHandler) SearchBookmarks() http.HandlerFunc {
 		bms, err := t.App.GetBookmarksByName(name, *user)
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for search '%s'; '%v'", name, err), r)
+		} else {
+			model.Bookmarks = bms
+		}
+		if err := tmpl.Execute(w, model); err != nil {
+			t.Logger.Error("template error", logging.ErrV(err))
+		}
+	}
+}
+
+// GetBookmarksForPath retrieves and renders the bookmarks for a defined path
+func (t TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
+	tmpl := template.Must(template.ParseFS(TemplateFS, "templates/_layout.html", "templates/bookmarks_path.html"))
+	return func(w http.ResponseWriter, r *http.Request) {
+		path := queryParam(r, "p")
+		user := ensureUser(r)
+		data := t.getPageModel(r)
+		model := BookmarkPathModel{
+			PageModel: data,
+			Path:      path,
+		}
+
+		t.Logger.InfoRequest(fmt.Sprintf("get bookmarks for path: '%s' for user: '%s'", path, user.Username), r)
+
+		bms, err := t.App.GetBookmarksByPath(path, *user)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", path, err), r)
 		} else {
 			model.Bookmarks = bms
 		}
@@ -82,6 +107,7 @@ func (t TemplateHandler) getPageModel(r *http.Request) (data PageModel) {
 		return
 	}
 	data.Authenticated = true
+	data.VersionString = fmt.Sprintf("%s-%s", t.Version, t.Build)
 	data.User = UserModel{
 		Username:    user.Username,
 		Email:       user.Email,

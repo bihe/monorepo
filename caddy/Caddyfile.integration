@@ -21,8 +21,8 @@ dev.binggl.net {
     import server
     encode gzip
 
-    handle_path /bmsearch* {
-        rewrite * /bookmarks/search{path}
+    handle_path /bm* {
+        rewrite * /bm{path}
         reverse_proxy http://bookmarks-3003:3000 {
             import proxy-transport
         }

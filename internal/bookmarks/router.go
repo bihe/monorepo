@@ -60,9 +60,11 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 		std.Get("/gettoken", devTokenHandler.Index())
 	}
 
-	// /bookmarks/search performs a server-side search and renders the results
+	// /bm/search performs a server-side search and renders the results
 	// this supersedes the client/frontend-based search interaction
-	sec.Get("/bookmarks/search", templateHandler.SearchBookmarks())
+	sec.Get("/bm/search", templateHandler.SearchBookmarks())
+	// retrieve the bookmarks for a given path
+	sec.Get("/bm/path", templateHandler.GetBookmarksForPath())
 
 	// the following APIs have the base-URL /api/v1
 	sec.Get("/api/v1/whoami", appInfoHandler.HandleWhoAmI())

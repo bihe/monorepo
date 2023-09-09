@@ -27,7 +27,10 @@
                 {{template "application_search_field" .}}
 
 
-
+                &nbsp;
+                <div class="application_version">
+                  <span class="badge text-bg-info"><i class="bi bi-git"></i> {{ .VersionString }}</span>
+                </div>
                 &nbsp;
                 <span class="badge d-flex align-items-center p-1 pe-2 text-dark-emphasis bg-light-subtle border border-dark-subtle rounded-pill">
                   <img class="rounded-circle me-1" width="24" height="24" src="{{ .User.ProfileURL}}" alt="">{{ .User.DisplayName}}

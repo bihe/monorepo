@@ -21,7 +21,7 @@ require (
 	github.com/stretchr/testify v1.8.4 // done
 	go.uber.org/zap v1.25.0 // done
 	golang.org/x/oauth2 v0.11.0
-	google.golang.org/grpc v1.57.0 // done
+	google.golang.org/grpc v1.57.1 // done
 	google.golang.org/protobuf v1.31.0 // done
 	gorm.io/driver/mysql v1.5.1 // done
 	gorm.io/driver/sqlite v1.5.3 // done

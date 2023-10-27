@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strings"
 
+	"github.com/go-chi/chi/v5"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/pkg/config"
+	"golang.binggl.net/monorepo/pkg/develop"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
@@ -31,7 +34,12 @@ type TemplateHandler struct {
 
 // SearchBookmarks performs a search for bookmarks and displays the result using server-side rendering
 func (t TemplateHandler) SearchBookmarks() http.HandlerFunc {
-	tmpl := template.Must(template.ParseFS(TemplateFS, "templates/_layout.html", "templates/search.html"))
+	tmpl, err := template.New("search.html").Funcs(template.FuncMap{
+		"trailingSlash": trailingSlash,
+	}).ParseFS(TemplateFS, "templates/_layout.html", "templates/search.html")
+	if err != nil {
+		panic(err)
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		name := queryParam(r, "q")
 		user := ensureUser(r)
@@ -57,14 +65,39 @@ func (t TemplateHandler) SearchBookmarks() http.HandlerFunc {
 
 // GetBookmarksForPath retrieves and renders the bookmarks for a defined path
 func (t TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
-	tmpl := template.Must(template.ParseFS(TemplateFS, "templates/_layout.html", "templates/bookmarks_path.html"))
+	tmpl, err := template.New("bookmarks_path.html").Funcs(template.FuncMap{
+		"trailingSlash": trailingSlash,
+	}).ParseFS(TemplateFS, "templates/_layout.html", "templates/bookmarks_path.html")
+	if err != nil {
+		panic(err)
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		path := queryParam(r, "p")
+		path := pathParam(r, "*")
 		user := ensureUser(r)
 		data := t.getPageModel(r)
+		pathHierarchy := make([]BookmarkPathEntry, 0)
+
+		// split up the path into it's sub-paths
+		pathParts := strings.Split(path, "/")
+		// now "grow" the paths so that the preceding part is added to the next part
+		var lastPath string
+		for _, p := range pathParts {
+			if p == "" {
+				continue
+			}
+			pathHierarchy = append(pathHierarchy, BookmarkPathEntry{
+				UrlPath:     lastPath + "/" + p,
+				DisplayName: p,
+			})
+			lastPath = lastPath + "/" + p
+		}
+		if len(pathHierarchy) > 0 {
+			pathHierarchy[len(pathHierarchy)-1].LastItem = true
+		}
+
 		model := BookmarkPathModel{
 			PageModel: data,
-			Path:      path,
+			Path:      pathHierarchy,
 		}
 
 		t.Logger.InfoRequest(fmt.Sprintf("get bookmarks for path: '%s' for user: '%s'", path, user.Username), r)
@@ -106,6 +139,8 @@ func (t TemplateHandler) getPageModel(r *http.Request) (data PageModel) {
 		t.Logger.Error("could not retrieve user from context; user not logged on")
 		return
 	}
+
+	data.PageReloadClientJS = template.HTML(develop.PageReloadClientJS)
 	data.Authenticated = true
 	data.VersionString = fmt.Sprintf("%s-%s", t.Version, t.Build)
 	data.User = UserModel{
@@ -127,10 +162,21 @@ func queryParam(r *http.Request, name string) string {
 	return keys[0]
 }
 
+func pathParam(r *http.Request, name string) string {
+	return chi.URLParam(r, name)
+}
+
 func ensureUser(r *http.Request) *security.User {
 	user, ok := security.UserFromContext(r.Context())
 	if !ok || user == nil {
 		panic("the sucurity context user is not available!")
 	}
 	return user
+}
+
+func trailingSlash(entry string) string {
+	if strings.HasSuffix(entry, "/") {
+		return entry
+	}
+	return entry + "/"
 }

@@ -26,7 +26,6 @@
 
                 {{template "application_search_field" .}}
 
-
                 &nbsp;
                 <div class="application_version">
                   <span class="badge text-bg-info"><i class="bi bi-git"></i> {{ .VersionString }}</span>
@@ -48,6 +47,7 @@
 
     <main>
       <div>
+
         <!-- content goes here-->
         {{template "content" .}}
         <!-- /content -->
@@ -55,5 +55,7 @@
     </main>
 
     <script src="/public/bootstrap/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"></script>
+
+    {{ .PageReloadClientJS }}
   </body>
-</html>
+ </html>

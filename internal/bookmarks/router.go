@@ -64,7 +64,7 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 	// this supersedes the client/frontend-based search interaction
 	sec.Get("/bm/search", templateHandler.SearchBookmarks())
 	// retrieve the bookmarks for a given path
-	sec.Get("/bm/path", templateHandler.GetBookmarksForPath())
+	sec.Get("/bm/~*", templateHandler.GetBookmarksForPath())
 
 	// the following APIs have the base-URL /api/v1
 	sec.Get("/api/v1/whoami", appInfoHandler.HandleWhoAmI())

@@ -49,12 +49,12 @@
             {{ end }}
 
             <span class="badge rounded-pill text-bg-secondary bookmark-path">
-                <a class="bookmark_path" href="/bookmarks{{ .Path }}">{{ .Path }}</a>
+                <a class="bookmark_path" href="/bm/~{{ .Path }}">{{ .Path }}</a>
             </span>
             {{ if (eq .Type "Node") }}
             <a class="bookmark_name" href="{{ .URL }}">
             {{ else }}
-            <a class="bookmark_name" href="/bookmarks{{ .Path }}/{{ .DisplayName }}">
+            <a class="bookmark_name" href="/bm/~{{ trailingSlash (.Path) }}{{ .DisplayName }}">
             {{ end }}
             {{ .DisplayName }}</a>
         </div>

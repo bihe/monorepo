@@ -34,3 +34,5 @@ litestream/litestream-integration.yml
 litestream/litestream.yml
 
 internal/crypter/testresult.pdf
+
+tmp/

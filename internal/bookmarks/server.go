@@ -8,6 +8,8 @@ import (
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/conf"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
+	"golang.binggl.net/monorepo/pkg/config"
+	"golang.binggl.net/monorepo/pkg/develop"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/server"
 	"gorm.io/gorm"
@@ -41,6 +43,12 @@ func Run(version, build, appName string) error {
 			Build:     build,
 		})
 	)
+
+	// only run the reload-server in development
+	if appCfg.Environment == config.Development {
+		reload := develop.NewReloadServer()
+		reload.Start()
+	}
 
 	return server.Run(server.RunOptions{
 		AppName:       appName,

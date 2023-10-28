@@ -30,6 +30,8 @@ body {
 .application_name {
   line-height: var(--lh);
   margin-left: 20px;
+  width: 100vw;
+  display: flex;
 }
 
 .application_version {
@@ -96,4 +98,11 @@ a.bookmark_name:hover {
 a.bookmark_path {
   color: #ffffff;
   text-decoration: none;
+}
+
+.modal-title {
+  color: black;
+}
+.modal-body {
+  color: black;
 }

@@ -51,3 +51,9 @@ type BookmarksSearchModel struct {
 	BookmarkResultModel
 	Search string
 }
+
+// ConfirmDeleteModel is used for confirm dialogs
+type ConfirmDeleteModel struct {
+	Item string
+	Path string
+}

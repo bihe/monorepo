@@ -150,7 +150,7 @@ func Test_Bookmark_ForPath(t *testing.T) {
 
 	// without authentication the redirect should be sent
 	rec := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/bm/path", nil)
+	req, _ := http.NewRequest("GET", "/bm/~", nil)
 	r.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusFound, rec.Code)
 	if rec.Header().Get("Location") != "/403" {
@@ -159,7 +159,7 @@ func Test_Bookmark_ForPath(t *testing.T) {
 
 	// add jwt auth
 	rec = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/bm/path", nil)
+	req, _ = http.NewRequest("GET", "/bm/~", nil)
 	addJwtAuth(req)
 
 	r.ServeHTTP(rec, req)

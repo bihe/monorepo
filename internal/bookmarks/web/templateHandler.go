@@ -25,21 +25,50 @@ var TemplateFS embed.FS
 // a limited amount of javascript is needed to achieve the frontend.
 // As additional benefit the build should be faster, because the nodejs build can be removed
 type TemplateHandler struct {
-	Logger  logging.Logger
-	Env     config.Environment
-	App     *bookmarks.Application
-	Version string
-	Build   string
+	Logger    logging.Logger
+	Env       config.Environment
+	App       *bookmarks.Application
+	Version   string
+	Build     string
+	templates map[string]*template.Template
 }
 
-// SearchBookmarks performs a search for bookmarks and displays the result using server-side rendering
-func (t TemplateHandler) SearchBookmarks() http.HandlerFunc {
-	tmpl, err := template.New("search.html").Funcs(template.FuncMap{
+const (
+	searchTemplate string = "search.html"
+	pathTemplate   string = "bookmarks_path.html"
+	confirmDelete  string = "delete_confirm.html"
+)
+
+// NewTemplateHandler performs some internal setup to prepare templates for later use
+func NewTemplateHandler(app *bookmarks.Application, logger logging.Logger, environment config.Environment, version, build string) *TemplateHandler {
+	functions := template.FuncMap{
 		"trailingSlash": trailingSlash,
-	}).ParseFS(TemplateFS, "templates/_layout.html", "templates/search.html")
+	}
+	templates := make(map[string]*template.Template)
+	templates[searchTemplate] = parseTemplate(searchTemplate, functions, "templates/_layout.html", "templates/search.html")
+	templates[pathTemplate] = parseTemplate(pathTemplate, functions, "templates/_layout.html", "templates/bookmarks_path.html")
+	templates[confirmDelete] = parseTemplate(confirmDelete, functions, "templates/delete_confirm.html")
+
+	return &TemplateHandler{
+		Logger:    logger,
+		Env:       environment,
+		App:       app,
+		Version:   version,
+		Build:     build,
+		templates: templates,
+	}
+}
+
+func parseTemplate(name string, functions template.FuncMap, templates ...string) *template.Template {
+	template, err := template.New(name).Funcs(functions).ParseFS(TemplateFS, templates...)
 	if err != nil {
 		panic(err)
 	}
+	return template
+}
+
+// SearchBookmarks performs a search for bookmarks and displays the result using server-side rendering
+func (t *TemplateHandler) SearchBookmarks() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		name := queryParam(r, "q")
 		user := ensureUser(r)
@@ -57,25 +86,24 @@ func (t TemplateHandler) SearchBookmarks() http.HandlerFunc {
 		} else {
 			model.Bookmarks = bms
 		}
-		if err := tmpl.Execute(w, model); err != nil {
+		if err := t.templates[searchTemplate].Execute(w, model); err != nil {
 			t.Logger.Error("template error", logging.ErrV(err))
 		}
 	}
 }
 
 // GetBookmarksForPath retrieves and renders the bookmarks for a defined path
-func (t TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
-	tmpl, err := template.New("bookmarks_path.html").Funcs(template.FuncMap{
-		"trailingSlash": trailingSlash,
-	}).ParseFS(TemplateFS, "templates/_layout.html", "templates/bookmarks_path.html")
-	if err != nil {
-		panic(err)
-	}
+func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		path := pathParam(r, "*")
 		user := ensureUser(r)
 		data := t.getPageModel(r)
-		pathHierarchy := make([]BookmarkPathEntry, 0)
+		pathHierarchy := make([]BookmarkPathEntry, 1)
+		// always start with the root item
+		pathHierarchy[0] = BookmarkPathEntry{
+			UrlPath:     "/",
+			DisplayName: "/root",
+		}
 
 		// split up the path into it's sub-paths
 		pathParts := strings.Split(path, "/")
@@ -91,9 +119,8 @@ func (t TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 			})
 			lastPath = lastPath + "/" + p
 		}
-		if len(pathHierarchy) > 0 {
-			pathHierarchy[len(pathHierarchy)-1].LastItem = true
-		}
+		// highlight the last item
+		pathHierarchy[len(pathHierarchy)-1].LastItem = true
 
 		model := BookmarkPathModel{
 			PageModel: data,
@@ -108,7 +135,28 @@ func (t TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 		} else {
 			model.Bookmarks = bms
 		}
-		if err := tmpl.Execute(w, model); err != nil {
+		if err := t.templates[pathTemplate].Execute(w, model); err != nil {
+			t.Logger.Error("template error", logging.ErrV(err))
+		}
+	}
+}
+
+// DeleteConfirm shows a confirm dialog before an item is deleted
+func (t *TemplateHandler) DeleteConfirm() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := pathParam(r, "id")
+		user := ensureUser(r)
+		t.Logger.InfoRequest(fmt.Sprintf("get bookmarks by id: '%s' for user: '%s'", id, user.Username), r)
+		model := ConfirmDeleteModel{}
+
+		bm, err := t.App.GetBookmarkByID(id, *user)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for id '%s'; '%v'", id, err), r)
+		} else {
+			model.Item = bm.DisplayName
+			model.Path = bm.Path
+		}
+		if err := t.templates[confirmDelete].Execute(w, model); err != nil {
 			t.Logger.Error("template error", logging.ErrV(err))
 		}
 	}

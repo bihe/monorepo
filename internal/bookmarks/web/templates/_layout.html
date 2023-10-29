@@ -34,8 +34,6 @@
                 <span class="badge d-flex align-items-center p-1 pe-2 text-dark-emphasis bg-light-subtle border border-dark-subtle rounded-pill">
                   <img class="rounded-circle me-1" width="24" height="24" src="{{ .User.ProfileURL}}" alt="">{{ .User.DisplayName}}
                 </span>
-
-
           </div>
         </div>
       </nav>
@@ -47,11 +45,11 @@
 
     <main>
       <div>
-
         <!-- content goes here-->
         {{template "content" .}}
         <!-- /content -->
       </div>
+
     </main>
 
     <script src="/public/js/htmx.min.js"></script>

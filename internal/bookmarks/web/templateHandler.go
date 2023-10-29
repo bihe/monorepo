@@ -36,18 +36,21 @@ type TemplateHandler struct {
 const (
 	searchTemplate string = "search.html"
 	pathTemplate   string = "bookmarks_path.html"
-	confirmDelete  string = "delete_confirm.html"
+	bookmarkList   string = "bookmarks_list.html"
+	confirmDelete  string = "dialog_delete_confirm.html"
 )
 
 // NewTemplateHandler performs some internal setup to prepare templates for later use
 func NewTemplateHandler(app *bookmarks.Application, logger logging.Logger, environment config.Environment, version, build string) *TemplateHandler {
 	functions := template.FuncMap{
-		"trailingSlash": trailingSlash,
+		"trailingSlash":   trailingSlash,
+		"cssShowWhenTrue": cssShowWhenTrue,
 	}
 	templates := make(map[string]*template.Template)
 	templates[searchTemplate] = parseTemplate(searchTemplate, functions, "templates/_layout.html", "templates/search.html")
-	templates[pathTemplate] = parseTemplate(pathTemplate, functions, "templates/_layout.html", "templates/bookmarks_path.html")
-	templates[confirmDelete] = parseTemplate(confirmDelete, functions, "templates/delete_confirm.html")
+	templates[pathTemplate] = parseTemplate(pathTemplate, functions, "templates/_layout.html", "templates/toast.html", "templates/bookmarks_path.html", "templates/bookmarks_list.html")
+	templates[confirmDelete] = parseTemplate(confirmDelete, functions, "templates/dialog_delete_confirm.html")
+	templates[bookmarkList] = parseTemplate(bookmarkList, functions, "templates/toast.html", "templates/bookmarks_list.html")
 
 	return &TemplateHandler{
 		Logger:    logger,
@@ -86,9 +89,7 @@ func (t *TemplateHandler) SearchBookmarks() http.HandlerFunc {
 		} else {
 			model.Bookmarks = bms
 		}
-		if err := t.templates[searchTemplate].Execute(w, model); err != nil {
-			t.Logger.Error("template error", logging.ErrV(err))
-		}
+		callTemplate[BookmarksSearchModel](t, searchTemplate, model, w)
 	}
 }
 
@@ -135,9 +136,7 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 		} else {
 			model.Bookmarks = bms
 		}
-		if err := t.templates[pathTemplate].Execute(w, model); err != nil {
-			t.Logger.Error("template error", logging.ErrV(err))
-		}
+		callTemplate[BookmarkPathModel](t, pathTemplate, model, w)
 	}
 }
 
@@ -154,11 +153,48 @@ func (t *TemplateHandler) DeleteConfirm() http.HandlerFunc {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for id '%s'; '%v'", id, err), r)
 		} else {
 			model.Item = bm.DisplayName
-			model.Path = bm.Path
+			model.ID = bm.ID
 		}
-		if err := t.templates[confirmDelete].Execute(w, model); err != nil {
-			t.Logger.Error("template error", logging.ErrV(err))
+		callTemplate[ConfirmDeleteModel](t, confirmDelete, model, w)
+	}
+}
+
+// DeleteBookmark deletes the given bookmark and replaces the bookmark-list with a new list without the deleted bookmark
+func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := pathParam(r, "id")
+		user := ensureUser(r)
+		t.Logger.InfoRequest(fmt.Sprintf("get bookmark by id: '%s' for user: '%s'", id, user.Username), r)
+
+		model := BookmarkResultModel{}
+
+		bm, err := t.App.GetBookmarkByID(id, *user)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmark for id '%s'; '%v'", id, err), r)
 		}
+		err = t.App.Delete(bm.ID, *user)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not delete bookmark with id '%s'; '%v'", id, err), r)
+
+			bms, bErr := t.App.GetBookmarksByPath(bm.Path, *user)
+			if bErr != nil {
+				t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", bm.Path, bErr), r)
+			} else {
+				model.Bookmarks = bms
+			}
+			model.Message = showErrorToast("Bookmark delete error", fmt.Sprintf("Error: '%s'", err))
+			callTemplate[BookmarkResultModel](t, bookmarkList, model, w)
+			return
+		}
+
+		bms, err := t.App.GetBookmarksByPath(bm.Path, *user)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", bm.Path, err), r)
+		} else {
+			model.Bookmarks = bms
+		}
+		model.Message = showSuccessToast("Bookmark deleted", fmt.Sprintf("The bookmark '%s' was deleted.", bm.DisplayName))
+		callTemplate[BookmarkResultModel](t, bookmarkList, model, w)
 	}
 }
 
@@ -167,7 +203,7 @@ func (t *TemplateHandler) DeleteConfirm() http.HandlerFunc {
 // --------------------------------------------------------------------------
 
 // Show403 displays a page which indicates that the given user has no access to the system
-func (t TemplateHandler) Show403() http.HandlerFunc {
+func (t *TemplateHandler) Show403() http.HandlerFunc {
 	tmpl := template.Must(template.ParseFS(TemplateFS, "templates/403.html"))
 	return func(w http.ResponseWriter, r *http.Request) {
 		tmpl.Execute(w, t.getPageModel(r))
@@ -175,8 +211,10 @@ func (t TemplateHandler) Show403() http.HandlerFunc {
 }
 
 // --------------------------------------------------------------------------
+//  Internals
+// --------------------------------------------------------------------------
 
-func (t TemplateHandler) getPageModel(r *http.Request) (data PageModel) {
+func (t *TemplateHandler) getPageModel(r *http.Request) (data PageModel) {
 	switch t.Env {
 	case config.Development:
 		data.Development = true
@@ -202,6 +240,15 @@ func (t TemplateHandler) getPageModel(r *http.Request) (data PageModel) {
 	return data
 }
 
+func callTemplate[M any](t *TemplateHandler, tmpl string, model M, w http.ResponseWriter) {
+	if err := t.templates[tmpl].Execute(w, model); err != nil {
+		t.Logger.Error("template error", logging.ErrV(err))
+		panic(err)
+	}
+}
+
+// --------------------------------------------------------------------------
+
 func queryParam(r *http.Request, name string) string {
 	keys, ok := r.URL.Query()[name]
 	if !ok || len(keys[0]) < 1 {
@@ -220,11 +267,4 @@ func ensureUser(r *http.Request) *security.User {
 		panic("the sucurity context user is not available!")
 	}
 	return user
-}
-
-func trailingSlash(entry string) string {
-	if strings.HasSuffix(entry, "/") {
-		return entry
-	}
-	return entry + "/"
 }

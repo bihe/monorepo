@@ -15,6 +15,20 @@ type PageModel struct {
 	PageReloadClientJS template.HTML
 }
 
+const (
+	MessageTypeInfo    = "info"
+	MessageTypeError   = "error"
+	MessageTypeSuccess = "success"
+)
+
+// MessageModel is used to provide information to the UI
+type MessageModel struct {
+	Title string
+	Text  string
+	Type  string
+	Show  bool
+}
+
 // UserModel provides user information for pages
 type UserModel struct {
 	Username    string
@@ -28,6 +42,7 @@ type UserModel struct {
 // BookmarkResultModel holds results from a bookmark operation
 type BookmarkResultModel struct {
 	Error     string
+	Message   MessageModel
 	Bookmarks []bookmarks.Bookmark
 }
 
@@ -55,5 +70,5 @@ type BookmarksSearchModel struct {
 // ConfirmDeleteModel is used for confirm dialogs
 type ConfirmDeleteModel struct {
 	Item string
-	Path string
+	ID   string
 }

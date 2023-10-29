@@ -1,0 +1,24 @@
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="infoToast" class="toast {{ cssShowWhenTrue (.Message.Show) }}" role="alert">
+        {{ if (eq .Message.Type "info") }}
+        <div class="toast-header" style="background-color: var(--bs-info);color:black;">
+        <i class="bi bi-info-circle"></i>
+        {{ else if (eq .Message.Type "error" ) }}
+        <div class="toast-header" style="background-color: var(--bs-danger);color:white;">
+        <i class="bi bi-exclamation-triangle"></i>
+        {{ else if (eq .Message.Type "success" ) }}
+        <div class="toast-header" style="background-color: var(--bs-success);color:white;">
+        <i class="bi bi-check"></i>
+        {{ else }}
+        <div class="toast-header" style="background-color: var(--bs-gray-500);color:black;">
+        {{ end }}
+        &nbsp;
+        <strong class="me-auto">{{ .Message.Title}}</strong>
+        <small></small>
+        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" style="color:black;">
+        {{ .Message.Text }}
+        </div>
+    </div>
+</div>

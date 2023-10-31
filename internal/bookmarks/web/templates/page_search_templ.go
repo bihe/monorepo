@@ -13,7 +13,7 @@ import "bytes"
 import "fmt"
 import "golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 
-func Search(items []bookmarks.Bookmark) templ.Component {
+func SearchContent(items []bookmarks.Bookmark) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -194,7 +194,7 @@ func SearchStyles() templ.Component {
 	})
 }
 
-func SearchAppNavigation(search string) templ.Component {
+func SearchNavigation(search string) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {

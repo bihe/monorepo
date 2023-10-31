@@ -98,6 +98,7 @@ a.bookmark_name:hover {
 .search-field {
   background-color: #ec84ad;
   border: var(--bs-border-width) solid #ae1d56;
+  color: white;
 }
 
 .search-field-prefix {

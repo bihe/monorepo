@@ -3,7 +3,7 @@ package templates
 import "fmt"
 import "golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 
-templ Search(items []bookmarks.Bookmark) {
+templ SearchContent(items []bookmarks.Bookmark) {
 	<div class="bookmark_list">
 		for _, b := range items {
 			<div class="bookmark_item">
@@ -33,7 +33,7 @@ templ SearchStyles() {
     </style>
 }
 
-templ SearchAppNavigation(search string) {
+templ SearchNavigation(search string) {
 	<div class="application_name">
 		<div>~ searching for: <span class="badge text-bg-success" style="font-size:small">{ search }</span></div>
 	</div>

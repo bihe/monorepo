@@ -78,29 +78,21 @@ func (t *TemplateHandler) SearchBookmarks() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		name := queryParam(r, "q")
 		user := ensureUser(r)
-		data := t.getPageModel(r)
-		model := BookmarksSearchModel{
-			PageModel: data,
-			Search:    name,
-		}
 
 		t.Logger.InfoRequest(fmt.Sprintf("get bookmarks by name: '%s' for user: '%s'", name, user.Username), r)
 
 		bms, err := t.App.GetBookmarksByName(name, *user)
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for search '%s'; '%v'", name, err), r)
-		} else {
-			model.Bookmarks = bms
 		}
 
-		layout := templates.Layout(templates.LayoutModel{
+		templates.Layout(templates.LayoutModel{
 			Title:              "Search Bookmarks!",
-			Version:            data.VersionString,
+			Version:            t.versionString(),
 			User:               *user,
 			Search:             name,
 			PageReloadClientJS: templates.PageReloadClientJS(),
-		}, templates.SearchStyles(), templates.SearchAppNavigation(name), templates.Search(bms))
-		layout.Render(r.Context(), w)
+		}, templates.SearchStyles(), templates.SearchNavigation(name), templates.SearchContent(bms)).Render(r.Context(), w)
 	}
 }
 
@@ -242,6 +234,10 @@ func (t *TemplateHandler) Show403() http.HandlerFunc {
 // --------------------------------------------------------------------------
 //  Internals
 // --------------------------------------------------------------------------
+
+func (t *TemplateHandler) versionString() string {
+	return fmt.Sprintf("%s-%s", t.Version, t.Build)
+}
 
 func (t *TemplateHandler) getPageModel(r *http.Request) (data PageModel) {
 	switch t.Env {

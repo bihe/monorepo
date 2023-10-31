@@ -60,13 +60,6 @@ type BookmarkPathEntry struct {
 	LastItem    bool
 }
 
-// BookmarksSearchModel holds the search-results for bookmarks
-type BookmarksSearchModel struct {
-	PageModel
-	BookmarkResultModel
-	Search string
-}
-
 // ConfirmDeleteModel is used for confirm dialogs
 type ConfirmDeleteModel struct {
 	Item string

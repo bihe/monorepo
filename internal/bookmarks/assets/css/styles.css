@@ -102,7 +102,43 @@ a.bookmark_path {
 
 .modal-title {
   color: black;
+  text-overflow: ellipsis;
 }
 .modal-body {
   color: black;
+}
+
+.bookmark_edit_form {
+  font-size: larger;
+}
+
+.bookmark_favicon_preview {
+  width: 50px;
+  height: 50px;
+  padding-right: 5px;
+  padding-top: 5px;
+}
+
+.flex_layout {
+  display: flex;
+}
+
+.bookmark_edit_layout_flex_5 {
+  flex: 5%;
+}
+
+.bookmark_edit_layout_flex_95 {
+  flex: 95%;
+}
+
+.bookmark_edit_layout_flex_10 {
+  flex: 10%;
+}
+
+.bookmark_edit_layout_flex_90 {
+  flex: 90%;
+}
+
+.spacer {
+  padding-bottom: 20px;
 }

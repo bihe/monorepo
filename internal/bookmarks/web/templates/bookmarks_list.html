@@ -33,7 +33,13 @@
                 <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"></button>
 
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#"><i class="bi bi-pencil"></i> Edit</a></li>
+                    <li><a class="dropdown-item" href="#"
+                        hx-target="#modals-here"
+                        hx-trigger="click"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modals-here"
+                        hx-get="/bm/{{.ID}}"
+                        ><i class="bi bi-pencil"></i> Edit</a></li>
                     <li><a class="dropdown-item delete" href="#"
                         hx-target="#modals-here"
                         hx-trigger="click"
@@ -57,6 +63,6 @@
         </div>
     </div>
 
-    {{template "toast.html" . }}
-
 </div>
+
+{{template "toast.html" . }}

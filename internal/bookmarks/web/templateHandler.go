@@ -38,6 +38,7 @@ const (
 	pathTemplate   string = "bookmarks_path.html"
 	bookmarkList   string = "bookmarks_list.html"
 	confirmDelete  string = "dialog_delete_confirm.html"
+	editBookmark   string = "dialog_edit_bookmark.html"
 )
 
 // NewTemplateHandler performs some internal setup to prepare templates for later use
@@ -45,12 +46,15 @@ func NewTemplateHandler(app *bookmarks.Application, logger logging.Logger, envir
 	functions := template.FuncMap{
 		"trailingSlash":   trailingSlash,
 		"cssShowWhenTrue": cssShowWhenTrue,
+		"valWhenNodeEq":   valWhenNodeEq,
+		"valWhenTrue":     valWhenTrue,
 	}
 	templates := make(map[string]*template.Template)
 	templates[searchTemplate] = parseTemplate(searchTemplate, functions, "templates/_layout.html", "templates/search.html")
 	templates[pathTemplate] = parseTemplate(pathTemplate, functions, "templates/_layout.html", "templates/toast.html", "templates/bookmarks_path.html", "templates/bookmarks_list.html")
 	templates[confirmDelete] = parseTemplate(confirmDelete, functions, "templates/dialog_delete_confirm.html")
 	templates[bookmarkList] = parseTemplate(bookmarkList, functions, "templates/toast.html", "templates/bookmarks_list.html")
+	templates[editBookmark] = parseTemplate(editBookmark, functions, "templates/dialog_edit_bookmark.html")
 
 	return &TemplateHandler{
 		Logger:    logger,
@@ -195,6 +199,24 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 		}
 		model.Message = showSuccessToast("Bookmark deleted", fmt.Sprintf("The bookmark '%s' was deleted.", bm.DisplayName))
 		callTemplate[BookmarkResultModel](t, bookmarkList, model, w)
+	}
+}
+
+// EditBookmarkDialog shows a dialog to edit a bookmark
+func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := pathParam(r, "id")
+		user := ensureUser(r)
+		t.Logger.InfoRequest(fmt.Sprintf("get bookmarks by id: '%s' for user: '%s'", id, user.Username), r)
+		model := EditBookmarkModel{}
+
+		bm, err := t.App.GetBookmarkByID(id, *user)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for id '%s'; '%v'", id, err), r)
+		} else {
+			model.Bookmark = *bm
+		}
+		callTemplate[EditBookmarkModel](t, editBookmark, model, w)
 	}
 }
 

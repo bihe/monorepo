@@ -1,6 +1,10 @@
 package web
 
-import "strings"
+import (
+	"strings"
+
+	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
+)
 
 // functions commonly used in templates
 
@@ -14,6 +18,20 @@ func trailingSlash(entry string) string {
 func cssShowWhenTrue(show bool) string {
 	if show {
 		return "show"
+	}
+	return ""
+}
+
+func valWhenNodeEq(expec string, val bookmarks.NodeType, returnVal string) string {
+	if string(val) == expec {
+		return returnVal
+	}
+	return ""
+}
+
+func valWhenTrue(expec bool, returnVal string) string {
+	if expec {
+		return returnVal
 	}
 	return ""
 }

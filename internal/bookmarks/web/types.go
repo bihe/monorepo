@@ -72,3 +72,8 @@ type ConfirmDeleteModel struct {
 	Item string
 	ID   string
 }
+
+// EditBookmarkModel is used to create or edit a bookmark
+type EditBookmarkModel struct {
+	bookmarks.Bookmark
+}

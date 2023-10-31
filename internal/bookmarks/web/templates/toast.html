@@ -1,5 +1,5 @@
 <div class="toast-container position-fixed bottom-0 end-0 p-3">
-    <div id="infoToast" class="toast {{ cssShowWhenTrue (.Message.Show) }}" role="alert">
+    <div id="infoToast" class="toast {{ cssShowWhenTrue (.Message.Show) }}" role="alert" data-type="{{ .Message.Type }}">
         {{ if (eq .Message.Type "info") }}
         <div class="toast-header" style="background-color: var(--bs-info);color:black;">
         <i class="bi bi-info-circle"></i>
@@ -22,3 +22,19 @@
         </div>
     </div>
 </div>
+
+{{ if .Message.Show }}
+<script type="text/javascript">
+    if (document.querySelector('#infoToast')) {
+        if (document.querySelector('#infoToast').classList.contains('show')) {
+            let type = document.querySelector('#infoToast').dataset.type;
+            if (type != 'error') {
+                    setTimeout(() => {
+                        // time to say goodbye
+                        document.querySelector('#infoToast').classList.remove('show');
+                }, 2500);
+            }
+        }
+    }
+</script>
+{{ end }}

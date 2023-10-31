@@ -61,6 +61,7 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 	sec.Get("/bm/~*", templateHandler.GetBookmarksForPath())
 	sec.Get("/bm/confirm/delete/{id}", templateHandler.DeleteConfirm())
 	sec.Delete("/bm/delete/{id}", templateHandler.DeleteBookmark())
+	sec.Get("/bm/{id}", templateHandler.EditBookmarkDialog())
 
 	// the following APIs have the base-URL /api/v1
 	sec.Get("/api/v1/whoami", appInfoHandler.HandleWhoAmI())

@@ -1,7 +1,7 @@
 body {
   padding-top: 3rem;
   padding-bottom: 3rem;
-  font-family: Roboto Mono,monospace;
+  font-family: Roboto Mono, monospace;
   font-size: .9em;
   background-color: #303030;
   color: white;
@@ -23,7 +23,7 @@ body {
   border-bottom: darkgray dashed 1px;
   font-size: small;
   font-weight: 700;
-  font-family: Roboto Mono,Courier New,Courier,monospace;
+  font-family: Roboto Mono, Courier New, Courier, monospace;
   padding-top: 3px;
 }
 
@@ -81,7 +81,7 @@ body {
 
 a.bookmark_name {
   font-weight: 700;
-  font-family: Source Code Pro,monospace;
+  font-family: Source Code Pro, monospace;
   font-size: 1.2em;
   color: #ccc;
   text-decoration: none;
@@ -95,6 +95,16 @@ a.bookmark_name:hover {
   filter: invert(100%);
 }
 
+.search-field {
+  background-color: #ec84ad;
+  border: var(--bs-border-width) solid #ae1d56;
+}
+
+.search-field-prefix {
+  background-color: #e2588e;
+  border: var(--bs-border-width) solid #ae1d56;
+}
+
 a.bookmark_path {
   color: #ffffff;
   text-decoration: none;
@@ -104,6 +114,7 @@ a.bookmark_path {
   color: black;
   text-overflow: ellipsis;
 }
+
 .modal-body {
   color: black;
 }

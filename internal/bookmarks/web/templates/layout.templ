@@ -1,0 +1,69 @@
+package templates
+
+import "golang.binggl.net/monorepo/pkg/security"
+
+type LayoutModel struct {
+	Title              string
+	Version            string
+	User               security.User
+	Search             string
+	PageReloadClientJS templ.Component
+}
+
+templ Layout(model LayoutModel, style, application_navigation, content templ.Component) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<link rel="shortcut icon" id="site-favicon" type="image/x-icon" href="/public/folder.svg"/>
+			<title>{ model.Title }</title>
+			<link href="/public/bootstrap/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"/>
+			<link href="/public/css/styles.css" rel="stylesheet"/>
+			<link href="/public/fonts/local.css" rel="stylesheet"/>
+			<link href="/public/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet"/>
+			{! style }
+		</head>
+		<body data-bs-theme="dark">
+			<header>
+				<nav class="navbar navbar-expand-md navbar-dark fixed-top header">
+					<div class="container-fluid">
+						<a class="navbar-brand" href="/bookmarks/search"><i class="bi-house-heart"></i> { model.Title }</a>
+						<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+							<span class="navbar-toggler-icon"></span>
+						</button>
+						<div class="collapse navbar-collapse" id="navbarCollapse">
+							<form class="w-100 me-3" role="search" method="GET" action="/bm/search">
+								<div class="input-group">
+									<span class="input-group-text search-field-prefix" id="search-addon"><i class="bi bi-search"></i></span>
+									<input type="search" name="q" class="form-control search-field" placeholder="Search..." aria-label="Search" control-id="search-field" value={ model.Search }/>
+								</div>
+							</form>
+							&nbsp;
+							<div class="application_version">
+								<span class="badge text-bg-info"><i class="bi bi-git"></i> { model.Version }</span>
+							</div>
+							&nbsp;
+							<span class="badge d-flex align-items-center p-1 pe-2 text-dark-emphasis bg-light-subtle border border-dark-subtle rounded-pill">
+								<img class="rounded-circle me-1" width="24" height="24" src={ model.User.ProfileURL } alt=""/>{ model.User.DisplayName }
+							</span>
+						</div>
+					</div>
+				</nav>
+			</header>
+			<section class="sub-navigation">
+				{! application_navigation }
+			</section>
+			<main>
+				<div>
+					<!-- content goes here-->
+					{! content }
+					<!-- /content -->
+				</div>
+			</main>
+			<script src="/public/js/htmx.min.js"></script>
+			<script src="/public/bootstrap/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"></script>
+			{! model.PageReloadClientJS }
+		</body>
+	</html>
+}

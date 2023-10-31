@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
+	"golang.binggl.net/monorepo/internal/bookmarks/web/templates"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/develop"
 	"golang.binggl.net/monorepo/pkg/logging"
@@ -34,11 +35,10 @@ type TemplateHandler struct {
 }
 
 const (
-	searchTemplate string = "search.html"
-	pathTemplate   string = "bookmarks_path.html"
-	bookmarkList   string = "bookmarks_list.html"
-	confirmDelete  string = "dialog_delete_confirm.html"
-	editBookmark   string = "dialog_edit_bookmark.html"
+	pathTemplate  string = "bookmarks_path.html"
+	bookmarkList  string = "bookmarks_list.html"
+	confirmDelete string = "dialog_delete_confirm.html"
+	editBookmark  string = "dialog_edit_bookmark.html"
 )
 
 // NewTemplateHandler performs some internal setup to prepare templates for later use
@@ -50,7 +50,6 @@ func NewTemplateHandler(app *bookmarks.Application, logger logging.Logger, envir
 		"valWhenTrue":     valWhenTrue,
 	}
 	templates := make(map[string]*template.Template)
-	templates[searchTemplate] = parseTemplate(searchTemplate, functions, "templates/_layout.html", "templates/search.html")
 	templates[pathTemplate] = parseTemplate(pathTemplate, functions, "templates/_layout.html", "templates/toast.html", "templates/bookmarks_path.html", "templates/bookmarks_list.html")
 	templates[confirmDelete] = parseTemplate(confirmDelete, functions, "templates/dialog_delete_confirm.html")
 	templates[bookmarkList] = parseTemplate(bookmarkList, functions, "templates/toast.html", "templates/bookmarks_list.html")
@@ -93,7 +92,15 @@ func (t *TemplateHandler) SearchBookmarks() http.HandlerFunc {
 		} else {
 			model.Bookmarks = bms
 		}
-		callTemplate[BookmarksSearchModel](t, searchTemplate, model, w)
+
+		layout := templates.Layout(templates.LayoutModel{
+			Title:              "Search Bookmarks!",
+			Version:            data.VersionString,
+			User:               *user,
+			Search:             name,
+			PageReloadClientJS: templates.PageReloadClientJS(),
+		}, templates.SearchStyles(), templates.SearchAppNavigation(name), templates.Search(bms))
+		layout.Render(r.Context(), w)
 	}
 }
 
@@ -103,6 +110,7 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 		path := pathParam(r, "*")
 		user := ensureUser(r)
 		data := t.getPageModel(r)
+
 		pathHierarchy := make([]BookmarkPathEntry, 1)
 		// always start with the root item
 		pathHierarchy[0] = BookmarkPathEntry{
@@ -226,9 +234,8 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 
 // Show403 displays a page which indicates that the given user has no access to the system
 func (t *TemplateHandler) Show403() http.HandlerFunc {
-	tmpl := template.Must(template.ParseFS(TemplateFS, "templates/403.html"))
 	return func(w http.ResponseWriter, r *http.Request) {
-		tmpl.Execute(w, t.getPageModel(r))
+		templates.Page403(t.Env).Render(r.Context(), w)
 	}
 }
 

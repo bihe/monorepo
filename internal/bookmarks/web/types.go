@@ -46,26 +46,6 @@ type BookmarkResultModel struct {
 	Bookmarks []bookmarks.Bookmark
 }
 
-// BookmarkPathModel is used to get bookmarks for a given path
-type BookmarkPathModel struct {
-	PageModel
-	BookmarkResultModel
-	Path []BookmarkPathEntry
-}
-
-// BookmarkPathEntry is used to display the path hierarchy
-type BookmarkPathEntry struct {
-	UrlPath     string
-	DisplayName string
-	LastItem    bool
-}
-
-// ConfirmDeleteModel is used for confirm dialogs
-type ConfirmDeleteModel struct {
-	Item string
-	ID   string
-}
-
 // EditBookmarkModel is used to create or edit a bookmark
 type EditBookmarkModel struct {
 	bookmarks.Bookmark

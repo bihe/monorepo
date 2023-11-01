@@ -1,0 +1,69 @@
+package templates
+
+import "fmt"
+import "golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
+
+templ BookmarkList(items []bookmarks.Bookmark, toast templ.Component) {
+	<div class="bookmark_list" id="bookmark_list">
+		for _, b := range items {
+			<div class="bookmark_item hstack gap-3">
+				<div class="p2">
+					<span>
+						<img width="24px" height="24px" alt="favicon" class={ "bookmark_favicon", templ.KV("invert", (b.InvertFaviconColor == 1)) } src={ fmt.Sprintf("/api/v1/bookmarks/favicon/%s", b.ID) }/>
+						if b.ChildCount > 0 {
+							<span class="top-0 start-100 translate-middle badge rounded-pill bg-danger">
+								{ fmt.Sprintf("%d", b.ChildCount) }
+							</span>
+						}
+					</span>
+					if b.Type == bookmarks.Node {
+						<a class="bookmark_name" href={ templ.URL(b.URL) }>{ b.DisplayName }</a>
+					} else {
+						<a class="bookmark_name" href={ templ.URL("/bm/~"+EnsureTrailingSlash(b.Path)+b.DisplayName) }>{ b.DisplayName }</a>
+					}
+				</div>
+				<div class="p2 ms-auto"></div>
+				<div class="p2">
+					<div class="btn-group" role="group">
+						<button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"></button>
+						<ul class="dropdown-menu">
+							<li>
+								<a
+ 									class="dropdown-item"
+ 									href="#"
+ 									hx-target="#modals-here"
+ 									hx-trigger="click"
+ 									data-bs-toggle="modal"
+ 									data-bs-target="#modals-here"
+ 									hx-get={ "/bm/" + b.ID }
+								><i class="bi bi-pencil"></i> Edit</a>
+							</li>
+							<li>
+								<a
+ 									class="dropdown-item delete"
+ 									href="#"
+ 									hx-target="#modals-here"
+ 									hx-trigger="click"
+ 									data-bs-toggle="modal"
+ 									data-bs-target="#modals-here"
+ 									hx-get={ "/bm/confirm/delete/" + b.ID }
+								><i class="bi bi-x"></i> Delete</a>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		}
+		<div
+ 			id="modals-here"
+ 			class="modal modal-blur fade"
+ 			aria-hidden="false"
+ 			tabindex="-1"
+		>
+			<div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+				<div class="modal-content"></div>
+			</div>
+		</div>
+	</div>
+	{! toast }
+}

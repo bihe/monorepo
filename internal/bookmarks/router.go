@@ -59,6 +59,7 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 	sec.Get("/bm/search", templateHandler.SearchBookmarks())
 	// retrieve the bookmarks for a given path
 	sec.Get("/bm/~*", templateHandler.GetBookmarksForPath())
+	sec.Get("/bm/partial/~*", templateHandler.GetBookmarksForPathPartial())
 	sec.Get("/bm/confirm/delete/{id}", templateHandler.DeleteConfirm())
 	sec.Delete("/bm/delete/{id}", templateHandler.DeleteBookmark())
 	sec.Get("/bm/{id}", templateHandler.EditBookmarkDialog())

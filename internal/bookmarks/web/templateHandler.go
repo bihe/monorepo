@@ -109,7 +109,30 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 			t.layoutModel("Bookmarks!", "", *user),
 			templates.BookmarksByPathStyles(),
 			templates.BookmarksByPathNavigation(pathHierarchy),
-			templates.BookmarksByPathContent(templates.BookmarkList(bms, templates.Toast(templates.MessageModel{}))),
+			templates.BookmarksByPathContent(templates.BookmarkList(
+				path,
+				bms,
+			)),
+		).Render(r.Context(), w)
+	}
+}
+
+// GetBookmarksForPathPartial only returns the bookmark list of the whole page
+func (t *TemplateHandler) GetBookmarksForPathPartial() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		path := pathParam(r, "*")
+		user := ensureUser(r)
+
+		t.Logger.InfoRequest(fmt.Sprintf("get bookmark-list partial for path: '%s' for user: '%s'", path, user.Username), r)
+
+		bms, err := t.App.GetBookmarksByPath(path, *user)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", path, err), r)
+		}
+
+		templates.BookmarkList(
+			path,
+			bms,
 		).Render(r.Context(), w)
 	}
 }
@@ -148,11 +171,11 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 				t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", bm.Path, bErr), r)
 			}
 
+			// show a notification-toast about the error!
+			w.Header().Add("HX-Trigger", templates.ErrorToast("Bookmark delete error", fmt.Sprintf("Error: '%s'", err)))
 			templates.BookmarkList(
+				bm.Path,
 				bms,
-				templates.Toast(
-					templates.ShowErrorToast("Bookmark delete error", fmt.Sprintf("Error: '%s'", err)),
-				),
 			).Render(r.Context(), w)
 			return
 		}
@@ -162,12 +185,15 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", bm.Path, err), r)
 		}
 
+		// show a notification-toast about the update!
+		// https://htmx.org/headers/hx-trigger/
+		w.Header().Add("HX-Trigger", templates.SuccessToast("Bookmark deleted", fmt.Sprintf("The bookmark '%s' was deleted.", bm.DisplayName)))
+
 		templates.BookmarkList(
+			bm.Path,
 			bms,
-			templates.Toast(
-				templates.ShowSuccessToast("Bookmark deleted", fmt.Sprintf("The bookmark '%s' was deleted.", bm.DisplayName)),
-			),
 		).Render(r.Context(), w)
+
 	}
 }
 
@@ -210,7 +236,6 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 				t.Logger.ErrorRequest(fmt.Sprintf("could not get all paths for bookmarks; '%v'", err), r)
 			}
 		}
-
 		templates.EditBookmarks(bm, paths).Render(r.Context(), w)
 	}
 }
@@ -220,7 +245,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
 			recv       bookmarks.Bookmark
-			bm         templates.Bookmark
+			formBm     templates.Bookmark
 			paths      []string
 			err        error
 			formPrefix string = "bookmark_"
@@ -249,36 +274,91 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 		}
 
 		// validation
-		bm.ID = templates.ValidatorInput{Val: recv.ID, Valid: true}
-		bm.DisplayName = templates.ValidatorInput{Val: recv.DisplayName, Valid: true}
+		validData := true
+		formBm.ID = templates.ValidatorInput{Val: recv.ID, Valid: true}
+		formBm.DisplayName = templates.ValidatorInput{Val: recv.DisplayName, Valid: true}
 		if recv.DisplayName == "" {
-			bm.DisplayName.Valid = false
-			bm.DisplayName.Message = "missing value!"
+			formBm.DisplayName.Valid = false
+			formBm.DisplayName.Message = "missing value!"
+			validData = false
 		}
-		bm.Path = templates.ValidatorInput{Val: recv.Path, Valid: true}
+		formBm.Path = templates.ValidatorInput{Val: recv.Path, Valid: true}
 		if recv.Path == "" {
-			bm.Path.Valid = false
-			bm.Path.Message = "missing value!"
+			formBm.Path.Valid = false
+			formBm.Path.Message = "missing value!"
+			validData = false
 		}
-		bm.Type = recv.Type
-		if bm.Type == bookmarks.Node {
-			bm.URL = templates.ValidatorInput{Val: recv.URL, Valid: true}
+		formBm.Type = recv.Type
+		if formBm.Type == bookmarks.Node {
+			formBm.URL = templates.ValidatorInput{Val: recv.URL, Valid: true}
 			if recv.URL == "" {
-				bm.URL.Valid = false
-				bm.URL.Message = "missing value!"
+				formBm.URL.Valid = false
+				formBm.URL.Message = "missing value!"
+				validData = false
 			}
 		}
 		if customFavicon {
-			bm.UseCustomFavicon = customFavicon
-			bm.Favicon = templates.ValidatorInput{Val: recv.Favicon, Valid: true}
+			formBm.UseCustomFavicon = customFavicon
+			formBm.Favicon = templates.ValidatorInput{Val: recv.Favicon, Valid: true}
 			if recv.Favicon == "" {
-				bm.Favicon.Valid = false
-				bm.Favicon.Message = "missing value!"
+				formBm.Favicon.Valid = false
+				formBm.Favicon.Message = "missing value!"
+				validData = false
 			}
 		}
-		bm.InvertFaviconColor = (recv.InvertFaviconColor == 1)
+		formBm.InvertFaviconColor = (recv.InvertFaviconColor == 1)
 
-		templates.EditBookmarks(bm, paths).Render(r.Context(), w)
+		if !validData {
+			// show the same form again!
+			t.Logger.ErrorRequest("the supplied data for creating bookmark entry is not valid!", r)
+			templates.EditBookmarks(formBm, paths).Render(r.Context(), w)
+			return
+		}
+
+		if recv.ID == "-1" {
+			// create a new bookmark entry
+			bm := bookmarks.Bookmark{
+				Path:               recv.Path,
+				DisplayName:        recv.DisplayName,
+				Type:               recv.Type,
+				URL:                recv.URL,
+				InvertFaviconColor: recv.InvertFaviconColor,
+			}
+			if customFavicon {
+				// the provided favicon needs to be an ID
+				bm.Favicon = recv.Favicon
+			}
+			created, err := t.App.CreateBookmark(bm, *user)
+			if err != nil {
+				t.Logger.ErrorRequest(fmt.Sprintf("could not create a new bookmark entry; '%v'", err), r)
+				formBm.Error = "Error: " + err.Error()
+				templates.EditBookmarks(formBm, paths).Render(r.Context(), w)
+				return
+			}
+			t.Logger.Info("new bookmark created", logging.LogV("ID", created.ID))
+
+			type triggerDef struct {
+				templates.ToastMessage
+				Refresh string `json:"refreshBookmarkList,omitempty"`
+			}
+
+			triggerEvent := triggerDef{
+				ToastMessage: templates.ToastMessage{
+					Event: templates.ToastMessageContent{
+						Type:  templates.MsgSuccess,
+						Title: "Bookmark saved!",
+						Text:  fmt.Sprintf("The bookmark '%s' was created.", created.DisplayName),
+					},
+				},
+				Refresh: "now",
+			}
+			// https://htmx.org/headers/hx-trigger/
+			w.Header().Add("HX-Trigger", templates.Json(triggerEvent))
+			formBm.Close = true
+			templates.EditBookmarks(formBm, paths).Render(r.Context(), w)
+		} else {
+			// update an exiting entry
+		}
 
 		// hint: Update with htmx Events: https://htmx.org/examples/update-other-content/#events
 	}

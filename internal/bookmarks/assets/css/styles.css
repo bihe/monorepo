@@ -158,3 +158,23 @@ a.bookmark_path {
 .error_text {
   color: var(--bs-form-invalid-border-color);
 }
+
+.disable {
+  pointer-events: none;
+}
+
+.disable_grey_bg {
+  pointer-events: none;
+  background: grey;
+}
+
+.error_icon {
+  font-size: xx-large;
+  color: var(--bs-form-invalid-border-color);
+}
+
+.position_error_icon {
+  top: 7px;
+  position: relative;
+  left: 10px;
+}

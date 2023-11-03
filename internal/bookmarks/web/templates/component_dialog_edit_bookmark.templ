@@ -8,7 +8,7 @@ type Bookmark struct {
 	DisplayName        ValidatorInput
 	URL                ValidatorInput
 	Type               bookmarks.NodeType
-	Favicon            ValidatorInput
+	CustomFavicon      ValidatorInput
 	InvertFaviconColor bool
 	UseCustomFavicon   bool
 	Error              string
@@ -35,17 +35,22 @@ templ EditBookmarks(bm Bookmark, paths []string) {
 					} else {
 						<h5 class="modal-title">Create Bookmark</h5>
 					}
+					<div id="indicator" class="htmx-indicator">
+						<div class="spinner-border text-light" role="status">
+							<span class="visually-hidden">Loading...</span>
+						</div>
+					</div>
 				</div>
 				<form class="bookmark_edit_form">
 					<input type="hidden" name="bookmark_ID" value={ bm.ID.Val }/>
 					<div class="modal-body">
 						<div class="form-check form-check-inline">
-							<input class="form-check-input" type="radio" name="bookmark_Type" id="type_Bookmark" value="Node" checked?={ bm.Type == bookmarks.Node } disabled?={ bm.ID.Val != "-1" }/>
-							<label class="form-check-label" for="type_Bookmark">Bookmark</label>
+							<input class={ "form-check-input", templ.KV("disable", (bm.ID.Val != "-1")) } type="radio" name="bookmark_Type" id="type_Bookmark" value="Node" checked?={ bm.Type == bookmarks.Node }/>
+							<label class={ "form-check-label", templ.KV("disable", (bm.ID.Val != "-1")) } for="type_Bookmark">Bookmark</label>
 						</div>
 						<div class="form-check form-check-inline">
-							<input class="form-check-input" type="radio" name="bookmark_Type" id="type_Folder" value="Folder" checked?={ bm.Type == bookmarks.Folder } disabled?={ bm.ID.Val != "-1" }/>
-							<label class="form-check-label" for="type_Folder">Folder</label>
+							<input class={ "form-check-input", templ.KV("disable", (bm.ID.Val != "-1")) } type="radio" name="bookmark_Type" id="type_Folder" value="Folder" checked?={ bm.Type == bookmarks.Folder }/>
+							<label class={ "form-check-label", templ.KV("disable", (bm.ID.Val != "-1")) } for="type_Folder">Folder</label>
 						</div>
 						<div class="spacer"></div>
 						<div class="flex_layout">
@@ -61,7 +66,16 @@ templ EditBookmarks(bm Bookmark, paths []string) {
 							<div class="input-group mb-3" id="url_section">
 								<span class="input-group-text" id="url"><i class="bi bi-link-45deg"></i></span>
 								<input type="text" class={ "form-control", templ.KV("control_invalid", !bm.URL.Valid) } placeholder="URL" aria-label="URL" aria-describedby="url" name="bookmark_URL" value={ bm.URL.Val }/>
-								<button type="button" class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i></button>
+								<button
+ 									type="button"
+ 									class="btn btn-outline-secondary"
+ 									hx-post="/bm/favicon/page"
+ 									hx-trigger="click"
+ 									hx-target="#bookmark_favicon_display"
+ 									hx-params="bookmark_URL"
+ 									hx-swap="outerHTML"
+ 									hx-indicator="#indicator"
+								><i class="bi bi-arrow-clockwise"></i></button>
 							</div>
 						}
 						<div class="form-floating mb-3">
@@ -87,8 +101,17 @@ templ EditBookmarks(bm Bookmark, paths []string) {
 						<div id="custom_favicon_section" class={ templ.KV("d-none", !bm.UseCustomFavicon) }>
 							<div class="spacer"></div>
 							<div class="input-group mb-3">
-								<input type="text" class={ "form-control", templ.KV("control_invalid", !bm.Favicon.Valid) } placeholder="Favicon URL" aria-label="Favicon URL" aria-describedby="Favicon URL" name="bookmark_CustomFavicon" value={ bm.Favicon.Val }/>
-								<button type="button" class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i></button>
+								<input type="text" class={ "form-control", templ.KV("control_invalid", !bm.CustomFavicon.Valid) } placeholder="Favicon URL" aria-label="Favicon URL" aria-describedby="Favicon URL" name="bookmark_CustomFavicon" value={ bm.CustomFavicon.Val }/>
+								<button
+ 									type="button"
+ 									class="btn btn-outline-secondary"
+ 									hx-post="/bm/favicon/url"
+ 									hx-trigger="click"
+ 									hx-target="#bookmark_favicon_display"
+ 									hx-params="bookmark_CustomFavicon"
+ 									hx-swap="outerHTML"
+ 									hx-indicator="#indicator"
+								><i class="bi bi-arrow-clockwise"></i></button>
 							</div>
 						</div>
 						<div id="error_section" class={ "error_text", templ.KV("d-none", bm.Error == "") }>

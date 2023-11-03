@@ -602,7 +602,7 @@ func (s *Application) LocalFetchFaviconURL(url string) (*ObjectInfo, error) {
 		return nil, app.ErrValidation("empty URL provided")
 	}
 
-	payload, err := favicon.FetchURL(url)
+	payload, err := favicon.FetchURL(url, favicon.FetchImage)
 	if err != nil {
 		return nil, fmt.Errorf("cannot fetch favicon from URL '%s': %v", url, err)
 	}

@@ -62,6 +62,8 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 	sec.Get("/bm/partial/~*", templateHandler.GetBookmarksForPathPartial())
 	sec.Get("/bm/confirm/delete/{id}", templateHandler.DeleteConfirm())
 	sec.Delete("/bm/delete/{id}", templateHandler.DeleteBookmark())
+	sec.Post("/bm/favicon/page", templateHandler.FetchCustomFaviconFromPage())
+	sec.Post("/bm/favicon/url", templateHandler.FetchCustomFaviconURL())
 	sec.Get("/bm/{id}", templateHandler.EditBookmarkDialog())
 	sec.Post("/bm", templateHandler.SaveBookmark())
 
@@ -90,6 +92,8 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 		r.Put("/", bookmarksHandler.Update())
 		return r
 	}())
+
+	std.NotFound(templateHandler.Show404())
 
 	return std
 }

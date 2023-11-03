@@ -125,7 +125,7 @@ func SearchContent(items []bookmarks.Bookmark) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var8 templ.SafeURL = templ.URL("/bm/~" + b.Path + "/" + b.DisplayName)
+				var templ_7745c5c3_Var8 templ.SafeURL = templ.URL("/bm/~" + EnsureTrailingSlash(b.Path) + b.DisplayName)
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var8)))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err

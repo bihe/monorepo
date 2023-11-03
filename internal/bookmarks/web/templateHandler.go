@@ -215,20 +215,22 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 			bm.Path = templates.ValidatorInput{Val: queryParam(r, "path"), Valid: true}
 			bm.DisplayName = templates.ValidatorInput{Valid: true}
 			bm.URL = templates.ValidatorInput{Valid: true}
-			bm.Favicon = templates.ValidatorInput{Valid: true}
+			bm.CustomFavicon = templates.ValidatorInput{Valid: true}
 			bm.Type = bookmarks.Node
 		} else {
 			// fetch an existing bookmark
 			b, err = t.App.GetBookmarkByID(id, *user)
 			if err != nil {
 				t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for id '%s'; '%v'", id, err), r)
+				templates.ErrorPageLayout(templates.ErrorApplication(t.Env, r, fmt.Sprintf("could not get bookmarks for id '%s'; '%v'", id, err))).Render(r.Context(), w)
+				return
 			}
 			bm.ID = templates.ValidatorInput{Val: b.ID, Valid: true}
 			bm.Path = templates.ValidatorInput{Val: b.Path, Valid: true}
 			bm.DisplayName = templates.ValidatorInput{Val: b.DisplayName, Valid: true}
 			bm.URL = templates.ValidatorInput{Val: b.URL, Valid: true}
 			bm.Type = b.Type
-			bm.Favicon = templates.ValidatorInput{Val: b.Favicon, Valid: true}
+			bm.CustomFavicon = templates.ValidatorInput{Valid: true}
 			bm.InvertFaviconColor = (b.InvertFaviconColor == 1)
 
 			paths, err = t.App.GetAllPaths(*user)
@@ -238,6 +240,53 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 		}
 		templates.EditBookmarks(bm, paths).Render(r.Context(), w)
 	}
+}
+
+const errorFavicon = `<span id="bookmark_favicon_display" class="error_icon">
+<i id="error_tooltip_favicon" class="position_error_icon bi bi-exclamation-square-fill" data-bs-toggle="tooltip" data-bs-title="%s"></i>
+</span>
+<script type="text/javascript">
+[...document.querySelectorAll('[data-bs-toggle="tooltip"]')].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+</script>
+`
+const favIconImage = `<img id="bookmark_favicon_display" class="bookmark_favicon_preview" src="/api/v1/bookmarks/favicon/temp/%s">
+<input type="hidden" name="bookmark_Favicon" value="%s"/>`
+
+// FetchCustomFaviconURL fetches the given custom favicon URL and returns a new image
+func (t *TemplateHandler) FetchCustomFaviconURL() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
+		favURL := r.FormValue("bookmark_CustomFavicon")
+		fav, err := t.App.LocalFetchFaviconURL(favURL)
+		if err != nil {
+			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
+			t.Logger.ErrorRequest(fmt.Sprintf("could not fetch the custom favicon; '%v'", err), r)
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
+			return
+		}
+		w.Write([]byte(fmt.Sprintf(favIconImage, fav.Name, fav.Name)))
+	}
+}
+
+// FetchCustomFaviconFromPage tries to fetch the favicon from the given Page-URL
+func (t *TemplateHandler) FetchCustomFaviconFromPage() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
+		pageUrl := r.FormValue("bookmark_URL")
+		fav, err := t.App.LocalExtractFaviconFromURL(pageUrl)
+		if err != nil {
+			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
+			t.Logger.ErrorRequest(fmt.Sprintf("could not fetch the custom favicon; '%v'", err), r)
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
+			return
+		}
+		w.Write([]byte(fmt.Sprintf(favIconImage, fav.Name, fav.Name)))
+	}
+}
+
+type triggerDef struct {
+	templates.ToastMessage
+	Refresh string `json:"refreshBookmarkList,omitempty"`
 }
 
 // SaveBookmark receives the values from the edit form, validates and persists the data
@@ -254,6 +303,12 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 		err = r.ParseForm()
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not parse supplied form data; '%v'", err), r)
+			templates.ErrorPageLayout(templates.ErrorApplication(
+				t.Env,
+				r,
+				fmt.Sprintf("could not parse supplied form data; '%v'", err)),
+			).Render(r.Context(), w)
+			return
 		}
 		user := ensureUser(r)
 		t.Logger.InfoRequest(fmt.Sprintf("save the bookmark data for user: '%s'", user.Username), r)
@@ -265,12 +320,9 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 		recv.URL = r.FormValue(formPrefix + "URL")
 		recv.InvertFaviconColor = getIntFromString(r.FormValue(formPrefix + "InvertFaviconColor"))
 		recv.Type = bookmarks.Node
+		recv.Favicon = r.FormValue(formPrefix + "Favicon")
 		if r.FormValue(formPrefix+"Type") == "Folder" {
 			recv.Type = bookmarks.Folder
-		}
-		if getIntFromString(r.FormValue(formPrefix+"UseCustomFavicon")) == 1 {
-			customFavicon = true
-			recv.Favicon = r.FormValue(formPrefix + "CustomFavicon")
 		}
 
 		// validation
@@ -299,10 +351,10 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 		}
 		if customFavicon {
 			formBm.UseCustomFavicon = customFavicon
-			formBm.Favicon = templates.ValidatorInput{Val: recv.Favicon, Valid: true}
+			formBm.CustomFavicon = templates.ValidatorInput{Val: recv.Favicon, Valid: true}
 			if recv.Favicon == "" {
-				formBm.Favicon.Valid = false
-				formBm.Favicon.Message = "missing value!"
+				formBm.CustomFavicon.Valid = false
+				formBm.CustomFavicon.Message = "missing value!"
 				validData = false
 			}
 		}
@@ -323,6 +375,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 				Type:               recv.Type,
 				URL:                recv.URL,
 				InvertFaviconColor: recv.InvertFaviconColor,
+				Favicon:            recv.Favicon,
 			}
 			if customFavicon {
 				// the provided favicon needs to be an ID
@@ -336,11 +389,6 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 				return
 			}
 			t.Logger.Info("new bookmark created", logging.LogV("ID", created.ID))
-
-			type triggerDef struct {
-				templates.ToastMessage
-				Refresh string `json:"refreshBookmarkList,omitempty"`
-			}
 
 			triggerEvent := triggerDef{
 				ToastMessage: templates.ToastMessage{
@@ -356,11 +404,59 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			w.Header().Add("HX-Trigger", templates.Json(triggerEvent))
 			formBm.Close = true
 			templates.EditBookmarks(formBm, paths).Render(r.Context(), w)
-		} else {
-			// update an exiting entry
-		}
+			return
 
-		// hint: Update with htmx Events: https://htmx.org/examples/update-other-content/#events
+		} else {
+			paths, err = t.App.GetAllPaths(*user)
+			if err != nil {
+				t.Logger.ErrorRequest(fmt.Sprintf("could not get all paths for bookmarks; '%v'", err), r)
+			}
+
+			// update an exiting entry
+			existing, err := t.App.GetBookmarkByID(recv.ID, *user)
+			if err != nil {
+				t.Logger.Error("the given bookmark ID is not available", logging.ErrV(err), logging.LogV("ID", recv.ID))
+				templates.ErrorPageLayout(templates.ErrorApplication(
+					t.Env,
+					r,
+					fmt.Sprintf("the given bookmark '%s' is not available; %v", recv.ID, err)),
+				).Render(r.Context(), w)
+				return
+			}
+
+			// update the existing bookmark with the supplied data
+			existing.DisplayName = recv.DisplayName
+			existing.Path = recv.Path
+			existing.InvertFaviconColor = recv.InvertFaviconColor
+			existing.URL = recv.URL
+			existing.Favicon = recv.Favicon
+
+			updated, err := t.App.UpdateBookmark(*existing, *user)
+			if err != nil {
+				t.Logger.ErrorRequest(fmt.Sprintf("could not update bookmark entry '%s'; '%v'", recv.ID, err), r)
+				formBm.Error = "Error: " + err.Error()
+				templates.EditBookmarks(formBm, paths).Render(r.Context(), w)
+				return
+			}
+
+			t.Logger.Info("bookmark updated", logging.LogV("ID", updated.ID))
+
+			triggerEvent := triggerDef{
+				ToastMessage: templates.ToastMessage{
+					Event: templates.ToastMessageContent{
+						Type:  templates.MsgSuccess,
+						Title: "Bookmark saved!",
+						Text:  fmt.Sprintf("The bookmark '%s' (%s) was updated.", existing.DisplayName, existing.ID),
+					},
+				},
+				Refresh: "now",
+			}
+			// https://htmx.org/headers/hx-trigger/
+			w.Header().Add("HX-Trigger", templates.Json(triggerEvent))
+			formBm.Close = true
+			templates.EditBookmarks(formBm, paths).Render(r.Context(), w)
+			return
+		}
 	}
 }
 
@@ -371,7 +467,14 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 // Show403 displays a page which indicates that the given user has no access to the system
 func (t *TemplateHandler) Show403() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		templates.Page403(t.Env).Render(r.Context(), w)
+		templates.ErrorPageLayout(templates.Error403(t.Env)).Render(r.Context(), w)
+	}
+}
+
+// Show404 is used for the http not-found error
+func (t *TemplateHandler) Show404() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		templates.ErrorPageLayout(templates.Error404(t.Env)).Render(r.Context(), w)
 	}
 }
 

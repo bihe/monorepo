@@ -21,7 +21,7 @@ templ SearchContent(items []bookmarks.Bookmark) {
 				if b.Type == bookmarks.Node {
 					<a class="bookmark_name" href={ templ.URL(b.URL) }>{ b.DisplayName }</a>
 				} else {
-					<a class="bookmark_name" href={ templ.URL("/bm/~"+b.Path+"/"+b.DisplayName) }>{ b.DisplayName }</a>
+					<a class="bookmark_name" href={ templ.URL("/bm/~"+EnsureTrailingSlash(b.Path)+b.DisplayName) }>{ b.DisplayName }</a>
 				}
 			</div>
 		}

@@ -14,6 +14,13 @@ import (
 
 const DefaultFaviconName = "favicon.ico"
 
+type FetchType string
+
+const (
+	FetchImage FetchType = "image"
+	FetchAll   FetchType = "*"
+)
+
 // GetFaviconFromURL tries to find and fetch the favicon from the given URL
 func GetFaviconFromURL(url string) (fileName string, payload []byte, err error) {
 	var (
@@ -31,7 +38,7 @@ func GetFaviconFromURL(url string) (fileName string, payload []byte, err error) 
 		// no favicon found on page
 		// fall back to the standard to get the favicon from the base-path
 		iconURL = fmt.Sprintf("%s/%s", baseURL, DefaultFaviconName)
-		if payload, err = FetchURL(iconURL); err != nil {
+		if payload, err = FetchURL(iconURL, FetchImage); err != nil {
 			err = fmt.Errorf("could not fetch favicon '%s': %v", iconURL, err)
 			return
 		}
@@ -57,7 +64,7 @@ func GetFaviconFromURL(url string) (fileName string, payload []byte, err error) 
 		iconURL = pageURL + iconURL
 	}
 
-	if payload, err = FetchURL(iconURL); err != nil {
+	if payload, err = FetchURL(iconURL, FetchImage); err != nil {
 		err = fmt.Errorf("could not fetch favicon '%s': %v", iconURL, err)
 		return
 	}
@@ -65,7 +72,7 @@ func GetFaviconFromURL(url string) (fileName string, payload []byte, err error) 
 }
 
 // FetchURL retrieves the payload of the specified URL
-func FetchURL(url string) ([]byte, error) {
+func FetchURL(url string, what FetchType) ([]byte, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch page: %v", err)
@@ -73,6 +80,12 @@ func FetchURL(url string) ([]byte, error) {
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("got status %d", resp.StatusCode)
+	}
+	if what == FetchImage {
+		mimeType := resp.Header.Get("Content-Type")
+		if !strings.HasPrefix(mimeType, "image/") {
+			return nil, fmt.Errorf("the payload needs to be an image mime-type; got '%s'", mimeType)
+		}
 	}
 
 	content, err := io.ReadAll(resp.Body)
@@ -102,7 +115,7 @@ func parseHtmlPageForFavicon(url string) (iconUrl, fileName string, err error) {
 		page []byte
 	)
 
-	if page, err = FetchURL(url); err != nil {
+	if page, err = FetchURL(url, FetchAll); err != nil {
 		return
 	}
 	if iconUrl, err = tryFaviconDefinitions(page); err != nil {
@@ -119,14 +132,14 @@ func tryFaviconDefinitions(page []byte) (string, error) {
 		iconUrl string
 		err     error
 	)
-	iconUrl, err = parseFavicon(page, "shortcut icon")
+	iconUrl, err = parsePageForFavicon(page, "shortcut icon")
 	if err != nil {
-		iconUrl, err = parseFavicon(page, "icon")
+		iconUrl, err = parsePageForFavicon(page, "icon")
 	}
 	return iconUrl, err
 }
 
-func parseFavicon(page []byte, faviconDef string) (string, error) {
+func parsePageForFavicon(page []byte, faviconDef string) (string, error) {
 	var (
 		iconUrl string
 		err     error

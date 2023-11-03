@@ -13,6 +13,8 @@ import "bytes"
 import "golang.binggl.net/monorepo/pkg/security"
 
 type LayoutModel struct {
+	PageTitle          string
+	Favicon            string
 	Title              string
 	Version            string
 	User               security.User
@@ -33,11 +35,19 @@ func Layout(model LayoutModel, style, application_navigation, content templ.Comp
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"shortcut icon\" id=\"site-favicon\" type=\"image/x-icon\" href=\"/public/folder.svg\"><title>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"shortcut icon\" id=\"site-favicon\" type=\"image/x-icon\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var2 string = model.Title
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(model.Favicon))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"><title>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var2 string = model.PageTitle
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -50,7 +60,7 @@ func Layout(model LayoutModel, style, application_navigation, content templ.Comp
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</head><body data-bs-theme=\"dark\"><header><nav class=\"navbar navbar-expand-md navbar-dark fixed-top header\"><div class=\"container-fluid\"><a class=\"navbar-brand\" href=\"/bookmarks/search\"><i class=\"bi-house-heart\"></i> ")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</head><body data-bs-theme=\"dark\"><header><nav class=\"navbar navbar-expand-md navbar-dark fixed-top header\"><div class=\"container-fluid\"><a class=\"navbar-brand\" href=\"/bm\"><i class=\"bi-house-heart\"></i> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

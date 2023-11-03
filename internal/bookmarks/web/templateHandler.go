@@ -41,7 +41,7 @@ func (t *TemplateHandler) SearchBookmarks() http.HandlerFunc {
 		}
 
 		templates.Layout(
-			t.layoutModel("Search Bookmarks!", search, *user),
+			t.layoutModel("Search Bookmarks!", "Bookmark Search", "/public/folder.svg", search, *user),
 			templates.SearchStyles(),
 			templates.SearchNavigation(search),
 			templates.SearchContent(bms),
@@ -87,10 +87,33 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 		bms, err := t.App.GetBookmarksByPath(path, *user)
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", path, err), r)
+			templates.ErrorPageLayout(templates.ErrorApplication(
+				t.Env,
+				r,
+				fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", path, err)),
+			).Render(r.Context(), w)
+			return
+		}
+
+		curFolder := ""
+		favicon := ""
+		if len(pathParts) > 0 {
+			curFolder = pathParts[len(pathParts)-1]
+			folder, err := t.App.GetBookmarksFolderByPath(path, *user)
+			if err != nil {
+				t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmark folder for path '%s'; '%v'", path, err), r)
+				templates.ErrorPageLayout(templates.ErrorApplication(
+					t.Env,
+					r,
+					fmt.Sprintf("could not get bookmark folder for path '%s'; '%v'", path, err)),
+				).Render(r.Context(), w)
+				return
+			}
+			favicon = "/api/v1/bookmarks/favicon/" + folder.ID
 		}
 
 		templates.Layout(
-			t.layoutModel("Bookmarks!", "", *user),
+			t.layoutModel("Bookmarks!", curFolder, "", favicon, *user),
 			templates.BookmarksByPathStyles(),
 			templates.BookmarksByPathNavigation(pathHierarchy, templates.SortButton()),
 			templates.BookmarksByPathContent(templates.BookmarkList(
@@ -542,14 +565,25 @@ func (t *TemplateHandler) versionString() string {
 	return fmt.Sprintf("%s-%s", t.Version, t.Build)
 }
 
-func (t *TemplateHandler) layoutModel(title, search string, user security.User) templates.LayoutModel {
-	return templates.LayoutModel{
-		Title:              title,
-		Version:            t.versionString(),
-		User:               user,
-		Search:             search,
-		PageReloadClientJS: templates.PageReloadClientJS(),
+func (t *TemplateHandler) layoutModel(title, pageTitle, search, favicon string, user security.User) templates.LayoutModel {
+	model := templates.LayoutModel{
+		Title:     title,
+		PageTitle: pageTitle,
+		Favicon:   favicon,
+		Version:   t.versionString(),
+		User:      user,
+		Search:    search,
 	}
+	if model.Favicon == "" {
+		model.Favicon = "/public/folder.svg"
+	}
+	if model.PageTitle == "" {
+		model.PageTitle = model.Title
+	}
+	if t.Env == config.Development {
+		model.PageReloadClientJS = templates.PageReloadClientJS()
+	}
+	return model
 }
 
 // --------------------------------------------------------------------------

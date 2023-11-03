@@ -36,7 +36,13 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 	bookmarksHandler := api.BookmarksHandler{
 		App: app,
 	}
-	templateHandler := web.NewTemplateHandler(app, logger, opts.Config.Environment, opts.Version, opts.Build)
+	templateHandler := &web.TemplateHandler{
+		Logger:  logger,
+		Env:     opts.Config.Environment,
+		App:     app,
+		Version: opts.Version,
+		Build:   opts.Build,
+	}
 
 	std.Mount("/", sec)
 

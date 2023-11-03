@@ -1,9 +1,7 @@
 package web
 
 import (
-	"embed"
 	"fmt"
-	"html/template"
 	"net/http"
 	"strings"
 
@@ -15,9 +13,6 @@ import (
 	"golang.binggl.net/monorepo/pkg/security"
 )
 
-//go:embed templates/*
-var TemplateFS embed.FS
-
 // TemplateHandler takes care of providing HTML templates.
 // This is the new approach with a template + htmx based UI to replace the angular frontend
 // and have a more go-oriented approach towards UI and user-interaction. This reduces the
@@ -25,26 +20,11 @@ var TemplateFS embed.FS
 // a limited amount of javascript is needed to achieve the frontend.
 // As additional benefit the build should be faster, because the nodejs build can be removed
 type TemplateHandler struct {
-	Logger    logging.Logger
-	Env       config.Environment
-	App       *bookmarks.Application
-	Version   string
-	Build     string
-	templates map[string]*template.Template
-}
-
-// NewTemplateHandler performs some internal setup to prepare templates for later use
-func NewTemplateHandler(app *bookmarks.Application, logger logging.Logger, environment config.Environment, version, build string) *TemplateHandler {
-	templates := make(map[string]*template.Template)
-
-	return &TemplateHandler{
-		Logger:    logger,
-		Env:       environment,
-		App:       app,
-		Version:   version,
-		Build:     build,
-		templates: templates,
-	}
+	Logger  logging.Logger
+	Env     config.Environment
+	App     *bookmarks.Application
+	Version string
+	Build   string
 }
 
 // SearchBookmarks performs a search for bookmarks and displays the result using server-side rendering

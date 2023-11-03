@@ -1,0 +1,176 @@
+package templates
+
+import "golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
+
+type Bookmark struct {
+	ID                 ValidatorInput
+	Path               ValidatorInput
+	DisplayName        ValidatorInput
+	URL                ValidatorInput
+	Type               bookmarks.NodeType
+	CustomFavicon      ValidatorInput
+	InvertFaviconColor bool
+	UseCustomFavicon   bool
+	Error              string
+	Close              bool
+}
+
+type ValidatorInput struct {
+	Val     string
+	Valid   bool
+	Message string
+}
+
+templ EditBookmarks(bm Bookmark, paths []string) {
+	<div class="modal-dialog modal-xl" id="bookmark_edit_dialog">
+		if bm.Close {
+			<script type="text/javascript">
+				bootstrap.Modal.getInstance('#modals-here').toggle();
+			</script>
+		} else {
+			<div class="modal-content">
+				<div class="modal-header">
+					if bm.ID.Val != "-1" {
+						<h5 class="modal-title">Edit Bookmark '{ bm.DisplayName.Val }'</h5>
+					} else {
+						<h5 class="modal-title">Create Bookmark</h5>
+					}
+					<div id="indicator" class="htmx-indicator">
+						<div class="spinner-border text-light" role="status">
+							<span class="visually-hidden">Loading...</span>
+						</div>
+					</div>
+				</div>
+				<form class="bookmark_edit_form">
+					<input type="hidden" name="bookmark_ID" value={ bm.ID.Val }/>
+					<div class="modal-body">
+						<div class="form-check form-check-inline">
+							<input class={ "form-check-input", templ.KV("disable", (bm.ID.Val != "-1")) } type="radio" name="bookmark_Type" id="type_Bookmark" value="Node" checked?={ bm.Type == bookmarks.Node }/>
+							<label class={ "form-check-label", templ.KV("disable", (bm.ID.Val != "-1")) } for="type_Bookmark">Bookmark</label>
+						</div>
+						<div class="form-check form-check-inline">
+							<input class={ "form-check-input", templ.KV("disable", (bm.ID.Val != "-1")) } type="radio" name="bookmark_Type" id="type_Folder" value="Folder" checked?={ bm.Type == bookmarks.Folder }/>
+							<label class={ "form-check-label", templ.KV("disable", (bm.ID.Val != "-1")) } for="type_Folder">Folder</label>
+						</div>
+						<div class="spacer"></div>
+						<div class="flex_layout">
+							<div class="bookmark_edit_layout_flex_5">
+								<img id="bookmark_favicon_display" class={ "bookmark_favicon_preview", templ.KV("invert", bm.InvertFaviconColor) } src={ "/api/v1/bookmarks/favicon/"+bm.ID.Val }/>
+							</div>
+							<div class="bookmark_edit_layout_flex_95 form-floating mb-3">
+								<input type="text" class={ "form-control", templ.KV("control_invalid", !bm.DisplayName.Valid) } class="" id="bookmark_DisplayName" placeholder="Displayname" name="bookmark_DisplayName" value={ bm.DisplayName.Val } required/>
+								<label for="bookmark_DisplayName">DisplayName</label>
+							</div>
+						</div>
+						if bm.Type == bookmarks.Node {
+							<div class="input-group mb-3" id="url_section">
+								<span class="input-group-text" id="url"><i class="bi bi-link-45deg"></i></span>
+								<input type="text" class={ "form-control", templ.KV("control_invalid", !bm.URL.Valid) } placeholder="URL" aria-label="URL" aria-describedby="url" name="bookmark_URL" value={ bm.URL.Val }/>
+								<button
+ 									type="button"
+ 									class="btn btn-outline-secondary"
+ 									hx-post="/bm/favicon/page"
+ 									hx-trigger="click"
+ 									hx-target="#bookmark_favicon_display"
+ 									hx-params="bookmark_URL"
+ 									hx-swap="outerHTML"
+ 									hx-indicator="#indicator"
+								><i class="bi bi-arrow-clockwise"></i></button>
+							</div>
+						}
+						<div class="form-floating mb-3">
+							<select class="form-select" aria-label="Path" id="bookmark_Path" name="bookmark_Path" required>
+								if bm.ID.Val != "-1" {
+									for _, p := range paths {
+										<option value={ p } selected?={ bm.Path.Val == p }>{ p }</option>
+									}
+								} else {
+									<option value={ bm.Path.Val } selected>{ bm.Path.Val }</option>
+								}
+							</select>
+							<label for="bookmark_Path">Path</label>
+						</div>
+						<div class="form-check form-switch">
+							<input class="form-check-input" type="checkbox" role="switch" id="bookmark_Invert" name="bookmark_InvertFaviconColor" value="1" checked?={ bm.InvertFaviconColor }/>
+							<label class="form-check-label" for="bookmark_Invert">Invert Favicon Color</label>
+						</div>
+						<div class="form-check form-switch">
+							<input class="form-check-input" type="checkbox" role="switch" id="bookmark_Custom_Favicon" name="bookmark_UseCustomFavicon" value="1" checked?={ bm.UseCustomFavicon }/>
+							<label class="form-check-label" for="bookmark_Custom_Favicon">Custom Favicon</label>
+						</div>
+						<div id="custom_favicon_section" class={ templ.KV("d-none", !bm.UseCustomFavicon) }>
+							<div class="spacer"></div>
+							<div class="input-group mb-3">
+								<input type="text" class={ "form-control", templ.KV("control_invalid", !bm.CustomFavicon.Valid) } placeholder="Favicon URL" aria-label="Favicon URL" aria-describedby="Favicon URL" name="bookmark_CustomFavicon" value={ bm.CustomFavicon.Val }/>
+								<button
+ 									type="button"
+ 									class="btn btn-outline-secondary"
+ 									hx-post="/bm/favicon/url"
+ 									hx-trigger="click"
+ 									hx-target="#bookmark_favicon_display"
+ 									hx-params="bookmark_CustomFavicon"
+ 									hx-swap="outerHTML"
+ 									hx-indicator="#indicator"
+								><i class="bi bi-arrow-clockwise"></i></button>
+							</div>
+						</div>
+						<div id="error_section" class={ "error_text", templ.KV("d-none", bm.Error == "") }>
+							<div class="spacer"></div>
+							<i class="bi bi-exclamation-diamond"></i>&nbsp;<span>{ bm.Error }</span>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+						<button
+ 							type="button"
+ 							class="btn btn-success"
+ 							hx-post="/bm"
+ 							hx-target="#bookmark_edit_dialog"
+						>Save</button>
+					</div>
+				</form>
+			</div>
+			<script type="text/javascript">
+				if (document.querySelector('#type_Bookmark')) {
+					document.querySelector('#type_Bookmark').addEventListener('change', (event) => {
+						if (event.target.value === 'Node') {
+						document.querySelector('#url_section').classList.remove('d-none');
+						} else {
+						document.querySelector('#url_section').classList.add('d-none');
+						}
+					});
+				}
+
+				if (document.querySelector('#type_Folder')) {
+					document.querySelector('#type_Folder').addEventListener('change', (event) => {
+						if (event.target.value === 'Folder') {
+						document.querySelector('#url_section').classList.add('d-none');
+						} else {
+						document.querySelector('#url_section').classList.remove('d-none');
+						}
+					});
+				}
+
+				if (document.querySelector('#bookmark_Custom_Favicon')) {
+					document.querySelector('#bookmark_Custom_Favicon').addEventListener('change', (event) => {
+						if (event.currentTarget.checked) {
+						document.querySelector('#custom_favicon_section').classList.remove('d-none');
+						} else {
+						document.querySelector('#custom_favicon_section').classList.add('d-none');
+						}
+					});
+				}
+
+				if (document.querySelector('#bookmark_Invert')) {
+					document.querySelector('#bookmark_Invert').addEventListener('change', (event) => {
+						if (event.currentTarget.checked) {
+						document.querySelector('#bookmark_favicon_display').classList.add('invert');
+						} else {
+						document.querySelector('#bookmark_favicon_display').classList.remove('invert');
+						}
+					});
+				}
+			</script>
+		}
+	</div>
+}

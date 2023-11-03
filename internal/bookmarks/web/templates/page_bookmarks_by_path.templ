@@ -1,0 +1,79 @@
+package templates
+
+templ BookmarksByPathContent(bookmarkList templ.Component) {
+	{! bookmarkList }
+}
+
+templ BookmarksByPathStyles() {
+	<style type="text/css">
+    .breadcrumb-item {
+        --bs-breadcrumb-divider-color: #ffffff !important;
+        --bs-breadcrumb-divider: '>';
+        font-size: medium;
+    }
+    .breadcrumb-item.active {
+        color: #ffffff;
+    }
+    li.breadcrumb-item > a {
+        color: #ffffff;
+    }
+    div.btn-group > button.btn.dropdown-toggle {
+        --bs-btn-color: #ffffff;
+    }
+    .delete {
+        font-weight: bold;
+        color: red;
+    }
+    .right-action {
+        position: absolute;
+        right: 20px;
+    }
+	.sortInput {
+		position: relative;
+    	top: 18px;
+	}
+    </style>
+}
+
+type BookmarkPathEntry struct {
+	UrlPath     string
+	DisplayName string
+	LastItem    bool
+}
+
+func getPath(entries []BookmarkPathEntry) string {
+	return entries[len(entries)-1].UrlPath
+}
+
+templ BookmarksByPathNavigation(entries []BookmarkPathEntry, sortButton templ.Component) {
+	<div class="application_name">
+		<nav aria-label="breadcrumb">
+			<ol class="breadcrumb">
+				for _, e := range entries {
+					if e.LastItem {
+						<li class="breadcrumb-item active" aria-current="page">{ e.DisplayName }</li>
+					} else {
+						<li class="breadcrumb-item"><a href={ templ.URL("/bm/~"+e.UrlPath) }>{ e.DisplayName }</a></li>
+					}
+				}
+			</ol>
+		</nav>
+		<span class="right-action">
+			<div id="request_indicator" class="request_indicator htmx-indicator">
+				<div class="spinner-border text-light" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
+			</div>
+			{! sortButton }
+			<button
+ 				type="button"
+ 				class="btn btn-primary"
+ 				data-bs-toggle="modal"
+ 				data-bs-target="#modals-here"
+ 				hx-target="#modals-here"
+ 				hx-trigger="click"
+ 				hx-get={ "/bm/-1?path="+getPath(entries) }
+			><i class="bi bi-plus"></i> Add</button>
+		</span>
+	</div>
+}

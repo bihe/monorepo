@@ -36,7 +36,7 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 	bookmarksHandler := api.BookmarksHandler{
 		App: app,
 	}
-	templateHandler := web.TemplateHandler{
+	templateHandler := &web.TemplateHandler{
 		Logger:  logger,
 		Env:     opts.Config.Environment,
 		App:     app,
@@ -48,7 +48,7 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 
 	// server-side rendered paths
 	// the following paths provide server-rendered UIs
-	// /403 displays a page telling the user that acces/permissions are missing
+	// /403 displays a page telling the user that access/permissions are missing
 	std.Get("/403", templateHandler.Show403())
 
 	// use this for development purposes only!
@@ -60,11 +60,24 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 		std.Get("/gettoken", devTokenHandler.Index())
 	}
 
-	// /bm/search performs a server-side search and renders the results
-	// this supersedes the client/frontend-based search interaction
-	sec.Get("/bm/search", templateHandler.SearchBookmarks())
-	// retrieve the bookmarks for a given path
-	sec.Get("/bm/path", templateHandler.GetBookmarksForPath())
+	// /bm performs a server-side rendering
+	// this implementation is to supersede the client/angular-based search interaction
+	sec.Mount("/bm", func() http.Handler {
+		r := chi.NewRouter()
+		r.Get("/search", templateHandler.SearchBookmarks())
+		r.Get("/~*", templateHandler.GetBookmarksForPath())
+		r.Get("/partial/~*", templateHandler.GetBookmarksForPathPartial())
+		r.Get("/confirm/delete/{id}", templateHandler.DeleteConfirm())
+		r.Delete("/delete/{id}", templateHandler.DeleteBookmark())
+		r.Post("/favicon/page", templateHandler.FetchCustomFaviconFromPage())
+		r.Post("/favicon/url", templateHandler.FetchCustomFaviconURL())
+		r.Get("/sort", templateHandler.TriggerSortBookmarks())
+		r.Post("/sort", templateHandler.SortBookmarks())
+		r.Get("/{id}", templateHandler.EditBookmarkDialog())
+		r.Get("/", templateHandler.GetBookmarksForPath())
+		r.Post("/", templateHandler.SaveBookmark())
+		return r
+	}())
 
 	// the following APIs have the base-URL /api/v1
 	sec.Get("/api/v1/whoami", appInfoHandler.HandleWhoAmI())
@@ -82,6 +95,7 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 		r.Get("/folder", bookmarksHandler.GetBookmarksFolderByPath())
 		r.Get("/byname", bookmarksHandler.GetBookmarksByName())
 		r.Get("/fetch/{id}", bookmarksHandler.FetchAndForward())
+
 		r.Get("/favicon/{id}", bookmarksHandler.GetFavicon())
 		r.Get("/favicon/temp/{id}", bookmarksHandler.GetTempFavicon())
 		r.Post("/favicon/temp/base", bookmarksHandler.CreateBaseURLFavicon())
@@ -91,6 +105,8 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 		r.Put("/", bookmarksHandler.Update())
 		return r
 	}())
+
+	std.NotFound(templateHandler.Show404())
 
 	return std
 }

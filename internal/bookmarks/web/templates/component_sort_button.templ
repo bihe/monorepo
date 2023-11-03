@@ -1,0 +1,15 @@
+package templates
+
+templ SortButton() {
+	<span id="save_list_sort_order" class="sort_button d-none">
+		<button
+ 			type="button"
+ 			class="btn btn-success"
+ 			hx-get="/bm/sort"
+ 			hx-trigger="click"
+ 			hx-target="#save_list_sort_order"
+ 			hx-swap="outerHTML"
+ 			hx-indicator="#request_indicator"
+		><i class="bi bi-sort-numeric-down"></i> Save</button>
+	</span>
+}

@@ -1,0 +1,40 @@
+package templates
+
+import "fmt"
+import "golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
+
+templ SearchContent(items []bookmarks.Bookmark) {
+	<div class="bookmark_list">
+		for _, b := range items {
+			<div class="bookmark_item">
+				<span>
+					<img width="24px" height="24px" alt="favicon" class={ "bookmark_favicon", templ.KV("invert", (b.InvertFaviconColor == 1)) } src={ fmt.Sprintf("/api/v1/bookmarks/favicon/%s", b.ID) }/>
+					if b.ChildCount > 0 {
+						<span class="top-0 start-100 translate-middle badge rounded-pill bg-danger">
+							{ fmt.Sprintf("%d", b.ChildCount) }
+						</span>
+					}
+				</span>
+				<span class="badge rounded-pill text-bg-secondary bookmark-path">
+					<a class="bookmark_path" href={ templ.URL("/bm/~"+b.Path) }>{ b.Path }</a>
+				</span>
+				if b.Type == bookmarks.Node {
+					<a class="bookmark_name" href={ templ.URL(b.URL) }>{ b.DisplayName }</a>
+				} else {
+					<a class="bookmark_name" href={ templ.URL("/bm/~"+EnsureTrailingSlash(b.Path)+b.DisplayName) }>{ b.DisplayName }</a>
+				}
+			</div>
+		}
+	</div>
+}
+
+templ SearchStyles() {
+	<style type="text/css">
+    </style>
+}
+
+templ SearchNavigation(search string) {
+	<div class="application_name">
+		<div>~ searching for: <span class="badge text-bg-success" style="font-size:small">{ search }</span></div>
+	</div>
+}

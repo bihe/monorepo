@@ -44,6 +44,14 @@ func TestFetchFavicon(t *testing.T) {
 		}
 
 	})
+	mux.HandleFunc("/wrong-mimetype", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(icoFavicon)))
+		w.Header().Add("content-type", "application/octet-stream")
+		if _, err := w.Write(icoFavicon); err != nil {
+			t.Fatalf("%v", err)
+		}
+
+	})
 	mux.HandleFunc("/singleFile/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(icoFavicon)))
 		if _, err := w.Write(icoFavicon); err != nil {
@@ -204,4 +212,10 @@ func TestFetchFavicon(t *testing.T) {
 		t.Errorf("expected error")
 	}
 
+	// wrong mime-type; expected image/*
+	// ------------------------------------------------------------------
+	_, err = FetchURL(ts.URL+"/wrong-mimetype", FetchImage)
+	if err == nil {
+		t.Error("error because of wrong image/* mime-type expected")
+	}
 }

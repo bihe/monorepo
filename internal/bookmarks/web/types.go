@@ -1,13 +1,32 @@
 package web
 
-import "golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
+import (
+	"html/template"
+
+	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
+)
 
 // PageModel combines common model data for pages
 type PageModel struct {
-	Development   bool
-	Authenticated bool
-	User          UserModel
-	VersionString string
+	Development        bool
+	Authenticated      bool
+	User               UserModel
+	VersionString      string
+	PageReloadClientJS template.HTML
+}
+
+const (
+	MessageTypeInfo    = "info"
+	MessageTypeError   = "error"
+	MessageTypeSuccess = "success"
+)
+
+// MessageModel is used to provide information to the UI
+type MessageModel struct {
+	Title string
+	Text  string
+	Type  string
+	Show  bool
 }
 
 // UserModel provides user information for pages
@@ -23,19 +42,11 @@ type UserModel struct {
 // BookmarkResultModel holds results from a bookmark operation
 type BookmarkResultModel struct {
 	Error     string
+	Message   MessageModel
 	Bookmarks []bookmarks.Bookmark
 }
 
-// BookmarkPathModel is used to get bookmarks for a given path
-type BookmarkPathModel struct {
-	PageModel
-	BookmarkResultModel
-	Path string
-}
-
-// BookmarksSearchModel holds the search-results for bookmarks
-type BookmarksSearchModel struct {
-	PageModel
-	BookmarkResultModel
-	Search string
+// EditBookmarkModel is used to create or edit a bookmark
+type EditBookmarkModel struct {
+	bookmarks.Bookmark
 }

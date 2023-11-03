@@ -28,6 +28,10 @@ templ BookmarksByPathStyles() {
         position: absolute;
         right: 20px;
     }
+	.sortInput {
+		position: relative;
+    	top: 18px;
+	}
     </style>
 }
 
@@ -41,7 +45,7 @@ func getPath(entries []BookmarkPathEntry) string {
 	return entries[len(entries)-1].UrlPath
 }
 
-templ BookmarksByPathNavigation(entries []BookmarkPathEntry) {
+templ BookmarksByPathNavigation(entries []BookmarkPathEntry, sortButton templ.Component) {
 	<div class="application_name">
 		<nav aria-label="breadcrumb">
 			<ol class="breadcrumb">
@@ -55,6 +59,12 @@ templ BookmarksByPathNavigation(entries []BookmarkPathEntry) {
 			</ol>
 		</nav>
 		<span class="right-action">
+			<div id="request_indicator" class="request_indicator htmx-indicator">
+				<div class="spinner-border text-light" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
+			</div>
+			{! sortButton }
 			<button
  				type="button"
  				class="btn btn-primary"

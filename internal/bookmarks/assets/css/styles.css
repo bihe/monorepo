@@ -178,3 +178,14 @@ a.bookmark_path {
   position: relative;
   left: 10px;
 }
+
+.request_indicator {
+  display: inline;
+  position: relative;
+  top: 10px;
+  padding-right: 5px;
+}
+
+.sort_button {
+  padding-right: 5px;
+}

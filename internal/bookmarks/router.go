@@ -64,6 +64,8 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 	sec.Delete("/bm/delete/{id}", templateHandler.DeleteBookmark())
 	sec.Post("/bm/favicon/page", templateHandler.FetchCustomFaviconFromPage())
 	sec.Post("/bm/favicon/url", templateHandler.FetchCustomFaviconURL())
+	sec.Get("/bm/sort", templateHandler.TriggerSortBookmarks())
+	sec.Post("/bm/sort", templateHandler.SortBookmarks())
 	sec.Get("/bm/{id}", templateHandler.EditBookmarkDialog())
 	sec.Post("/bm", templateHandler.SaveBookmark())
 

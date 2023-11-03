@@ -108,10 +108,11 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 		templates.Layout(
 			t.layoutModel("Bookmarks!", "", *user),
 			templates.BookmarksByPathStyles(),
-			templates.BookmarksByPathNavigation(pathHierarchy),
+			templates.BookmarksByPathNavigation(pathHierarchy, templates.SortButton()),
 			templates.BookmarksByPathContent(templates.BookmarkList(
 				path,
 				bms,
+				false,
 			)),
 		).Render(r.Context(), w)
 	}
@@ -133,6 +134,7 @@ func (t *TemplateHandler) GetBookmarksForPathPartial() http.HandlerFunc {
 		templates.BookmarkList(
 			path,
 			bms,
+			true,
 		).Render(r.Context(), w)
 	}
 }
@@ -176,6 +178,7 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 			templates.BookmarkList(
 				bm.Path,
 				bms,
+				true,
 			).Render(r.Context(), w)
 			return
 		}
@@ -192,6 +195,7 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 		templates.BookmarkList(
 			bm.Path,
 			bms,
+			true,
 		).Render(r.Context(), w)
 
 	}
@@ -457,6 +461,74 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			templates.EditBookmarks(formBm, paths).Render(r.Context(), w)
 			return
 		}
+	}
+}
+
+// TriggerSortBookmarks starts the event to save the new bookmark sort-order
+func (t *TemplateHandler) TriggerSortBookmarks() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("HX-Trigger", "sortBookmarkList")
+		templates.SortButton().Render(r.Context(), w)
+	}
+}
+
+// SortBookmarks performs a reordering of the bookmark list
+func (t *TemplateHandler) SortBookmarks() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := ensureUser(r)
+		err := r.ParseForm()
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not parse supplied form data; '%v'", err), r)
+			templates.ErrorPageLayout(templates.ErrorApplication(
+				t.Env,
+				r,
+				fmt.Sprintf("could not parse supplied form data; '%v'", err)),
+			).Render(r.Context(), w)
+			return
+		}
+
+		idList := r.Form["ID"]
+		indexList := make([]int, len(idList))
+		t.Logger.Info("will save the new bookmark list", logging.LogV("ID_List", fmt.Sprintf("%v", idList)))
+		// we jus ust the order of supplied IDs as the "natural" sort-order
+		for i, _ := range idList {
+			indexList[i] = i
+		}
+
+		sortOrder := bookmarks.BookmarksSortOrder{
+			IDs:       idList,
+			SortOrder: indexList,
+		}
+
+		updates, err := t.App.UpdateSortOrder(sortOrder, *user)
+		if err != nil {
+			triggerEvent := triggerDef{
+				ToastMessage: templates.ToastMessage{
+					Event: templates.ToastMessageContent{
+						Type:  templates.MsgError,
+						Title: "Error sorting!",
+						Text:  fmt.Sprintf("Could not perform sorting: %v", err),
+					},
+				},
+			}
+			// https://htmx.org/headers/hx-trigger/
+			w.Header().Add("HX-Trigger", templates.Json(triggerEvent))
+			return
+		}
+
+		triggerEvent := triggerDef{
+			ToastMessage: templates.ToastMessage{
+				Event: templates.ToastMessageContent{
+					Type:  templates.MsgSuccess,
+					Title: "List sorted!",
+					Text:  fmt.Sprintf("%d bookmarks were successfully sorted", updates),
+				},
+			},
+			Refresh: "now",
+		}
+		// https://htmx.org/headers/hx-trigger/
+		w.Header().Add("HX-Trigger", templates.Json(triggerEvent))
+
 	}
 }
 

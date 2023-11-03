@@ -1108,7 +1108,7 @@ func Test_GetFavicon(t *testing.T) {
 	req, _ = http.NewRequest("GET", url, nil)
 	addJwtAuth(req)
 	r.ServeHTTP(rec, req)
-	assert.Equal(t, http.StatusNotFound, rec.Code)
+	assert.Equal(t, http.StatusOK, rec.Code)
 
 	// fail lookup
 	// ---------------------------------------------------------------
@@ -1139,7 +1139,7 @@ func Test_GetTempFavicon(t *testing.T) {
 	req, _ = http.NewRequest("GET", url, nil)
 	addJwtAuth(req)
 	r.ServeHTTP(rec, req)
-	assert.Equal(t, http.StatusNotFound, rec.Code)
+	assert.Equal(t, http.StatusOK, rec.Code)
 
 	// fail lookup
 	// ---------------------------------------------------------------

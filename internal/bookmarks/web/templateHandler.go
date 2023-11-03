@@ -73,6 +73,10 @@ func (t *TemplateHandler) SearchBookmarks() http.HandlerFunc {
 func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		path := pathParam(r, "*")
+		if path == "" {
+			// start with the root path
+			path = "/"
+		}
 		user := ensureUser(r)
 
 		pathHierarchy := make([]templates.BookmarkPathEntry, 1)
@@ -491,7 +495,7 @@ func (t *TemplateHandler) SortBookmarks() http.HandlerFunc {
 		indexList := make([]int, len(idList))
 		t.Logger.Info("will save the new bookmark list", logging.LogV("ID_List", fmt.Sprintf("%v", idList)))
 		// we jus ust the order of supplied IDs as the "natural" sort-order
-		for i, _ := range idList {
+		for i := range idList {
 			indexList[i] = i
 		}
 

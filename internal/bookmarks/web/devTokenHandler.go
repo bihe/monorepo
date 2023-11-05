@@ -23,6 +23,12 @@ func (d DevTokenHandler) Index() http.HandlerFunc {
 		}
 
 		jwt := createToken()
+
+		cookie := http.Cookie{
+			Name:  "login_token",
+			Value: jwt,
+		}
+		http.SetCookie(w, &cookie)
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(jwt))
 	}

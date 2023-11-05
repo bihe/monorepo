@@ -49,7 +49,7 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 	// server-side rendered paths
 	// the following paths provide server-rendered UIs
 	// /403 displays a page telling the user that access/permissions are missing
-	std.Get("/403", templateHandler.Show403())
+	std.Get("/bm/403", templateHandler.Show403())
 
 	// use this for development purposes only!
 	if opts.Config.Environment == config.Development {
@@ -71,7 +71,6 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 		r.Delete("/delete/{id}", templateHandler.DeleteBookmark())
 		r.Post("/favicon/page", templateHandler.FetchCustomFaviconFromPage())
 		r.Post("/favicon/url", templateHandler.FetchCustomFaviconURL())
-		r.Get("/sort", templateHandler.TriggerSortBookmarks())
 		r.Post("/sort", templateHandler.SortBookmarks())
 		r.Get("/{id}", templateHandler.EditBookmarkDialog())
 		r.Get("/", templateHandler.GetBookmarksForPath())
@@ -172,7 +171,7 @@ func (u secInterceptor) handleJWT(next http.Handler) http.Handler {
 				return
 			}
 			// when the Accept header is not pure 'application/json' provide a human-readable response
-			http.Redirect(w, r, "/403", http.StatusFound)
+			http.Redirect(w, r, "/bm/403", http.StatusFound)
 			return
 
 		}

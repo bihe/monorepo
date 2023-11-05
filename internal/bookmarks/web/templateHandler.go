@@ -41,7 +41,7 @@ func (t *TemplateHandler) SearchBookmarks() http.HandlerFunc {
 		}
 
 		templates.Layout(
-			t.layoutModel("Search Bookmarks!", search, *user),
+			t.layoutModel("Search Bookmarks!", "Bookmark Search", search, "/bm/public/folder.svg", *user),
 			templates.SearchStyles(),
 			templates.SearchNavigation(search),
 			templates.SearchContent(bms),
@@ -87,16 +87,38 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 		bms, err := t.App.GetBookmarksByPath(path, *user)
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", path, err), r)
+			templates.ErrorPageLayout(templates.ErrorApplication(
+				t.Env,
+				r,
+				fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", path, err)),
+			).Render(r.Context(), w)
+			return
+		}
+
+		curFolder := ""
+		favicon := ""
+		if len(pathParts) > 0 {
+			curFolder = pathParts[len(pathParts)-1]
+			folder, err := t.App.GetBookmarksFolderByPath(path, *user)
+			if err != nil {
+				t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmark folder for path '%s'; '%v'", path, err), r)
+				templates.ErrorPageLayout(templates.ErrorApplication(
+					t.Env,
+					r,
+					fmt.Sprintf("could not get bookmark folder for path '%s'; '%v'", path, err)),
+				).Render(r.Context(), w)
+				return
+			}
+			favicon = "/api/v1/bookmarks/favicon/" + folder.ID
 		}
 
 		templates.Layout(
-			t.layoutModel("Bookmarks!", "", *user),
+			t.layoutModel("Bookmarks!", curFolder, "", favicon, *user),
 			templates.BookmarksByPathStyles(),
-			templates.BookmarksByPathNavigation(pathHierarchy, templates.SortButton()),
+			templates.BookmarksByPathNavigation(pathHierarchy),
 			templates.BookmarksByPathContent(templates.BookmarkList(
 				path,
 				bms,
-				false,
 			)),
 		).Render(r.Context(), w)
 	}
@@ -118,7 +140,6 @@ func (t *TemplateHandler) GetBookmarksForPathPartial() http.HandlerFunc {
 		templates.BookmarkList(
 			path,
 			bms,
-			true,
 		).Render(r.Context(), w)
 	}
 }
@@ -162,7 +183,6 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 			templates.BookmarkList(
 				bm.Path,
 				bms,
-				true,
 			).Render(r.Context(), w)
 			return
 		}
@@ -179,7 +199,6 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 		templates.BookmarkList(
 			bm.Path,
 			bms,
-			true,
 		).Render(r.Context(), w)
 
 	}
@@ -448,14 +467,6 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 	}
 }
 
-// TriggerSortBookmarks starts the event to save the new bookmark sort-order
-func (t *TemplateHandler) TriggerSortBookmarks() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("HX-Trigger", "sortBookmarkList")
-		templates.SortButton().Render(r.Context(), w)
-	}
-}
-
 // SortBookmarks performs a reordering of the bookmark list
 func (t *TemplateHandler) SortBookmarks() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -542,14 +553,25 @@ func (t *TemplateHandler) versionString() string {
 	return fmt.Sprintf("%s-%s", t.Version, t.Build)
 }
 
-func (t *TemplateHandler) layoutModel(title, search string, user security.User) templates.LayoutModel {
-	return templates.LayoutModel{
-		Title:              title,
-		Version:            t.versionString(),
-		User:               user,
-		Search:             search,
-		PageReloadClientJS: templates.PageReloadClientJS(),
+func (t *TemplateHandler) layoutModel(title, pageTitle, search, favicon string, user security.User) templates.LayoutModel {
+	model := templates.LayoutModel{
+		Title:     title,
+		PageTitle: pageTitle,
+		Favicon:   favicon,
+		Version:   t.versionString(),
+		User:      user,
+		Search:    search,
 	}
+	if model.Favicon == "" {
+		model.Favicon = "/public/folder.svg"
+	}
+	if model.PageTitle == "" {
+		model.PageTitle = model.Title
+	}
+	if t.Env == config.Development {
+		model.PageReloadClientJS = templates.PageReloadClientJS()
+	}
+	return model
 }
 
 // --------------------------------------------------------------------------

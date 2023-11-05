@@ -3,7 +3,7 @@ package templates
 import "fmt"
 import "golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 
-templ BookmarkList(path string, items []bookmarks.Bookmark, sortableReload bool) {
+templ BookmarkList(path string, items []bookmarks.Bookmark) {
 	<div class="bookmark_list" id="bookmark_list" hx-get={ "/bm/partial/~"+path } hx-trigger="refreshBookmarkList from:body once" hx-swap="outerHTML">
 		<form name="sortform" class="sortable" hx-post="/bm/sort" hx-trigger="sortBookmarkList from:body once" hx-swap="none">
 			for _, b := range items {
@@ -18,9 +18,9 @@ templ BookmarkList(path string, items []bookmarks.Bookmark, sortableReload bool)
 							}
 						</span>
 						if b.Type == bookmarks.Node {
-							<a class="bookmark_name" href={ templ.URL(b.URL) }>{ b.DisplayName }</a>
+							<a class="bookmark_name" href={ templ.URL(b.URL) } title={ b.DisplayName }>{ Ellipsis(b.DisplayName, 30, "...") }</a>
 						} else {
-							<a class="bookmark_name" href={ templ.URL("/bm/~"+EnsureTrailingSlash(b.Path)+b.DisplayName) }>{ b.DisplayName }</a>
+							<a class="bookmark_name" href={ templ.URL("/bm/~"+EnsureTrailingSlash(b.Path)+b.DisplayName) } title={ b.DisplayName }>{ Ellipsis(b.DisplayName, 30, "...") }</a>
 						}
 						<input type="hidden" name="ID" value={ b.ID }/>
 					</div>
@@ -59,10 +59,5 @@ templ BookmarkList(path string, items []bookmarks.Bookmark, sortableReload bool)
 				</div>
 			}
 		</form>
-		if sortableReload {
-			<script type="text/javascript">
-			sortableRefresh(document);
-			</script>
-		}
 	</div>
 }

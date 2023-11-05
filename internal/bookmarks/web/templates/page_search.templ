@@ -16,12 +16,12 @@ templ SearchContent(items []bookmarks.Bookmark) {
 					}
 				</span>
 				<span class="badge rounded-pill text-bg-secondary bookmark-path">
-					<a class="bookmark_path" href={ templ.URL("/bm/~"+b.Path) }>{ b.Path }</a>
+					<a class="bookmark_path" href={ templ.URL("/bm/~"+b.Path) } title={ b.Path }>{ Ellipsis(b.Path,5, "") }</a>
 				</span>
 				if b.Type == bookmarks.Node {
-					<a class="bookmark_name" href={ templ.URL(b.URL) }>{ b.DisplayName }</a>
+					<a class="bookmark_name" href={ templ.URL(b.URL) } title={ b.DisplayName }>{ Ellipsis(b.DisplayName,30, "...") }</a>
 				} else {
-					<a class="bookmark_name" href={ templ.URL("/bm/~"+EnsureTrailingSlash(b.Path)+b.DisplayName) }>{ b.DisplayName }</a>
+					<a class="bookmark_name" href={ templ.URL("/bm/~"+EnsureTrailingSlash(b.Path)+b.DisplayName) } title={ b.DisplayName }>{ Ellipsis(b.DisplayName,20, "...") }</a>
 				}
 			</div>
 		}

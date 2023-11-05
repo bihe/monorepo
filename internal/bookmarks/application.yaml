@@ -9,24 +9,24 @@ baseconfig:
     # allow cross-origin requests
     cors:
         origins:
-        - "http://localhost:8080"
-        - "http://localhost:3000"
-        - "http://localhost:4200"
-        - "http://dev.binggl.net"
-        - "https://dev.binggl.net"
-        - "http://dev.binggl.net:4200"
+            - "http://localhost:8080"
+            - "http://localhost:3000"
+            - "http://localhost:4200"
+            - "http://dev.binggl.net"
+            - "https://dev.binggl.net"
+            - "http://dev.binggl.net:4200"
         methods:
-        - "GET"
-        - "POST"
-        - "PUT"
-        - "DELETE"
-        - "OPTIONS"
+            - "GET"
+            - "POST"
+            - "PUT"
+            - "DELETE"
+            - "OPTIONS"
         headers:
-        - "cache-control"
-        - "content-type"
-        - "pragma"
-        - "accept"
-        - "authorization"
+            - "cache-control"
+            - "content-type"
+            - "pragma"
+            - "accept"
+            - "authorization"
         credentials: true
         maxAge: 500
 
@@ -52,13 +52,13 @@ baseconfig:
             name: bookmarks
             url: http://localhost:3003
             roles:
-            - User
+                - User
         cacheDuration: 10m
 
     # static assets
     assets:
         assetDir: "./assets"
-        assetPrefix: "/public"
+        assetPrefix: "/bm/public"
 
 database:
     connectionString: "DATABASE"

@@ -18,9 +18,9 @@ templ BookmarkList(path string, items []bookmarks.Bookmark) {
 							}
 						</span>
 						if b.Type == bookmarks.Node {
-							<a class="bookmark_name" href={ templ.URL(b.URL) }>{ b.DisplayName }</a>
+							<a class="bookmark_name" href={ templ.URL(b.URL) } title={ b.DisplayName }>{ Ellipsis(b.DisplayName, 30, "...") }</a>
 						} else {
-							<a class="bookmark_name" href={ templ.URL("/bm/~"+EnsureTrailingSlash(b.Path)+b.DisplayName) }>{ b.DisplayName }</a>
+							<a class="bookmark_name" href={ templ.URL("/bm/~"+EnsureTrailingSlash(b.Path)+b.DisplayName) } title={ b.DisplayName }>{ Ellipsis(b.DisplayName, 30, "...") }</a>
 						}
 						<input type="hidden" name="ID" value={ b.ID }/>
 					</div>

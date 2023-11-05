@@ -25,6 +25,16 @@ func EnsureTrailingSlash(entry string) string {
 	return entry + "/"
 }
 
+func Ellipsis(entry string, length int, indicator string) string {
+	if entry == "" {
+		return ""
+	}
+	if len(entry) < length {
+		return entry
+	}
+	return entry[:length] + indicator
+}
+
 const (
 	MsgSuccess = "success"
 	MsgError   = "error"

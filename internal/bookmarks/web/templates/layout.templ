@@ -20,10 +20,10 @@ templ Layout(model LayoutModel, style, application_navigation, content templ.Com
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<link rel="shortcut icon" id="site-favicon" type="image/x-icon" href={ model.Favicon }/>
 			<title>{ model.PageTitle }</title>
-			<link href="/public/bootstrap/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"/>
-			<link href="/public/css/styles.css" rel="stylesheet"/>
-			<link href="/public/fonts/local.css" rel="stylesheet"/>
-			<link href="/public/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet"/>
+			<link href="/bm/public/bootstrap/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"/>
+			<link href="/bm/public/css/styles.css" rel="stylesheet"/>
+			<link href="/bm/public/fonts/local.css" rel="stylesheet"/>
+			<link href="/bm/public/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet"/>
 			{! style }
 		</head>
 		<body data-bs-theme="dark">
@@ -90,11 +90,11 @@ templ Layout(model LayoutModel, style, application_navigation, content templ.Com
 					</div>
 				</div>
 			</main>
-			<script src="/public/js/htmx.min.js"></script>
-			<script src="/public/bootstrap/js/popper.min.js"></script>
-			<script src="/public/bootstrap/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"></script>
-			<script src="/public/js/Sortable.min.js"></script>
-			<script src="/public/js/script.js"></script>
+			<script src="/bm/public/js/htmx.min.js"></script>
+			<script src="/bm/public/bootstrap/js/popper.min.js"></script>
+			<script src="/bm/public/bootstrap/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"></script>
+			<script src="/bm/public/js/Sortable.min.js"></script>
+			<script src="/bm/public/js/script.js"></script>
 			{! model.PageReloadClientJS }
 		</body>
 	</html>

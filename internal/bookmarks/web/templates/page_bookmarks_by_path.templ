@@ -32,6 +32,19 @@ templ BookmarksByPathStyles() {
 		position: relative;
     	top: 18px;
 	}
+	@media only screen and (min-device-width: 375px) and (max-device-width: 812px) {
+	.breadcrumb-item {
+        --bs-breadcrumb-divider-color: #ffffff !important;
+        --bs-breadcrumb-divider: '>';
+        font-size: smaller;
+    }
+	.breadcrumb-item.active {
+        color: #ffffff;
+    }
+    li.breadcrumb-item > a {
+        color: #ffffff;
+    }
+	}
     </style>
 }
 
@@ -49,11 +62,19 @@ templ BookmarksByPathNavigation(entries []BookmarkPathEntry) {
 	<div class="application_name">
 		<nav aria-label="breadcrumb">
 			<ol class="breadcrumb">
-				for _, e := range entries {
+				for i, e := range entries {
 					if e.LastItem {
-						<li class="breadcrumb-item active" aria-current="page">{ e.DisplayName }</li>
+						if i == 0 {
+							<li class="breadcrumb-item active" aria-current="page"><i class="bi bi-house"></i></li>
+						} else {
+							<li class="breadcrumb-item active" aria-current="page">{ e.DisplayName }</li>
+						}
 					} else {
-						<li class="breadcrumb-item"><a href={ templ.URL("/bm/~"+e.UrlPath) }>{ e.DisplayName }</a></li>
+						if i == 0 {
+							<li class="breadcrumb-item"><a href={ templ.URL("/bm/~"+e.UrlPath) }><i class="bi bi-house"></i></a></li>
+						} else {
+							<li class="breadcrumb-item"><a href={ templ.URL("/bm/~"+e.UrlPath) }>{ e.DisplayName }</a></li>
+						}
 					}
 				}
 			</ol>
@@ -74,12 +95,12 @@ templ BookmarksByPathNavigation(entries []BookmarkPathEntry) {
 				<button
  					id="btn_save_sorting"
  					type="button"
- 					class="btn btn-success"
+ 					class="btn btn-success sort_button"
 				><i class="bi bi-sort-numeric-down"></i> Save</button>
 			</span>
 			<button
  				type="button"
- 				class="btn btn-primary"
+ 				class="btn btn-primary new_button"
  				data-bs-toggle="modal"
  				data-bs-target="#modals-here"
  				hx-target="#modals-here"

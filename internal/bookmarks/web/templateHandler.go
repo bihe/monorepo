@@ -41,7 +41,7 @@ func (t *TemplateHandler) SearchBookmarks() http.HandlerFunc {
 		}
 
 		templates.Layout(
-			t.layoutModel("Search Bookmarks!", "Bookmark Search", "/public/folder.svg", search, *user),
+			t.layoutModel("Search Bookmarks!", "Bookmark Search", search, "/bm/public/folder.svg", *user),
 			templates.SearchStyles(),
 			templates.SearchNavigation(search),
 			templates.SearchContent(bms),

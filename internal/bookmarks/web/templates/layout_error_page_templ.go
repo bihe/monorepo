@@ -32,7 +32,7 @@ func ErrorPageLayout(content templ.Component) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</title><base href=\"/\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\"><link rel=\"shortcut icon\" id=\"site-favicon\" type=\"image/x-icon\" href=\"public/folder.svg\"><link href=\"public/bootstrap/css/bootstrap.min.css\" rel=\"stylesheet\" integrity=\"sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM\"><link href=\"public/fonts/local.css\" rel=\"stylesheet\"><link href=\"public/css/error_pages.css\" rel=\"stylesheet\"></head><body><div class=\"appcontent container-fluid\" style=\"height: 100%;\"><div class=\"row contentArea\"><div class=\"col-main body-content\"><!--")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</title><base href=\"/\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\"><link rel=\"shortcut icon\" id=\"site-favicon\" type=\"image/x-icon\" href=\"public/folder.svg\"><link href=\"/bm/public/bootstrap/css/bootstrap.min.css\" rel=\"stylesheet\" integrity=\"sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM\"><link href=\"/bm/public/fonts/local.css\" rel=\"stylesheet\"><link href=\"/bm/public/css/error_pages.css\" rel=\"stylesheet\"></head><body><div class=\"appcontent container-fluid\" style=\"height: 100%;\"><div class=\"row contentArea\"><div class=\"col-main body-content\"><!--")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

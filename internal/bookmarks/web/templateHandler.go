@@ -115,11 +115,10 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 		templates.Layout(
 			t.layoutModel("Bookmarks!", curFolder, "", favicon, *user),
 			templates.BookmarksByPathStyles(),
-			templates.BookmarksByPathNavigation(pathHierarchy, templates.SortButton()),
+			templates.BookmarksByPathNavigation(pathHierarchy),
 			templates.BookmarksByPathContent(templates.BookmarkList(
 				path,
 				bms,
-				false,
 			)),
 		).Render(r.Context(), w)
 	}
@@ -141,7 +140,6 @@ func (t *TemplateHandler) GetBookmarksForPathPartial() http.HandlerFunc {
 		templates.BookmarkList(
 			path,
 			bms,
-			true,
 		).Render(r.Context(), w)
 	}
 }
@@ -185,7 +183,6 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 			templates.BookmarkList(
 				bm.Path,
 				bms,
-				true,
 			).Render(r.Context(), w)
 			return
 		}
@@ -202,7 +199,6 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 		templates.BookmarkList(
 			bm.Path,
 			bms,
-			true,
 		).Render(r.Context(), w)
 
 	}
@@ -468,14 +464,6 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			templates.EditBookmarks(formBm, paths).Render(r.Context(), w)
 			return
 		}
-	}
-}
-
-// TriggerSortBookmarks starts the event to save the new bookmark sort-order
-func (t *TemplateHandler) TriggerSortBookmarks() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("HX-Trigger", "sortBookmarkList")
-		templates.SortButton().Render(r.Context(), w)
 	}
 }
 

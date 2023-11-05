@@ -45,7 +45,7 @@ func getPath(entries []BookmarkPathEntry) string {
 	return entries[len(entries)-1].UrlPath
 }
 
-templ BookmarksByPathNavigation(entries []BookmarkPathEntry, sortButton templ.Component) {
+templ BookmarksByPathNavigation(entries []BookmarkPathEntry) {
 	<div class="application_name">
 		<nav aria-label="breadcrumb">
 			<ol class="breadcrumb">
@@ -64,7 +64,19 @@ templ BookmarksByPathNavigation(entries []BookmarkPathEntry, sortButton templ.Co
 					<span class="visually-hidden">Loading...</span>
 				</div>
 			</div>
-			{! sortButton }
+			<button
+ 				id="btn_toggle_sorting"
+ 				type="button"
+ 				data-bs-toggle="button"
+ 				class="btn sort_button"
+			><i class="bi bi-arrow-down-up"></i> Sort</button>
+			<span id="save_list_sort_order" class="sort_button d-none">
+				<button
+ 					id="btn_save_sorting"
+ 					type="button"
+ 					class="btn btn-success"
+				><i class="bi bi-sort-numeric-down"></i> Save</button>
+			</span>
 			<button
  				type="button"
  				class="btn btn-primary"
@@ -75,5 +87,26 @@ templ BookmarksByPathNavigation(entries []BookmarkPathEntry, sortButton templ.Co
  				hx-get={ "/bm/-1?path="+getPath(entries) }
 			><i class="bi bi-plus"></i> Add</button>
 		</span>
+		<script type="text/javascript">
+			try {
+				document.querySelector('#btn_toggle_sorting').addEventListener('click', (event) => {
+					if (event.target.classList.contains('active')) {
+						console.log('Activate sorting');
+						sortableRefresh(document);
+					} else {
+						console.log('Disable sorting - refresh the list');
+						document.querySelector('#save_list_sort_order').classList.add('d-none');
+						htmx.trigger('#btn_toggle_sorting', 'refreshBookmarkList');
+					}
+				});
+				document.querySelector('#btn_save_sorting').addEventListener('click', (event) => {
+					htmx.trigger('#btn_save_sorting', 'sortBookmarkList');
+					document.querySelector('#btn_toggle_sorting').classList.remove('active');
+					document.querySelector('#save_list_sort_order').classList.add('d-none');
+				});
+			} catch(error) {
+				console.error(error);
+			}
+		</script>
 	</div>
 }

@@ -104,7 +104,7 @@ func Test_Page_403(t *testing.T) {
 	r := bookmarkHandler(repo, fRepo)
 
 	rec := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/403", nil)
+	req, _ := http.NewRequest("GET", "/bm/403", nil)
 
 	r.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusOK, rec.Code)
@@ -121,7 +121,7 @@ func Test_Bookmark_Search(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/bm/search", nil)
 	r.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusFound, rec.Code)
-	if rec.Header().Get("Location") != "/403" {
+	if rec.Header().Get("Location") != "/bm/403" {
 		t.Errorf("expected redirect to '403' got '%s'", rec.Header().Get("Location"))
 	}
 
@@ -153,7 +153,7 @@ func Test_Bookmark_ForPath(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/bm/~", nil)
 	r.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusFound, rec.Code)
-	if rec.Header().Get("Location") != "/403" {
+	if rec.Header().Get("Location") != "/bm/403" {
 		t.Errorf("expected redirect to '403' got '%s'", rec.Header().Get("Location"))
 	}
 

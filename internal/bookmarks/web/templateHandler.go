@@ -9,6 +9,7 @@ import (
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/web/templates"
 	"golang.binggl.net/monorepo/pkg/config"
+	"golang.binggl.net/monorepo/pkg/develop"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
@@ -568,9 +569,11 @@ func (t *TemplateHandler) layoutModel(title, pageTitle, search, favicon string, 
 	if model.PageTitle == "" {
 		model.PageTitle = model.Title
 	}
+	var jsReloadLogic string
 	if t.Env == config.Development {
-		model.PageReloadClientJS = templates.PageReloadClientJS()
+		jsReloadLogic = develop.PageReloadClientJS
 	}
+	model.PageReloadClientJS = templates.PageReloadClientJS(jsReloadLogic)
 	return model
 }
 

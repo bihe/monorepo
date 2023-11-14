@@ -13,6 +13,7 @@ import (
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/conf"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
+	"golang.binggl.net/monorepo/internal/bookmarks/web"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"gorm.io/driver/sqlite"
@@ -171,5 +172,45 @@ func Test_Bookmark_ForPath(t *testing.T) {
 
 	if !strings.Contains(payload, "path") {
 		t.Errorf("cannot find string in page result")
+	}
+}
+
+func Test_EllipsisValue(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/bm/~", nil)
+	el := web.GetEllipsisValues(req)
+
+	// for the standard case without anything the standard ellipsis values should be returned
+	if el.PathLen != web.StdEllipsis.PathLen &&
+		el.NodeLen != web.StdEllipsis.NodeLen &&
+		el.FolderLen != web.StdEllipsis.FolderLen {
+		t.Errorf("expected the std ellipsis - got something different")
+	}
+
+	// we have a viewport cookie
+	req, _ = http.NewRequest("GET", "/bm/~", nil)
+	req.AddCookie(&http.Cookie{
+		Name:  "viewport",
+		Value: "1024:768",
+	})
+
+	el = web.GetEllipsisValues(req)
+	if el.PathLen != web.StdEllipsis.PathLen &&
+		el.NodeLen != web.StdEllipsis.NodeLen &&
+		el.FolderLen != web.StdEllipsis.FolderLen {
+		t.Errorf("expected the std ellipsis - got something different")
+	}
+
+	// we have a mobile viewport
+	req, _ = http.NewRequest("GET", "/bm/~", nil)
+	req.AddCookie(&http.Cookie{
+		Name:  "viewport",
+		Value: "320:560",
+	})
+
+	el = web.GetEllipsisValues(req)
+	if el.PathLen != web.MobileEllipsis.PathLen &&
+		el.NodeLen != web.MobileEllipsis.NodeLen &&
+		el.FolderLen != web.MobileEllipsis.FolderLen {
+		t.Errorf("expected the std ellipsis - got something different")
 	}
 }

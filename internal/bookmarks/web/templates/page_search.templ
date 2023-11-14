@@ -3,7 +3,13 @@ package templates
 import "fmt"
 import "golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 
-templ SearchContent(items []bookmarks.Bookmark) {
+type EllipsisValues struct {
+	PathLen   int
+	NodeLen   int
+	FolderLen int
+}
+
+templ SearchContent(items []bookmarks.Bookmark, ell EllipsisValues) {
 	<div class="bookmark_list">
 		for _, b := range items {
 			<div class="bookmark_item">
@@ -16,12 +22,12 @@ templ SearchContent(items []bookmarks.Bookmark) {
 					}
 				</span>
 				<span class="badge rounded-pill text-bg-secondary bookmark-path">
-					<a class="bookmark_path" href={ templ.URL("/bm/~"+b.Path) } title={ b.Path }>{ Ellipsis(b.Path,5, "") }</a>
+					<a class="bookmark_path" href={ templ.URL("/bm/~"+b.Path) } title={ b.Path }>{ Ellipsis(b.Path,ell.PathLen, "") }</a>
 				</span>
 				if b.Type == bookmarks.Node {
-					<a class="bookmark_name" href={ templ.URL(b.URL) } title={ b.DisplayName }>{ Ellipsis(b.DisplayName,30, "...") }</a>
+					<a class="bookmark_name" href={ templ.URL(b.URL) } title={ b.DisplayName }>{ Ellipsis(b.DisplayName,ell.NodeLen, "...") }</a>
 				} else {
-					<a class="bookmark_name" href={ templ.URL("/bm/~"+EnsureTrailingSlash(b.Path)+b.DisplayName) } title={ b.DisplayName }>{ Ellipsis(b.DisplayName,20, "...") }</a>
+					<a class="bookmark_name" href={ templ.URL("/bm/~"+EnsureTrailingSlash(b.Path)+b.DisplayName) } title={ b.DisplayName }>{ Ellipsis(b.DisplayName,ell.FolderLen, "...") }</a>
 				}
 			</div>
 		}

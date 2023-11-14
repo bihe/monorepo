@@ -30,3 +30,17 @@
         }
     });
 })();
+/* resize */
+; (function resize() {
+    function viewPort(x, y) {
+        document.cookie = `viewport=${x}:${y}`;
+    }
+    window.addEventListener("resize", (event) => {
+        console.log(`${window.innerWidth}/${window.innerHeight}`);
+        viewPort(window.innerWidth, window.innerHeight);
+    });
+    window.addEventListener("load", (event) => {
+        console.log(`${window.innerWidth}/${window.innerHeight}`);
+        viewPort(window.innerWidth, window.innerHeight);
+    });
+})();

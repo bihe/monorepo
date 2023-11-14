@@ -20,6 +20,8 @@ type LayoutModel struct {
 	User               security.User
 	Search             string
 	PageReloadClientJS templ.Component
+	WindowX            int
+	WindowY            int
 }
 
 func Layout(model LayoutModel, style, application_navigation, content templ.Component) templ.Component {

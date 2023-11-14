@@ -10,6 +10,8 @@ type LayoutModel struct {
 	User               security.User
 	Search             string
 	PageReloadClientJS templ.Component
+	WindowX            int
+	WindowY            int
 }
 
 templ Layout(model LayoutModel, style, application_navigation, content templ.Component) {

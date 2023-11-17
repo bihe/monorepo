@@ -3,6 +3,7 @@ package web
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -41,11 +42,12 @@ func (t *TemplateHandler) SearchBookmarks() http.HandlerFunc {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for search '%s'; '%v'", search, err), r)
 		}
 
+		ell := GetEllipsisValues(r)
 		templates.Layout(
 			t.layoutModel("Search Bookmarks!", "Bookmark Search", search, "/bm/public/folder.svg", *user),
 			templates.SearchStyles(),
 			templates.SearchNavigation(search),
-			templates.SearchContent(bms),
+			templates.SearchContent(bms, ell),
 		).Render(r.Context(), w)
 	}
 }
@@ -113,6 +115,7 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 			favicon = "/api/v1/bookmarks/favicon/" + folder.ID
 		}
 
+		ell := GetEllipsisValues(r)
 		templates.Layout(
 			t.layoutModel("Bookmarks!", curFolder, "", favicon, *user),
 			templates.BookmarksByPathStyles(),
@@ -120,6 +123,7 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 			templates.BookmarksByPathContent(templates.BookmarkList(
 				path,
 				bms,
+				ell,
 			)),
 		).Render(r.Context(), w)
 	}
@@ -137,10 +141,11 @@ func (t *TemplateHandler) GetBookmarksForPathPartial() http.HandlerFunc {
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", path, err), r)
 		}
-
+		ell := GetEllipsisValues(r)
 		templates.BookmarkList(
 			path,
 			bms,
+			ell,
 		).Render(r.Context(), w)
 	}
 }
@@ -165,6 +170,8 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := pathParam(r, "id")
 		user := ensureUser(r)
+		ell := GetEllipsisValues(r)
+
 		t.Logger.InfoRequest(fmt.Sprintf("get bookmark by id: '%s' for user: '%s'", id, user.Username), r)
 		bm, err := t.App.GetBookmarkByID(id, *user)
 		if err != nil {
@@ -184,6 +191,7 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 			templates.BookmarkList(
 				bm.Path,
 				bms,
+				ell,
 			).Render(r.Context(), w)
 			return
 		}
@@ -196,10 +204,10 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 		// show a notification-toast about the update!
 		// https://htmx.org/headers/hx-trigger/
 		w.Header().Add("HX-Trigger", templates.SuccessToast("Bookmark deleted", fmt.Sprintf("The bookmark '%s' was deleted.", bm.DisplayName)))
-
 		templates.BookmarkList(
 			bm.Path,
 			bms,
+			ell,
 		).Render(r.Context(), w)
 
 	}
@@ -547,6 +555,56 @@ func (t *TemplateHandler) Show404() http.HandlerFunc {
 }
 
 // --------------------------------------------------------------------------
+//  UI Ellipsis Handling
+// --------------------------------------------------------------------------
+
+// Desktop Browser
+var StdEllipsis = templates.EllipsisValues{
+	PathLen:   50,
+	NodeLen:   60,
+	FolderLen: 50,
+}
+
+// Mobile View
+var MobileEllipsis = templates.EllipsisValues{
+	PathLen:   5,
+	NodeLen:   30,
+	FolderLen: 20,
+}
+
+func GetEllipsisValues(r *http.Request) (ell templates.EllipsisValues) {
+	vX, _ := getViewPort(r)
+	ell = StdEllipsis
+	if vX == 0 {
+		// this looks odd - use the std
+		return
+	}
+	// iPhone 12 Pro
+	if vX <= 390 {
+		ell = MobileEllipsis
+	}
+	return
+}
+
+const cookieViewPortName = "viewport"
+
+func getViewPort(r *http.Request) (x, y int) {
+	cookie, _ := r.Cookie(cookieViewPortName)
+	if cookie != nil && cookie.Value != "" {
+		dim := strings.Split(cookie.Value, ":")
+		if len(dim) == 2 {
+			if v, err := strconv.Atoi(dim[0]); err == nil {
+				x = v
+			}
+			if v, err := strconv.Atoi(dim[1]); err == nil {
+				y = v
+			}
+		}
+	}
+	return
+}
+
+// --------------------------------------------------------------------------
 //  Internals
 // --------------------------------------------------------------------------
 
@@ -563,6 +621,7 @@ func (t *TemplateHandler) layoutModel(title, pageTitle, search, favicon string, 
 		User:      user,
 		Search:    search,
 	}
+
 	if model.Favicon == "" {
 		model.Favicon = "/public/folder.svg"
 	}

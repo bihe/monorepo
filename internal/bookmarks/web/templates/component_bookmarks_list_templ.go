@@ -13,7 +13,7 @@ import "bytes"
 import "fmt"
 import "golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 
-func BookmarkList(path string, items []bookmarks.Bookmark) templ.Component {
+func BookmarkList(path string, items []bookmarks.Bookmark, ell EllipsisValues) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -109,7 +109,7 @@ func BookmarkList(path string, items []bookmarks.Bookmark) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var5 string = Ellipsis(b.DisplayName, 30, "...")
+				var templ_7745c5c3_Var5 string = Ellipsis(b.DisplayName, ell.NodeLen, "...")
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -140,7 +140,7 @@ func BookmarkList(path string, items []bookmarks.Bookmark) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var7 string = Ellipsis(b.DisplayName, 30, "...")
+				var templ_7745c5c3_Var7 string = Ellipsis(b.DisplayName, ell.FolderLen, "...")
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err

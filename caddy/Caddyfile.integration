@@ -28,20 +28,6 @@ dev.binggl.net {
         }
     }
 
-    handle_path /public* {
-        rewrite * /public{path}
-        reverse_proxy http://bookmarks-3003:3000 {
-            import proxy-transport
-        }
-    }
-
-    handle_path /403* {
-        rewrite * /403
-        reverse_proxy http://bookmarks-3003:3000 {
-            import proxy-transport
-        }
-    }
-
     handle_path /api/v1/bookmarks* {
         rewrite * /api/v1/bookmarks{path}
         reverse_proxy http://bookmarks-3003:3000 {
@@ -83,7 +69,7 @@ dev.binggl.net {
         }
     }
 
-    handle /* {
+    handle_path /ui* {
         root * /opt/frontend/app
         file_server
     }
@@ -98,4 +84,6 @@ dev.binggl.net {
         output stderr
         level ERROR
     }
+
+    redir / /bm 302
 }

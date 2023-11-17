@@ -4,9 +4,9 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "dev-integration": "ng serve --configuration integration",
-    "build": "ng build --configuration production",
-    "integration": "ng build --configuration integration",
+    "dev-integration": "ng serve --configuration integration --base-href /ui/",
+    "build": "ng build --configuration production --base-href /ui/",
+    "integration": "ng build --configuration integration --base-href /ui/",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"

@@ -25,14 +25,13 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { Title } from '@angular/platform-browser';
 import { LazyLoadImageModule } from 'ng-lazyload-image';
 import { AppComponent } from './components/app/app.component';
-import { CreateBookmarksDialog } from './components/bookmarks/home/create.dialog';
-import { BookmarkHomeComponent } from './components/bookmarks/home/home.component';
 import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
 import { HeaderComponent } from './components/header/header.component';
 import { EditSitesComponent } from './components/login/edit/edit.component';
 import { SiteHomeComponent } from './components/login/home/home.component';
 import { MyDmsDocumentComponent } from './components/mydms/document/document.component';
 import { MyDmsHomeComponent } from './components/mydms/home/home.component';
+import { Bookmarkv2RedirectCompnent } from './components/redirect/redirec.component';
 import { ModuleIndex } from './shared/moduleIndex';
 import { DateFormatPipe } from './shared/pipes/dataformat';
 import { EllipsisPipe } from './shared/pipes/ellipsis';
@@ -57,32 +56,31 @@ const ImportAngularElements = [
 export class AppMaterialModule { }
 
 export const sharedConfig: NgModule = {
-    bootstrap: [ AppComponent ],
-    declarations: [
-      AppComponent,
-      BookmarkHomeComponent,
-      HeaderComponent,
-      EllipsisPipe,
-      DateFormatPipe,
-      CreateBookmarksDialog,
-      ConfirmDialogComponent,
-      MyDmsHomeComponent,
-      SiteHomeComponent,
-      EditSitesComponent,
-      MyDmsDocumentComponent
-    ],
-    imports: [
-      AppMaterialModule,
-      LazyLoadImageModule
-    ],
-    providers: [
-      ApplicationState,
-      ApiBookmarksService,
-      ApiSiteService,
-      ApiMydmsService,
-      ApiCoreService,
-      Title,
-      ModuleIndex
-    ],
-    entryComponents: [ CreateBookmarksDialog, ConfirmDialogComponent ]
+  bootstrap: [AppComponent],
+  declarations: [
+    AppComponent,
+    Bookmarkv2RedirectCompnent,
+    HeaderComponent,
+    EllipsisPipe,
+    DateFormatPipe,
+    ConfirmDialogComponent,
+    MyDmsHomeComponent,
+    SiteHomeComponent,
+    EditSitesComponent,
+    MyDmsDocumentComponent
+  ],
+  imports: [
+    AppMaterialModule,
+    LazyLoadImageModule
+  ],
+  providers: [
+    ApplicationState,
+    ApiBookmarksService,
+    ApiSiteService,
+    ApiMydmsService,
+    ApiCoreService,
+    Title,
+    ModuleIndex
+  ],
+  entryComponents: [ConfirmDialogComponent]
 };

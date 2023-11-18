@@ -3,7 +3,7 @@ package api_test
 import (
 	"net/http"
 
-	"golang.binggl.net/monorepo/internal/core/api"
+	"golang.binggl.net/monorepo/internal/core"
 	"golang.binggl.net/monorepo/internal/core/app/conf"
 	"golang.binggl.net/monorepo/internal/core/app/oidc"
 	"golang.binggl.net/monorepo/internal/core/app/sites"
@@ -27,7 +27,7 @@ type handlerOps struct {
 }
 
 func handlerWith(ops *handlerOps) http.Handler {
-	return api.MakeHTTPHandler(ops.oidcSvc, ops.siteSvc, ops.uploadSvc, logger, api.HTTPHandlerOptions{
+	return core.MakeHTTPHandler(ops.oidcSvc, ops.siteSvc, ops.uploadSvc, logger, core.HTTPHandlerOptions{
 		BasePath:  "./",
 		ErrorPath: "/error",
 		Config: conf.AppConfig{

@@ -32,7 +32,7 @@ type OidcHandler struct {
 // the **state** value is used a a correlation token during the OIDC call
 // to ensure that the cookie is written this intermediate hop is used (same host/damain/...) until the real OIDC redirect starts
 // -- handlePrepIntOIDCRedirect -- (redirect) -->  handleGetExtOIDCRedirect
-func (o OidcHandler) handlePrepIntOIDCRedirect() http.HandlerFunc {
+func (o OidcHandler) HandlePrepIntOIDCRedirect() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		url, state := o.OidcSvc.PrepIntOIDCRedirect()
 		o.Cookies.Set(stateCookieName, state, 60, w)
@@ -44,7 +44,7 @@ func (o OidcHandler) handlePrepIntOIDCRedirect() http.HandlerFunc {
 // handleGetExtOIDCRedirect just reads the **state** cookie value (and returns an error if no **state** cookie is found)
 // if the **state** is available the handler starts the OIDC process by redirecting to the first URL of the OIDC implementation
 // -- handleGetExtOIDCRedirect -- (redirect) --> OIDC process flow
-func (o OidcHandler) handleGetExtOIDCRedirect() http.HandlerFunc {
+func (o OidcHandler) HandleGetExtOIDCRedirect() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		state := o.Cookies.Get(stateCookieName, r)
 		o.Logger.Debug("retrieve state cookie", logging.LogV("cookie_name", stateCookieName), logging.LogV("cookie_value", state))
@@ -65,7 +65,7 @@ func (o OidcHandler) handleGetExtOIDCRedirect() http.HandlerFunc {
 // the state/code parameters are retrieved state is compared to the **state** cookie value and code is used to fetch the token
 // once successfull a redirect is performed to the configured URL or the site-URL
 // -- handleLoginOIDC -- (redirect) --> configured application URL
-func (o OidcHandler) handleLoginOIDC(jwtCookieName string, jwtCookieExpire int) http.HandlerFunc {
+func (o OidcHandler) HandleLoginOIDC(jwtCookieName string, jwtCookieExpire int) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
 			token  string
@@ -140,7 +140,7 @@ func (o OidcHandler) handleLoginOIDC(jwtCookieName string, jwtCookieExpire int) 
 // if the check is successfull (and authorization is performend via OIDC) a redirect is performed to the specific application site
 // the first step is to save the site/URL and then kick-off the OIDC process
 // -- handleAuthFlow -- (redirect) --> handleGetExtOIDCRedirect
-func (o OidcHandler) handleAuthFlow() http.HandlerFunc {
+func (o OidcHandler) HandleAuthFlow() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		site := queryParam(r, siteParam)
 		redirect := queryParam(r, redirectParam)

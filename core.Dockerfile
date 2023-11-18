@@ -18,6 +18,7 @@ ENV LSV=${buildtime_variable_litestream_ver}
 WORKDIR /backend-build
 COPY ./go.mod ./
 COPY ./go.sum ./
+COPY ./cmd/core/server/main.go ./cmd/core/server/main.go
 COPY ./internal/core  ./internal/core
 COPY ./internal/crypter  ./internal/crypter
 COPY ./pkg ./pkg
@@ -26,7 +27,7 @@ COPY ./proto ./proto
 # necessary to build sqlite3
 RUN apk add build-base
 
-RUN GOOS=linux GOARCH=${ARCH} go build -ldflags="-w -s -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o core.api ./internal/core/server.go
+RUN GOOS=linux GOARCH=${ARCH} go build -ldflags="-w -s -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o core.api ./cmd/core/server/main.go
 
 ##
 ## include litestream into the image and use the litestream replication capabilities

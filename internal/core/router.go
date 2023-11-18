@@ -6,6 +6,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/cookies"
+	"golang.binggl.net/monorepo/pkg/develop"
+	"golang.binggl.net/monorepo/pkg/security"
 
 	"golang.binggl.net/monorepo/internal/core/api"
 	"golang.binggl.net/monorepo/internal/core/app/conf"
@@ -56,6 +58,15 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, uploadSvc uplo
 		Build:   opts.Build,
 	}
 
+	// use this for development purposes only!
+	if opts.Config.Environment == config.Development {
+		devTokenHandler := develop.DevTokenHandler{
+			Logger: logger,
+			Env:    opts.Config.Environment,
+		}
+		std.Get("/gettoken", devTokenHandler.Index())
+	}
+
 	// the following APIs have the base-URL /api/v1
 	std.Mount("/api/v1", sec)
 	sec.Mount("/", func() http.Handler {
@@ -96,24 +107,34 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, uploadSvc uplo
 	return std
 }
 
-func setupRouter(opts HTTPHandlerOptions, logger logging.Logger) (router chi.Router, apiRouter chi.Router) {
+func setupRouter(opts HTTPHandlerOptions, logger logging.Logger) (router chi.Router, secureRouter chi.Router) {
 	router = server.SetupBasicRouter(opts.BasePath, opts.Config.Cookies, opts.Config.Cors, opts.Config.Assets, logger)
-	apiRouter = server.SetupSecureAPIRouter(opts.ErrorPath, config.Security{
+
+	// add a middleware to "catch" security errors and present a human-readable form
+	// if the client requests "application/json" just use the the problem-json format
+	jwtOptions := security.JwtOptions{
+		CacheDuration: opts.Config.Security.CacheDuration,
+		CookieName:    opts.Config.Security.CookieName,
+		ErrorPath:     opts.ErrorPath,
 		JwtIssuer:     opts.Config.Security.JwtIssuer,
 		JwtSecret:     opts.Config.Security.JwtSecret,
-		CookieName:    opts.Config.Security.CookieName,
-		LoginRedirect: opts.Config.Security.LoginRedirect,
-		Claim: config.Claim{
+		RedirectURL:   opts.Config.Security.LoginRedirect,
+		RequiredClaim: security.Claim{
 			Name:  opts.Config.Security.Claim.Name,
 			URL:   opts.Config.Security.Claim.URL,
 			Roles: opts.Config.Security.Claim.Roles,
 		},
-		CacheDuration: opts.Config.Security.CacheDuration,
-	}, config.ApplicationCookies{
-		Path:   opts.Config.Cookies.Path,
-		Domain: opts.Config.Cookies.Domain,
-		Secure: opts.Config.Cookies.Secure,
-		Prefix: opts.Config.Cookies.Prefix,
-	}, logger)
+	}
+	jwtAuth := security.NewJWTAuthorization(jwtOptions, true)
+	interceptor := security.SecInterceptor{
+		Log:           logger,
+		Auth:          jwtAuth,
+		Options:       jwtOptions,
+		ErrorRedirect: "/core/403",
+	}
+
+	secureRouter = chi.NewRouter()
+	secureRouter.Use(interceptor.HandleJWT)
+
 	return
 }

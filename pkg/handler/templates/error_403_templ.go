@@ -57,7 +57,7 @@ func Error403(env config.Environment) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if env == config.Development {
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div><br><a id=\"link-gettoken\" href=\"http://localhost:3003/gettoken\"><button type=\"button\" class=\"btn btn-lg btn-danger\">")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div><br><a id=\"link-gettoken\" href=\"/gettoken\"><button type=\"button\" class=\"btn btn-lg btn-danger\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

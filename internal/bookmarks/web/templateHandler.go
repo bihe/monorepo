@@ -11,6 +11,7 @@ import (
 	"golang.binggl.net/monorepo/internal/bookmarks/web/templates"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/develop"
+	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
@@ -22,8 +23,7 @@ import (
 // a limited amount of javascript is needed to achieve the frontend.
 // As additional benefit the build should be faster, because the nodejs build can be removed
 type TemplateHandler struct {
-	Logger  logging.Logger
-	Env     config.Environment
+	*handler.TemplateHandler
 	App     *bookmarks.Application
 	Version string
 	Build   string
@@ -90,11 +90,7 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 		bms, err := t.App.GetBookmarksByPath(path, *user)
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", path, err), r)
-			templates.ErrorPageLayout(templates.ErrorApplication(
-				t.Env,
-				r,
-				fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", path, err)),
-			).Render(r.Context(), w)
+			t.RenderErr(r, w, fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", path, err))
 			return
 		}
 
@@ -105,11 +101,7 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 			folder, err := t.App.GetBookmarksFolderByPath(path, *user)
 			if err != nil {
 				t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmark folder for path '%s'; '%v'", path, err), r)
-				templates.ErrorPageLayout(templates.ErrorApplication(
-					t.Env,
-					r,
-					fmt.Sprintf("could not get bookmark folder for path '%s'; '%v'", path, err)),
-				).Render(r.Context(), w)
+				t.RenderErr(r, w, fmt.Sprintf("could not get bookmark folder for path '%s'; '%v'", path, err))
 				return
 			}
 			favicon = "/api/v1/bookmarks/favicon/" + folder.ID
@@ -238,7 +230,7 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 			b, err = t.App.GetBookmarkByID(id, *user)
 			if err != nil {
 				t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for id '%s'; '%v'", id, err), r)
-				templates.ErrorPageLayout(templates.ErrorApplication(t.Env, r, fmt.Sprintf("could not get bookmarks for id '%s'; '%v'", id, err))).Render(r.Context(), w)
+				t.RenderErr(r, w, fmt.Sprintf("could not get bookmarks for id '%s'; '%v'", id, err))
 				return
 			}
 			bm.ID = templates.ValidatorInput{Val: b.ID, Valid: true}
@@ -319,11 +311,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 		err = r.ParseForm()
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not parse supplied form data; '%v'", err), r)
-			templates.ErrorPageLayout(templates.ErrorApplication(
-				t.Env,
-				r,
-				fmt.Sprintf("could not parse supplied form data; '%v'", err)),
-			).Render(r.Context(), w)
+			t.RenderErr(r, w, fmt.Sprintf("could not parse supplied form data; '%v'", err))
 			return
 		}
 		user := ensureUser(r)
@@ -432,11 +420,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			existing, err := t.App.GetBookmarkByID(recv.ID, *user)
 			if err != nil {
 				t.Logger.Error("the given bookmark ID is not available", logging.ErrV(err), logging.LogV("ID", recv.ID))
-				templates.ErrorPageLayout(templates.ErrorApplication(
-					t.Env,
-					r,
-					fmt.Sprintf("the given bookmark '%s' is not available; %v", recv.ID, err)),
-				).Render(r.Context(), w)
+				t.RenderErr(r, w, fmt.Sprintf("the given bookmark '%s' is not available; %v", recv.ID, err))
 				return
 			}
 
@@ -483,11 +467,7 @@ func (t *TemplateHandler) SortBookmarks() http.HandlerFunc {
 		err := r.ParseForm()
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not parse supplied form data; '%v'", err), r)
-			templates.ErrorPageLayout(templates.ErrorApplication(
-				t.Env,
-				r,
-				fmt.Sprintf("could not parse supplied form data; '%v'", err)),
-			).Render(r.Context(), w)
+			t.RenderErr(r, w, fmt.Sprintf("could not parse supplied form data; '%v'", err))
 			return
 		}
 
@@ -533,24 +513,6 @@ func (t *TemplateHandler) SortBookmarks() http.HandlerFunc {
 		// https://htmx.org/headers/hx-trigger/
 		w.Header().Add("HX-Trigger", templates.Json(triggerEvent))
 
-	}
-}
-
-// --------------------------------------------------------------------------
-//  Errors
-// --------------------------------------------------------------------------
-
-// Show403 displays a page which indicates that the given user has no access to the system
-func (t *TemplateHandler) Show403() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		templates.ErrorPageLayout(templates.Error403(t.Env)).Render(r.Context(), w)
-	}
-}
-
-// Show404 is used for the http not-found error
-func (t *TemplateHandler) Show404() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		templates.ErrorPageLayout(templates.Error404(t.Env)).Render(r.Context(), w)
 	}
 }
 

@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 
 @Component({
     selector: 'app-bookmark-redirect',
-    template: '<span></span>',
+    template: '<span><a href="/bm">Goto Bookmarks</a></span>',
 })
 export class Bookmarkv2RedirectCompnent {
 

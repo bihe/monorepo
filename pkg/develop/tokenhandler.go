@@ -1,4 +1,4 @@
-package web
+package develop
 
 import (
 	"fmt"
@@ -10,6 +10,7 @@ import (
 	"golang.binggl.net/monorepo/pkg/security"
 )
 
+// DevTokenHandler is used during development to create a JWT token
 type DevTokenHandler struct {
 	Logger logging.Logger
 	Env    config.Environment

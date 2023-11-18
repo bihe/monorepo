@@ -4,7 +4,7 @@ import "fmt"
 import "net/http"
 import "golang.binggl.net/monorepo/pkg/config"
 
-templ ErrorApplication(env config.Environment, r *http.Request, err string) {
+templ ErrorApplication(startPage string, env config.Environment, r *http.Request, err string) {
 	<div class="application_error">
 		<h2>
 			<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-bug" viewBox="0 0 16 16">
@@ -37,7 +37,7 @@ templ ErrorApplication(env config.Environment, r *http.Request, err string) {
 				</li>
 			</ul>
 		}
-		<a id="go_home" href="bm/~/">
+		<a id="go_home" href={ templ.URL(startPage) }>
 			<button type="button" class="btn btn-lg btn-primary">Go back to Start-Page</button>
 		</a>
 	</div>

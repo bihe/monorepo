@@ -31,7 +31,6 @@ import { EditSitesComponent } from './components/login/edit/edit.component';
 import { SiteHomeComponent } from './components/login/home/home.component';
 import { MyDmsDocumentComponent } from './components/mydms/document/document.component';
 import { MyDmsHomeComponent } from './components/mydms/home/home.component';
-import { Bookmarkv2RedirectCompnent } from './components/redirect/redirec.component';
 import { ModuleIndex } from './shared/moduleIndex';
 import { DateFormatPipe } from './shared/pipes/dataformat';
 import { EllipsisPipe } from './shared/pipes/ellipsis';
@@ -59,7 +58,6 @@ export const sharedConfig: NgModule = {
   bootstrap: [AppComponent],
   declarations: [
     AppComponent,
-    Bookmarkv2RedirectCompnent,
     HeaderComponent,
     EllipsisPipe,
     DateFormatPipe,

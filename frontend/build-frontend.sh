@@ -1,2 +1,2 @@
 #!/bin/sh
-npm run build -- --prod --base-href /ui/
+npm run integration 

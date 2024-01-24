@@ -32,12 +32,12 @@ templ Layout(model LayoutModel, style, application_navigation, content templ.Com
 			<header>
 				<nav class="navbar navbar-expand-md navbar-dark fixed-top header">
 					<div class="container-fluid">
-						<a class="navbar-brand" href="/bm"><i class="bi-house-heart"></i> { model.Title }</a>
+						<a class="navbar-brand" href="/sites"><i class="bi-house-heart"></i> { model.Title }</a>
 						<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
 							<span class="navbar-toggler-icon"></span>
 						</button>
 						<div class="collapse navbar-collapse" id="navbarCollapse">
-							<form class="w-100 me-3" role="search" method="GET" action="/bm/search">
+							<form class="w-100 me-3" role="search" method="GET" action="/sites/search">
 								<div class="input-group">
 									<span class="input-group-text search-field-prefix" id="search-addon"><i class="bi bi-search"></i></span>
 									<input type="search" name="q" class="form-control search-field" placeholder="Search..." aria-label="Search" control-id="search-field" value={ model.Search }/>

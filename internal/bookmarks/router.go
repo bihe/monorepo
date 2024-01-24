@@ -40,7 +40,7 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 		TemplateHandler: &handler.TemplateHandler{
 			Logger:    logger,
 			Env:       opts.Config.Environment,
-			BasePath:  "/bm/public",
+			BasePath:  "/public",
 			StartPage: "/bm",
 		},
 		App:     app,

@@ -43,7 +43,7 @@ func Error404(env config.Environment) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p><a id=\"go_home\" href=\"bm/~/\"><button type=\"button\" class=\"btn btn-lg btn-primary\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p><a id=\"go_home\" href=\"/\"><button type=\"button\" class=\"btn btn-lg btn-primary\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

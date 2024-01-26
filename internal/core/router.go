@@ -7,6 +7,7 @@ import (
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/develop"
+	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/security"
 
 	"golang.binggl.net/monorepo/internal/core/api"
@@ -14,6 +15,7 @@ import (
 	"golang.binggl.net/monorepo/internal/core/app/oidc"
 	"golang.binggl.net/monorepo/internal/core/app/sites"
 	"golang.binggl.net/monorepo/internal/core/app/upload"
+	"golang.binggl.net/monorepo/internal/core/web"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/server"
 )
@@ -58,6 +60,18 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, uploadSvc uplo
 		Build:   opts.Build,
 	}
 
+	templateHandler := &web.TemplateHandler{
+		TemplateHandler: &handler.TemplateHandler{
+			Logger:    logger,
+			Env:       opts.Config.Environment,
+			BasePath:  "/public",
+			StartPage: "/sites",
+		},
+		SiteSvc: siteSvc,
+		Version: opts.Version,
+		Build:   opts.Build,
+	}
+
 	// use this for development purposes only!
 	if opts.Config.Environment == config.Development {
 		devTokenHandler := develop.DevTokenHandler{
@@ -67,22 +81,35 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, uploadSvc uplo
 		std.Get("/gettoken", devTokenHandler.Index())
 	}
 
+	// server-side rendered paths
+	// the following paths provide server-rendered UIs
+	// /403 displays a page telling the user that access/permissions are missing
+	std.Get("/sites/403", templateHandler.Show403())
+
+	std.Mount("/", sec)
+
+	// mount the server-side rendering paths
+	sec.Mount("/sites", func() http.Handler {
+		r := chi.NewRouter()
+		r.Get("/", templateHandler.DisplaySites())
+		return r
+	}())
+
 	// the following APIs have the base-URL /api/v1
-	std.Mount("/api/v1", sec)
-	sec.Mount("/", func() http.Handler {
+	sec.Mount("/api/v1", func() http.Handler {
 		r := chi.NewRouter()
 		r.Get("/appinfo", appInfoHandler.HandleGetAppInfo())
 		r.Get("/whoami", appInfoHandler.HandleWhoAmI())
 		return r
 	}())
-	sec.Mount("/sites", func() http.Handler {
+	sec.Mount("/api/v1/sites", func() http.Handler {
 		r := chi.NewRouter()
 		r.Get("/", sitesHandler.HandleGetSitesForUser())
 		r.Get("/users/{siteName}", sitesHandler.HandleGetUsersForSite())
 		r.Post("/", sitesHandler.HandleSaveSitesForUser())
 		return r
 	}())
-	sec.Mount("/upload", func() http.Handler {
+	sec.Mount("/api/v1/upload", func() http.Handler {
 		r := chi.NewRouter()
 		r.Post("/file", uploadHandler.Upload())
 		r.Get("/{id}", uploadHandler.GetItemByID())
@@ -103,6 +130,8 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, uploadSvc uplo
 		r.Get("/auth/flow", oidcHandler.HandleAuthFlow())
 		return r
 	}())
+
+	std.NotFound(templateHandler.Show404())
 
 	return std
 }

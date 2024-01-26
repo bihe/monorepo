@@ -4,27 +4,27 @@ tmp_dir = "./tmp"
 
 [build]
   # -------------------------------------------------------------------------
-  # bookmarks
+  # core
   # -------------------------------------------------------------------------
   args_bin = [
     "--port",
     "3003",
     "--basepath",
-    "./internal/bookmarks"
+    "./internal/core"
   ]
-  bin = "./tmp/bookmarks.api"
-  cmd = "go build -ldflags=\"-s -w -X main.Version=NOW -X main.Build=DEV\" -o ./tmp/bookmarks.api ./cmd/bookmarks/server/main.go"
+  bin = "./tmp/core.api"
+  cmd = "go build -ldflags=\"-s -w -X main.Version=NOW -X main.Build=DEV\" -o ./tmp/core.api ./cmd/core/server/main.go"
 
   # -------------------------------------------------------------------------
   # bookmarks
   # -------------------------------------------------------------------------
   #args_bin = [
   #  "--port",
-  #  "3001",
+  #  "3003",
   #  "--basepath",
-  #  "./internal/core"
+  #  "./internal/bookmarks"
   #]
-  #bin = "./tmp/core.api"
+  #bin = "./tmp/bookmarks.api"
   #cmd = "go build -ldflags=\"-s -w -X main.Version=NOW -X main.Build=DEV\" -o ./tmp/bookmarks.api ./cmd/bookmarks/server/main.go"
 
   delay = 500

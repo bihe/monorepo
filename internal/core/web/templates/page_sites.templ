@@ -1,0 +1,18 @@
+package templates
+
+import "golang.binggl.net/monorepo/internal/core/app/sites"
+
+templ SiteContent(sites sites.UserSites) {
+	<p>Hello, Sites</p>
+}
+
+templ SiteStyles() {
+	<style type="text/css">
+    </style>
+}
+
+templ SiteNavigation(search string) {
+	<div class="application_name">
+		<div>~ sites:</div>
+	</div>
+}

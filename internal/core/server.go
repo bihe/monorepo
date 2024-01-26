@@ -9,6 +9,8 @@ import (
 	"golang.binggl.net/monorepo/internal/core/app/store"
 	"golang.binggl.net/monorepo/internal/core/app/upload"
 	"golang.binggl.net/monorepo/internal/crypter"
+	"golang.binggl.net/monorepo/pkg/config"
+	"golang.binggl.net/monorepo/pkg/develop"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/server"
 	"google.golang.org/grpc"
@@ -71,6 +73,12 @@ func Run(version, build, appName string) error {
 			Build:     build,
 		})
 	)
+
+	// only run the reload-server in development
+	if appCfg.Environment == config.Development {
+		reload := develop.NewReloadServer()
+		reload.Start()
+	}
 
 	return server.Run(server.RunOptions{
 		AppName:       appName,

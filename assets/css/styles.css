@@ -190,6 +190,10 @@ a.bookmark_path {
   margin: 5px;
 }
 
+.search_bar {
+  width: 50% !important;
+}
+
 @media only screen and (min-device-width: 375px) and (max-device-width: 812px) {
   .bookmark_item {
     padding: 5px;

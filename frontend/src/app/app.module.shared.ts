@@ -27,17 +27,13 @@ import { LazyLoadImageModule } from 'ng-lazyload-image';
 import { AppComponent } from './components/app/app.component';
 import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
 import { HeaderComponent } from './components/header/header.component';
-import { EditSitesComponent } from './components/login/edit/edit.component';
-import { SiteHomeComponent } from './components/login/home/home.component';
 import { MyDmsDocumentComponent } from './components/mydms/document/document.component';
 import { MyDmsHomeComponent } from './components/mydms/home/home.component';
 import { ModuleIndex } from './shared/moduleIndex';
 import { DateFormatPipe } from './shared/pipes/dataformat';
 import { EllipsisPipe } from './shared/pipes/ellipsis';
-import { ApiBookmarksService } from './shared/service/api.bookmarks.service';
 import { ApiCoreService } from './shared/service/api.core.service';
 import { ApiMydmsService } from './shared/service/api.mydms.service';
-import { ApiSiteService } from './shared/service/api.sites.service';
 import { ApplicationState } from './shared/service/application.state';
 
 const ImportAngularElements = [
@@ -63,8 +59,6 @@ export const sharedConfig: NgModule = {
     DateFormatPipe,
     ConfirmDialogComponent,
     MyDmsHomeComponent,
-    SiteHomeComponent,
-    EditSitesComponent,
     MyDmsDocumentComponent
   ],
   imports: [
@@ -73,8 +67,6 @@ export const sharedConfig: NgModule = {
   ],
   providers: [
     ApplicationState,
-    ApiBookmarksService,
-    ApiSiteService,
     ApiMydmsService,
     ApiCoreService,
     Title,

@@ -84,7 +84,17 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, uploadSvc uplo
 	// server-side rendered paths
 	// the following paths provide server-rendered UIs
 	// /403 displays a page telling the user that access/permissions are missing
-	std.Get("/sites/403", templateHandler.Show403())
+	std.Get("/core/403", templateHandler.Show403())
+
+	// the OIDC logic and handshake to authenticate with external auth system
+	std.Mount("/oidc", func() http.Handler {
+		r := chi.NewRouter()
+		r.Get("/start", oidcHandler.HandlePrepIntOIDCRedirect())
+		r.Get(oidc.OIDCInitiateRoutingPath, oidcHandler.HandleGetExtOIDCRedirect())
+		r.Get("/signin", oidcHandler.HandleLoginOIDC(oidcHandler.JwtCookieName, oidcHandler.JwtExpiryDays))
+		r.Get("/auth/flow", oidcHandler.HandleAuthFlow())
+		return r
+	}())
 
 	std.Mount("/", sec)
 
@@ -92,9 +102,10 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, uploadSvc uplo
 	sec.Mount("/sites", func() http.Handler {
 		r := chi.NewRouter()
 		r.Get("/", templateHandler.DisplaySites())
+		r.Get("/edit", templateHandler.ShowEditSites())
+		r.Post("/", templateHandler.SaveSites())
 		return r
 	}())
-
 	// the following APIs have the base-URL /api/v1
 	sec.Mount("/api/v1", func() http.Handler {
 		r := chi.NewRouter()
@@ -121,15 +132,6 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, uploadSvc uplo
 	std.Get("/ok", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-
-	std.Mount("/oidc", func() http.Handler {
-		r := chi.NewRouter()
-		r.Get("/start", oidcHandler.HandlePrepIntOIDCRedirect())
-		r.Get(oidc.OIDCInitiateRoutingPath, oidcHandler.HandleGetExtOIDCRedirect())
-		r.Get("/signin", oidcHandler.HandleLoginOIDC(oidcHandler.JwtCookieName, oidcHandler.JwtExpiryDays))
-		r.Get("/auth/flow", oidcHandler.HandleAuthFlow())
-		return r
-	}())
 
 	std.NotFound(templateHandler.Show404())
 

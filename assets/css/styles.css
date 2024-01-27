@@ -5,6 +5,7 @@ body {
   font-size: .9em;
   background-color: #303030;
   color: white;
+  overflow: hidden;
 }
 
 :root {
@@ -15,12 +16,17 @@ body {
   background: #c2185b;
 }
 
+.content_area {
+  height: calc(100vh - 109px);
+  overflow-y: auto;
+  border-top: darkgray dashed 1px;
+}
+
 .sub-navigation {
   height: var(--lh);
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  border-bottom: darkgray dashed 1px;
   font-size: small;
   font-weight: 700;
   font-family: Roboto Mono, Courier New, Courier, monospace;
@@ -190,8 +196,22 @@ a.bookmark_path {
   margin: 5px;
 }
 
-.search_bar {
-  width: 50% !important;
+.hide_mobile {
+  display: inline;
+}
+
+.application {
+  width: 18rem;
+  margin: 10px;
+}
+
+.permission {
+  margin: 2px;
+}
+
+.right-action {
+  position: absolute;
+  right: 20px;
 }
 
 @media only screen and (min-device-width: 375px) and (max-device-width: 812px) {
@@ -237,5 +257,17 @@ a.bookmark_path {
     --bs-btn-padding-x: 0.5rem;
     --bs-btn-font-size: 0.875rem;
     --bs-btn-border-radius: var(--bs-border-radius-sm);
+  }
+
+  .hide_mobile {
+    display: inline;
+  }
+
+  .navbar-nav {
+    flex-direction: row;
+  }
+
+  .nav-item {
+    margin-left: 5px;
   }
 }

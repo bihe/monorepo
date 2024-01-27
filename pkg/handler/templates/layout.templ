@@ -33,27 +33,27 @@ templ Layout(model LayoutModel, style, application_navigation, content templ.Com
 			<link href="/public/css/styles.css" rel="stylesheet"/>
 			<link href="/public/fonts/local.css" rel="stylesheet"/>
 			<link href="/public/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet"/>
-			{! style }
+			@style
 		</head>
 		<body data-bs-theme="dark">
 			<header>
 				<nav class="navbar navbar-expand-md navbar-dark fixed-top header">
 					<div class="container-fluid">
+						<ul class="navbar-nav me-auto mb-lg-0">
+							for _, n := range model.Navigation {
+								<li class="nav-item">
+									<a class={ "nav-link", templ.KV("active", (n.Active)) } aria-current="page" href={ templ.URL(n.URL) }>
+										@templ.Raw(n.Icon)
+										<span class="hide_mobile">{ n.DisplayName }</span>
+									</a>
+								</li>
+							}
+						</ul>
 						<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
 							<span class="navbar-toggler-icon"></span>
 						</button>
 						<div class="collapse navbar-collapse" id="navbarCollapse">
-							<ul class="navbar-nav me-auto mb-2 mb-lg-0">
-								for _, n := range model.Navigation {
-									<li class="nav-item">
-										<a class={ "nav-link", templ.KV("active", (n.Active)) } aria-current="page" href={ templ.URL(n.URL) }>
-											@templ.Raw(n.Icon)
-											{ n.DisplayName }
-										</a>
-									</li>
-								}
-							</ul>
-							<form class="search_bar me-3" role="search" method="GET" action="/bm/search">
+							<form class="w-100 me-3" role="search" method="GET" action="/bm/search">
 								<div class="input-group">
 									<span class="input-group-text search-field-prefix" id="search-addon"><i class="bi bi-search"></i></span>
 									<input type="search" name="q" class="form-control search-field" placeholder="Search..." aria-label="Search" control-id="search-field" value={ model.Search }/>
@@ -72,12 +72,12 @@ templ Layout(model LayoutModel, style, application_navigation, content templ.Com
 				</nav>
 			</header>
 			<section class="sub-navigation">
-				{! application_navigation }
+				@application_navigation
 			</section>
 			<main>
-				<div>
+				<div class="content_area">
 					<!-- content goes here-->
-					{! content }
+					@content
 					<!-- /content -->
 				</div>
 				<div id="modals-here" class="modal modal-blur fade" aria-hidden="false" tabindex="-1">
@@ -113,7 +113,7 @@ templ Layout(model LayoutModel, style, application_navigation, content templ.Com
 			<script src="/public/bootstrap/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"></script>
 			<script src="/public/js/Sortable.min.js"></script>
 			<script src="/public/js/script.js"></script>
-			{! model.PageReloadClientJS }
+			@model.PageReloadClientJS
 		</body>
 	</html>
 }

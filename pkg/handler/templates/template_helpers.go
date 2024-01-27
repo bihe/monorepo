@@ -75,3 +75,11 @@ func Json[T any](data T) string {
 	}
 	return string(payload)
 }
+
+func JsonIndent[T any](data T) string {
+	payload, err := json.MarshalIndent(data, "", "\t")
+	if err != nil {
+		panic(fmt.Sprintf("could not marshall data; %v", err))
+	}
+	return string(payload)
+}

@@ -18,6 +18,6 @@ export class Bookmarkv2RedirectCompnent {
 export class Sitesv2RedirectCompnent {
 
   constructor() {
-    location.href = '/sits';
+    location.href = '/sites';
   }
 }

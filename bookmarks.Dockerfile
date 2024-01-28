@@ -19,7 +19,9 @@ COPY ./go.mod ./
 COPY ./go.sum ./
 COPY ./cmd/bookmarks/server ./cmd/bookmarks/server
 COPY ./internal/bookmarks  ./internal/bookmarks
+COPY ./internal/common  ./internal/common
 COPY ./pkg ./pkg
+COPY ./assets ./assets
 
 # necessary to build sqlite3
 RUN apk add build-base
@@ -51,8 +53,8 @@ RUN addgroup -g 1000 -S bookmarks && \
     adduser -u 1000 -S bookmarks -G bookmarks
 COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/bookmarks.api /opt/bookmarks
 COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/litestream /opt/litestream
+COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/assets /opt/bookmarks/assets
 COPY --chown=1000:1000 ./litestream/run_litestream.sh /opt/bookmarks
-COPY --chown=1000:1000 ./internal/bookmarks/assets /opt/bookmarks/assets
 RUN chown bookmarks:bookmarks /opt/bookmarks/etc \
     && chown bookmarks:bookmarks /opt/bookmarks/logs \
     && chown bookmarks:bookmarks /opt/bookmarks/uploads \

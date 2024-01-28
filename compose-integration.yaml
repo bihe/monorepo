@@ -1,7 +1,6 @@
-version: '3'
+version: "3"
 
 services:
-
     tokentest:
         build:
             context: .
@@ -9,8 +8,7 @@ services:
             args:
                 buildtime_variable_arch: $ARCH
         image: tokentest
-        restart:
-            always
+        restart: always
         environment:
             JWT_COOKIE_NAME: $JWT_COOKIE_NAME
             JWT_ISSUER: $JWT_ISSUER
@@ -30,8 +28,7 @@ services:
         volumes:
             - ./internal/crypter:/opt/crypter/etc
             - ./_logs:/opt/crypter/logs
-        restart:
-            always
+        restart: always
         environment:
             CR_BASECONFIG__ENVIRONMENT: Production
             CR_BASECONFIG__SECURITY__JWTISSUER: $JWT_ISSUER
@@ -52,12 +49,12 @@ services:
             - ./upload:/opt/core/uploads
             - ./testdata/sqlite/integration:/opt/core/db
             - ./litestream/litestream-integration.yml:/etc/litestream.yml
-        restart:
-            always
+        restart: always
         environment:
             CO_BASECONFIG__ENVIRONMENT: Development
             CO_BASECONFIG__LOGGING__FILEPATH: /opt/core/logs/core-api.log
             CO_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
+            CO_BASECONFIG__ASSETS__ASSETDIR: ./assets
             CO_SECURITY__JWTISSUER: $JWT_ISSUER
             CO_SECURITY__JWTSECRET: $JWT_SECRET
             CO_SECURITY__LOGINREDIRECT: https://dev.binggl.net
@@ -89,8 +86,7 @@ services:
             - ./_logs:/opt/mydms/logs
             - ./testdata/sqlite/integration:/opt/mydms/db
             - ./litestream/litestream-integration.yml:/etc/litestream.yml
-        restart:
-            always
+        restart: always
         environment:
             MY_BASECONFIG__ENVIRONMENT: Development
             MY_BASECONFIG__SECURITY__JWTISSUER: $JWT_ISSUER
@@ -125,14 +121,14 @@ services:
             - ./_logs:/opt/bookmarks/logs
             - ./testdata/sqlite/integration:/opt/bookmarks/db
             - ./litestream/litestream-integration.yml:/etc/litestream.yml
-        restart:
-            always
+        restart: always
         environment:
             BM_BASECONFIG__ENVIRONMENT: Development
             BM_BASECONFIG__SECURITY__JWTISSUER: $JWT_ISSUER
             BM_BASECONFIG__SECURITY__JWTSECRET: $JWT_SECRET
             BM_BASECONFIG__LOGGING__FILEPATH: /opt/bookmarks/logs/bookmarks-api.log
             BM_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
+            BM_BASECONFIG__ASSETS__ASSETDIR: ./assets
             BM_DATABASE__CONNECTIONSTRING: /opt/bookmarks/db/bookmarks.db
             CONNECTIONSTRING: /opt/bookmarks/db/bookmarks.db
             REPLICA_URL: $BOOKMARKS_REPLICA_URL
@@ -156,5 +152,4 @@ services:
         volumes:
             - ./caddy/Caddyfile.integration:/etc/caddy/Caddyfile
             - ./caddy/certs:/opt/caddy/certs
-        restart:
-            on-failure
+        restart: on-failure

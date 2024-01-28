@@ -270,4 +270,10 @@ a.bookmark_path {
   .nav-item {
     margin-left: 5px;
   }
+
+  .application {
+    width: 94vw;
+    margin: 10px;
+    padding: 10px;
+  }
 }

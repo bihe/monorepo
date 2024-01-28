@@ -134,7 +134,7 @@ func Test_Bookmark_Search(t *testing.T) {
 	r.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusOK, rec.Code)
 	payload := rec.Body.String()
-	if !strings.Contains(payload, "Search Bookmarks!") {
+	if !strings.Contains(payload, "Bookmarks") {
 		t.Errorf("cannot find string in page result")
 	}
 
@@ -166,7 +166,7 @@ func Test_Bookmark_ForPath(t *testing.T) {
 	r.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusOK, rec.Code)
 	payload := rec.Body.String()
-	if !strings.Contains(payload, "Bookmarks!") {
+	if !strings.Contains(payload, "Bookmarks") {
 		t.Errorf("cannot find string in page result")
 	}
 

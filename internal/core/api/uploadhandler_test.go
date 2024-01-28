@@ -76,6 +76,7 @@ func Test_Upload_Item_By_ID_Auth_Fail(t *testing.T) {
 	// arrange
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/v1/upload/1", nil)
+	req.Header.Add("Accept", "application/json")
 
 	// act
 	uploadHandler().ServeHTTP(rec, req)

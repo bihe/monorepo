@@ -113,7 +113,7 @@ func BookmarksByPathNavigation(entries []BookmarkPathEntry) templ.Component {
 				}
 			} else {
 				if i == 0 {
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<li class=\"breadcrumb-item\"><a href=\"")
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<li class=\"breadcrumb-item\"><a class=\"rootroot\" href=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -143,7 +143,7 @@ func BookmarksByPathNavigation(entries []BookmarkPathEntry) templ.Component {
 					var templ_7745c5c3_Var7 string
 					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(e.DisplayName)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `page_bookmarks_by_path.templ`, Line: 75, Col: 91}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `page_bookmarks_by_path.templ`, Line: 75, Col: 93}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 					if templ_7745c5c3_Err != nil {
@@ -156,7 +156,7 @@ func BookmarksByPathNavigation(entries []BookmarkPathEntry) templ.Component {
 				}
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</ol></nav><span class=\"right-action\"><div id=\"request_indicator\" class=\"request_indicator htmx-indicator\"><div class=\"spinner-border text-light\" role=\"status\"><span class=\"visually-hidden\">Loading...</span></div></div><button id=\"btn_toggle_sorting\" type=\"button\" data-bs-toggle=\"button\" class=\"btn sort_button\"><i class=\"bi bi-arrow-down-up\"></i> Sort</button> <span id=\"save_list_sort_order\" class=\"sort_button d-none\"><button id=\"btn_save_sorting\" type=\"button\" class=\"btn btn-success sort_button\"><i class=\"bi bi-sort-numeric-down\"></i> Save</button></span> <button type=\"button\" class=\"btn btn-primary new_button\" data-bs-toggle=\"modal\" data-bs-target=\"#modals-here\" hx-target=\"#modals-here\" hx-trigger=\"click\" hx-get=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</ol></nav><span class=\"right-action\"><div id=\"request_indicator\" class=\"request_indicator htmx-indicator\"><div class=\"spinner-border text-light\" role=\"status\"><span class=\"visually-hidden\">Loading...</span></div></div><button id=\"btn_toggle_sorting\" type=\"button\" data-bs-toggle=\"button\" class=\"btn sort_button\"><i class=\"bi bi-arrow-down-up\"></i> Sort</button> <span id=\"save_list_sort_order\" class=\"sort_button d-none\"><button id=\"btn_save_sorting\" type=\"button\" class=\"btn btn-success sort_button\"><i class=\"bi bi-sort-numeric-down\"></i> Save</button></span> <button type=\"button\" data-testid=\"link-add-bookmark\" class=\"btn btn-primary new_button\" data-bs-toggle=\"modal\" data-bs-target=\"#modals-here\" hx-target=\"#modals-here\" hx-trigger=\"click\" hx-get=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

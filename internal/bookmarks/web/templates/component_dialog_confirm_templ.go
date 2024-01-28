@@ -36,7 +36,7 @@ func DialogConfirmDelete(name, id string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</strong>'?</p></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-secondary\" data-bs-dismiss=\"modal\">Close</button> <button type=\"button\" class=\"btn btn-danger\" data-bs-dismiss=\"modal\" hx-target=\"#bookmark_list\" hx-delete=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</strong>'?</p></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-secondary\" data-bs-dismiss=\"modal\">Close</button> <button type=\"button\" id=\"btn-confirm\" class=\"btn btn-danger\" data-bs-dismiss=\"modal\" hx-target=\"#bookmark_list\" hx-delete=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

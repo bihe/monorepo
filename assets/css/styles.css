@@ -214,6 +214,11 @@ a.bookmark_path {
   right: 20px;
 }
 
+.no_bookmarks {
+  padding: 30px;
+  text-align: center;
+}
+
 @media only screen and (min-device-width: 375px) and (max-device-width: 812px) {
   .bookmark_item {
     padding: 5px;

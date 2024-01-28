@@ -9,12 +9,12 @@ templ Error403(env config.Environment) {
 			<h2>Access denied</h2>
 			<p>You are not loged in or you do not have permission to access this page!</p>
 			<a
- 				id="link-oidc-start"
- 				href="https://one.binggl.net/oidc/start"
+				id="link-oidc-start"
+				href="https://one.binggl.net/oidc/start"
 			>
 				<button
- 					type="button"
- 					class="btn btn-lg btn-warning"
+					type="button"
+					class="btn btn-lg btn-warning"
 				>Login to access the page</button>
 			</a>
 			if env == config.Development {
@@ -22,6 +22,13 @@ templ Error403(env config.Environment) {
 					<br/>
 					<a id="link-gettoken" href="/gettoken">
 						<button type="button" class="btn btn-lg btn-danger">Show me the JWT token for development</button>
+					</a>
+				</div>
+			} else if env == config.Integration {
+				<div>
+					<br/>
+					<a id="link-gettoken" href="https://dev.binggl.net/gettoken">
+						<button type="button" class="btn btn-lg btn-danger">Generate development token</button>
 					</a>
 				</div>
 			}

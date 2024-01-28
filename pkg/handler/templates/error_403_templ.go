@@ -34,6 +34,11 @@ func Error403(env config.Environment) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
+		} else if env == config.Integration {
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div><br><a id=\"link-gettoken\" href=\"https://dev.binggl.net/gettoken\"><button type=\"button\" class=\"btn btn-lg btn-danger\">Generate development token</button></a></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div></div>")
 		if templ_7745c5c3_Err != nil {

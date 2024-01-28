@@ -55,7 +55,7 @@ templ EditBookmarks(bm Bookmark, paths []string) {
 						<div class="spacer"></div>
 						<div class="flex_layout">
 							<div class="bookmark_edit_layout_flex_5">
-								<img id="bookmark_favicon_display" class={ "bookmark_favicon_preview", templ.KV("invert", bm.InvertFaviconColor) } src={ "/api/v1/bookmarks/favicon/"+bm.ID.Val }/>
+								<img id="bookmark_favicon_display" class={ "bookmark_favicon_preview", templ.KV("invert", bm.InvertFaviconColor) } src={ "/api/v1/bookmarks/favicon/" + bm.ID.Val }/>
 							</div>
 							<div class="bookmark_edit_layout_flex_95 form-floating mb-3">
 								<input type="text" class={ "form-control", templ.KV("control_invalid", !bm.DisplayName.Valid) } class="" id="bookmark_DisplayName" placeholder="Displayname" name="bookmark_DisplayName" value={ bm.DisplayName.Val } required/>
@@ -65,16 +65,16 @@ templ EditBookmarks(bm Bookmark, paths []string) {
 						if bm.Type == bookmarks.Node {
 							<div class="input-group mb-3" id="url_section">
 								<span class="input-group-text" id="url"><i class="bi bi-link-45deg"></i></span>
-								<input type="text" class={ "form-control", templ.KV("control_invalid", !bm.URL.Valid) } placeholder="URL" aria-label="URL" aria-describedby="url" name="bookmark_URL" value={ bm.URL.Val }/>
+								<input type="text" id="bookmark_URL" class={ "form-control", templ.KV("control_invalid", !bm.URL.Valid) } placeholder="URL" aria-label="URL" aria-describedby="url" name="bookmark_URL" value={ bm.URL.Val }/>
 								<button
- 									type="button"
- 									class="btn btn-outline-secondary"
- 									hx-post="/bm/favicon/page"
- 									hx-trigger="click"
- 									hx-target="#bookmark_favicon_display"
- 									hx-params="bookmark_URL"
- 									hx-swap="outerHTML"
- 									hx-indicator="#indicator"
+									type="button"
+									class="btn btn-outline-secondary"
+									hx-post="/bm/favicon/page"
+									hx-trigger="click"
+									hx-target="#bookmark_favicon_display"
+									hx-params="bookmark_URL"
+									hx-swap="outerHTML"
+									hx-indicator="#indicator"
 								><i class="bi bi-arrow-clockwise"></i></button>
 							</div>
 						}
@@ -103,14 +103,14 @@ templ EditBookmarks(bm Bookmark, paths []string) {
 							<div class="input-group mb-3">
 								<input type="text" class={ "form-control", templ.KV("control_invalid", !bm.CustomFavicon.Valid) } placeholder="Favicon URL" aria-label="Favicon URL" aria-describedby="Favicon URL" name="bookmark_CustomFavicon" value={ bm.CustomFavicon.Val }/>
 								<button
- 									type="button"
- 									class="btn btn-outline-secondary"
- 									hx-post="/bm/favicon/url"
- 									hx-trigger="click"
- 									hx-target="#bookmark_favicon_display"
- 									hx-params="bookmark_CustomFavicon"
- 									hx-swap="outerHTML"
- 									hx-indicator="#indicator"
+									type="button"
+									class="btn btn-outline-secondary"
+									hx-post="/bm/favicon/url"
+									hx-trigger="click"
+									hx-target="#bookmark_favicon_display"
+									hx-params="bookmark_CustomFavicon"
+									hx-swap="outerHTML"
+									hx-indicator="#indicator"
 								><i class="bi bi-arrow-clockwise"></i></button>
 							</div>
 						</div>
@@ -122,10 +122,11 @@ templ EditBookmarks(bm Bookmark, paths []string) {
 					<div class="modal-footer">
 						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
 						<button
- 							type="button"
- 							class="btn btn-success"
- 							hx-post="/bm"
- 							hx-target="#bookmark_edit_dialog"
+							id="btn-bookmark-save"
+							type="button"
+							class="btn btn-success"
+							hx-post="/bm"
+							hx-target="#bookmark_edit_dialog"
 						>Save</button>
 					</div>
 				</form>

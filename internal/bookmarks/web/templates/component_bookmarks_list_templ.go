@@ -39,6 +39,12 @@ func BookmarkList(path string, items []bookmarks.Bookmark, ell EllipsisValues) t
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		if len(items) == 0 {
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"no_bookmarks\">no entries available</div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
 		for _, b := range items {
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"bookmark_item hstack gap-3\"><div class=\"p2\"><span>")
 			if templ_7745c5c3_Err != nil {
@@ -77,7 +83,7 @@ func BookmarkList(path string, items []bookmarks.Bookmark, ell EllipsisValues) t
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", b.ChildCount))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_bookmarks_list.templ`, Line: 16, Col: 42}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_bookmarks_list.templ`, Line: 21, Col: 42}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -117,7 +123,7 @@ func BookmarkList(path string, items []bookmarks.Bookmark, ell EllipsisValues) t
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(templates.Ellipsis(b.DisplayName, ell.NodeLen, "..."))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_bookmarks_list.templ`, Line: 21, Col: 137}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_bookmarks_list.templ`, Line: 26, Col: 137}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -152,7 +158,7 @@ func BookmarkList(path string, items []bookmarks.Bookmark, ell EllipsisValues) t
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(templates.Ellipsis(b.DisplayName, ell.FolderLen, "..."))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_bookmarks_list.templ`, Line: 23, Col: 193}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_bookmarks_list.templ`, Line: 28, Col: 197}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
@@ -171,7 +177,7 @@ func BookmarkList(path string, items []bookmarks.Bookmark, ell EllipsisValues) t
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></div><div class=\"p2 ms-auto\"></div><div class=\"p2\"><div class=\"btn-group\" role=\"group\"><button type=\"button\" class=\"btn dropdown-toggle\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\"></button><ul class=\"dropdown-menu\"><li><a class=\"dropdown-item\" href=\"#\" hx-target=\"#modals-here\" hx-trigger=\"click\" data-bs-toggle=\"modal\" data-bs-target=\"#modals-here\" hx-get=\"")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></div><div class=\"p2 ms-auto\"></div><div class=\"p2\"><div class=\"btn-group\" role=\"group\"><button type=\"button\" class=\"btn dropdown-toggle\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\"></button><ul class=\"dropdown-menu\"><li><a class=\"dropdown-item\" id=\"btn-bookmark-edit\" href=\"#\" hx-target=\"#modals-here\" hx-trigger=\"click\" data-bs-toggle=\"modal\" data-bs-target=\"#modals-here\" hx-get=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -179,7 +185,7 @@ func BookmarkList(path string, items []bookmarks.Bookmark, ell EllipsisValues) t
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-swap=\"innerHTML\"><i class=\"bi bi-pencil\"></i> Edit</a></li><li><a class=\"dropdown-item delete\" href=\"#\" hx-target=\"#modals-here\" hx-trigger=\"click\" data-bs-toggle=\"modal\" data-bs-target=\"#modals-here\" hx-get=\"")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-swap=\"innerHTML\"><i class=\"bi bi-pencil\"></i> Edit</a></li><li><a class=\"dropdown-item delete\" id=\"btn-bookmark-delete\" href=\"#\" hx-target=\"#modals-here\" hx-trigger=\"click\" data-bs-toggle=\"modal\" data-bs-target=\"#modals-here\" hx-get=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

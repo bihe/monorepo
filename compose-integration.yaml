@@ -51,7 +51,7 @@ services:
             - ./litestream/litestream-integration.yml:/etc/litestream.yml
         restart: always
         environment:
-            CO_BASECONFIG__ENVIRONMENT: Development
+            CO_BASECONFIG__ENVIRONMENT: Integration
             CO_BASECONFIG__LOGGING__FILEPATH: /opt/core/logs/core-api.log
             CO_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
             CO_BASECONFIG__ASSETS__ASSETDIR: ./assets
@@ -88,7 +88,7 @@ services:
             - ./litestream/litestream-integration.yml:/etc/litestream.yml
         restart: always
         environment:
-            MY_BASECONFIG__ENVIRONMENT: Development
+            MY_BASECONFIG__ENVIRONMENT: Integration
             MY_BASECONFIG__SECURITY__JWTISSUER: $JWT_ISSUER
             MY_BASECONFIG__SECURITY__JWTSECRET: $JWT_SECRET
             MY_BASECONFIG__SECURITY__CLAIM.URL: http://localhost:3002
@@ -123,7 +123,7 @@ services:
             - ./litestream/litestream-integration.yml:/etc/litestream.yml
         restart: always
         environment:
-            BM_BASECONFIG__ENVIRONMENT: Development
+            BM_BASECONFIG__ENVIRONMENT: Integration
             BM_BASECONFIG__SECURITY__JWTISSUER: $JWT_ISSUER
             BM_BASECONFIG__SECURITY__JWTSECRET: $JWT_SECRET
             BM_BASECONFIG__LOGGING__FILEPATH: /opt/bookmarks/logs/bookmarks-api.log

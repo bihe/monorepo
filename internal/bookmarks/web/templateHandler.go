@@ -9,8 +9,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/web/templates"
+	"golang.binggl.net/monorepo/internal/common"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/develop"
+	"golang.binggl.net/monorepo/pkg/handler"
+	tmpl "golang.binggl.net/monorepo/pkg/handler/templates"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
@@ -22,8 +25,7 @@ import (
 // a limited amount of javascript is needed to achieve the frontend.
 // As additional benefit the build should be faster, because the nodejs build can be removed
 type TemplateHandler struct {
-	Logger  logging.Logger
-	Env     config.Environment
+	*handler.TemplateHandler
 	App     *bookmarks.Application
 	Version string
 	Build   string
@@ -43,8 +45,8 @@ func (t *TemplateHandler) SearchBookmarks() http.HandlerFunc {
 		}
 
 		ell := GetEllipsisValues(r)
-		templates.Layout(
-			t.layoutModel("Search Bookmarks!", "Bookmark Search", search, "/bm/public/folder.svg", *user),
+		tmpl.Layout(
+			t.layoutModel("Bookmark Search", search, "/public/folder.svg", *user),
 			templates.SearchStyles(),
 			templates.SearchNavigation(search),
 			templates.SearchContent(bms, ell),
@@ -90,11 +92,7 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 		bms, err := t.App.GetBookmarksByPath(path, *user)
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", path, err), r)
-			templates.ErrorPageLayout(templates.ErrorApplication(
-				t.Env,
-				r,
-				fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", path, err)),
-			).Render(r.Context(), w)
+			t.RenderErr(r, w, fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", path, err))
 			return
 		}
 
@@ -105,19 +103,15 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 			folder, err := t.App.GetBookmarksFolderByPath(path, *user)
 			if err != nil {
 				t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmark folder for path '%s'; '%v'", path, err), r)
-				templates.ErrorPageLayout(templates.ErrorApplication(
-					t.Env,
-					r,
-					fmt.Sprintf("could not get bookmark folder for path '%s'; '%v'", path, err)),
-				).Render(r.Context(), w)
+				t.RenderErr(r, w, fmt.Sprintf("could not get bookmark folder for path '%s'; '%v'", path, err))
 				return
 			}
 			favicon = "/api/v1/bookmarks/favicon/" + folder.ID
 		}
 
 		ell := GetEllipsisValues(r)
-		templates.Layout(
-			t.layoutModel("Bookmarks!", curFolder, "", favicon, *user),
+		tmpl.Layout(
+			t.layoutModel(curFolder, "", favicon, *user),
 			templates.BookmarksByPathStyles(),
 			templates.BookmarksByPathNavigation(pathHierarchy),
 			templates.BookmarksByPathContent(templates.BookmarkList(
@@ -187,7 +181,7 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 			}
 
 			// show a notification-toast about the error!
-			w.Header().Add("HX-Trigger", templates.ErrorToast("Bookmark delete error", fmt.Sprintf("Error: '%s'", err)))
+			w.Header().Add("HX-Trigger", tmpl.ErrorToast("Bookmark delete error", fmt.Sprintf("Error: '%s'", err)))
 			templates.BookmarkList(
 				bm.Path,
 				bms,
@@ -203,7 +197,7 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 
 		// show a notification-toast about the update!
 		// https://htmx.org/headers/hx-trigger/
-		w.Header().Add("HX-Trigger", templates.SuccessToast("Bookmark deleted", fmt.Sprintf("The bookmark '%s' was deleted.", bm.DisplayName)))
+		w.Header().Add("HX-Trigger", tmpl.SuccessToast("Bookmark deleted", fmt.Sprintf("The bookmark '%s' was deleted.", bm.DisplayName)))
 		templates.BookmarkList(
 			bm.Path,
 			bms,
@@ -238,7 +232,7 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 			b, err = t.App.GetBookmarkByID(id, *user)
 			if err != nil {
 				t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for id '%s'; '%v'", id, err), r)
-				templates.ErrorPageLayout(templates.ErrorApplication(t.Env, r, fmt.Sprintf("could not get bookmarks for id '%s'; '%v'", id, err))).Render(r.Context(), w)
+				t.RenderErr(r, w, fmt.Sprintf("could not get bookmarks for id '%s'; '%v'", id, err))
 				return
 			}
 			bm.ID = templates.ValidatorInput{Val: b.ID, Valid: true}
@@ -301,7 +295,7 @@ func (t *TemplateHandler) FetchCustomFaviconFromPage() http.HandlerFunc {
 }
 
 type triggerDef struct {
-	templates.ToastMessage
+	tmpl.ToastMessage
 	Refresh string `json:"refreshBookmarkList,omitempty"`
 }
 
@@ -319,11 +313,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 		err = r.ParseForm()
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not parse supplied form data; '%v'", err), r)
-			templates.ErrorPageLayout(templates.ErrorApplication(
-				t.Env,
-				r,
-				fmt.Sprintf("could not parse supplied form data; '%v'", err)),
-			).Render(r.Context(), w)
+			t.RenderErr(r, w, fmt.Sprintf("could not parse supplied form data; '%v'", err))
 			return
 		}
 		user := ensureUser(r)
@@ -407,9 +397,9 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			t.Logger.Info("new bookmark created", logging.LogV("ID", created.ID))
 
 			triggerEvent := triggerDef{
-				ToastMessage: templates.ToastMessage{
-					Event: templates.ToastMessageContent{
-						Type:  templates.MsgSuccess,
+				ToastMessage: tmpl.ToastMessage{
+					Event: tmpl.ToastMessageContent{
+						Type:  tmpl.MsgSuccess,
 						Title: "Bookmark saved!",
 						Text:  fmt.Sprintf("The bookmark '%s' was created.", created.DisplayName),
 					},
@@ -417,7 +407,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 				Refresh: "now",
 			}
 			// https://htmx.org/headers/hx-trigger/
-			w.Header().Add("HX-Trigger", templates.Json(triggerEvent))
+			w.Header().Add("HX-Trigger", tmpl.Json(triggerEvent))
 			formBm.Close = true
 			templates.EditBookmarks(formBm, paths).Render(r.Context(), w)
 			return
@@ -432,11 +422,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			existing, err := t.App.GetBookmarkByID(recv.ID, *user)
 			if err != nil {
 				t.Logger.Error("the given bookmark ID is not available", logging.ErrV(err), logging.LogV("ID", recv.ID))
-				templates.ErrorPageLayout(templates.ErrorApplication(
-					t.Env,
-					r,
-					fmt.Sprintf("the given bookmark '%s' is not available; %v", recv.ID, err)),
-				).Render(r.Context(), w)
+				t.RenderErr(r, w, fmt.Sprintf("the given bookmark '%s' is not available; %v", recv.ID, err))
 				return
 			}
 
@@ -458,9 +444,9 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			t.Logger.Info("bookmark updated", logging.LogV("ID", updated.ID))
 
 			triggerEvent := triggerDef{
-				ToastMessage: templates.ToastMessage{
-					Event: templates.ToastMessageContent{
-						Type:  templates.MsgSuccess,
+				ToastMessage: tmpl.ToastMessage{
+					Event: tmpl.ToastMessageContent{
+						Type:  tmpl.MsgSuccess,
 						Title: "Bookmark saved!",
 						Text:  fmt.Sprintf("The bookmark '%s' (%s) was updated.", existing.DisplayName, existing.ID),
 					},
@@ -468,7 +454,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 				Refresh: "now",
 			}
 			// https://htmx.org/headers/hx-trigger/
-			w.Header().Add("HX-Trigger", templates.Json(triggerEvent))
+			w.Header().Add("HX-Trigger", tmpl.Json(triggerEvent))
 			formBm.Close = true
 			templates.EditBookmarks(formBm, paths).Render(r.Context(), w)
 			return
@@ -483,11 +469,7 @@ func (t *TemplateHandler) SortBookmarks() http.HandlerFunc {
 		err := r.ParseForm()
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not parse supplied form data; '%v'", err), r)
-			templates.ErrorPageLayout(templates.ErrorApplication(
-				t.Env,
-				r,
-				fmt.Sprintf("could not parse supplied form data; '%v'", err)),
-			).Render(r.Context(), w)
+			t.RenderErr(r, w, fmt.Sprintf("could not parse supplied form data; '%v'", err))
 			return
 		}
 
@@ -507,23 +489,23 @@ func (t *TemplateHandler) SortBookmarks() http.HandlerFunc {
 		updates, err := t.App.UpdateSortOrder(sortOrder, *user)
 		if err != nil {
 			triggerEvent := triggerDef{
-				ToastMessage: templates.ToastMessage{
-					Event: templates.ToastMessageContent{
-						Type:  templates.MsgError,
+				ToastMessage: tmpl.ToastMessage{
+					Event: tmpl.ToastMessageContent{
+						Type:  tmpl.MsgError,
 						Title: "Error sorting!",
 						Text:  fmt.Sprintf("Could not perform sorting: %v", err),
 					},
 				},
 			}
 			// https://htmx.org/headers/hx-trigger/
-			w.Header().Add("HX-Trigger", templates.Json(triggerEvent))
+			w.Header().Add("HX-Trigger", tmpl.Json(triggerEvent))
 			return
 		}
 
 		triggerEvent := triggerDef{
-			ToastMessage: templates.ToastMessage{
-				Event: templates.ToastMessageContent{
-					Type:  templates.MsgSuccess,
+			ToastMessage: tmpl.ToastMessage{
+				Event: tmpl.ToastMessageContent{
+					Type:  tmpl.MsgSuccess,
 					Title: "List sorted!",
 					Text:  fmt.Sprintf("%d bookmarks were successfully sorted", updates),
 				},
@@ -531,26 +513,8 @@ func (t *TemplateHandler) SortBookmarks() http.HandlerFunc {
 			Refresh: "now",
 		}
 		// https://htmx.org/headers/hx-trigger/
-		w.Header().Add("HX-Trigger", templates.Json(triggerEvent))
+		w.Header().Add("HX-Trigger", tmpl.Json(triggerEvent))
 
-	}
-}
-
-// --------------------------------------------------------------------------
-//  Errors
-// --------------------------------------------------------------------------
-
-// Show403 displays a page which indicates that the given user has no access to the system
-func (t *TemplateHandler) Show403() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		templates.ErrorPageLayout(templates.Error403(t.Env)).Render(r.Context(), w)
-	}
-}
-
-// Show404 is used for the http not-found error
-func (t *TemplateHandler) Show404() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		templates.ErrorPageLayout(templates.Error404(t.Env)).Render(r.Context(), w)
 	}
 }
 
@@ -612,27 +576,36 @@ func (t *TemplateHandler) versionString() string {
 	return fmt.Sprintf("%s-%s", t.Version, t.Build)
 }
 
-func (t *TemplateHandler) layoutModel(title, pageTitle, search, favicon string, user security.User) templates.LayoutModel {
-	model := templates.LayoutModel{
-		Title:     title,
-		PageTitle: pageTitle,
-		Favicon:   favicon,
-		Version:   t.versionString(),
-		User:      user,
-		Search:    search,
+func (t *TemplateHandler) layoutModel(pageTitle, search, favicon string, user security.User) tmpl.LayoutModel {
+	appNav := make([]tmpl.NavItem, 0)
+	var title string
+	for _, a := range common.AvailableApps {
+		if a.URL == "/bm" {
+			a.Active = true
+			title = a.DisplayName
+		}
+		appNav = append(appNav, a)
+	}
+	if pageTitle == "" {
+		pageTitle = title
+	}
+	model := tmpl.LayoutModel{
+		PageTitle:  pageTitle,
+		Favicon:    favicon,
+		Version:    t.versionString(),
+		User:       user,
+		Search:     search,
+		Navigation: appNav,
 	}
 
 	if model.Favicon == "" {
 		model.Favicon = "/public/folder.svg"
 	}
-	if model.PageTitle == "" {
-		model.PageTitle = model.Title
-	}
 	var jsReloadLogic string
 	if t.Env == config.Development {
 		jsReloadLogic = develop.PageReloadClientJS
 	}
-	model.PageReloadClientJS = templates.PageReloadClientJS(jsReloadLogic)
+	model.PageReloadClientJS = tmpl.PageReloadClientJS(jsReloadLogic)
 	return model
 }
 
@@ -653,7 +626,7 @@ func pathParam(r *http.Request, name string) string {
 func ensureUser(r *http.Request) *security.User {
 	user, ok := security.UserFromContext(r.Context())
 	if !ok || user == nil {
-		panic("the sucurity context user is not available!")
+		panic("the security context user is not available!")
 	}
 	return user
 }

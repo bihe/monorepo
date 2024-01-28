@@ -7,7 +7,6 @@ import { AppModules } from 'src/app/app.globals';
 import { ErrorModel } from 'src/app/shared/models/error.model';
 import { ModuleInfo } from 'src/app/shared/models/module.model';
 import { SearchModel } from 'src/app/shared/models/search.model';
-import { ApiBookmarksService } from 'src/app/shared/service/api.bookmarks.service';
 import { ApiCoreService } from 'src/app/shared/service/api.core.service';
 import { ApiMydmsService } from 'src/app/shared/service/api.mydms.service';
 import { environment } from 'src/environments/environment';
@@ -40,21 +39,20 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private readonly router: Router,
     private snackBar: MatSnackBar,
     private coreApi: ApiCoreService,
-    private bookmarkApi: ApiBookmarksService,
     private mydmsApi: ApiMydmsService) {
 
-      this.subscriptions = [];
-      this.subscriptions.push(this.txtQueryChanged.pipe(debounceTime(500), distinctUntilChanged())
-        .subscribe(model => {
-          this.searchText = model;
+    this.subscriptions = [];
+    this.subscriptions.push(this.txtQueryChanged.pipe(debounceTime(500), distinctUntilChanged())
+      .subscribe(model => {
+        this.searchText = model;
 
-          // Call your function which calls API or do anything you would like do after a lag of 1 sec
-          let m = new SearchModel();
-          m.module = this.currentModule;
-          m.term = this.searchText;
-          this.state.setSearchInput(m);
-        })
-      );
+        // Call your function which calls API or do anything you would like do after a lag of 1 sec
+        let m = new SearchModel();
+        m.module = this.currentModule;
+        m.term = this.searchText;
+        this.state.setSearchInput(m);
+      })
+    );
   }
 
   ngOnDestroy(): void {
@@ -94,9 +92,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
         mergeMap(() => this.coreApi.getApplicationInfo()),
         map(result => this.state.setSitesVersion(result)),
 
-        mergeMap(() => this.bookmarkApi.getApplicationInfo()),
-        map(result => this.state.setBookmarksVersion(result)),
-
         mergeMap(() => this.mydmsApi.getApplicationInfo()),
         map(result => this.state.setMyDmsVersion(result)),
 
@@ -111,10 +106,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
             if (error.status == 401 || error.status == 403 || !error.status) {
               this.state.setWhoAmI(new WhoAmI());
               if (!environment.production) {
-                window.location.href='assets/noaccess.dev.html';
+                window.location.href = 'assets/noaccess.dev.html';
                 return;
               }
-              window.location.href='assets/noaccess.html';
+              window.location.href = 'assets/noaccess.html';
               return;
             }
             new MessageUtils().showError(this.snackBar, error.message);
@@ -161,7 +156,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   }
 
-  onFieldChange(query:string){
+  onFieldChange(query: string) {
     this.txtQueryChanged.next(query);
   }
 

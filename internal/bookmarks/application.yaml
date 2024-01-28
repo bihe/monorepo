@@ -57,8 +57,8 @@ baseconfig:
 
     # static assets
     assets:
-        assetDir: "./assets"
-        assetPrefix: "/bm/public"
+        assetDir: "../../assets"
+        assetPrefix: "/public"
 
 database:
     connectionString: "DATABASE"

@@ -8,6 +8,8 @@ const (
 	Development Environment = "Development"
 	// Production is used for deployments
 	Production Environment = "Production"
+	// Production is a specific environment used for testing
+	Integration Environment = "Integration"
 )
 
 // BaseConfig holds the application configuration

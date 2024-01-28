@@ -18,7 +18,7 @@ type SitesHandler struct {
 }
 
 // handleGetSitesForUser returns the available sites for the given user - who is authenticated via JWT
-func (s SitesHandler) handleGetSitesForUser() http.HandlerFunc {
+func (s SitesHandler) HandleGetSitesForUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := ensureUser(r)
 		s.Logger.Debug("retrieve the site with name for user", logging.LogV("username", user.DisplayName))
@@ -34,7 +34,7 @@ func (s SitesHandler) handleGetSitesForUser() http.HandlerFunc {
 }
 
 // handleGetUsersForSite take a **siteName** and returns the users for the given site
-func (s SitesHandler) handleGetUsersForSite() http.HandlerFunc {
+func (s SitesHandler) HandleGetUsersForSite() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := ensureUser(r)
 		siteName := chi.URLParam(r, "siteName")
@@ -78,7 +78,7 @@ func (s *UserSitesRequest) String() string {
 
 // --------------------------------------------------------------------------
 
-func (s SitesHandler) handleSaveSitesForUser() http.HandlerFunc {
+func (s SitesHandler) HandleSaveSitesForUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		payload := &UserSitesRequest{}
 		user := ensureUser(r)

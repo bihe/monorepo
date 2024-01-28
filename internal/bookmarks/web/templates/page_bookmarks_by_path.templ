@@ -1,7 +1,7 @@
 package templates
 
 templ BookmarksByPathContent(bookmarkList templ.Component) {
-	{! bookmarkList }
+	@bookmarkList
 }
 
 templ BookmarksByPathStyles() {
@@ -71,9 +71,9 @@ templ BookmarksByPathNavigation(entries []BookmarkPathEntry) {
 						}
 					} else {
 						if i == 0 {
-							<li class="breadcrumb-item"><a href={ templ.URL("/bm/~"+e.UrlPath) }><i class="bi bi-house"></i></a></li>
+							<li class="breadcrumb-item"><a class="rootroot" href={ templ.URL("/bm/~" + e.UrlPath) }><i class="bi bi-house"></i></a></li>
 						} else {
-							<li class="breadcrumb-item"><a href={ templ.URL("/bm/~"+e.UrlPath) }>{ e.DisplayName }</a></li>
+							<li class="breadcrumb-item"><a href={ templ.URL("/bm/~" + e.UrlPath) }>{ e.DisplayName }</a></li>
 						}
 					}
 				}
@@ -86,26 +86,27 @@ templ BookmarksByPathNavigation(entries []BookmarkPathEntry) {
 				</div>
 			</div>
 			<button
- 				id="btn_toggle_sorting"
- 				type="button"
- 				data-bs-toggle="button"
- 				class="btn sort_button"
+				id="btn_toggle_sorting"
+				type="button"
+				data-bs-toggle="button"
+				class="btn sort_button"
 			><i class="bi bi-arrow-down-up"></i> Sort</button>
 			<span id="save_list_sort_order" class="sort_button d-none">
 				<button
- 					id="btn_save_sorting"
- 					type="button"
- 					class="btn btn-success sort_button"
+					id="btn_save_sorting"
+					type="button"
+					class="btn btn-success sort_button"
 				><i class="bi bi-sort-numeric-down"></i> Save</button>
 			</span>
 			<button
- 				type="button"
- 				class="btn btn-primary new_button"
- 				data-bs-toggle="modal"
- 				data-bs-target="#modals-here"
- 				hx-target="#modals-here"
- 				hx-trigger="click"
- 				hx-get={ "/bm/-1?path="+getPath(entries) }
+				type="button"
+				data-testid="link-add-bookmark"
+				class="btn btn-primary new_button"
+				data-bs-toggle="modal"
+				data-bs-target="#modals-here"
+				hx-target="#modals-here"
+				hx-trigger="click"
+				hx-get={ "/bm/-1?path=" + getPath(entries) }
 			><i class="bi bi-plus"></i> Add</button>
 		</span>
 		<script type="text/javascript">

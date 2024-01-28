@@ -18,15 +18,18 @@ ENV LSV=${buildtime_variable_litestream_ver}
 WORKDIR /backend-build
 COPY ./go.mod ./
 COPY ./go.sum ./
+COPY ./cmd/core/server/main.go ./cmd/core/server/main.go
 COPY ./internal/core  ./internal/core
+COPY ./internal/common  ./internal/common
 COPY ./internal/crypter  ./internal/crypter
 COPY ./pkg ./pkg
 COPY ./proto ./proto
+COPY ./assets ./assets
 
 # necessary to build sqlite3
 RUN apk add build-base
 
-RUN GOOS=linux GOARCH=${ARCH} go build -ldflags="-w -s -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o core.api ./internal/core/server.go
+RUN GOOS=linux GOARCH=${ARCH} go build -ldflags="-w -s -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o core.api ./cmd/core/server/main.go
 
 ##
 ## include litestream into the image and use the litestream replication capabilities
@@ -52,6 +55,7 @@ RUN addgroup -g 1000 -S coreapp && \
 
 COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/core.api /opt/core
 COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/litestream /opt/litestream
+COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/assets /opt/core/assets
 COPY --chown=1000:1000 ./litestream/run_litestream.sh /opt/core
 RUN chown coreapp:coreapp /opt/core/etc \
     && chown coreapp:coreapp /opt/core/logs \

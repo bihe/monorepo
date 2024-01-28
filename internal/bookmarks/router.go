@@ -1,7 +1,6 @@
 package bookmarks
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -10,7 +9,8 @@ import (
 	"golang.binggl.net/monorepo/internal/bookmarks/app/conf"
 	"golang.binggl.net/monorepo/internal/bookmarks/web"
 	"golang.binggl.net/monorepo/pkg/config"
-	pkgerr "golang.binggl.net/monorepo/pkg/errors"
+	"golang.binggl.net/monorepo/pkg/develop"
+	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 	"golang.binggl.net/monorepo/pkg/server"
@@ -37,8 +37,12 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 		App: app,
 	}
 	templateHandler := &web.TemplateHandler{
-		Logger:  logger,
-		Env:     opts.Config.Environment,
+		TemplateHandler: &handler.TemplateHandler{
+			Logger:    logger,
+			Env:       opts.Config.Environment,
+			BasePath:  "/public",
+			StartPage: "/bm",
+		},
 		App:     app,
 		Version: opts.Version,
 		Build:   opts.Build,
@@ -53,7 +57,7 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 
 	// use this for development purposes only!
 	if opts.Config.Environment == config.Development {
-		devTokenHandler := web.DevTokenHandler{
+		devTokenHandler := develop.DevTokenHandler{
 			Logger: logger,
 			Env:    opts.Config.Environment,
 		}
@@ -129,52 +133,15 @@ func setupRouter(opts HTTPHandlerOptions, logger logging.Logger) (router chi.Rou
 		},
 	}
 
-	jwtSecurity := security.NewJwtMiddleware(jwtOptions, logger)
 	jwtAuth := security.NewJWTAuthorization(jwtOptions, true)
-	interceptor := secInterceptor{
-		log:     logger,
-		jwt:     jwtSecurity,
-		auth:    jwtAuth,
-		options: jwtOptions,
+	interceptor := security.SecInterceptor{
+		Log:           logger,
+		Auth:          jwtAuth,
+		Options:       jwtOptions,
+		ErrorRedirect: "/bm/403",
 	}
 	secureRouter = chi.NewRouter()
-	secureRouter.Use(interceptor.handleJWT)
+	secureRouter.Use(interceptor.HandleJWT)
 
 	return
-}
-
-// secInterceptor is used the redirect to an error page if we can assume that no api-client
-// requests the URL
-type secInterceptor struct {
-	log     logging.Logger
-	jwt     *security.JwtMiddleware
-	auth    *security.JWTAuthorization
-	options security.JwtOptions
-}
-
-func (u secInterceptor) handleJWT(next http.Handler) http.Handler {
-	jwtAuth := u.auth
-	options := u.options
-	logger := u.log
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, err := security.Validate(r, jwtAuth, options, logger)
-		if err != nil {
-			u.log.Debug("custom JWT validation in secInterceptor!")
-			acc := r.Header.Get("Accept")
-			if acc == "application/json" {
-				u.log.Debug("the client requests JSON, provide json error-message")
-				pkgerr.WriteError(w, r, pkgerr.SecurityError{
-					Err:     fmt.Errorf("security error because of missing JWT token"),
-					Request: r,
-					Status:  http.StatusUnauthorized,
-				})
-				return
-			}
-			// when the Accept header is not pure 'application/json' provide a human-readable response
-			http.Redirect(w, r, "/bm/403", http.StatusFound)
-			return
-
-		}
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
 }

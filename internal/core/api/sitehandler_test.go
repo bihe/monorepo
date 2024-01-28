@@ -45,6 +45,7 @@ func Test_GetSitesForUser_NoAuth(t *testing.T) {
 	// arrange
 	rec := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/v1/sites", nil)
+	req.Header.Add("Accept", "application/json")
 
 	// act
 	sitesHandler().ServeHTTP(rec, req)

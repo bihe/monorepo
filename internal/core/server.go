@@ -1,47 +1,28 @@
-package main
+package core
 
 import (
 	"fmt"
-	"os"
 
-	"golang.binggl.net/monorepo/internal/core/api"
 	"golang.binggl.net/monorepo/internal/core/app/conf"
 	"golang.binggl.net/monorepo/internal/core/app/oidc"
 	"golang.binggl.net/monorepo/internal/core/app/sites"
 	"golang.binggl.net/monorepo/internal/core/app/store"
 	"golang.binggl.net/monorepo/internal/core/app/upload"
 	"golang.binggl.net/monorepo/internal/crypter"
+	"golang.binggl.net/monorepo/pkg/config"
+	"golang.binggl.net/monorepo/pkg/develop"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/server"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"gorm.io/gorm"
 
 	"gorm.io/driver/sqlite"
 )
 
-var (
-	// Version exports the application version
-	Version = "1.0.0"
-	// Build provides information about the application build
-	Build = "localbuild"
-	// AppName specifies the application itself
-	AppName = "core"
-	// ApplicationNameKey identifies the application in structured logging
-	ApplicationNameKey = "appName"
-	// HostIDKey identifies the host in structured logging
-	HostIDKey = "localhost"
-)
-
-func main() {
-	if err := run(Version, Build); err != nil {
-		fmt.Fprintf(os.Stderr, "<< ERROR-RESULT >> '%s'\n", err)
-		os.Exit(1)
-	}
-}
-
 // run is the entry-point for the core/auth service
 // where initialization, setup and execution is done
-func run(version, build string) error {
+func Run(version, build, appName string) error {
 	hostname, port, basePath, appCfg := server.ReadConfig[conf.AppConfig]("CO")
 
 	// use the new pkg logger implementation
@@ -63,7 +44,7 @@ func run(version, build string) error {
 		client     *grpc.ClientConn
 	)
 	if appCfg.Upload.EncGrpcConn != "" {
-		client, err = grpc.Dial(appCfg.Upload.EncGrpcConn, grpc.WithInsecure())
+		client, err = grpc.Dial(appCfg.Upload.EncGrpcConn, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			panic(fmt.Sprintf("could not connect: %v", err))
 		}
@@ -84,19 +65,25 @@ func run(version, build string) error {
 			TimeOut:          "30s",
 		},
 		)
-		handler = api.MakeHTTPHandler(oidcSvc, siteSvc, uploadSvc, logger, api.HTTPHandlerOptions{
+		handler = MakeHTTPHandler(oidcSvc, siteSvc, uploadSvc, logger, HTTPHandlerOptions{
 			BasePath:  basePath,
 			ErrorPath: appCfg.ErrorPath,
 			Config:    appCfg,
-			Version:   Version,
-			Build:     Build,
+			Version:   version,
+			Build:     build,
 		})
 	)
 
+	// only run the reload-server in development
+	if appCfg.Environment == config.Development {
+		reload := develop.NewReloadServer()
+		reload.Start()
+	}
+
 	return server.Run(server.RunOptions{
-		AppName:       AppName,
-		Version:       Version,
-		Build:         Build,
+		AppName:       appName,
+		Version:       version,
+		Build:         build,
 		HostName:      hostname,
 		Port:          port,
 		Environment:   string(appCfg.Environment),

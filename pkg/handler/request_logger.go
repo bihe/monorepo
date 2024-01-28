@@ -9,13 +9,6 @@ import (
 	"golang.binggl.net/monorepo/pkg/logging"
 )
 
-// logCtxtKey is an unexported type for keys defined in this package.
-// This prevents collisions with keys defined in other packages.
-type logCtxtKey int
-
-// logKey is used to access the log-entry in the context
-var logKey logCtxtKey
-
 // LoggerMiddleware is a middleware that logs the start and end of each request, along
 // with some useful data about what was requested, what the response status was,
 // and how long it took to return.

@@ -12,11 +12,12 @@ templ DialogConfirmDelete(name, id string) {
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
 				<button
- 					type="button"
- 					class="btn btn-danger"
- 					data-bs-dismiss="modal"
- 					hx-target="#bookmark_list"
- 					hx-delete={ "/bm/delete/"+id }
+					type="button"
+					id="btn-confirm"
+					class="btn btn-danger"
+					data-bs-dismiss="modal"
+					hx-target="#bookmark_list"
+					hx-delete={ "/bm/delete/" + id }
 				>Delete</button>
 			</div>
 		</div>

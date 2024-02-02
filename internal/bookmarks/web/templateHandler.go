@@ -3,6 +3,7 @@ package web
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -255,7 +256,11 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 
 const errorFavicon = `<span id="bookmark_favicon_display" class="error_icon">
 <i id="error_tooltip_favicon" class="position_error_icon bi bi-exclamation-square-fill" data-bs-toggle="tooltip" data-bs-title="%s"></i>
+<div class="bookmark_favicon_error_text">
+	<span class="alert alert-danger">%s</span>
+</div>
 </span>
+
 <script type="text/javascript">
 [...document.querySelectorAll('[data-bs-toggle="tooltip"]')].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 </script>
@@ -272,7 +277,7 @@ func (t *TemplateHandler) FetchCustomFaviconURL() http.HandlerFunc {
 		if err != nil {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
 			t.Logger.ErrorRequest(fmt.Sprintf("could not fetch the custom favicon; '%v'", err), r)
-			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
 			return
 		}
 		w.Write([]byte(fmt.Sprintf(favIconImage, fav.Name, fav.Name)))
@@ -288,7 +293,47 @@ func (t *TemplateHandler) FetchCustomFaviconFromPage() http.HandlerFunc {
 		if err != nil {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
 			t.Logger.ErrorRequest(fmt.Sprintf("could not fetch the custom favicon; '%v'", err), r)
-			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
+			return
+		}
+		w.Write([]byte(fmt.Sprintf(favIconImage, fav.Name, fav.Name)))
+	}
+}
+
+// UploadCustomFavicon takes a file upload and stores the payload locally
+func (t *TemplateHandler) UploadCustomFavicon() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Parse our multipart form, 10 << 20 specifies a maximum
+		// upload of 10 MB files.
+		r.ParseMultipartForm(10 << 20)
+
+		file, meta, err := r.FormFile("bookmark_customFaviconUpload")
+		if err != nil {
+			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
+			t.Logger.ErrorRequest(fmt.Sprintf("could not upload the custom favicon; '%v'", err), r)
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
+			return
+		}
+		defer file.Close()
+
+		cType := meta.Header.Get("Content-Type")
+		if !strings.HasPrefix(cType, "image") {
+			t.Logger.ErrorRequest(fmt.Sprintf("only image types are supported - got '%s'", cType), r)
+			w.Write([]byte(fmt.Sprintf(errorFavicon, "Only an image mimetype is supported!", "Only an image mimetype is supported!")))
+			return
+		}
+		payload, err := io.ReadAll(file)
+		if err != nil {
+			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
+			t.Logger.ErrorRequest(fmt.Sprintf("could not read data of upload '%s'", cType), r)
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
+			return
+		}
+		fav, err := t.App.WriteLocalFavicon(meta.Filename, payload)
+		if err != nil {
+			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
+			t.Logger.ErrorRequest(fmt.Sprintf("could not fetch the custom favicon; '%v'", err), r)
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
 			return
 		}
 		w.Write([]byte(fmt.Sprintf(favIconImage, fav.Name, fav.Name)))

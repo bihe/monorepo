@@ -1,10 +1,15 @@
 package web_test
 
 import (
+	"bytes"
 	"database/sql"
+	_ "embed"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"net/textproto"
 	"strings"
 	"testing"
 
@@ -213,4 +218,89 @@ func Test_EllipsisValue(t *testing.T) {
 		el.FolderLen != web.MobileEllipsis.FolderLen {
 		t.Errorf("expected the std ellipsis - got something different")
 	}
+}
+
+//go:embed Death-Star.png
+var imagePayload []byte
+
+func Test_CustomFaviconUpload(t *testing.T) {
+	repo, fRepo, db := repositories(t)
+	defer db.Close()
+	r := bookmarkHandler(repo, fRepo)
+
+	// create a test payload
+	body, ctype := getMultiPartPayload(t,
+		"bookmark_customFaviconUpload",
+		"filename.png",
+		"image/png", imagePayload)
+
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/bm/favicon/upload", body)
+	addJwtAuth(req)
+	req.Header.Add("Content-Type", ctype)
+
+	r.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+	responsePrefix := `<img id="bookmark_favicon_display" class="bookmark_favicon_preview" src="/bm/favicon/temp/`
+	response := rec.Body.String()
+	if !strings.HasPrefix(response, responsePrefix) {
+		t.Errorf("expected a HTML response with uploaded favicon")
+	}
+
+	// –-------------------  wrong ctype
+
+	body, ctype = getMultiPartPayload(t,
+		"bookmark_customFaviconUpload",
+		"filename.png",
+		"application/octet-stream", imagePayload)
+
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/bm/favicon/upload", body)
+	addJwtAuth(req)
+	req.Header.Add("Content-Type", ctype)
+
+	r.ServeHTTP(rec, req)
+
+	response = rec.Body.String()
+	if !strings.Contains(response, "Only an image mimetype is supported!") {
+		t.Errorf("expected an error message about the wrong mime-type")
+	}
+
+	// –-------------------  wrong upload formfield
+
+	body, ctype = getMultiPartPayload(t,
+		"file",
+		"filename.png",
+		"image/png", imagePayload)
+
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/bm/favicon/upload", body)
+	addJwtAuth(req)
+	req.Header.Add("Content-Type", ctype)
+
+	r.ServeHTTP(rec, req)
+
+	response = rec.Body.String()
+	if !strings.Contains(response, `<span id="bookmark_favicon_display" class="error_icon">`) {
+		t.Errorf("expected an error message about the form-field")
+	}
+
+}
+
+func getMultiPartPayload(t *testing.T, multiPartKey, fileName, contentType string, payload []byte) (*bytes.Buffer, string) {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	defer writer.Close()
+
+	h := make(textproto.MIMEHeader)
+	h.Set("Content-Disposition", fmt.Sprintf(`form-data; name="%s"; filename="%s"`, multiPartKey, fileName))
+	h.Set("Content-Type", contentType)
+	part, err := writer.CreatePart(h)
+	if err != nil {
+		t.Fatalf("could not create multipart: %v", err)
+	}
+	io.Copy(part, bytes.NewBuffer(payload))
+	ctype := writer.FormDataContentType()
+	return body, ctype
 }

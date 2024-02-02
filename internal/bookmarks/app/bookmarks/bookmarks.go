@@ -619,7 +619,7 @@ func (s *Application) LocalFetchFaviconURL(url string) (*ObjectInfo, error) {
 	}
 
 	s.Logger.Info(fmt.Sprintf("got favicon payload length of '%d' for URL '%s'", len(payload), url))
-	return s.writeLocalFavicon(favi, payload)
+	return s.WriteLocalFavicon(favi, payload)
 }
 
 // LocalExtractFaviconFromURL retrieves the Favicon from the bookmarks URL and stores the payload locally
@@ -637,10 +637,11 @@ func (s *Application) LocalExtractFaviconFromURL(baseURL string) (*ObjectInfo, e
 	}
 
 	s.Logger.Info(fmt.Sprintf("got favicon payload length of '%d' for URL '%s'", len(payload), baseURL))
-	return s.writeLocalFavicon(favi, payload)
+	return s.WriteLocalFavicon(favi, payload)
 }
 
-func (s *Application) writeLocalFavicon(name string, payload []byte) (*ObjectInfo, error) {
+// WriteLocalFavicon takes a payload and stores it locally using a generated hash-code
+func (s *Application) WriteLocalFavicon(name string, payload []byte) (*ObjectInfo, error) {
 	hashPayload, err := hashInput(payload)
 	if err != nil {
 		return nil, fmt.Errorf("could not hash payload: '%v'", err)

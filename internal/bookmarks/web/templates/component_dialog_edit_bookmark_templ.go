@@ -394,7 +394,7 @@ func EditBookmarks(bm Bookmark, paths []string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"> <button type=\"button\" class=\"btn btn-outline-secondary\" hx-post=\"/bm/favicon/url\" hx-trigger=\"click\" hx-target=\"#bookmark_favicon_display\" hx-params=\"bookmark_CustomFavicon\" hx-swap=\"outerHTML\" hx-indicator=\"#indicator\"><i class=\"bi bi-arrow-clockwise\"></i></button></div></div>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"> <button type=\"button\" class=\"btn btn-outline-secondary\" hx-post=\"/bm/favicon/url\" hx-trigger=\"click\" hx-target=\"#bookmark_favicon_display\" hx-params=\"bookmark_CustomFavicon\" hx-swap=\"outerHTML\" hx-indicator=\"#indicator\"><i class=\"bi bi-arrow-clockwise\"></i></button></div><label for=\"customFaviconUpload\" class=\"form-label\">Upload a custom icon</label><div class=\"input-group mb-3\"><input class=\"form-control\" type=\"file\" name=\"bookmark_customFaviconUpload\" id=\"customFaviconUpload\" accept=\"image/*,.png,.jpeg,.jpg,.gif\"> <button type=\"button\" class=\"btn btn-outline-secondary\" hx-post=\"/bm/favicon/upload\" hx-encoding=\"multipart/form-data\" hx-trigger=\"click\" hx-target=\"#bookmark_favicon_display\" hx-params=\"bookmark_customFaviconUpload\" hx-swap=\"outerHTML\" hx-indicator=\"#indicator\"><i class=\"bi bi-upload\"></i></button></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -418,7 +418,7 @@ func EditBookmarks(bm Bookmark, paths []string) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(bm.Error)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit_bookmark.templ`, Line: 118, Col: 70}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit_bookmark.templ`, Line: 147, Col: 70}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {

@@ -63,13 +63,6 @@ dev.binggl.net {
 
     ## api definitions below
 
-    handle_path /api/v1/bookmarks* {
-        rewrite * /api/v1/bookmarks{path}
-        reverse_proxy http://bookmarks-3003:3000 {
-            import proxy-transport
-        }
-    }
-
     handle_path /api/v1/mydms* {
         rewrite * /api/v1{path}
         reverse_proxy http://mydms-3002:3000 {
@@ -79,13 +72,6 @@ dev.binggl.net {
 
     handle_path /api/v1/core* {
         rewrite * /api/v1{path}
-        reverse_proxy http://core-3001:3000 {
-            import proxy-transport
-        }
-    }
-
-    handle_path /api/v1/sites* {
-        rewrite * /api/v1/sites{path}
         reverse_proxy http://core-3001:3000 {
             import proxy-transport
         }

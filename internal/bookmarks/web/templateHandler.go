@@ -1,7 +1,9 @@
 package web
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -106,7 +108,7 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 				t.RenderErr(r, w, fmt.Sprintf("could not get bookmark folder for path '%s'; '%v'", path, err))
 				return
 			}
-			favicon = "/api/v1/bookmarks/favicon/" + folder.ID
+			favicon = "/bm/favicon/" + folder.ID
 		}
 
 		ell := GetEllipsisValues(r)
@@ -254,12 +256,16 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 
 const errorFavicon = `<span id="bookmark_favicon_display" class="error_icon">
 <i id="error_tooltip_favicon" class="position_error_icon bi bi-exclamation-square-fill" data-bs-toggle="tooltip" data-bs-title="%s"></i>
+<div class="bookmark_favicon_error_text">
+	<span class="alert alert-danger">%s</span>
+</div>
 </span>
+
 <script type="text/javascript">
 [...document.querySelectorAll('[data-bs-toggle="tooltip"]')].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 </script>
 `
-const favIconImage = `<img id="bookmark_favicon_display" class="bookmark_favicon_preview" src="/api/v1/bookmarks/favicon/temp/%s">
+const favIconImage = `<img id="bookmark_favicon_display" class="bookmark_favicon_preview" src="/bm/favicon/temp/%s">
 <input type="hidden" name="bookmark_Favicon" value="%s"/>`
 
 // FetchCustomFaviconURL fetches the given custom favicon URL and returns a new image
@@ -271,7 +277,7 @@ func (t *TemplateHandler) FetchCustomFaviconURL() http.HandlerFunc {
 		if err != nil {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
 			t.Logger.ErrorRequest(fmt.Sprintf("could not fetch the custom favicon; '%v'", err), r)
-			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
 			return
 		}
 		w.Write([]byte(fmt.Sprintf(favIconImage, fav.Name, fav.Name)))
@@ -287,10 +293,81 @@ func (t *TemplateHandler) FetchCustomFaviconFromPage() http.HandlerFunc {
 		if err != nil {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
 			t.Logger.ErrorRequest(fmt.Sprintf("could not fetch the custom favicon; '%v'", err), r)
-			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
 			return
 		}
 		w.Write([]byte(fmt.Sprintf(favIconImage, fav.Name, fav.Name)))
+	}
+}
+
+// UploadCustomFavicon takes a file upload and stores the payload locally
+func (t *TemplateHandler) UploadCustomFavicon() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Parse our multipart form, 10 << 20 specifies a maximum
+		// upload of 10 MB files.
+		r.ParseMultipartForm(10 << 20)
+
+		file, meta, err := r.FormFile("bookmark_customFaviconUpload")
+		if err != nil {
+			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
+			t.Logger.ErrorRequest(fmt.Sprintf("could not upload the custom favicon; '%v'", err), r)
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
+			return
+		}
+		defer file.Close()
+
+		cType := meta.Header.Get("Content-Type")
+		if !strings.HasPrefix(cType, "image") {
+			t.Logger.ErrorRequest(fmt.Sprintf("only image types are supported - got '%s'", cType), r)
+			w.Write([]byte(fmt.Sprintf(errorFavicon, "Only an image mimetype is supported!", "Only an image mimetype is supported!")))
+			return
+		}
+		payload, err := io.ReadAll(file)
+		if err != nil {
+			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
+			t.Logger.ErrorRequest(fmt.Sprintf("could not read data of upload '%s'", cType), r)
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
+			return
+		}
+		fav, err := t.App.WriteLocalFavicon(meta.Filename, payload)
+		if err != nil {
+			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
+			t.Logger.ErrorRequest(fmt.Sprintf("could not fetch the custom favicon; '%v'", err), r)
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
+			return
+		}
+		w.Write([]byte(fmt.Sprintf(favIconImage, fav.Name, fav.Name)))
+	}
+}
+
+// GetFaviconByID returns a stored favicon for the provided ID
+func (t *TemplateHandler) GetFaviconByID() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := ensureUser(r)
+		id := pathParam(r, "id")
+		t.Logger.InfoRequest(fmt.Sprintf("try to get favicon with the given ID '%s'", id), r)
+		favicon, err := t.App.GetBookmarkFavicon(id, *user)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get favicon by ID; '%v'", err), r)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		http.ServeContent(w, r, favicon.Name, favicon.Modified, bytes.NewReader(favicon.Payload))
+	}
+}
+
+// GetTempFaviconByID returns a temporarily saved favicon specified by the given ID
+func (t *TemplateHandler) GetTempFaviconByID() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := pathParam(r, "id")
+		t.Logger.InfoRequest(fmt.Sprintf("try to get locally stored favicon by ID '%s'", id), r)
+		favicon, err := t.App.GetLocalFaviconByID(id)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get locally stored favicon by ID; '%v'", err), r)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		http.ServeContent(w, r, favicon.Name, favicon.Modified, bytes.NewReader(favicon.Payload))
 	}
 }
 

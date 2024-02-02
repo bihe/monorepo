@@ -16,7 +16,7 @@ templ BookmarkList(path string, items []bookmarks.Bookmark, ell EllipsisValues) 
 				<div class="bookmark_item hstack gap-3">
 					<div class="p2">
 						<span>
-							<img width="24px" height="24px" alt="favicon" class={ "bookmark_favicon", templ.KV("invert", (b.InvertFaviconColor == 1)) } src={ fmt.Sprintf("/api/v1/bookmarks/favicon/%s", b.ID) }/>
+							<img width="24px" height="24px" alt="favicon" class={ "bookmark_favicon", templ.KV("invert", (b.InvertFaviconColor == 1)) } src={ fmt.Sprintf("/bm/favicon/%s", b.ID) }/>
 							if b.ChildCount > 0 {
 								<span class="top-0 start-100 translate-middle badge rounded-pill bg-danger">
 									{ fmt.Sprintf("%d", b.ChildCount) }

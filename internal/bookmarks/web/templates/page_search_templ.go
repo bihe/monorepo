@@ -59,7 +59,7 @@ func SearchContent(items []bookmarks.Bookmark, ell EllipsisValues) templ.Compone
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(fmt.Sprintf("/api/v1/bookmarks/favicon/%s", b.ID)))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(fmt.Sprintf("/bm/favicon/%s", b.ID)))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -110,7 +110,7 @@ func SearchContent(items []bookmarks.Bookmark, ell EllipsisValues) templ.Compone
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(templates.Ellipsis(b.Path, ell.PathLen, ""))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `page_search.templ`, Line: 25, Col: 126}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `page_search.templ`, Line: 25, Col: 128}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -180,7 +180,7 @@ func SearchContent(items []bookmarks.Bookmark, ell EllipsisValues) templ.Compone
 				var templ_7745c5c3_Var9 string
 				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(templates.Ellipsis(b.DisplayName, ell.FolderLen, "..."))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `page_search.templ`, Line: 30, Col: 190}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `page_search.templ`, Line: 30, Col: 194}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 				if templ_7745c5c3_Err != nil {

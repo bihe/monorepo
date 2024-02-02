@@ -15,7 +15,7 @@ templ SearchContent(items []bookmarks.Bookmark, ell EllipsisValues) {
 		for _, b := range items {
 			<div class="bookmark_item">
 				<span>
-					<img width="24px" height="24px" alt="favicon" class={ "bookmark_favicon", templ.KV("invert", (b.InvertFaviconColor == 1)) } src={ fmt.Sprintf("/api/v1/bookmarks/favicon/%s", b.ID) }/>
+					<img width="24px" height="24px" alt="favicon" class={ "bookmark_favicon", templ.KV("invert", (b.InvertFaviconColor == 1)) } src={ fmt.Sprintf("/bm/favicon/%s", b.ID) }/>
 					if b.ChildCount > 0 {
 						<span class="top-0 start-100 translate-middle badge rounded-pill bg-danger">
 							{ fmt.Sprintf("%d", b.ChildCount) }
@@ -23,12 +23,12 @@ templ SearchContent(items []bookmarks.Bookmark, ell EllipsisValues) {
 					}
 				</span>
 				<span class="badge rounded-pill text-bg-secondary bookmark-path">
-					<a class="bookmark_path" href={ templ.URL("/bm/~"+b.Path) } title={ b.Path }>{ templates.Ellipsis(b.Path,ell.PathLen, "") }</a>
+					<a class="bookmark_path" href={ templ.URL("/bm/~" + b.Path) } title={ b.Path }>{ templates.Ellipsis(b.Path,ell.PathLen, "") }</a>
 				</span>
 				if b.Type == bookmarks.Node {
 					<a class="bookmark_name" href={ templ.URL(b.URL) } title={ b.DisplayName }>{ templates.Ellipsis(b.DisplayName,ell.NodeLen, "...") }</a>
 				} else {
-					<a class="bookmark_name" href={ templ.URL("/bm/~"+templates.EnsureTrailingSlash(b.Path)+b.DisplayName) } title={ b.DisplayName }>{ templates.Ellipsis(b.DisplayName,ell.FolderLen, "...") }</a>
+					<a class="bookmark_name" href={ templ.URL("/bm/~" + templates.EnsureTrailingSlash(b.Path) + b.DisplayName) } title={ b.DisplayName }>{ templates.Ellipsis(b.DisplayName,ell.FolderLen, "...") }</a>
 				}
 			</div>
 		}

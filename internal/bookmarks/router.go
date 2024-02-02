@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"golang.binggl.net/monorepo/internal/bookmarks/api"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/conf"
 	"golang.binggl.net/monorepo/internal/bookmarks/web"
@@ -28,14 +27,7 @@ type HTTPHandlerOptions struct {
 // MakeHTTPHandler creates a new handler implementation which is used together with the HTTP server
 func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTTPHandlerOptions) http.Handler {
 	std, sec := setupRouter(opts, logger)
-	appInfoHandler := api.AppInfoHandler{
-		Logger:  logger,
-		Version: opts.Version,
-		Build:   opts.Build,
-	}
-	bookmarksHandler := api.BookmarksHandler{
-		App: app,
-	}
+
 	templateHandler := &web.TemplateHandler{
 		TemplateHandler: &handler.TemplateHandler{
 			Logger:    logger,
@@ -75,37 +67,13 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 		r.Delete("/delete/{id}", templateHandler.DeleteBookmark())
 		r.Post("/favicon/page", templateHandler.FetchCustomFaviconFromPage())
 		r.Post("/favicon/url", templateHandler.FetchCustomFaviconURL())
+		r.Get("/favicon/{id}", templateHandler.GetFaviconByID())
+		r.Get("/favicon/temp/{id}", templateHandler.GetTempFaviconByID())
+		r.Post("/favicon/upload", templateHandler.UploadCustomFavicon())
 		r.Post("/sort", templateHandler.SortBookmarks())
 		r.Get("/{id}", templateHandler.EditBookmarkDialog())
 		r.Get("/", templateHandler.GetBookmarksForPath())
 		r.Post("/", templateHandler.SaveBookmark())
-		return r
-	}())
-
-	// the following APIs have the base-URL /api/v1
-	sec.Get("/api/v1/whoami", appInfoHandler.HandleWhoAmI())
-	// the bookmarks routes
-	sec.Mount("/api/v1/bookmarks", func() http.Handler {
-		r := chi.NewRouter()
-		// information about the app itself
-		r.Get("/appinfo", appInfoHandler.HandleGetAppInfo())
-		// the real bookmark paths
-		r.Put("/sortorder", bookmarksHandler.UpdateSortOrder())
-		r.Delete("/{id}", bookmarksHandler.Delete())
-		r.Get("/{id}", bookmarksHandler.GetBookmarkByID())
-		r.Get("/bypath", bookmarksHandler.GetBookmarksByPath())
-		r.Get("/allpaths", bookmarksHandler.GetAllPaths())
-		r.Get("/folder", bookmarksHandler.GetBookmarksFolderByPath())
-		r.Get("/byname", bookmarksHandler.GetBookmarksByName())
-		r.Get("/fetch/{id}", bookmarksHandler.FetchAndForward())
-
-		r.Get("/favicon/{id}", bookmarksHandler.GetFavicon())
-		r.Get("/favicon/temp/{id}", bookmarksHandler.GetTempFavicon())
-		r.Post("/favicon/temp/base", bookmarksHandler.CreateBaseURLFavicon())
-		r.Post("/favicon/temp/url", bookmarksHandler.CreateFaviconFromCustomURL())
-
-		r.Post("/", bookmarksHandler.Create())
-		r.Put("/", bookmarksHandler.Update())
 		return r
 	}())
 

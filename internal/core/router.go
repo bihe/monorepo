@@ -44,20 +44,10 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, uploadSvc uplo
 		JwtCookieName: opts.Config.Security.CookieName,
 		JwtExpiryDays: opts.Config.Security.Expiry,
 	}
-	sitesHandler := api.SitesHandler{
-		SitesSvc: siteSvc,
-		Logger:   logger,
-	}
 
 	uploadHandler := &api.UploadHandler{
 		Service: uploadSvc,
 		Logger:  logger,
-	}
-
-	appInfoHandler := api.AppInfoHandler{
-		Logger:  logger,
-		Version: opts.Version,
-		Build:   opts.Build,
 	}
 
 	templateHandler := &web.TemplateHandler{
@@ -107,19 +97,6 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, uploadSvc uplo
 		return r
 	}())
 	// the following APIs have the base-URL /api/v1
-	sec.Mount("/api/v1", func() http.Handler {
-		r := chi.NewRouter()
-		r.Get("/appinfo", appInfoHandler.HandleGetAppInfo())
-		r.Get("/whoami", appInfoHandler.HandleWhoAmI())
-		return r
-	}())
-	sec.Mount("/api/v1/sites", func() http.Handler {
-		r := chi.NewRouter()
-		r.Get("/", sitesHandler.HandleGetSitesForUser())
-		r.Get("/users/{siteName}", sitesHandler.HandleGetUsersForSite())
-		r.Post("/", sitesHandler.HandleSaveSitesForUser())
-		return r
-	}())
 	sec.Mount("/api/v1/upload", func() http.Handler {
 		r := chi.NewRouter()
 		r.Post("/file", uploadHandler.Upload())

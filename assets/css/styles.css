@@ -148,6 +148,14 @@ a.bookmark_path {
   flex: 90%;
 }
 
+.bookmark_favicon_error_text {
+  position: absolute;
+  z-index: 99;
+  bottom: -50px;
+  left: 5px;
+  font-size: small;
+}
+
 .spacer {
   padding-bottom: 20px;
 }

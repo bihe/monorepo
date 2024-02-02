@@ -55,7 +55,7 @@ templ EditBookmarks(bm Bookmark, paths []string) {
 						<div class="spacer"></div>
 						<div class="flex_layout">
 							<div class="bookmark_edit_layout_flex_5">
-								<img id="bookmark_favicon_display" class={ "bookmark_favicon_preview", templ.KV("invert", bm.InvertFaviconColor) } src={ "/api/v1/bookmarks/favicon/" + bm.ID.Val }/>
+								<img id="bookmark_favicon_display" class={ "bookmark_favicon_preview", templ.KV("invert", bm.InvertFaviconColor) } src={ "/bm/favicon/" + bm.ID.Val }/>
 							</div>
 							<div class="bookmark_edit_layout_flex_95 form-floating mb-3">
 								<input type="text" class={ "form-control", templ.KV("control_invalid", !bm.DisplayName.Valid) } class="" id="bookmark_DisplayName" placeholder="Displayname" name="bookmark_DisplayName" value={ bm.DisplayName.Val } required/>
@@ -101,7 +101,15 @@ templ EditBookmarks(bm Bookmark, paths []string) {
 						<div id="custom_favicon_section" class={ templ.KV("d-none", !bm.UseCustomFavicon) }>
 							<div class="spacer"></div>
 							<div class="input-group mb-3">
-								<input type="text" class={ "form-control", templ.KV("control_invalid", !bm.CustomFavicon.Valid) } placeholder="Favicon URL" aria-label="Favicon URL" aria-describedby="Favicon URL" name="bookmark_CustomFavicon" value={ bm.CustomFavicon.Val }/>
+								<input
+									type="text"
+									class={ "form-control", templ.KV("control_invalid", !bm.CustomFavicon.Valid) }
+									placeholder="Favicon URL"
+									aria-label="Favicon URL"
+									aria-describedby="Favicon URL"
+									name="bookmark_CustomFavicon"
+									value={ bm.CustomFavicon.Val }
+								/>
 								<button
 									type="button"
 									class="btn btn-outline-secondary"
@@ -112,6 +120,27 @@ templ EditBookmarks(bm Bookmark, paths []string) {
 									hx-swap="outerHTML"
 									hx-indicator="#indicator"
 								><i class="bi bi-arrow-clockwise"></i></button>
+							</div>
+							<label for="customFaviconUpload" class="form-label">Upload a custom icon</label>
+							<div class="input-group mb-3">
+								<input
+									class="form-control"
+									type="file"
+									name="bookmark_customFaviconUpload"
+									id="customFaviconUpload"
+									accept="image/*,.png,.jpeg,.jpg,.gif"
+								/>
+								<button
+									type="button"
+									class="btn btn-outline-secondary"
+									hx-post="/bm/favicon/upload"
+									hx-encoding="multipart/form-data"
+									hx-trigger="click"
+									hx-target="#bookmark_favicon_display"
+									hx-params="bookmark_customFaviconUpload"
+									hx-swap="outerHTML"
+									hx-indicator="#indicator"
+								><i class="bi bi-upload"></i></button>
 							</div>
 						</div>
 						<div id="error_section" class={ "error_text", templ.KV("d-none", bm.Error == "") }>

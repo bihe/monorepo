@@ -199,7 +199,7 @@ func EditBookmarks(bm Bookmark, paths []string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString("/api/v1/bookmarks/favicon/" + bm.ID.Val))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString("/bm/favicon/" + bm.ID.Val))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

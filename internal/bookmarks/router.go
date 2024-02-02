@@ -71,6 +71,8 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 		r.Get("/{id}", templateHandler.EditBookmarkDialog())
 		r.Get("/", templateHandler.GetBookmarksForPath())
 		r.Post("/", templateHandler.SaveBookmark())
+		r.Get("/favicon/{id}", templateHandler.GetFaviconByID())
+		r.Get("/favicon/temp/{id}", templateHandler.GetTempFaviconByID())
 		return r
 	}())
 

@@ -55,7 +55,7 @@ templ EditBookmarks(bm Bookmark, paths []string) {
 						<div class="spacer"></div>
 						<div class="flex_layout">
 							<div class="bookmark_edit_layout_flex_5">
-								<img id="bookmark_favicon_display" class={ "bookmark_favicon_preview", templ.KV("invert", bm.InvertFaviconColor) } src={ "/api/v1/bookmarks/favicon/" + bm.ID.Val }/>
+								<img id="bookmark_favicon_display" class={ "bookmark_favicon_preview", templ.KV("invert", bm.InvertFaviconColor) } src={ "/bm/favicon/" + bm.ID.Val }/>
 							</div>
 							<div class="bookmark_edit_layout_flex_95 form-floating mb-3">
 								<input type="text" class={ "form-control", templ.KV("control_invalid", !bm.DisplayName.Valid) } class="" id="bookmark_DisplayName" placeholder="Displayname" name="bookmark_DisplayName" value={ bm.DisplayName.Val } required/>

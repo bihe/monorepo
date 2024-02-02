@@ -67,7 +67,7 @@ func BookmarkList(path string, items []bookmarks.Bookmark, ell EllipsisValues) t
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(fmt.Sprintf("/api/v1/bookmarks/favicon/%s", b.ID)))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(fmt.Sprintf("/bm/favicon/%s", b.ID)))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

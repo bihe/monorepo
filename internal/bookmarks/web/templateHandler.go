@@ -1,6 +1,7 @@
 package web
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -106,7 +107,7 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 				t.RenderErr(r, w, fmt.Sprintf("could not get bookmark folder for path '%s'; '%v'", path, err))
 				return
 			}
-			favicon = "/api/v1/bookmarks/favicon/" + folder.ID
+			favicon = "/bm/favicon/" + folder.ID
 		}
 
 		ell := GetEllipsisValues(r)
@@ -259,7 +260,7 @@ const errorFavicon = `<span id="bookmark_favicon_display" class="error_icon">
 [...document.querySelectorAll('[data-bs-toggle="tooltip"]')].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 </script>
 `
-const favIconImage = `<img id="bookmark_favicon_display" class="bookmark_favicon_preview" src="/api/v1/bookmarks/favicon/temp/%s">
+const favIconImage = `<img id="bookmark_favicon_display" class="bookmark_favicon_preview" src="/bm/favicon/temp/%s">
 <input type="hidden" name="bookmark_Favicon" value="%s"/>`
 
 // FetchCustomFaviconURL fetches the given custom favicon URL and returns a new image
@@ -291,6 +292,37 @@ func (t *TemplateHandler) FetchCustomFaviconFromPage() http.HandlerFunc {
 			return
 		}
 		w.Write([]byte(fmt.Sprintf(favIconImage, fav.Name, fav.Name)))
+	}
+}
+
+// GetFaviconByID returns a stored favicon for the provided ID
+func (t *TemplateHandler) GetFaviconByID() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := ensureUser(r)
+		id := pathParam(r, "id")
+		t.Logger.InfoRequest(fmt.Sprintf("try to get favicon with the given ID '%s'", id), r)
+		favicon, err := t.App.GetBookmarkFavicon(id, *user)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get favicon by ID; '%v'", err), r)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		http.ServeContent(w, r, favicon.Name, favicon.Modified, bytes.NewReader(favicon.Payload))
+	}
+}
+
+// GetTempFaviconByID returns a temporarily saved favicon specified by the given ID
+func (t *TemplateHandler) GetTempFaviconByID() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := pathParam(r, "id")
+		t.Logger.InfoRequest(fmt.Sprintf("try to get locally stored favicon by ID '%s'", id), r)
+		favicon, err := t.App.GetLocalFaviconByID(id)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get locally stored favicon by ID; '%v'", err), r)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		http.ServeContent(w, r, favicon.Name, favicon.Modified, bytes.NewReader(favicon.Payload))
 	}
 }
 

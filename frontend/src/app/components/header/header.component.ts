@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map, mergeMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { AppModules } from 'src/app/app.globals';
 import { ErrorModel } from 'src/app/shared/models/error.model';
 import { ModuleInfo } from 'src/app/shared/models/module.model';
@@ -81,20 +81,19 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.state.setProgress(true);
     // chain the calls so that we have an overall result/error
     // the call will "break" if an error occurs and no subsequent call will be done
-    this.subscriptions.push(this.coreApi.getWhoAmI()
+    this.subscriptions.push(this.mydmsApi.getApplicationInfo()
       .pipe(
         map(result => {
-          result.authenticated = true;
-          this.state.setWhoAmI(result);
-          this.whoAmI = result;
+          let whoami = new WhoAmI();
+          whoami.authenticated = true;
+          whoami.displayName = result.userInfo.displayName;
+          whoami.email = result.userInfo.email;
+          whoami.userId = result.userInfo.userId;
+          whoami.userName = result.userInfo.userName;
+
+          this.state.setMyDmsVersion(result);
+          this.whoAmI = whoami;
         }),
-        // get the application-information for the given APIs
-        mergeMap(() => this.coreApi.getApplicationInfo()),
-        map(result => this.state.setSitesVersion(result)),
-
-        mergeMap(() => this.mydmsApi.getApplicationInfo()),
-        map(result => this.state.setMyDmsVersion(result)),
-
       ).subscribe(
         result => {
           console.log(result);

@@ -1,4 +1,4 @@
-package mydms
+package config
 
 import "golang.binggl.net/monorepo/pkg/config"
 

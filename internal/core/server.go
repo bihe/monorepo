@@ -36,9 +36,6 @@ func Run(version, build, appName string) error {
 		panic(fmt.Sprintf("cannot create database connection: %v", err))
 	}
 
-	// Build the layers of the gateway-server "onion" from the inside out. First, the
-	// business logic store.Repository; oidc.Service; sites.Service; ...
-	// and finally, a series of concrete transport adapters.
 	var (
 		encService crypter.EncryptionService
 		client     *grpc.ClientConn

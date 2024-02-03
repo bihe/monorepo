@@ -31,7 +31,7 @@ type Service interface {
 	// SearchList searches for senders or tags
 	SearchList(name string, st SearchType) (l []string, err error)
 	// SaveDocument receives a document and stores it
-	// either creation a new document or updating an existing
+	// either creates a new document or updates an existing one
 	SaveDocument(doc Document, user security.User) (d Document, err error)
 }
 

@@ -34,6 +34,16 @@ func Ellipsis(entry string, length int, indicator string) string {
 	return entry[:length] + indicator
 }
 
+func SubString(entry string, length int) string {
+	if entry == "" {
+		return ""
+	}
+	if len(entry) < length {
+		return entry
+	}
+	return entry[:length]
+}
+
 const (
 	MsgSuccess = "success"
 	MsgError   = "error"

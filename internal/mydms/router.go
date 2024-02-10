@@ -61,6 +61,7 @@ func MakeHTTPHandler(docSvc document.Service, logger logging.Logger, opts HTTPHa
 	sec.Mount("/mydms", func() http.Handler {
 		r := chi.NewRouter()
 		r.Get("/", templateHandler.DisplayDocuments())
+		r.Put("/partial", templateHandler.DisplayDocumentsPartial())
 		return r
 	}())
 

@@ -12,7 +12,7 @@ var AvailableApps = []templates.NavItem{
 	{
 		DisplayName: "Documents",
 		Icon:        "<i class=\"bi bi-file-earmark-pdf\"></i> ",
-		URL:         "/ui",
+		URL:         "/mydms",
 	},
 	{
 		DisplayName: "Sites",

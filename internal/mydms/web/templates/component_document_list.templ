@@ -1,0 +1,94 @@
+package templates
+
+import "golang.binggl.net/monorepo/internal/mydms/app/document"
+import "golang.binggl.net/monorepo/pkg/handler/templates"
+import "fmt"
+
+templ DocumentList(docNum, skip int, search string, pd document.PagedDocument) {
+	for _, doc := range pd.Documents {
+		<div class="card by_my_document">
+			<div class="card-body">
+				<h5
+					class="card-title"
+					title={ doc.Title }
+				>
+					<a href={ templ.URL("/mydms/file/" + doc.PreviewLink) } target="_NEW">
+						<i class="bi bi-cloud-download"></i>
+					</a>
+					{ templates.Ellipsis(doc.Title, 23, "~") }
+				</h5>
+				if doc.Amount != 0 {
+					<span class="amount">
+						€ { fmt.Sprintf("%.2f", doc.Amount) }
+					</span>
+				}
+			</div>
+			<div class="card-body doc-content">
+				if doc.InvoiceNumber != "" {
+					<span class="invoice-number"><i class="bi bi-123"></i> { doc.InvoiceNumber }</span>
+				} else {
+					<span class="invoice-number">-</span>
+				}
+			</div>
+			<div class="card-body">
+				<div class="tags">
+					for _, t := range doc.Tags {
+						<span class="badge text-bg-secondary tag">#{ t }</span>
+					}
+				</div>
+				<div class="senders">
+					for _, s := range doc.Senders {
+						<span class="badge text-bg-light tag"><a title={ s }><i class="bi bi-truck"></i> { templates.Ellipsis(s, 30, "~") }</a></span>
+					}
+				</div>
+				<div class="meta">
+					<span>
+						c:<span class="meta_date">{ templates.SubString(doc.Created, 10) }</span>
+						if doc.Modified != "" {
+							<br/>
+							m:<span class="meta_date">{ templates.SubString(doc.Modified, 10) }</span>
+						}
+					</span>
+				</div>
+			</div>
+		</div>
+	}
+	<div id="page_content" class="show_more_results">
+		if docNum > 0 {
+			<form name="paging_form">
+				<input type="hidden" name="skip" value={ fmt.Sprintf("%d", skip) }/>
+				<input type="hidden" name="q" value={ search }/>
+				<p>Currently showing { fmt.Sprintf("%d", docNum ) } results of total { fmt.Sprintf("%d", pd.TotalEntries) }</p>
+				<div id="request_indicator" class="request_indicator htmx-indicator">
+					<div class="spinner-border text-light" role="status">
+						<span class="visually-hidden">Loading...</span>
+					</div>
+				</div>
+				if skip > 0 {
+					<button
+						type="button"
+						class="btn btn-light btn-sm"
+						hx-put={ "/mydms/partial" }
+						hx-target="#page_content"
+						hx-swap="outerHTML"
+					>
+						...
+					</button>
+				}
+			</form>
+		} else {
+			<div class="center_aligned">
+				<p class="noitems"><i class="bigger bi bi-balloon"></i> No results available!</p>
+			</div>
+		}
+	</div>
+	<style type="text/css">
+        .noitems {
+            margin-top: 25px;
+            font-size: large;
+        }
+        .bigger {
+            font-size: xx-large;
+        }
+    </style>
+}

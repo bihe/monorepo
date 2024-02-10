@@ -3,6 +3,7 @@ package web
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"golang.binggl.net/monorepo/internal/common"
@@ -28,27 +29,96 @@ type TemplateHandler struct {
 	Build   string
 }
 
-const searchURL = "/mydms/search"
+const searchURL = "/mydms"
+const defaultPageSize = 20
+const searchParam = "q"
+const skipParam = "skip"
 
 // DisplayDocuments shows the available documents for the given user
 func (t *TemplateHandler) DisplayDocuments() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := ensureUser(r)
-		search := ""
-		t.Logger.InfoRequest(fmt.Sprintf("display the documents for user: '%s'", user.Username), r)
+		var (
+			search    string
+			docNum    int
+			documents document.PagedDocument
+		)
 
-		documents, err := t.DocSvc.SearchDocuments(search, "", "", time.Time{}, time.Time{}, 20, 0)
-		if err != nil {
-			t.Logger.ErrorRequest(fmt.Sprintf("could not get documents for user '%s'; '%v'", user.Username, err), r)
-		}
+		documents, search, _ = t.getDocuments(r)
+		docNum = len(documents.Documents)
 		tmpl.Layout(
 			t.layoutModel("Documents", search, "/public/folder.svg", *user),
 			templates.DocumentsStyles(),
 			templates.DocumentsNavigation(search),
-			templates.DocumentsContent(20, documents),
+			templates.DocumentsContent(
+				templates.DocumentList(docNum, defaultPageSize, search, documents)),
 			searchURL,
 		).Render(r.Context(), w)
 	}
+}
+
+// DisplayDocumentsPartial returns the HTML list code for the documents
+func (t *TemplateHandler) DisplayDocumentsPartial() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := ensureUser(r)
+		var (
+			skip      int
+			err       error
+			search    string
+			docNum    int
+			documents document.PagedDocument
+		)
+		documents, search, skip = t.getDocuments(r)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get documents for user '%s'; '%v'", user.Username, err), r)
+		}
+		docSize := len(documents.Documents)
+		docNum = docSize + skip
+		if skip == 0 {
+			skip = defaultPageSize
+		}
+		next := defaultPageSize + skip
+		if next > documents.TotalEntries {
+			next = 0
+		}
+		templates.DocumentList(docNum, next, search, documents).Render(r.Context(), w)
+	}
+}
+
+func (t *TemplateHandler) getDocuments(r *http.Request) (document.PagedDocument, string, int) {
+	user := ensureUser(r)
+	var (
+		search string
+		skip   int
+		err    error
+	)
+
+	err = r.ParseForm()
+	if err != nil {
+		t.Logger.Error(fmt.Sprintf("could not parse provided form data; %v", err))
+	}
+	search = r.FormValue(searchParam)
+	skipParam := r.FormValue(skipParam)
+
+	if skipParam != "" {
+		skip, err = strconv.Atoi(skipParam)
+		if err != nil {
+			t.Logger.Warn(fmt.Sprintf("could not parse skip param: '%s'; %v", skipParam, err))
+			skip = 0
+		}
+	}
+
+	t.Logger.InfoRequest(fmt.Sprintf("display the documents for user: '%s'", user.Username), r)
+
+	documents, err := t.DocSvc.SearchDocuments(search, "", "", time.Time{}, time.Time{}, defaultPageSize, skip)
+	if err != nil {
+		t.Logger.ErrorRequest(fmt.Sprintf("could not get documents for user '%s'; '%v'", user.Username, err), r)
+		documents = document.PagedDocument{
+			TotalEntries: 0,
+			Documents:    make([]document.Document, 0),
+		}
+	}
+	return documents, search, skip
 }
 
 // --------------------------------------------------------------------------
@@ -98,4 +168,12 @@ func ensureUser(r *http.Request) *security.User {
 		panic("the security context user is not available!")
 	}
 	return user
+}
+
+func queryParam(r *http.Request, name string) string {
+	keys, ok := r.URL.Query()[name]
+	if !ok || len(keys[0]) < 1 {
+		return ""
+	}
+	return keys[0]
 }

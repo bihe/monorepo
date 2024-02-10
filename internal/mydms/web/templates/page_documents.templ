@@ -1,64 +1,9 @@
 package templates
 
-import "golang.binggl.net/monorepo/internal/mydms/app/document"
-import "golang.binggl.net/monorepo/pkg/handler/templates"
-import "fmt"
-
-templ DocumentsContent(docNum int, pd document.PagedDocument) {
+templ DocumentsContent(documentList templ.Component) {
 	<div class="container-fluid">
 		<div class="row be_my_center">
-			for _, doc := range pd.Documents {
-				<div class="card by_my_document">
-					<div class="card-body">
-						<h6
-							class="card-title"
-							title={ doc.Title }
-						>
-							<a href={ templ.URL("/mydms/file/" + doc.PreviewLink) } target="_NEW">
-								<i class="bi bi-cloud-download"></i>
-							</a>
-							{ templates.Ellipsis(doc.Title, 25, "...") }
-						</h6>
-						if doc.Amount != 0 {
-							<span class="amount">
-								€ { fmt.Sprintf("%.2f", doc.Amount) }
-							</span>
-						}
-					</div>
-					<div class="card-body">
-						if doc.InvoiceNumber != "" {
-							<span class="invoice-number"><i class="bi bi-123"></i> { doc.InvoiceNumber }</span>
-						} else {
-							<span class="invoice-number">-</span>
-						}
-					</div>
-					<div class="card-body">
-						<div class="tags">
-							for _, t := range doc.Tags {
-								<span class="badge text-bg-info tag">#{ t }</span>
-							}
-						</div>
-						<div class="senders">
-							for _, s := range doc.Senders {
-								<span class="badge text-bg-warning tag"><i class="bi bi-truck"></i> { s }</span>
-							}
-						</div>
-						<div class="meta">
-							<span>
-								c:<span class="meta_date">{ templates.SubString(doc.Created, 10) }</span>
-								if doc.Modified != "" {
-									<br/>
-									m:<span class="meta_date">{ templates.SubString(doc.Modified, 10) }</span>
-								}
-							</span>
-						</div>
-					</div>
-				</div>
-			}
-			<div class="show_more_results">
-				<p>Currently showing { fmt.Sprintf("%d", docNum ) } results of total { fmt.Sprintf("%d", pd.TotalEntries) }</p>
-				<button type="button" class="btn btn-light btn-sm">...</button>
-			</div>
+			@documentList
 		</div>
 	</div>
 }
@@ -86,11 +31,15 @@ templ DocumentsStyles() {
 	}
 	.amount {
 		position: absolute;
-		right: 15px;
-		top: 78px;
+		right: 4px;
+		top: 93px;
 		font-weight: 700;
 		font-size: 1.2em;
 		color: #3aa677;
+	}
+	.doc-content {
+		padding-top: 2px;
+		padding-bottom: 2px;
 	}
 	.meta {
 		position: absolute;
@@ -105,12 +54,17 @@ templ DocumentsStyles() {
 	.show_more_results {
 		text-align: center;
 	}
-    	</style>
+    </style>
 }
 
 templ DocumentsNavigation(search string) {
 	<div class="application_name">
-		<div>~ mydms:</div>
+		<div>
+			~ mydms:
+			if search != "" {
+				>> searching for <span class="badge text-bg-success" style="font-size:small">{ search }</span>
+			}
+		</div>
 		<span class="right-action">
 			<div id="request_indicator" class="request_indicator htmx-indicator">
 				<div class="spinner-border text-light" role="status">

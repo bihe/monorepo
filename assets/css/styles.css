@@ -227,6 +227,33 @@ a.bookmark_path {
   text-align: center;
 }
 
+.document_download {
+  padding-top: 18px;
+  padding-bottom: 10px;
+  font-size: larger;
+}
+
+.document_download_link {
+  text-decoration: none;
+  color: white;
+}
+
+.document_download_link:hover {
+  text-decoration: none;
+  background-color: lightgrey;
+  color: black;
+  cursor: pointer;
+}
+
+.document-tag {
+  font-size: large;
+  margin-right: 5px;
+}
+
+
+/* ------------------------------------------- responsive ------------------------------------------*/
+
+
 @media only screen and (min-device-width: 375px) and (max-device-width: 812px) {
   .bookmark_item {
     padding: 5px;

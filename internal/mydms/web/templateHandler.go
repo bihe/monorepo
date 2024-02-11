@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"golang.binggl.net/monorepo/internal/common"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
 	"golang.binggl.net/monorepo/internal/mydms/web/templates"
@@ -13,6 +14,7 @@ import (
 	"golang.binggl.net/monorepo/pkg/develop"
 	"golang.binggl.net/monorepo/pkg/handler"
 	tmpl "golang.binggl.net/monorepo/pkg/handler/templates"
+	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
 
@@ -118,6 +120,33 @@ func (t *TemplateHandler) getDocuments(r *http.Request) (documents document.Page
 	return documents, search, numDocs, next
 }
 
+// ShowEditDocumentDialog is used to display the document edit dialog
+// either to create a new document or edit an existing one
+func (t *TemplateHandler) ShowEditDocumentDialog() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var (
+			id  string
+			doc document.Document
+			err error
+		)
+		user := ensureUser(r)
+		id = pathParam(r, "id")
+		switch id {
+		case "NEW":
+			t.Logger.Debug("open dialog to create a new document")
+		case "":
+			t.Logger.ErrorRequest("empty param supplied for id", r)
+		default:
+			t.Logger.Debug(fmt.Sprintf("fetch document by id '%s' for user '%s'", id, *user), logging.LogV("id", id))
+			doc, err = t.DocSvc.GetDocumentByID(id)
+			if err != nil {
+				t.Logger.ErrorRequest(fmt.Sprintf("could not get document for id '%s'; %v", id, err), r)
+			}
+		}
+		templates.EditDocumentDialog(doc).Render(r.Context(), w)
+	}
+}
+
 // --------------------------------------------------------------------------
 //  Internals
 // --------------------------------------------------------------------------
@@ -173,4 +202,8 @@ func queryParam(r *http.Request, name string) string {
 		return ""
 	}
 	return keys[0]
+}
+
+func pathParam(r *http.Request, name string) string {
+	return chi.URLParam(r, name)
 }

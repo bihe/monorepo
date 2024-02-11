@@ -15,7 +15,17 @@ templ DocumentList(docNum, skip int, search string, pd document.PagedDocument) {
 					<a href={ templ.URL("/mydms/file/" + doc.PreviewLink) } target="_NEW">
 						<i class="bi bi-cloud-download"></i>
 					</a>
-					{ templates.Ellipsis(doc.Title, 23, "~") }
+					<span
+						class="edit_document"
+						data-testid="edit-document"
+						data-bs-toggle="modal"
+						data-bs-target="#modals-here"
+						hx-post={ "/mydms/dialog/" + doc.ID }
+						hx-target="#modals-here"
+						hx-trigger="click"
+					>
+						{ templates.Ellipsis(doc.Title, 23, "~") }
+					</span>
 				</h5>
 				if doc.Amount != 0 {
 					<span class="amount">
@@ -90,5 +100,8 @@ templ DocumentList(docNum, skip int, search string, pd document.PagedDocument) {
         .bigger {
             font-size: xx-large;
         }
+		.edit_document {
+			cursor: pointer;
+		}
     </style>
 }

@@ -75,6 +75,11 @@ templ DocumentsNavigation(search string) {
 				type="button"
 				data-testid="link-add-document"
 				class="btn btn-primary new_button"
+				data-bs-toggle="modal"
+				data-bs-target="#modals-here"
+				hx-target="#modals-here"
+				hx-trigger="click"
+				hx-post={ "/mydms/dialog/NEW" }
 			><i class="bi bi-plus"></i> Add</button>
 		</span>
 	</div>

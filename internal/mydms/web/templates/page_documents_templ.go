@@ -102,7 +102,15 @@ func DocumentsNavigation(search string) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div><span class=\"right-action\"><div id=\"request_indicator\" class=\"request_indicator htmx-indicator\"><div class=\"spinner-border text-light\" role=\"status\"><span class=\"visually-hidden\">Loading...</span></div></div><button type=\"button\" data-testid=\"link-add-document\" class=\"btn btn-primary new_button\"><i class=\"bi bi-plus\"></i> Add</button></span></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div><span class=\"right-action\"><div id=\"request_indicator\" class=\"request_indicator htmx-indicator\"><div class=\"spinner-border text-light\" role=\"status\"><span class=\"visually-hidden\">Loading...</span></div></div><button type=\"button\" data-testid=\"link-add-document\" class=\"btn btn-primary new_button\" data-bs-toggle=\"modal\" data-bs-target=\"#modals-here\" hx-target=\"#modals-here\" hx-trigger=\"click\" hx-post=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString("/mydms/dialog/NEW"))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"><i class=\"bi bi-plus\"></i> Add</button></span></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

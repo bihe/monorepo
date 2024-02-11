@@ -25,6 +25,8 @@ type HTTPHandlerOptions struct {
 	Build     string
 }
 
+const forbiddenPath = "/mydms/403"
+
 // MakeHTTPHandler creates a new handler implementation which is used together with the HTTP server
 func MakeHTTPHandler(docSvc document.Service, logger logging.Logger, opts HTTPHandlerOptions) http.Handler {
 	std, sec := setupRouter(opts, logger)
@@ -53,7 +55,7 @@ func MakeHTTPHandler(docSvc document.Service, logger logging.Logger, opts HTTPHa
 	// server-side rendered paths
 	// the following paths provide server-rendered UIs
 	// /403 displays a page telling the user that access/permissions are missing
-	std.Get("/mydms/403", templateHandler.Show403())
+	std.Get(forbiddenPath, templateHandler.Show403())
 
 	std.Mount("/", sec)
 
@@ -93,7 +95,7 @@ func setupRouter(opts HTTPHandlerOptions, logger logging.Logger) (router chi.Rou
 		Log:           logger,
 		Auth:          jwtAuth,
 		Options:       jwtOptions,
-		ErrorRedirect: "/mydms/403",
+		ErrorRedirect: forbiddenPath,
 	}
 
 	secureRouter = chi.NewRouter()

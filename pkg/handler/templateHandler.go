@@ -19,6 +19,7 @@ type TemplateHandler struct {
 // Show403 displays a page which indicates that the given user has no access to the system
 func (t *TemplateHandler) Show403() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
 		templates.ErrorPageLayout(t.BasePath, templates.Error403(t.Env)).Render(r.Context(), w)
 	}
 }
@@ -26,6 +27,7 @@ func (t *TemplateHandler) Show403() http.HandlerFunc {
 // Show404 is used for the http not-found error
 func (t *TemplateHandler) Show404() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
 		templates.ErrorPageLayout(t.BasePath, templates.Error404(t.Env)).Render(r.Context(), w)
 	}
 }

@@ -113,7 +113,7 @@ func Test_Page_403(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/bm/403", nil)
 
 	r.ServeHTTP(rec, req)
-	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, http.StatusForbidden, rec.Code)
 }
 
 func Test_Bookmark_Search(t *testing.T) {

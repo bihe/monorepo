@@ -147,6 +147,56 @@ func (t *TemplateHandler) ShowEditDocumentDialog() http.HandlerFunc {
 	}
 }
 
+// SearchListItems returns a JSON structure used by the frontend to search for tags/senders
+// the structure is defined by the 3rd party frontend library used: https://github.com/lekoala/bootstrap5-tags
+func (t *TemplateHandler) SearchListItems() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		listType := pathParam(r, "type")
+		if listType == "" {
+			t.Logger.ErrorRequest("empty type supplied unable to search list", r)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		q := queryParam(r, "query")
+
+		var st document.SearchType
+		switch listType {
+		case "tags":
+			st = document.TAGS
+		case "senders":
+			st = document.SENDERS
+		}
+
+		t.Logger.Debug(fmt.Sprintf("search list '%s' for item '%s'", listType, q))
+
+		items, err := t.DocSvc.SearchList(q, st)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could search items in list; %v", err), r)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// custom structure requuired by
+		// https://github.com/lekoala/bootstrap5-tags
+		type listItem struct {
+			Value string `json:"value,omitempty"`
+			Label string `json:"label,omitempty"`
+		}
+		listItems := make([]listItem, 0)
+		for _, item := range items {
+			listItems = append(listItems, listItem{
+				Value: item,
+				Label: item,
+			})
+		}
+
+		json := tmpl.Json(listItems)
+		w.Header().Add("content-type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(json))
+	}
+}
+
 // --------------------------------------------------------------------------
 //  Internals
 // --------------------------------------------------------------------------

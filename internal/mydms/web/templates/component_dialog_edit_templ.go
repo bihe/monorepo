@@ -11,7 +11,6 @@ import "io"
 import "bytes"
 
 import "golang.binggl.net/monorepo/internal/mydms/app/document"
-import "golang.binggl.net/monorepo/pkg/handler/templates"
 import "fmt"
 
 func EditDocumentDialog(doc document.Document) templ.Component {
@@ -27,7 +26,7 @@ func EditDocumentDialog(doc document.Document) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"modal-dialog modal-xl\" id=\"document_edit_dialog\"><div class=\"modal-content\"><!-- header --><div class=\"modal-header\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<script type=\"module\">\n\t\timport Tags from \"/public/js/tags/tags.min.js\";\n\t\tTags.init();\n\t</script><style type=\"text/css\">\n\t\tspan.tags-badge {\n\t\t\tfont-size:large;\n\t\t}\n\t</style><div class=\"modal-dialog modal-xl\" id=\"document_edit_dialog\"><div class=\"modal-content\"><!-- header --><div class=\"modal-header\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -39,7 +38,7 @@ func EditDocumentDialog(doc document.Document) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(doc.Title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit.templ`, Line: 12, Col: 46}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit.templ`, Line: 20, Col: 46}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -103,41 +102,49 @@ func EditDocumentDialog(doc document.Document) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(doc.FileName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit.templ`, Line: 51, Col: 22}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit.templ`, Line: 59, Col: 22}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</a></div></div><div class=\"mb-3\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</a></div></div><div class=\"mb-3\"><div class=\"input-group\"><span class=\"input-group-text\">#Tag</span> <select class=\"form-select\" id=\"tags-input\" name=\"document_tags\" multiple data-allow-clear=\"true\" data-allow-new=\"true\" data-server=\"/mydms/list/tags\" data-live-server=\"1\"><option disabled hidden value=\"\">Choose a tag...</option> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for _, t := range doc.Tags {
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<span class=\"badge text-bg-secondary document-tag\">#")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<option value=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(t))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" selected=\"selected\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(t)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit.templ`, Line: 57, Col: 62}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit.templ`, Line: 78, Col: 52}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</span>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</option>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div><!-- https://github.com/lekoala/bootstrap5-autocomplete?tab=readme-ov-file --><div class=\"mb-3\"><div class=\"input-group\"><span class=\"input-group-text\">#Tag</span> <input class=\"form-control\" id=\"document_tag\" placeholder=\"Document Tag\" name=\"doc-tag\"> <button type=\"button\" class=\"btn btn-outline-secondary\" id=\"button_add_tag\">Add</button></div></div><div class=\"mb-3\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</select></div><div class=\"invalid-feedback\">Please select a valid tag.</div></div><div class=\"mb-3\"><div class=\"input-group\"><span class=\"input-group-text\"><i class=\"bi bi-truck\"></i>&nbsp;Sender</span> <select class=\"form-select\" id=\"senders-input\" name=\"document_senders\" multiple data-allow-clear=\"true\" data-allow-new=\"true\" data-server=\"/mydms/list/senders\" data-live-server=\"1\"><option disabled hidden value=\"\">Choose a sender...</option> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for _, s := range doc.Senders {
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<span class=\"badge text-bg-light document-tag\"><a title=\"")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<option value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -145,25 +152,25 @@ func EditDocumentDialog(doc document.Document) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"><i class=\"bi bi-truck\"></i> ")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" selected=\"selected\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(templates.Ellipsis(s, 30, "~"))
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(s)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit.templ`, Line: 70, Col: 129}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit.templ`, Line: 99, Col: 52}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</a></span>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</option>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div><div class=\"mb-3\"><div class=\"input-group\"><span class=\"input-group-text\"><i class=\"bi bi-truck\"></i>&nbsp;Sender</span> <input class=\"form-control\" id=\"document_sender\" placeholder=\"Document Sender\" name=\"doc-sender\"> <button type=\"button\" class=\"btn btn-outline-secondary\" id=\"button_add_tag\">Add</button></div></div></div><!-- footer --><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-secondary\" data-bs-dismiss=\"modal\">Close</button> <button id=\"btn-document-save\" type=\"button\" class=\"btn btn-success\">Save</button></div></form></div></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</select></div><div class=\"invalid-feedback\">Please select a valid tag.</div></div></div><!-- footer --><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-secondary\" data-bs-dismiss=\"modal\">Close</button> <button id=\"btn-document-save\" type=\"button\" class=\"btn btn-success\">Save</button></div></form></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

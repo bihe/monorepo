@@ -65,6 +65,7 @@ func MakeHTTPHandler(docSvc document.Service, logger logging.Logger, opts HTTPHa
 		r.Get("/", templateHandler.DisplayDocuments())
 		r.Put("/partial", templateHandler.DisplayDocumentsPartial())
 		r.Post("/dialog/{id}", templateHandler.ShowEditDocumentDialog())
+		r.Get("/list/{type}", templateHandler.SearchListItems())
 		return r
 	}())
 

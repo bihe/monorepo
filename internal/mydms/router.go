@@ -63,7 +63,8 @@ func MakeHTTPHandler(docSvc document.Service, logger logging.Logger, opts HTTPHa
 	sec.Mount("/mydms", func() http.Handler {
 		r := chi.NewRouter()
 		r.Get("/", templateHandler.DisplayDocuments())
-		r.Put("/partial", templateHandler.DisplayDocumentsPartial())
+		r.Put("/partial/list", templateHandler.DisplayDocumentsPartial())
+		r.Delete("/partial/upload", templateHandler.DisplayDocumentUploadPartial())
 		r.Post("/dialog/{id}", templateHandler.ShowEditDocumentDialog())
 		r.Get("/list/{type}", templateHandler.SearchListItems())
 		return r

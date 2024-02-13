@@ -78,7 +78,7 @@ templ DocumentList(docNum, skip int, search string, pd document.PagedDocument) {
 					<button
 						type="button"
 						class="btn btn-light btn-sm"
-						hx-put={ "/mydms/partial" }
+						hx-put={ "/mydms/partial/list" }
 						hx-target="#page_content"
 						hx-swap="outerHTML"
 					>

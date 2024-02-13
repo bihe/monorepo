@@ -1,0 +1,45 @@
+package templates
+
+import "golang.binggl.net/monorepo/internal/mydms/app/document"
+
+templ DisplayDocumentDownload(doc document.Document) {
+	if doc.ID != "" && doc.FileName != "" {
+		<div class="document_download" id="document_download_link">
+			<i class="bi bi-cloud-arrow-down"></i>
+			<a class="document_download_link" href={ templ.URL("/mydms/file/" + doc.PreviewLink) } target="_NEW">
+				{ doc.FileName }
+			</a>
+			<div class="float-end">
+				<i class="bi bi-x-lg"></i>
+				<a
+					class="remove_document_link"
+					hx-delete="/mydms/partial/upload"
+					hx-target="#document_download_link"
+					hx-swap="outerHTML"
+				>remove</a>
+			</div>
+		</div>
+	} else {
+		<div id="document_upload_area">
+			<div class="input-group mb-3">
+				<input
+					class="form-control"
+					type="file"
+					name="doc-fileupload"
+					id="documentFileUpload"
+				/>
+				<button
+					type="button"
+					class="btn btn-outline-secondary"
+					hx-post="/mydms/upload"
+					hx-encoding="multipart/form-data"
+					hx-trigger="click"
+					hx-target="#bookmark_favicon_display"
+					hx-params="doc-fileupload"
+					hx-swap="outerHTML"
+					hx-indicator="#indicator"
+				><i class="bi bi-upload"></i></button>
+			</div>
+		</div>
+	}
+}

@@ -268,7 +268,7 @@ func DocumentList(docNum, skip int, search string, pd document.PagedDocument) te
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString("/mydms/partial"))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString("/mydms/partial/list"))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

@@ -227,30 +227,6 @@ a.bookmark_path {
   text-align: center;
 }
 
-.document_download {
-  padding-top: 18px;
-  padding-bottom: 10px;
-  font-size: larger;
-}
-
-.document_download_link {
-  text-decoration: none;
-  color: white;
-}
-
-.document_download_link:hover {
-  text-decoration: none;
-  background-color: lightgrey;
-  color: black;
-  cursor: pointer;
-}
-
-.document-tag {
-  font-size: large;
-  margin-right: 5px;
-}
-
-
 /* ------------------------------------------- responsive ------------------------------------------*/
 
 

@@ -3,7 +3,7 @@ package templates
 import "golang.binggl.net/monorepo/internal/mydms/app/document"
 import "fmt"
 
-templ EditDocumentDialog(doc document.Document) {
+templ EditDocumentDialog(doc document.Document, docDownload templ.Component) {
 	<script type="module">
 		import Tags from "/public/js/tags/tags.min.js";
 		Tags.init();
@@ -11,6 +11,29 @@ templ EditDocumentDialog(doc document.Document) {
 	<style type="text/css">
 		span.tags-badge {
 			font-size:large;
+		}
+		.document_download {
+			font-size: larger;
+		}
+		.document_download_link {
+			text-decoration: none;
+			color: white;
+		}
+		.document_download_link:hover {
+			text-decoration: none;
+			background-color: lightgrey;
+			color: black;
+			cursor: pointer;
+		}
+		.remove_document_link {
+			cursor: pointer;
+			text-decoration: none;
+			color: white;
+		}
+		.remove_document_link:hover {
+			cursor: pointer;
+			text-decoration: underline;
+			color: white;
 		}
 	</style>
 	<div class="modal-dialog modal-xl" id="document_edit_dialog">
@@ -46,7 +69,7 @@ templ EditDocumentDialog(doc document.Document) {
 								<span class="input-group-text">€</span>
 							</div>
 						</div>
-						<div class="col">
+						<div class="col mb-3">
 							<div class="input-group">
 								<span class="input-group-text">Number</span>
 								<input class="form-control" id="document_number" placeholder="Invoice Number" name="doc-invoicenumber" value={ doc.InvoiceNumber }/>
@@ -54,12 +77,7 @@ templ EditDocumentDialog(doc document.Document) {
 						</div>
 					</div>
 					<div class="mb-3">
-						<div class="document_download">
-							<i class="bi bi-cloud-arrow-down"></i>
-							<a class="document_download_link" href={ templ.URL("/mydms/file/" + doc.PreviewLink) } target="_NEW">
-								{ doc.FileName }
-							</a>
-						</div>
+						@docDownload
 					</div>
 					<div class="mb-3">
 						<div class="input-group">

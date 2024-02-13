@@ -13,7 +13,7 @@ import "bytes"
 import "golang.binggl.net/monorepo/internal/mydms/app/document"
 import "fmt"
 
-func EditDocumentDialog(doc document.Document) templ.Component {
+func EditDocumentDialog(doc document.Document, docDownload templ.Component) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -26,7 +26,7 @@ func EditDocumentDialog(doc document.Document) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<script type=\"module\">\n\t\timport Tags from \"/public/js/tags/tags.min.js\";\n\t\tTags.init();\n\t</script><style type=\"text/css\">\n\t\tspan.tags-badge {\n\t\t\tfont-size:large;\n\t\t}\n\t</style><div class=\"modal-dialog modal-xl\" id=\"document_edit_dialog\"><div class=\"modal-content\"><!-- header --><div class=\"modal-header\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<script type=\"module\">\n\t\timport Tags from \"/public/js/tags/tags.min.js\";\n\t\tTags.init();\n\t</script><style type=\"text/css\">\n\t\tspan.tags-badge {\n\t\t\tfont-size:large;\n\t\t}\n\t\t.document_download {\n\t\t\tfont-size: larger;\n\t\t}\n\t\t.document_download_link {\n\t\t\ttext-decoration: none;\n\t\t\tcolor: white;\n\t\t}\n\t\t.document_download_link:hover {\n\t\t\ttext-decoration: none;\n\t\t\tbackground-color: lightgrey;\n\t\t\tcolor: black;\n\t\t\tcursor: pointer;\n\t\t}\n\t\t.remove_document_link {\n\t\t\tcursor: pointer;\n\t\t\ttext-decoration: none;\n\t\t\tcolor: white;\n\t\t}\n\t\t.remove_document_link:hover {\n\t\t\tcursor: pointer;\n\t\t\ttext-decoration: underline;\n\t\t\tcolor: white;\n\t\t}\n\t</style><div class=\"modal-dialog modal-xl\" id=\"document_edit_dialog\"><div class=\"modal-content\"><!-- header --><div class=\"modal-header\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -38,7 +38,7 @@ func EditDocumentDialog(doc document.Document) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(doc.Title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit.templ`, Line: 20, Col: 46}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit.templ`, Line: 43, Col: 46}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -78,7 +78,7 @@ func EditDocumentDialog(doc document.Document) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"> <span class=\"input-group-text\">€</span></div></div><div class=\"col\"><div class=\"input-group\"><span class=\"input-group-text\">Number</span> <input class=\"form-control\" id=\"document_number\" placeholder=\"Invoice Number\" name=\"doc-invoicenumber\" value=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"> <span class=\"input-group-text\">€</span></div></div><div class=\"col mb-3\"><div class=\"input-group\"><span class=\"input-group-text\">Number</span> <input class=\"form-control\" id=\"document_number\" placeholder=\"Invoice Number\" name=\"doc-invoicenumber\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -86,29 +86,15 @@ func EditDocumentDialog(doc document.Document) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></div></div></div><div class=\"mb-3\"><div class=\"document_download\"><i class=\"bi bi-cloud-arrow-down\"></i> <a class=\"document_download_link\" href=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></div></div></div><div class=\"mb-3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var3 templ.SafeURL = templ.URL("/mydms/file/" + doc.PreviewLink)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var3)))
+		templ_7745c5c3_Err = docDownload.Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" target=\"_NEW\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(doc.FileName)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit.templ`, Line: 59, Col: 22}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</a></div></div><div class=\"mb-3\"><div class=\"input-group\"><span class=\"input-group-text\">#Tag</span> <select class=\"form-select\" id=\"tags-input\" name=\"document_tags\" multiple data-allow-clear=\"true\" data-allow-new=\"true\" data-server=\"/mydms/list/tags\" data-live-server=\"1\"><option disabled hidden value=\"\">Choose a tag...</option> ")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div><div class=\"mb-3\"><div class=\"input-group\"><span class=\"input-group-text\">#Tag</span> <select class=\"form-select\" id=\"tags-input\" name=\"document_tags\" multiple data-allow-clear=\"true\" data-allow-new=\"true\" data-server=\"/mydms/list/tags\" data-live-server=\"1\"><option disabled hidden value=\"\">Choose a tag...</option> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -125,12 +111,12 @@ func EditDocumentDialog(doc document.Document) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(t)
+			var templ_7745c5c3_Var3 string
+			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(t)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit.templ`, Line: 78, Col: 52}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit.templ`, Line: 96, Col: 52}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -156,12 +142,12 @@ func EditDocumentDialog(doc document.Document) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var6 string
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(s)
+			var templ_7745c5c3_Var4 string
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(s)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit.templ`, Line: 99, Col: 52}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit.templ`, Line: 117, Col: 52}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

@@ -143,7 +143,7 @@ func (t *TemplateHandler) ShowEditDocumentDialog() http.HandlerFunc {
 				t.Logger.ErrorRequest(fmt.Sprintf("could not get document for id '%s'; %v", id, err), r)
 			}
 		}
-		templates.EditDocumentDialog(doc).Render(r.Context(), w)
+		templates.EditDocumentDialog(doc, templates.DisplayDocumentDownload(doc)).Render(r.Context(), w)
 	}
 }
 
@@ -194,6 +194,13 @@ func (t *TemplateHandler) SearchListItems() http.HandlerFunc {
 		w.Header().Add("content-type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(json))
+	}
+}
+
+// DisplayDocumentUploadPartial is used to display the upload elements for documents
+func (t *TemplateHandler) DisplayDocumentUploadPartial() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		templates.DisplayDocumentDownload(document.Document{}).Render(r.Context(), w)
 	}
 }
 

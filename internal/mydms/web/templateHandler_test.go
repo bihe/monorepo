@@ -137,7 +137,7 @@ func Test_Document_Partial(t *testing.T) {
 
 	r := handler(repo)
 	rec := httptest.NewRecorder()
-	req, _ := http.NewRequest("PUT", "/mydms/partial", strings.NewReader(formData.Encode()))
+	req, _ := http.NewRequest("PUT", "/mydms/partial/list", strings.NewReader(formData.Encode()))
 	addJwtAuth(req)
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
@@ -157,7 +157,7 @@ func Test_Document_Partial(t *testing.T) {
 
 	r = handler(repo)
 	rec = httptest.NewRecorder()
-	req, _ = http.NewRequest("PUT", "/mydms/partial", strings.NewReader(formData.Encode()))
+	req, _ = http.NewRequest("PUT", "/mydms/partial/list", strings.NewReader(formData.Encode()))
 	addJwtAuth(req)
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
@@ -171,7 +171,7 @@ func Test_Document_Partial(t *testing.T) {
 
 	r = handler(repo)
 	rec = httptest.NewRecorder()
-	req, _ = http.NewRequest("PUT", "/mydms/partial", strings.NewReader(formData.Encode()))
+	req, _ = http.NewRequest("PUT", "/mydms/partial/list", strings.NewReader(formData.Encode()))
 	addJwtAuth(req)
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
@@ -181,7 +181,7 @@ func Test_Document_Partial(t *testing.T) {
 	// incorrect form data
 	r = handler(repo)
 	rec = httptest.NewRecorder()
-	req, _ = http.NewRequest("PUT", "/mydms/partial", nil)
+	req, _ = http.NewRequest("PUT", "/mydms/partial/list", nil)
 	addJwtAuth(req)
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 

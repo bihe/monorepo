@@ -66,7 +66,15 @@ func DocumentList(docNum, skip int, search string, pd document.PagedDocument) te
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</span></h5>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</span></h5><div class=\"btn-group card_menu\" role=\"group\"><button type=\"button\" class=\"btn dropdown-toggle\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\"></button><ul class=\"dropdown-menu\"><li><a class=\"dropdown-item delete\" id=\"btn-document-delete\" href=\"#\" hx-target=\"#modals-here\" hx-trigger=\"click\" data-bs-toggle=\"modal\" data-bs-target=\"#modals-here\" hx-post=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString("/mydms/confirm/" + doc.ID))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-swap=\"innerHTML\"><i class=\"bi bi-x\"></i> Delete</a></li></ul></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -78,7 +86,7 @@ func DocumentList(docNum, skip int, search string, pd document.PagedDocument) te
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", doc.Amount))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `partial_document_list.templ`, Line: 31, Col: 43}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `partial_document_list.templ`, Line: 49, Col: 43}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -101,7 +109,7 @@ func DocumentList(docNum, skip int, search string, pd document.PagedDocument) te
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(doc.InvoiceNumber)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `partial_document_list.templ`, Line: 37, Col: 79}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `partial_document_list.templ`, Line: 55, Col: 79}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -129,7 +137,7 @@ func DocumentList(docNum, skip int, search string, pd document.PagedDocument) te
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(t)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `partial_document_list.templ`, Line: 45, Col: 52}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `partial_document_list.templ`, Line: 63, Col: 52}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -160,7 +168,7 @@ func DocumentList(docNum, skip int, search string, pd document.PagedDocument) te
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(templates.Ellipsis(s, 30, "~"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `partial_document_list.templ`, Line: 50, Col: 119}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `partial_document_list.templ`, Line: 68, Col: 119}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
@@ -178,7 +186,7 @@ func DocumentList(docNum, skip int, search string, pd document.PagedDocument) te
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(templates.SubString(doc.Created, 10))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `partial_document_list.templ`, Line: 55, Col: 70}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `partial_document_list.templ`, Line: 73, Col: 70}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -196,7 +204,7 @@ func DocumentList(docNum, skip int, search string, pd document.PagedDocument) te
 				var templ_7745c5c3_Var9 string
 				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(templates.SubString(doc.Modified, 10))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `partial_document_list.templ`, Line: 58, Col: 72}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `partial_document_list.templ`, Line: 76, Col: 72}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 				if templ_7745c5c3_Err != nil {
@@ -240,7 +248,7 @@ func DocumentList(docNum, skip int, search string, pd document.PagedDocument) te
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", docNum))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `partial_document_list.templ`, Line: 70, Col: 53}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `partial_document_list.templ`, Line: 88, Col: 53}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -253,7 +261,7 @@ func DocumentList(docNum, skip int, search string, pd document.PagedDocument) te
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", pd.TotalEntries))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `partial_document_list.templ`, Line: 70, Col: 109}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `partial_document_list.templ`, Line: 88, Col: 109}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -287,7 +295,7 @@ func DocumentList(docNum, skip int, search string, pd document.PagedDocument) te
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div><style type=\"text/css\">\n        .noitems {\n            margin-top: 25px;\n            font-size: large;\n        }\n        .bigger {\n            font-size: xx-large;\n        }\n\t\t.edit_document {\n\t\t\tcursor: pointer;\n\t\t}\n    </style>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div><style type=\"text/css\">\n        .noitems {\n            margin-top: 25px;\n            font-size: large;\n        }\n        .bigger {\n            font-size: xx-large;\n        }\n\t\t.edit_document {\n\t\t\tcursor: pointer;\n\t\t}\n\t\t.delete {\n\t\t\tfont-weight:bold;\n\t\t\tcolor: red;\n\t\t}\n\t\t.card_menu {\n\t\t\tposition: absolute;\n\t\t\ttop: 5px;\n\t\t\tright: 10px;\n\t\t}\n    </style>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

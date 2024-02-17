@@ -124,13 +124,6 @@ templ EditDocumentDialog(doc document.Document, docDownload templ.Component) {
 				</div>
 				<!-- footer -->
 				<div class="modal-footer">
-					if doc.ID != "" {
-						<button
-							id="btn-document-delete"
-							type="button"
-							class="btn btn-danger"
-						>Delete</button>
-					}
 					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
 					<button
 						id="btn-document-save"

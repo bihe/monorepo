@@ -252,6 +252,20 @@ func (t *TemplateHandler) UploadDocument() http.HandlerFunc {
 	}
 }
 
+// ShowDeleteConfirmDialog shows a confirm dialog before an item is deleted
+func (t *TemplateHandler) ShowDeleteConfirmDialog() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := pathParam(r, "id")
+		user := ensureUser(r)
+		t.Logger.InfoRequest(fmt.Sprintf("get document by id: '%s' for user: '%s'", id, user.Username), r)
+		doc, err := t.DocSvc.GetDocumentByID(id)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get document for id '%s'; '%v'", id, err), r)
+		}
+		templates.DialogConfirmDelete(doc.Title, doc.ID).Render(r.Context(), w)
+	}
+}
+
 // --------------------------------------------------------------------------
 //  Internals
 // --------------------------------------------------------------------------

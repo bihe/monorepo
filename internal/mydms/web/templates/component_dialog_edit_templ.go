@@ -156,17 +156,7 @@ func EditDocumentDialog(doc document.Document, docDownload templ.Component) temp
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</select></div><div class=\"invalid-feedback\">Please select a valid tag.</div></div></div><!-- footer --><div class=\"modal-footer\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if doc.ID != "" {
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<button id=\"btn-document-delete\" type=\"button\" class=\"btn btn-danger\">Delete</button>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<button type=\"button\" class=\"btn btn-secondary\" data-bs-dismiss=\"modal\">Close</button> <button id=\"btn-document-save\" type=\"button\" class=\"btn btn-success\">Save</button></div></form></div></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</select></div><div class=\"invalid-feedback\">Please select a valid tag.</div></div></div><!-- footer --><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-secondary\" data-bs-dismiss=\"modal\">Close</button> <button id=\"btn-document-save\" type=\"button\" class=\"btn btn-success\">Save</button></div></form></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

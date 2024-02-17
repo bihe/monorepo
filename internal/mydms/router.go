@@ -70,6 +70,7 @@ func MakeHTTPHandler(docSvc document.Service, uploadSvc upload.Service, logger l
 		r.Delete("/partial/upload", templateHandler.DisplayDocumentUploadPartial())
 		r.Post("/upload", templateHandler.UploadDocument())
 		r.Post("/dialog/{id}", templateHandler.ShowEditDocumentDialog())
+		r.Post("/confirm/{id}", templateHandler.ShowDeleteConfirmDialog())
 		r.Get("/list/{type}", templateHandler.SearchListItems())
 		return r
 	}())

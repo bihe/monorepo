@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"golang.binggl.net/monorepo/internal/common"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
+	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	"golang.binggl.net/monorepo/internal/mydms/web/templates"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/develop"
@@ -26,9 +28,11 @@ import (
 // As additional benefit the build should be faster, because the nodejs build can be removed
 type TemplateHandler struct {
 	*handler.TemplateHandler
-	DocSvc  document.Service
-	Version string
-	Build   string
+	DocSvc        document.Service
+	UploadSvc     upload.Service
+	Version       string
+	Build         string
+	MaxUploadSize int64
 }
 
 const searchURL = "/mydms"
@@ -201,6 +205,50 @@ func (t *TemplateHandler) SearchListItems() http.HandlerFunc {
 func (t *TemplateHandler) DisplayDocumentUploadPartial() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		templates.DisplayDocumentDownload(document.Document{}).Render(r.Context(), w)
+	}
+}
+
+// UploadDocument uses the upload service to create a temp file which is later used
+// when the overall document is saved
+func (t *TemplateHandler) UploadDocument() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		r.ParseMultipartForm(t.MaxUploadSize)
+
+		file, meta, err := r.FormFile("doc-fileupload")
+		if err != nil {
+			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
+			t.Logger.ErrorRequest(fmt.Sprintf("could not upload document; '%v'", err), r)
+			templates.DisplayTempDocumentUpload("", "", errMsg).Render(r.Context(), w)
+			return
+		}
+		defer file.Close()
+
+		initPass := r.Form.Get("doc-initPass")
+		newPass := r.Form.Get("doc-newPass")
+		var encReq upload.EncryptionRequest
+		if initPass != "" && newPass != "" {
+			// passwords are provided so we need to call the encryption service
+			encReq = upload.EncryptionRequest{
+				InitPassword: initPass,
+				Password:     newPass,
+			}
+		}
+		cType := meta.Header.Get("Content-Type")
+		tempId, err := t.UploadSvc.Save(upload.File{
+			File:     file,
+			Name:     meta.Filename,
+			Size:     meta.Size,
+			MimeType: cType,
+			Enc:      encReq,
+		})
+		if err != nil {
+			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
+			t.Logger.ErrorRequest(fmt.Sprintf("could not save document; '%v'", err), r)
+			templates.DisplayTempDocumentUpload("", "", errMsg).Render(r.Context(), w)
+			return
+		}
+
+		templates.DisplayTempDocumentUpload(meta.Filename, tempId, "").Render(r.Context(), w)
 	}
 }
 

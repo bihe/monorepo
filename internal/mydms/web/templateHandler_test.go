@@ -12,6 +12,8 @@ import (
 	"golang.binggl.net/monorepo/internal/mydms"
 	"golang.binggl.net/monorepo/internal/mydms/app/config"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
+	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
+	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	conf "golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/persistence"
@@ -23,17 +25,84 @@ const validToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4MjcyMDE0NDU
 //   Boilerplate to make the tests happen
 // --------------------------------------------------------------------------
 
+// --------------------------------------------------------------------------
+// MOCK: filestore.FileService
+// --------------------------------------------------------------------------
+
+// rather small PDF payload
+// https://stackoverflow.com/questions/17279712/what-is-the-smallest-possible-valid-pdf
+const pdfPayload = `%PDF-1.0
+1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 3 3]>>endobj
+xref
+0 4
+0000000000 65535 f
+0000000010 00000 n
+0000000053 00000 n
+0000000102 00000 n
+trailer<</Size 4/Root 1 0 R>>
+startxref
+149
+%EOF
+`
+
+type mockFileService struct {
+	errMap    map[int]error
+	callCount int
+}
+
+func newFileService() *mockFileService {
+	return &mockFileService{
+		errMap: make(map[int]error),
+	}
+}
+
+// compile time assertions for our service
+var (
+	_ filestore.FileService = &mockFileService{}
+)
+
+func (m *mockFileService) InitClient() (err error) {
+	m.callCount++
+	return m.errMap[m.callCount]
+}
+
+func (m *mockFileService) SaveFile(file filestore.FileItem) error {
+	m.callCount++
+	return m.errMap[m.callCount]
+}
+
+func (m *mockFileService) GetFile(filePath string) (filestore.FileItem, error) {
+	m.callCount++
+	return filestore.FileItem{
+		FileName:   "test.pdf",
+		FolderName: "PATH",
+		MimeType:   "application/pdf",
+		Payload:    []byte(pdfPayload),
+	}, m.errMap[m.callCount]
+}
+
+func (m *mockFileService) DeleteFile(filePath string) error {
+	m.callCount++
+	return m.errMap[m.callCount]
+}
+
 var logger = logging.NewNop()
 
 func handler(repo document.Repository) http.Handler {
 
+	fileStore := newFileService()
+	uploadStore := upload.NewStore("/tmp")
+	uploadSvc := upload.NewService(upload.ServiceOptions{
+		Logger: logger,
+		Store:  uploadStore,
+	})
 	svc := document.NewService(logger,
 		repo,
-		nil, /* filestore.FileService */
-		nil, /* upload.Cleint */
+		fileStore, /* filestore.FileService */
+		uploadSvc, /* upload.Service */
 	)
 
-	return mydms.MakeHTTPHandler(svc, logger, mydms.HTTPHandlerOptions{
+	return mydms.MakeHTTPHandler(svc, uploadSvc, logger, mydms.HTTPHandlerOptions{
 		BasePath:  "./",
 		ErrorPath: "/error",
 		Config: config.AppConfig{

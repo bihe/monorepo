@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"golang.binggl.net/monorepo/internal/mydms/app/config"
+	"golang.binggl.net/monorepo/internal/mydms/app/crypter"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
 	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
 	"golang.binggl.net/monorepo/internal/mydms/app/upload"
@@ -41,9 +42,17 @@ func Run(version, build, appName string) error {
 			Key:    appCfg.Filestore.Key,
 			Secret: appCfg.Filestore.Secret,
 		})
-		uploadClient = upload.NewClient(appCfg.Upload.EndpointURL)
-		docSvc       = document.NewService(logger, repo, fileSvc, uploadClient)
-		handler      = MakeHTTPHandler(docSvc, logger, HTTPHandlerOptions{
+		crypterSvc = crypter.NewService(logger)
+		uploadSvc  = upload.NewService(upload.ServiceOptions{
+			Logger:           logger,
+			Store:            upload.NewStore(appCfg.Upload.UploadPath),
+			MaxUploadSize:    appCfg.Upload.MaxUploadSize,
+			AllowedFileTypes: appCfg.Upload.AllowedFileTypes,
+			Crypter:          crypterSvc,
+			TimeOut:          "30s",
+		})
+		docSvc  = document.NewService(logger, repo, fileSvc, uploadSvc)
+		handler = MakeHTTPHandler(docSvc, uploadSvc, logger, HTTPHandlerOptions{
 			BasePath:  basePath,
 			ErrorPath: appCfg.ErrorPath,
 			Config:    appCfg,

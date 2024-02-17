@@ -10,7 +10,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
 	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
-	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	"golang.binggl.net/monorepo/pkg/persistence"
 )
 
@@ -196,29 +195,3 @@ func (m *mockFileService) DeleteFile(filePath string) error {
 	m.callCount++
 	return m.errMap[m.callCount]
 }
-
-// --------------------------------------------------------------------------
-// MOCK: upload.Client
-// --------------------------------------------------------------------------
-
-type mockUploadClient struct {
-	getFail    bool
-	deleteFail bool
-}
-
-func (m *mockUploadClient) Get(id, authToken string) (upload.Upload, error) {
-	if m.getFail {
-		return upload.Upload{}, fmt.Errorf("error")
-	}
-	return upload.Upload{}, nil
-}
-
-// Delete removes the upload-object specified by the given ID
-func (m *mockUploadClient) Delete(id, authToken string) error {
-	if m.deleteFail {
-		return fmt.Errorf("error")
-	}
-	return nil
-}
-
-var _ upload.Client = &mockUploadClient{}

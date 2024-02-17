@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"golang.binggl.net/monorepo/internal/mydms/app/config"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
+	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	"golang.binggl.net/monorepo/internal/mydms/web"
 	conf "golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/develop"
@@ -28,7 +29,7 @@ type HTTPHandlerOptions struct {
 const forbiddenPath = "/mydms/403"
 
 // MakeHTTPHandler creates a new handler implementation which is used together with the HTTP server
-func MakeHTTPHandler(docSvc document.Service, logger logging.Logger, opts HTTPHandlerOptions) http.Handler {
+func MakeHTTPHandler(docSvc document.Service, uploadSvc upload.Service, logger logging.Logger, opts HTTPHandlerOptions) http.Handler {
 	std, sec := setupRouter(opts, logger)
 
 	templateHandler := &web.TemplateHandler{
@@ -38,9 +39,11 @@ func MakeHTTPHandler(docSvc document.Service, logger logging.Logger, opts HTTPHa
 			BasePath:  "/public",
 			StartPage: "/mydms",
 		},
-		DocSvc:  docSvc,
-		Version: opts.Version,
-		Build:   opts.Build,
+		DocSvc:        docSvc,
+		UploadSvc:     uploadSvc,
+		Version:       opts.Version,
+		Build:         opts.Build,
+		MaxUploadSize: opts.Config.Upload.MaxUploadSize,
 	}
 
 	// use this for development purposes only!
@@ -65,6 +68,7 @@ func MakeHTTPHandler(docSvc document.Service, logger logging.Logger, opts HTTPHa
 		r.Get("/", templateHandler.DisplayDocuments())
 		r.Put("/partial/list", templateHandler.DisplayDocumentsPartial())
 		r.Delete("/partial/upload", templateHandler.DisplayDocumentUploadPartial())
+		r.Post("/upload", templateHandler.UploadDocument())
 		r.Post("/dialog/{id}", templateHandler.ShowEditDocumentDialog())
 		r.Get("/list/{type}", templateHandler.SearchListItems())
 		return r

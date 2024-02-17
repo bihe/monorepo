@@ -65,11 +65,18 @@ baseconfig:
 database:
     connectionString: "DATABASE"
 
-upload:
-    endpointURL: http://localhost:3000/
-
 filestore:
     region: "region"
     bucket: "bucket"
     key: "key"
     secret: "secret"
+
+upload:
+    allowedFileTypes:
+        - "pdf"
+        - "jpg"
+        - "jpeg"
+        - "png"
+        - "gif"
+    maxUploadSize: 500000
+    uploadPath: "/tmp/"

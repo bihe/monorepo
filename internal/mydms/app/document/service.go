@@ -36,15 +36,15 @@ type Service interface {
 }
 
 // NewService returns a Service with all of the expected middlewares wired in.
-func NewService(logger logging.Logger, repo Repository, fileSvc filestore.FileService, uploadClient upload.Client) Service {
+func NewService(logger logging.Logger, repo Repository, fileSvc filestore.FileService, uploadSvc upload.Service) Service {
 	var svc Service
 	{
 		svc = &documentService{
-			repo:         repo,
-			policy:       bluemonday.UGCPolicy(),
-			logger:       logger,
-			fileSvc:      fileSvc,
-			uploadClient: uploadClient,
+			repo:      repo,
+			policy:    bluemonday.UGCPolicy(),
+			logger:    logger,
+			fileSvc:   fileSvc,
+			uploadSvc: uploadSvc,
 		}
 		svc = ServiceLoggingMiddleware(logger)(svc)
 	}
@@ -63,11 +63,11 @@ var (
 )
 
 type documentService struct {
-	repo         Repository
-	policy       *bluemonday.Policy
-	fileSvc      filestore.FileService
-	logger       logging.Logger
-	uploadClient upload.Client
+	repo      Repository
+	policy    *bluemonday.Policy
+	fileSvc   filestore.FileService
+	uploadSvc upload.Service
+	logger    logging.Logger
 }
 
 // GetDocumentByID returns a Document object for a specified id, or returns an error if the document is not found
@@ -217,7 +217,7 @@ func (s documentService) SaveDocument(doc Document, user security.User) (d Docum
 		return d, fmt.Errorf("error while saving document: %v", err)
 	}
 
-	err = s.uploadClient.Delete(d.UploadToken, user.Token)
+	err = s.uploadSvc.Delete(d.UploadToken)
 	if err != nil {
 		// this error is ignored, does not invalidate the overall operation
 		s.logger.Warn("unable to delete uploaded file", logging.ErrV(fmt.Errorf("could not delete the upload-item by id '%s', %v", d.UploadToken, err)))
@@ -316,9 +316,9 @@ func (s documentService) procssUploadFile(uploadToken, fileName string, user sec
 	if uploadToken == "" || uploadToken == "-" {
 		return fileName, nil
 	}
-	u, err := s.uploadClient.Get(uploadToken, user.Token)
+	u, err := s.uploadSvc.Read(uploadToken)
 	if err != nil {
-		s.logger.Error("uploadclient returned error", logging.ErrV(fmt.Errorf("could not read upload-file for token '%s', %v", uploadToken, err)))
+		s.logger.Error("upload returned error", logging.ErrV(fmt.Errorf("could not read upload-file for token '%s', %v", uploadToken, err)))
 		return "", fmt.Errorf("upload token error: %v", err)
 	}
 	s.logger.Info(fmt.Sprintf("use uploaded file identified by token '%s'", uploadToken))

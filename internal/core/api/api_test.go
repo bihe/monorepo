@@ -7,7 +7,6 @@ import (
 	"golang.binggl.net/monorepo/internal/core/app/conf"
 	"golang.binggl.net/monorepo/internal/core/app/oidc"
 	"golang.binggl.net/monorepo/internal/core/app/sites"
-	"golang.binggl.net/monorepo/internal/core/app/upload"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/logging"
 )
@@ -21,15 +20,14 @@ const validToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4MjcyMDE0NDU
 var logger = logging.NewNop()
 
 type handlerOps struct {
-	oidcSvc   oidc.Service
-	siteSvc   sites.Service
-	uploadSvc upload.Service
-	version   string
-	build     string
+	oidcSvc oidc.Service
+	siteSvc sites.Service
+	version string
+	build   string
 }
 
 func handlerWith(ops *handlerOps) http.Handler {
-	return core.MakeHTTPHandler(ops.oidcSvc, ops.siteSvc, ops.uploadSvc, logger, core.HTTPHandlerOptions{
+	return core.MakeHTTPHandler(ops.oidcSvc, ops.siteSvc, logger, core.HTTPHandlerOptions{
 		BasePath:  "./",
 		ErrorPath: "/error",
 		Config: conf.AppConfig{
@@ -55,11 +53,6 @@ func handlerWith(ops *handlerOps) http.Handler {
 					URL:   "http://A",
 					Roles: []string{"A"},
 				},
-			},
-			Upload: conf.UploadSettings{
-				AllowedFileTypes: []string{"png"},
-				MaxUploadSize:    100000,
-				UploadPath:       "/tmp",
 			},
 		},
 		Version: ops.version,

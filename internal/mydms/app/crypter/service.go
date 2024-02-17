@@ -1,3 +1,6 @@
+// Package crypter implements an encryption services.
+// the main purpose is to encrypt files / binary payloads.
+// initial implementation focuses on PDF files
 package crypter
 
 import (
@@ -8,10 +11,28 @@ import (
 
 	pdfApi "github.com/pdfcpu/pdfcpu/pkg/api"
 	pdfModel "github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
-	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/logging"
-	"golang.binggl.net/monorepo/pkg/security"
 )
+
+// --------------------------------------------------------------------------
+// Types definition
+// --------------------------------------------------------------------------
+
+// PayloadType enumerates the available payload types
+type PayloadType string
+
+const (
+	// PDF is a payload of application/pdf
+	PDF PayloadType = "PDF"
+)
+
+// Request combines the parameters passed on to the encryption service
+type Request struct {
+	Payload  []byte
+	Type     PayloadType
+	InitPass string
+	NewPass  string
+}
 
 // --------------------------------------------------------------------------
 // EncryptionService definition
@@ -30,22 +51,11 @@ var (
 )
 
 // NewService returns a Service with all of the expected middlewares wired in.
-func NewService(logger logging.Logger, tokenSetting config.Security) EncryptionService {
-	var useCache = tokenSetting.CacheDuration != ""
+func NewService(logger logging.Logger) EncryptionService {
 	var svc EncryptionService
 	{
 		svc = &encryptionSvc{
 			logger: logger,
-			jwtAuth: security.NewJWTAuthorization(security.JwtOptions{
-				CacheDuration: tokenSetting.CacheDuration,
-				JwtIssuer:     tokenSetting.JwtIssuer,
-				JwtSecret:     tokenSetting.JwtSecret,
-				RequiredClaim: security.Claim{
-					Name:  tokenSetting.Claim.Name,
-					Roles: tokenSetting.Claim.Roles,
-					URL:   tokenSetting.Claim.URL,
-				},
-			}, useCache),
 		}
 		svc = ServiceLoggingMiddleware(logger)(svc)
 	}
@@ -100,22 +110,15 @@ var (
 
 // implment the Service
 type encryptionSvc struct {
-	logger  logging.Logger
-	jwtAuth *security.JWTAuthorization
+	logger logging.Logger
 }
 
 func (e *encryptionSvc) Encrypt(ctx context.Context, req Request) ([]byte, error) {
-	err := validateEncryptionRequest(req.AuthToken, req.NewPass, req.Payload)
+	err := validateEncryptionRequest(req.NewPass, req.Payload)
 	if err != nil {
 		e.logger.Error("Encrypt error", logging.ErrV(fmt.Errorf("validation arguments error: %v", err)))
 		return nil, err
 	}
-	user, err := e.jwtAuth.EvaluateToken(req.AuthToken)
-	if err != nil {
-		e.logger.Error("Encrypt error", logging.ErrV(fmt.Errorf("error during token evaluation: %v", err)))
-		return nil, err
-	}
-	e.logger.Info(fmt.Sprintf("Encrypt: user '%s' requests encryption of payload", user.UserID))
 
 	// encrypt the payload per respective type
 	switch req.Type {
@@ -126,10 +129,7 @@ func (e *encryptionSvc) Encrypt(ctx context.Context, req Request) ([]byte, error
 }
 
 // check for provided values
-func validateEncryptionRequest(authToken, newPwd string, payload []byte) error {
-	if authToken == "" {
-		return fmt.Errorf("no authentication token supplied")
-	}
+func validateEncryptionRequest(newPwd string, payload []byte) error {
 	if newPwd == "" {
 		return fmt.Errorf("cannot encrypt with empty password")
 	}

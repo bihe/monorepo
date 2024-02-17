@@ -14,7 +14,6 @@ import (
 	"golang.binggl.net/monorepo/internal/core/app/conf"
 	"golang.binggl.net/monorepo/internal/core/app/oidc"
 	"golang.binggl.net/monorepo/internal/core/app/sites"
-	"golang.binggl.net/monorepo/internal/core/app/upload"
 	"golang.binggl.net/monorepo/internal/core/web"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/server"
@@ -30,7 +29,7 @@ type HTTPHandlerOptions struct {
 }
 
 // MakeHTTPHandler creates a new handler implementation which is used together with the HTTP server
-func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, uploadSvc upload.Service, logger logging.Logger, opts HTTPHandlerOptions) http.Handler {
+func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, logger logging.Logger, opts HTTPHandlerOptions) http.Handler {
 	std, sec := setupRouter(opts, logger)
 	oidcHandler := api.OidcHandler{
 		OidcSvc: oidcSvc,
@@ -45,10 +44,10 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, uploadSvc uplo
 		JwtExpiryDays: opts.Config.Security.Expiry,
 	}
 
-	uploadHandler := &api.UploadHandler{
-		Service: uploadSvc,
-		Logger:  logger,
-	}
+	// uploadHandler := &api.UploadHandler{
+	// 	Service: uploadSvc,
+	// 	Logger:  logger,
+	// }
 
 	templateHandler := &web.TemplateHandler{
 		TemplateHandler: &handler.TemplateHandler{
@@ -97,13 +96,13 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, uploadSvc uplo
 		return r
 	}())
 	// the following APIs have the base-URL /api/v1
-	sec.Mount("/api/v1/upload", func() http.Handler {
-		r := chi.NewRouter()
-		r.Post("/file", uploadHandler.Upload())
-		r.Get("/{id}", uploadHandler.GetItemByID())
-		r.Delete("/{id}", uploadHandler.DeleteItemByID())
-		return r
-	}())
+	// sec.Mount("/api/v1/upload", func() http.Handler {
+	// 	r := chi.NewRouter()
+	// 	r.Post("/file", uploadHandler.Upload())
+	// 	r.Get("/{id}", uploadHandler.GetItemByID())
+	// 	r.Delete("/{id}", uploadHandler.DeleteItemByID())
+	// 	return r
+	// }())
 
 	// call on the ROOT path
 	std.Get("/ok", func(w http.ResponseWriter, r *http.Request) {

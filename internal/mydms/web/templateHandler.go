@@ -147,7 +147,8 @@ func (t *TemplateHandler) ShowEditDocumentDialog() http.HandlerFunc {
 				t.Logger.ErrorRequest(fmt.Sprintf("could not get document for id '%s'; %v", id, err), r)
 			}
 		}
-		templates.EditDocumentDialog(doc, templates.DisplayDocumentDownload(doc)).Render(r.Context(), w)
+		validDoc := prepValidDoc(doc)
+		templates.EditDocumentDialog(validDoc, templates.DisplayDocumentDownload(validDoc)).Render(r.Context(), w)
 	}
 }
 
@@ -204,7 +205,7 @@ func (t *TemplateHandler) SearchListItems() http.HandlerFunc {
 // DisplayDocumentUploadPartial is used to display the upload elements for documents
 func (t *TemplateHandler) DisplayDocumentUploadPartial() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		templates.DisplayDocumentDownload(document.Document{}).Render(r.Context(), w)
+		templates.DisplayDocumentDownload(templates.Document{}).Render(r.Context(), w)
 	}
 }
 
@@ -249,6 +250,85 @@ func (t *TemplateHandler) UploadDocument() http.HandlerFunc {
 		}
 
 		templates.DisplayTempDocumentUpload(meta.Filename, tempId, "").Render(r.Context(), w)
+	}
+}
+
+// SaveDocument receives the data form the edit form, validates it
+// and if the data is valid, persists the document
+func (t *TemplateHandler) SaveDocument() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var (
+			err        error
+			formPrefix string = "doc-"
+			rcvDoc     document.Document
+			validDoc   templates.Document
+			validData  bool
+		)
+
+		err = r.ParseForm()
+
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not parse supplied form data; '%v'", err), r)
+			t.RenderErr(r, w, fmt.Sprintf("could not parse supplied form data; '%v'", err))
+			return
+		}
+
+		t.Logger.InfoRequest("save the document data", r)
+
+		rcvDoc.ID = r.FormValue(formPrefix + "id")
+		rcvDoc.Title = r.FormValue(formPrefix + "title")
+		amount := r.FormValue(formPrefix + "amount")
+		if amount != "" {
+			// parse the supplied amount value
+			f, err := strconv.ParseFloat(amount, 32)
+			if err != nil {
+				t.Logger.Warn(fmt.Sprintf("could not parse amount '%s'; %v", amount, err))
+			} else {
+				rcvDoc.Amount = float32(f)
+			}
+		}
+		rcvDoc.InvoiceNumber = r.FormValue(formPrefix + "invoicenumber")
+		rcvDoc.Tags = r.Form[formPrefix+"tags[]"]
+		rcvDoc.Senders = r.Form[formPrefix+"senders[]"]
+		rcvDoc.UploadToken = r.FormValue(formPrefix + "tempID")
+		rcvDoc.FileName = r.FormValue(formPrefix + "filename")
+
+		validData = true
+		validDoc = prepValidDoc(rcvDoc)
+		if validDoc.Title.Val == "" {
+			validDoc.Title.Valid = false
+			validDoc.Title.Message = "Title is required"
+			validData = false
+		}
+		if len(validDoc.Tags.Val) == 0 {
+			validDoc.Tags.Valid = false
+			validDoc.Tags.Message = "Tags are required"
+			validData = false
+		}
+		if len(validDoc.Senders.Val) == 0 {
+			validDoc.Senders.Valid = false
+			validDoc.Senders.Message = "Senders are required"
+			validData = false
+		}
+		if validDoc.UploadToken.Val == "" {
+			validDoc.UploadToken.Valid = false
+			validDoc.UploadToken.Message = "Document upload is required"
+			validData = false
+		}
+
+		if !validData {
+			// show the same form again!
+			t.Logger.ErrorRequest("the supplied data for saving a document is not valid!", r)
+			templates.EditDocumentDialog(validDoc, templates.DisplayDocumentDownload(validDoc)).Render(r.Context(), w)
+			return
+		}
+
+		if rcvDoc.ID == "" {
+			// create a new document
+
+		} else {
+			// update an existing document
+		}
 	}
 }
 
@@ -325,4 +405,42 @@ func queryParam(r *http.Request, name string) string {
 
 func pathParam(r *http.Request, name string) string {
 	return chi.URLParam(r, name)
+}
+
+func prepValidDoc(doc document.Document) templates.Document {
+	return templates.Document{
+		ID: doc.ID,
+		Title: templates.ValidStr{
+			Val:   doc.Title,
+			Valid: true,
+		},
+		Amount: templates.ValidFloat{
+			Val:   doc.Amount,
+			Valid: true,
+		},
+		FileName: templates.ValidStr{
+			Val:   doc.FileName,
+			Valid: true,
+		},
+		PreviewLink: templates.ValidStr{
+			Val:   doc.PreviewLink,
+			Valid: true,
+		},
+		UploadToken: templates.ValidStr{
+			Val:   doc.UploadToken,
+			Valid: true,
+		},
+		InvoiceNumber: templates.ValidStr{
+			Val:   doc.InvoiceNumber,
+			Valid: true,
+		},
+		Tags: templates.ValidStrSlice{
+			Val:   doc.Tags,
+			Valid: true,
+		},
+		Senders: templates.ValidStrSlice{
+			Val:   doc.Senders,
+			Valid: true,
+		},
+	}
 }

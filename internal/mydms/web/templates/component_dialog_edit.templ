@@ -1,9 +1,38 @@
 package templates
 
-import "golang.binggl.net/monorepo/internal/mydms/app/document"
 import "fmt"
 
-templ EditDocumentDialog(doc document.Document, docDownload templ.Component) {
+type Document struct {
+	ID            string
+	Title         ValidStr
+	Amount        ValidFloat
+	FileName      ValidStr
+	PreviewLink   ValidStr
+	UploadToken   ValidStr
+	Tags          ValidStrSlice
+	Senders       ValidStrSlice
+	InvoiceNumber ValidStr
+}
+
+type ValidStr struct {
+	Val     string
+	Valid   bool
+	Message string
+}
+
+type ValidStrSlice struct {
+	Val     []string
+	Valid   bool
+	Message string
+}
+
+type ValidFloat struct {
+	Val     float32
+	Valid   bool
+	Message string
+}
+
+templ EditDocumentDialog(doc Document, docDownload templ.Component) {
 	<script type="module">
 		import Tags from "/public/js/tags/tags.min.js";
 		Tags.init();
@@ -41,7 +70,7 @@ templ EditDocumentDialog(doc document.Document, docDownload templ.Component) {
 			<!-- header -->
 			<div class="modal-header">
 				if doc.ID != "" {
-					<h5 class="modal-title">Edit: { doc.Title }</h5>
+					<h5 class="modal-title">Edit: { doc.Title.Val }</h5>
 				} else {
 					<h5 class="modal-title">Create Document</h5>
 				}
@@ -58,21 +87,40 @@ templ EditDocumentDialog(doc document.Document, docDownload templ.Component) {
 					<div class="mb-3">
 						<div class="input-group">
 							<span class="input-group-text">Document Title</span>
-							<input class="form-control" id="document_title" placeholder="Document Title" name="doc-title" value={ doc.Title }/>
+							<input
+								id="document_title"
+								placeholder="Document Title"
+								name="doc-title"
+								class={ "form-control", templ.KV("control_invalid", !doc.Title.Valid) }
+								value={ doc.Title.Val }
+								required
+							/>
 						</div>
 					</div>
 					<div class="row">
 						<div class="col">
 							<div class="input-group">
 								<span class="input-group-text">Amount</span>
-								<input class="form-control" id="document_amount" placeholder="Amount" name="doc-amount" value={ fmt.Sprintf("%f", doc.Amount) }/>
+								<input
+									class="form-control"
+									id="document_amount"
+									placeholder="Amount"
+									name="doc-amount"
+									value={ fmt.Sprintf("%.1f", doc.Amount.Val) }
+								/>
 								<span class="input-group-text">€</span>
 							</div>
 						</div>
 						<div class="col mb-3">
 							<div class="input-group">
 								<span class="input-group-text">Number</span>
-								<input class="form-control" id="document_number" placeholder="Invoice Number" name="doc-invoicenumber" value={ doc.InvoiceNumber }/>
+								<input
+									class="form-control"
+									id="document_number"
+									placeholder="Invoice Number"
+									name="doc-invoicenumber"
+									value={ doc.InvoiceNumber.Val }
+								/>
 							</div>
 						</div>
 					</div>
@@ -80,20 +128,28 @@ templ EditDocumentDialog(doc document.Document, docDownload templ.Component) {
 						@docDownload
 					</div>
 					<div class="mb-3">
-						<div class="input-group">
-							<span class="input-group-text">#Tag</span>
+						<div
+							class={ "input-group", templ.KV("control_invalid", !doc.Tags.Valid) }
+						>
+							<span
+								class={ "input-group-text", templ.KV("control_invalid", !doc.Tags.Valid) }
+							>#Tag</span>
 							<select
-								class="form-select"
 								id="tags-input"
-								name="document_tags"
+								class="form-select"
+								name="doc-tags[]"
 								multiple
 								data-allow-clear="true"
 								data-allow-new="true"
 								data-server="/mydms/list/tags"
 								data-live-server="1"
 							>
-								<option disabled hidden value="">Choose a tag...</option>
-								for _, t := range doc.Tags {
+								if doc.Tags.Message != "" {
+									<option disabled hidden value="">{ doc.Tags.Message }</option>
+								} else {
+									<option disabled hidden value="">Choose a tag...</option>
+								}
+								for _, t := range doc.Tags.Val {
 									<option value={ t } selected="selected">{ t }</option>
 								}
 							</select>
@@ -101,20 +157,30 @@ templ EditDocumentDialog(doc document.Document, docDownload templ.Component) {
 						<div class="invalid-feedback">Please select a valid tag.</div>
 					</div>
 					<div class="mb-3">
-						<div class="input-group">
-							<span class="input-group-text"><i class="bi bi-truck"></i>&nbsp;Sender</span>
+						<div
+							class={ "input-group", templ.KV("control_invalid", !doc.Senders.Valid) }
+						>
+							<span
+								class={ "input-group-text", templ.KV("control_invalid", !doc.Senders.Valid) }
+							>
+								<i class="bi bi-truck"></i>&nbsp;Sender
+							</span>
 							<select
-								class="form-select"
 								id="senders-input"
-								name="document_senders"
+								class="form-select"
+								name="doc-senders[]"
 								multiple
 								data-allow-clear="true"
 								data-allow-new="true"
 								data-server="/mydms/list/senders"
 								data-live-server="1"
 							>
-								<option disabled hidden value="">Choose a sender...</option>
-								for _, s := range doc.Senders {
+								if doc.Senders.Message != "" {
+									<option disabled hidden value="">{ doc.Senders.Message }</option>
+								} else {
+									<option disabled hidden value="">Choose a sender...</option>
+								}
+								for _, s := range doc.Senders.Val {
 									<option value={ s } selected="selected">{ s }</option>
 								}
 							</select>
@@ -129,6 +195,9 @@ templ EditDocumentDialog(doc document.Document, docDownload templ.Component) {
 						id="btn-document-save"
 						type="button"
 						class="btn btn-success"
+						hx-post="/mydms"
+						hx-target="#document_edit_dialog"
+						hx-indicator="#indicator"
 					>Save</button>
 				</div>
 			</form>

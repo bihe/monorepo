@@ -66,12 +66,14 @@ func MakeHTTPHandler(docSvc document.Service, uploadSvc upload.Service, logger l
 	sec.Mount("/mydms", func() http.Handler {
 		r := chi.NewRouter()
 		r.Get("/", templateHandler.DisplayDocuments())
+		r.Post("/", templateHandler.SaveDocument())
 		r.Put("/partial/list", templateHandler.DisplayDocumentsPartial())
 		r.Delete("/partial/upload", templateHandler.DisplayDocumentUploadPartial())
 		r.Post("/upload", templateHandler.UploadDocument())
 		r.Post("/dialog/{id}", templateHandler.ShowEditDocumentDialog())
 		r.Post("/confirm/{id}", templateHandler.ShowDeleteConfirmDialog())
 		r.Get("/list/{type}", templateHandler.SearchListItems())
+
 		return r
 	}())
 

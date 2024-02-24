@@ -1,10 +1,13 @@
 package templates
 
-templ DocumentsContent(documentList templ.Component) {
+templ DocumentsContent(documentList templ.Component, search string) {
 	<div class="container-fluid">
-		<div class="row be_my_center" id="document_list">
-			@documentList
-		</div>
+		<form>
+			<input type="hidden" name="q" value={ search }/>
+			<div class="row be_my_center" id="document_list" hx-put={ "/mydms/partial/list" } hx-trigger="refreshDocumentList from:body" hx-swap="innerHTML">
+				@documentList
+			</div>
+		</form>
 	</div>
 }
 

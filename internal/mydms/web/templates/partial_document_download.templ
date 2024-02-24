@@ -9,7 +9,7 @@ templ DisplayDocumentDownload(doc Document) {
 			<a class="document_download_link" href={ templ.URL("/mydms/file/" + doc.PreviewLink.Val) } target="_NEW">
 				{ doc.FileName.Val }
 			</a>
-			<input type="hidden" name="doc-tempID" value="FILE"/>
+			<input type="hidden" name="doc-tempID" value="-"/>
 			<input type="hidden" name="doc-filename" value={ doc.FileName.Val }/>
 			<div class="float-end">
 				<i class="bi bi-x-lg"></i>

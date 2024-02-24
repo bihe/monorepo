@@ -57,7 +57,7 @@ func (t *TemplateHandler) DisplayDocuments() http.HandlerFunc {
 			templates.DocumentsStyles(),
 			templates.DocumentsNavigation(search),
 			templates.DocumentsContent(
-				templates.DocumentList(numDocs, next, search, documents)),
+				templates.DocumentList(numDocs, next, search, documents), search),
 			searchURL,
 		).Render(r.Context(), w)
 	}
@@ -253,6 +253,12 @@ func (t *TemplateHandler) UploadDocument() http.HandlerFunc {
 	}
 }
 
+// we define a JSON structur which is used to trigger actions on the frontend via htmx
+type triggerDef struct {
+	tmpl.ToastMessage
+	Refresh string `json:"refreshDocumentList,omitempty"`
+}
+
 // SaveDocument receives the data form the edit form, validates it
 // and if the data is valid, persists the document
 func (t *TemplateHandler) SaveDocument() http.HandlerFunc {
@@ -264,9 +270,8 @@ func (t *TemplateHandler) SaveDocument() http.HandlerFunc {
 			validDoc   templates.Document
 			validData  bool
 		)
-
+		user := ensureUser(r)
 		err = r.ParseForm()
-
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not parse supplied form data; '%v'", err), r)
 			t.RenderErr(r, w, fmt.Sprintf("could not parse supplied form data; '%v'", err))
@@ -323,12 +328,33 @@ func (t *TemplateHandler) SaveDocument() http.HandlerFunc {
 			return
 		}
 
-		if rcvDoc.ID == "" {
-			// create a new document
-
-		} else {
-			// update an existing document
+		savedDoc, err := t.DocSvc.SaveDocument(rcvDoc, *user)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not save the supplied document; %v", err), r)
+			validDoc.Error = fmt.Sprintf("Cannot save the document; '%v'", err)
+			templates.EditDocumentDialog(validDoc, templates.DisplayDocumentDownload(validDoc)).Render(r.Context(), w)
+			return
 		}
+
+		t.Logger.Info("new document created", logging.LogV("ID", savedDoc.ID))
+
+		// the trigger definitions is used for two actions
+		// one) is the toast message to show a saved indicator
+		// two) is the notification to reload the document list, because of the changes
+		triggerEvent := triggerDef{
+			ToastMessage: tmpl.ToastMessage{
+				Event: tmpl.ToastMessageContent{
+					Type:  tmpl.MsgSuccess,
+					Title: "Document saved!",
+					Text:  fmt.Sprintf("The document with ID '%s' was saved.", savedDoc.ID),
+				},
+			},
+			Refresh: "now",
+		}
+		// https://htmx.org/headers/hx-trigger/
+		w.Header().Add("HX-Trigger", tmpl.Json(triggerEvent))
+		validDoc.Close = true
+		templates.EditDocumentDialog(validDoc, templates.DisplayDocumentDownload(validDoc)).Render(r.Context(), w)
 	}
 }
 
@@ -343,6 +369,36 @@ func (t *TemplateHandler) ShowDeleteConfirmDialog() http.HandlerFunc {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get document for id '%s'; '%v'", id, err), r)
 		}
 		templates.DialogConfirmDelete(doc.Title, doc.ID).Render(r.Context(), w)
+	}
+}
+
+// DeleteDocument removed the document with the given id
+func (t *TemplateHandler) DeleteDocument() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := pathParam(r, "id")
+		user := ensureUser(r)
+		t.Logger.InfoRequest(fmt.Sprintf("delete document by id: '%s' for user: '%s'", id, user.Username), r)
+
+		err := t.DocSvc.DeleteDocumentByID(id)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not delete document by id '%s'; '%v'", id, err), r)
+		}
+
+		// the trigger definitions is used for two actions
+		// one) is the toast message to show a saved indicator
+		// two) is the notification to reload the document list, because of the changes
+		triggerEvent := triggerDef{
+			ToastMessage: tmpl.ToastMessage{
+				Event: tmpl.ToastMessageContent{
+					Type:  tmpl.MsgSuccess,
+					Title: "Document delete!",
+					Text:  fmt.Sprintf("The document with ID '%s' was removed.", id),
+				},
+			},
+			Refresh: "now",
+		}
+		// https://htmx.org/headers/hx-trigger/
+		w.Header().Add("HX-Trigger", tmpl.Json(triggerEvent))
 	}
 }
 

@@ -19,9 +19,10 @@ COPY ./cmd ./cmd
 COPY ./go.mod ./
 COPY ./go.sum ./
 COPY ./internal/mydms ./internal/mydms
+COPY ./internal/common  ./internal/common
 COPY ./pkg ./pkg
 COPY ./tools ./tools
-RUN go generate ./...
+COPY ./assets ./assets
 
 # necessary to build sqlite3
 RUN apk add build-base
@@ -42,7 +43,7 @@ RUN tar -C /backend-build -xzf /backend-build/litestream.tar.gz
 FROM alpine:latest
 LABEL author="henrik@binggl.net"
 WORKDIR /opt/mydms
-RUN mkdir -p /opt/litestream && mkdir -p /opt/mydms/uploads && mkdir -p /opt/mydms/etc && mkdir -p /opt/mydms/logs && mkdir -p /opt/mydms/uploads && mkdir -p /opt/mydms/db
+RUN mkdir -p /opt/litestream && mkdir -p /opt/mydms/uploads && mkdir -p /opt/mydms/etc && mkdir -p /opt/mydms/logs && mkdir -p /opt/mydms/uploads && mkdir -p /opt/mydms/db && mkdir -p /opt/mydms/assets
 EXPOSE 3000
 
 RUN apk add bash
@@ -53,7 +54,7 @@ RUN addgroup -g 1000 -S mydms && \
     adduser -u 1000 -S mydms -G mydms
 
 COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/mydms.api /opt/mydms
-COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/internal/mydms/assets /opt/mydms/assets
+COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/assets /opt/mydms/assets
 COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/litestream /opt/litestream
 COPY --chown=1000:1000 ./litestream/run_litestream.sh /opt/mydms
 RUN chown mydms:mydms /opt/mydms/etc \

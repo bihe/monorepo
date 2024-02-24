@@ -48,7 +48,7 @@ func DisplayDocumentDownload(doc Document) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</a> <input type=\"hidden\" name=\"doc-tempID\" value=\"FILE\"> <input type=\"hidden\" name=\"doc-filename\" value=\"")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</a> <input type=\"hidden\" name=\"doc-tempID\" value=\"-\"> <input type=\"hidden\" name=\"doc-filename\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

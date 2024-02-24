@@ -257,3 +257,71 @@ func Test_Document_Partial(t *testing.T) {
 	r.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusOK, rec.Code)
 }
+
+func Test_ShowEditDocumentDialog(t *testing.T) {
+	repo, con := memRepo(t)
+	defer con.Close()
+
+	r := handler(repo)
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/mydms/dialog/NEW", nil)
+	addJwtAuth(req)
+
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	// with empty/new ID we will receive a dialog to create a document
+	payload := rec.Body.String()
+	if !strings.Contains(payload, "Create Document") {
+		t.Errorf("cannot find string in page result")
+	}
+
+	// a unknown ID still provides a dialog to create a NEW document
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/mydms/dialog/abc-def-ghi", nil)
+	addJwtAuth(req)
+
+	r.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	payload = rec.Body.String()
+	if !strings.Contains(payload, "Create Document") {
+		t.Errorf("cannot find string in page result")
+	}
+}
+
+func Test_SearchListItemsForAutocomplete(t *testing.T) {
+	repo, con := memRepo(t)
+	defer con.Close()
+
+	r := handler(repo)
+	rec := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/mydms/list/tags", nil)
+	addJwtAuth(req)
+
+	r.ServeHTTP(rec, req)
+	// empty database
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+
+	// missing listtype
+
+	rec = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/mydms/list/senders", nil)
+	addJwtAuth(req)
+
+	r.ServeHTTP(rec, req)
+	// empty database
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+
+	// // the response is a JSON array
+	// type listItem struct {
+	// 	Value string `json:"value,omitempty"`
+	// 	Label string `json:"label,omitempty"`
+	// }
+	// listItems := make([]listItem, 0)
+	// err := json.Unmarshal(rec.Body.Bytes(), &listItems)
+	// if err != nil {
+	// 	t.Errorf("could not get JSON structure: %v", err)
+	// }
+
+}

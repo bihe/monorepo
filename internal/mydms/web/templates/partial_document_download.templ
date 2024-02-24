@@ -1,0 +1,112 @@
+package templates
+
+import "golang.binggl.net/monorepo/pkg/handler/templates"
+
+templ DisplayDocumentDownload(doc Document) {
+	if doc.ID != "" && doc.FileName.Val != "" {
+		<div class="document_download" id="document_download_link">
+			<i class="bi bi-cloud-arrow-down"></i>
+			<a class="document_download_link" href={ templ.URL("/mydms/file/" + doc.PreviewLink.Val) } target="_NEW">
+				{ doc.FileName.Val }
+			</a>
+			<input type="hidden" name="doc-tempID" value="-"/>
+			<input type="hidden" name="doc-filename" value={ doc.FileName.Val }/>
+			<div class="float-end">
+				<i class="bi bi-x-lg"></i>
+				<a
+					class="remove_document_link"
+					hx-delete="/mydms/partial/upload"
+					hx-target="#document_download_link"
+					hx-swap="outerHTML"
+				>remove</a>
+			</div>
+		</div>
+	} else if doc.UploadToken.Val != "" && doc.FileName.Val != "" {
+		<div class="document_download" id="document_download_link">
+			<i class="bi bi-cloud-arrow-down"></i>
+			<a class="document_download_link">{ doc.FileName.Val }</a>
+			<input type="hidden" name="doc-tempID" value={ doc.UploadToken.Val }/>
+			<input type="hidden" name="doc-filename" value={ doc.FileName.Val }/>
+			<div class="float-end">
+				<i class="bi bi-x-lg"></i>
+				<a
+					class="remove_document_link"
+					hx-delete="/mydms/partial/upload"
+					hx-target="#document_download_link"
+					hx-swap="outerHTML"
+				>remove</a>
+			</div>
+		</div>
+	} else {
+		<div id="document_upload_area">
+			<div class="input-group mb-3">
+				<div class="dropdown">
+					<button type="button" class="btn btn-warning dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+						Encryption
+					</button>
+					<div class="dropdown-menu p-4">
+						<div class="mb-3">
+							<label for="initialPass" class="form-label">Password</label>
+							<input type="password" class="form-control" id="initialPass" name="doc-initPass" placeholder="initial"/>
+						</div>
+						<div class="mb-3">
+							<label for="pass" class="form-label">Password</label>
+							<input type="password" class="form-control" id="pass" name="doc-newPass" placeholder="new"/>
+						</div>
+					</div>
+				</div>
+				&nbsp;
+				<input
+					class={ "form-control", templ.KV("control_invalid", !doc.UploadToken.Valid) }
+					type="file"
+					name="doc-fileupload"
+					id="documentFileUpload"
+				/>
+				<button
+					type="button"
+					class="btn btn-outline-secondary"
+					hx-post="/mydms/upload"
+					hx-encoding="multipart/form-data"
+					hx-trigger="click"
+					hx-target="#document_upload_area"
+					hx-swap="outerHTML"
+					hx-params="doc-fileupload,doc-initPass,doc-newPass"
+					hx-indicator="#indicator"
+				><i class="bi bi-upload"></i></button>
+			</div>
+		</div>
+	}
+}
+
+templ DisplayTempDocumentUpload(fileName, tempID, errMsg string) {
+	<div class="document_download" id="document_download_link">
+		if errMsg == "" {
+			<i class="bi bi-cloud-arrow-down"></i>
+			<a class="document_download_link">{ fileName }</a>
+			<input type="hidden" name="doc-tempID" value={ tempID }/>
+			<input type="hidden" name="doc-filename" value={ fileName }/>
+			<div class="float-end">
+				<i class="bi bi-x-lg"></i>
+				<a
+					class="remove_document_link"
+					hx-delete="/mydms/partial/upload"
+					hx-target="#document_download_link"
+					hx-swap="outerHTML"
+				>remove</a>
+			</div>
+		} else {
+			<div class="alert alert-danger" role="alert">
+				<i class="bi bi-exclamation-triangle"></i> { templates.Ellipsis(errMsg, 60, "...") }
+				<div class="float-end">
+					<i class="bi bi-x-lg"></i>
+					<a
+						class="remove_document_link"
+						hx-delete="/mydms/partial/upload"
+						hx-target="#document_download_link"
+						hx-swap="outerHTML"
+					>remove</a>
+				</div>
+			</div>
+		}
+	</div>
+}

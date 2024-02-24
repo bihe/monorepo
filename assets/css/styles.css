@@ -13,7 +13,7 @@ body {
 }
 
 .header {
-  background: #c2185b;
+  background: #0d6efd;
 }
 
 .content_area {
@@ -102,14 +102,14 @@ a.bookmark_name:hover {
 }
 
 .search-field {
-  background-color: #ec84ad;
-  border: var(--bs-border-width) solid #ae1d56;
+  background-color: #0099ff;
+  border: var(--bs-border-width) solid #0000cc;
   color: #dddddd;
 }
 
 .search-field-prefix {
-  background-color: #e2588e;
-  border: var(--bs-border-width) solid #ae1d56;
+  background-color: #0d6efd;
+  border: var(--bs-border-width) solid #0000cc;
 }
 
 a.bookmark_path {
@@ -226,6 +226,9 @@ a.bookmark_path {
   padding: 30px;
   text-align: center;
 }
+
+/* ------------------------------------------- responsive ------------------------------------------*/
+
 
 @media only screen and (min-device-width: 375px) and (max-device-width: 812px) {
   .bookmark_item {

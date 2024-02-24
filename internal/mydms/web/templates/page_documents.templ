@@ -1,0 +1,89 @@
+package templates
+
+templ DocumentsContent(documentList templ.Component, search string) {
+	<div class="container-fluid">
+		<form>
+			<input type="hidden" name="q" value={ search }/>
+			<div class="row be_my_center" id="document_list" hx-put={ "/mydms/partial/list" } hx-trigger="refreshDocumentList from:body" hx-swap="innerHTML">
+				@documentList
+			</div>
+		</form>
+	</div>
+}
+
+templ DocumentsStyles() {
+	<style type="text/css">
+	.be_my_center {
+		align-items: center;
+    		justify-content: center;
+	}
+	.by_my_document {
+		width: 25rem;
+		margin: 10px;
+		height: 12rem;
+	}
+	.tag {
+		margin: 2px;
+	}
+	.invoice-number {
+		font-size: 1em;
+		font-weight: 700;
+		color: #ff9800;
+		font-style: italic;
+		font-family: Roboto Mono,monospace;
+	}
+	.amount {
+		position: absolute;
+		right: 4px;
+		top: 93px;
+		font-weight: 700;
+		font-size: 1.2em;
+		color: #3aa677;
+	}
+	.doc-content {
+		padding-top: 2px;
+		padding-bottom: 2px;
+	}
+	.meta {
+		position: absolute;
+		right: 5px;
+		font-size: 0.8em;
+		bottom: 10px;
+	}
+	.meta_date {
+		font-weight:bold;
+		color: white;
+	}
+	.show_more_results {
+		text-align: center;
+	}
+    </style>
+}
+
+templ DocumentsNavigation(search string) {
+	<div class="application_name">
+		<div>
+			~ mydms:
+			if search != "" {
+				>> searching for <span class="badge text-bg-success" style="font-size:small">{ search }</span>
+			}
+		</div>
+		<span class="right-action">
+			<div id="request_indicator" class="request_indicator htmx-indicator">
+				<div class="spinner-border text-light" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
+			</div>
+			<button
+				type="button"
+				data-testid="link-add-document"
+				class="btn btn-primary new_button"
+				data-bs-toggle="modal"
+				data-bs-target="#modals-here"
+				hx-target="#modals-here"
+				hx-trigger="click"
+				hx-post={ "/mydms/dialog/NEW" }
+			><i class="bi bi-plus"></i> Add</button>
+		</span>
+	</div>
+}

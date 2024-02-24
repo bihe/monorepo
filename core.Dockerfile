@@ -21,9 +21,7 @@ COPY ./go.sum ./
 COPY ./cmd/core/server/main.go ./cmd/core/server/main.go
 COPY ./internal/core  ./internal/core
 COPY ./internal/common  ./internal/common
-COPY ./internal/crypter  ./internal/crypter
 COPY ./pkg ./pkg
-COPY ./proto ./proto
 COPY ./assets ./assets
 
 # necessary to build sqlite3
@@ -43,7 +41,7 @@ RUN tar -C /backend-build -xzf /backend-build/litestream.tar.gz
 FROM alpine:latest
 LABEL author="henrik@binggl.net"
 WORKDIR /opt/core
-RUN mkdir -p /opt/litestream && mkdir -p /opt/core/etc && mkdir -p /opt/core/logs && mkdir -p /opt/core/uploads && mkdir -p /opt/core/db
+RUN mkdir -p /opt/litestream && mkdir -p /opt/core/etc && mkdir -p /opt/core/logs && mkdir -p /opt/core/db
 EXPOSE 3000
 
 RUN apk add bash
@@ -59,7 +57,6 @@ COPY --chown=1000:1000 --from=BACKEND-BUILD /backend-build/assets /opt/core/asse
 COPY --chown=1000:1000 ./litestream/run_litestream.sh /opt/core
 RUN chown coreapp:coreapp /opt/core/etc \
     && chown coreapp:coreapp /opt/core/logs \
-    &&  chown coreapp:coreapp /opt/core/uploads \
     &&  chown coreapp:coreapp /opt/core/db
 USER coreapp
 

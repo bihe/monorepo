@@ -3,7 +3,6 @@ package document
 import "fmt"
 
 // ActionResult is a code specifying a specific outcome/result
-// swagger:enum ActionResult
 type ActionResult string
 
 const (
@@ -18,21 +17,18 @@ const (
 )
 
 // Result is a generic result object
-// swagger:model
 type Result struct {
 	Message      string       `json:"message"`
 	ActionResult ActionResult `json:"result"`
 }
 
 // IDResult is a generic result which returns an ID
-// swagger:model
 type IDResult struct {
 	Result
 	ID string `json:"id,omitempty"`
 }
 
 // Document represents a document entity
-// swagger:model
 type Document struct {
 	ID            string   `json:"id"`
 	Title         string   `json:"title"`
@@ -53,7 +49,6 @@ func (d Document) String() string {
 }
 
 // PagedDocument represents a paged result
-// swagger:model
 type PagedDocument struct {
 	Documents    []Document `json:"documents"`
 	TotalEntries int        `json:"totalEntries"`

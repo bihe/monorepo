@@ -8,7 +8,6 @@ type AppConfig struct {
 	Database Database
 	Security Security
 	OIDC     OAuthConfig
-	Upload   UploadSettings
 }
 
 // Database defines the connection string
@@ -34,16 +33,4 @@ type OAuthConfig struct {
 	RedirectURL  string
 	Provider     string
 	EndPointURL  string
-}
-
-// UploadSettings defines relevant values for the upload logic
-type UploadSettings struct {
-	// AllowedFileTypes is a list of mime-types allowed to be uploaded
-	AllowedFileTypes []string
-	// MaxUploadSize defines the maximum permissible fiile-size
-	MaxUploadSize int64
-	// UploadPath defines a directory where uploaded files are stored
-	UploadPath string
-	// EncGrpcConn defines a connection to a encryption GRPC service
-	EncGrpcConn string
 }

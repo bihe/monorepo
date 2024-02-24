@@ -10,7 +10,6 @@ on:
           - bookmarks
           - core
           - mydms
-          - crypter
           - frontend
         required: true
 
@@ -111,23 +110,6 @@ jobs:
 
       # ---------------------------------------------------------------------
 
-      - name: "Build :: crypter"
-        if: github.event.inputs.imageName == 'crypter'
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: crypter.Dockerfile
-          build-args: |
-            buildtime_variable_version=${{ env.BUILD_ID }}
-            buildtime_variable_timestamp=${{ env.BUILD_DATE }}
-            buildtime_variable_commit=${{ env.GIT_HASH }}
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/crypter:latest
-            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/crypter:${{ env.GIT_HASH }}
-
-      # ---------------------------------------------------------------------
-
       - name: "Build :: frontend"
         if: github.event.inputs.imageName == 'frontend'
         uses: docker/build-push-action@v4
@@ -138,9 +120,7 @@ jobs:
             buildtime_variable_version=${{ env.BUILD_ID }}
             buildtime_variable_timestamp=${{ env.BUILD_DATE }}
             buildtime_variable_commit=${{ env.GIT_HASH }}
-            FRONTEND_MODE=${{ env.FRONTEND_MODE }}
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/frontend:latest
             ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/frontend:${{ env.GIT_HASH }}
-

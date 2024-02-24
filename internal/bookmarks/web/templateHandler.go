@@ -33,6 +33,8 @@ type TemplateHandler struct {
 	Build   string
 }
 
+const searchURL = "/bm/search"
+
 // SearchBookmarks performs a search for bookmarks and displays the result using server-side rendering
 func (t *TemplateHandler) SearchBookmarks() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -52,6 +54,7 @@ func (t *TemplateHandler) SearchBookmarks() http.HandlerFunc {
 			templates.SearchStyles(),
 			templates.SearchNavigation(search),
 			templates.SearchContent(bms, ell),
+			searchURL,
 		).Render(r.Context(), w)
 	}
 }
@@ -121,6 +124,7 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 				bms,
 				ell,
 			)),
+			searchURL,
 		).Render(r.Context(), w)
 	}
 }

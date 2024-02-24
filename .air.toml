@@ -13,22 +13,35 @@ tmp_dir = "./tmp"
   #  "./internal/core"
   #]
   #bin = "./tmp/core.api"
-  #cmd = "go build -ldflags=\"-s -w -X main.Version=NOW -X main.Build=DEV\" -o ./tmp/core.api ./cmd/core/server/main.go"
+  #cmd = "go build -ldflags=\"-X main.Version=NOW -X main.Build=DEV\" -o ./tmp/core.api ./cmd/core/server/main.go"
 
   # -------------------------------------------------------------------------
   # bookmarks
+  # -------------------------------------------------------------------------
+  #args_bin = [
+  #  "--port",
+  #  "3003",
+  #  "--basepath",
+  #  "./internal/bookmarks"
+  #]
+  #bin = "./tmp/bookmarks.api"
+  #cmd = "go build -ldflags=\"-X main.Version=NOW -X main.Build=DEV\" -o ./tmp/bookmarks.api ./cmd/bookmarks/server/main.go"
+
+
+  # -------------------------------------------------------------------------
+  # mydms
   # -------------------------------------------------------------------------
   args_bin = [
     "--port",
     "3003",
     "--basepath",
-    "./internal/bookmarks"
+    "./internal/mydms"
   ]
-  bin = "./tmp/bookmarks.api"
-  cmd = "go build -ldflags=\"-s -w -X main.Version=NOW -X main.Build=DEV\" -o ./tmp/bookmarks.api ./cmd/bookmarks/server/main.go"
+  bin = "./tmp/mydms.api"
+  cmd = "go build -ldflags=\"-X main.Version=NOW -X main.Build=DEV\" -o ./tmp/mydms.api ./cmd/mydms/server/main.go"
 
   delay = 500
-  exclude_dir = ["assets", "tmp", "vendor", "testdata","frontend", "caddy", ".vscode", "doc", "tmp", "tools", "upload", "litestream", "_logs"]
+  exclude_dir = ["assets", "tmp", "vendor", "testdata", "frontend", "caddy", ".vscode", "doc", "tmp", "tools", "upload", "litestream", "_logs"]
   exclude_file = []
   exclude_regex = ["_test.go"]
   exclude_unchanged = false

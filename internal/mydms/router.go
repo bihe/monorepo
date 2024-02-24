@@ -1,20 +1,18 @@
-package core
+package mydms
 
 import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"golang.binggl.net/monorepo/pkg/config"
-	"golang.binggl.net/monorepo/pkg/cookies"
+	"golang.binggl.net/monorepo/internal/mydms/app/config"
+	"golang.binggl.net/monorepo/internal/mydms/app/document"
+	"golang.binggl.net/monorepo/internal/mydms/app/upload"
+	"golang.binggl.net/monorepo/internal/mydms/web"
+	conf "golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/develop"
 	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/security"
 
-	"golang.binggl.net/monorepo/internal/core/api"
-	"golang.binggl.net/monorepo/internal/core/app/conf"
-	"golang.binggl.net/monorepo/internal/core/app/oidc"
-	"golang.binggl.net/monorepo/internal/core/app/sites"
-	"golang.binggl.net/monorepo/internal/core/web"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/server"
 )
@@ -23,46 +21,33 @@ import (
 type HTTPHandlerOptions struct {
 	BasePath  string
 	ErrorPath string
-	Config    conf.AppConfig
+	Config    config.AppConfig
 	Version   string
 	Build     string
 }
 
-// MakeHTTPHandler creates a new handler implementation which is used together with the HTTP server
-func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, logger logging.Logger, opts HTTPHandlerOptions) http.Handler {
-	std, sec := setupRouter(opts, logger)
-	oidcHandler := api.OidcHandler{
-		OidcSvc: oidcSvc,
-		Logger:  logger,
-		Cookies: cookies.NewAppCookie(cookies.Settings{
-			Path:   opts.Config.Cookies.Path,
-			Domain: opts.Config.Cookies.Domain,
-			Secure: opts.Config.Cookies.Secure,
-			Prefix: opts.Config.Cookies.Prefix,
-		}),
-		JwtCookieName: opts.Config.Security.CookieName,
-		JwtExpiryDays: opts.Config.Security.Expiry,
-	}
+const forbiddenPath = "/mydms/403"
 
-	// uploadHandler := &api.UploadHandler{
-	// 	Service: uploadSvc,
-	// 	Logger:  logger,
-	// }
+// MakeHTTPHandler creates a new handler implementation which is used together with the HTTP server
+func MakeHTTPHandler(docSvc document.Service, uploadSvc upload.Service, logger logging.Logger, opts HTTPHandlerOptions) http.Handler {
+	std, sec := setupRouter(opts, logger)
 
 	templateHandler := &web.TemplateHandler{
 		TemplateHandler: &handler.TemplateHandler{
 			Logger:    logger,
 			Env:       opts.Config.Environment,
 			BasePath:  "/public",
-			StartPage: "/sites",
+			StartPage: "/mydms",
 		},
-		SiteSvc: siteSvc,
-		Version: opts.Version,
-		Build:   opts.Build,
+		DocSvc:        docSvc,
+		UploadSvc:     uploadSvc,
+		Version:       opts.Version,
+		Build:         opts.Build,
+		MaxUploadSize: opts.Config.Upload.MaxUploadSize,
 	}
 
 	// use this for development purposes only!
-	if opts.Config.Environment == config.Development {
+	if opts.Config.Environment == conf.Development {
 		devTokenHandler := develop.DevTokenHandler{
 			Logger: logger,
 			Env:    opts.Config.Environment,
@@ -73,41 +58,25 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, logger logging
 	// server-side rendered paths
 	// the following paths provide server-rendered UIs
 	// /403 displays a page telling the user that access/permissions are missing
-	std.Get("/core/403", templateHandler.Show403())
-
-	// the OIDC logic and handshake to authenticate with external auth system
-	std.Mount("/oidc", func() http.Handler {
-		r := chi.NewRouter()
-		r.Get("/start", oidcHandler.HandlePrepIntOIDCRedirect())
-		r.Get(oidc.OIDCInitiateRoutingPath, oidcHandler.HandleGetExtOIDCRedirect())
-		r.Get("/signin", oidcHandler.HandleLoginOIDC(oidcHandler.JwtCookieName, oidcHandler.JwtExpiryDays))
-		r.Get("/auth/flow", oidcHandler.HandleAuthFlow())
-		return r
-	}())
+	std.Get(forbiddenPath, templateHandler.Show403())
 
 	std.Mount("/", sec)
 
-	// mount the server-side rendering paths
-	sec.Mount("/sites", func() http.Handler {
+	// the routes for the templates
+	sec.Mount("/mydms", func() http.Handler {
 		r := chi.NewRouter()
-		r.Get("/", templateHandler.DisplaySites())
-		r.Get("/edit", templateHandler.ShowEditSites())
-		r.Post("/", templateHandler.SaveSites())
+		r.Get("/", templateHandler.DisplayDocuments())
+		r.Post("/", templateHandler.SaveDocument())
+		r.Put("/partial/list", templateHandler.DisplayDocumentsPartial())
+		r.Delete("/partial/upload", templateHandler.DisplayDocumentUploadPartial())
+		r.Post("/upload", templateHandler.UploadDocument())
+		r.Post("/dialog/{id}", templateHandler.ShowEditDocumentDialog())
+		r.Post("/confirm/{id}", templateHandler.ShowDeleteConfirmDialog())
+		r.Delete("/{id}", templateHandler.DeleteDocument())
+		r.Get("/list/{type}", templateHandler.SearchListItems())
+
 		return r
 	}())
-	// the following APIs have the base-URL /api/v1
-	// sec.Mount("/api/v1/upload", func() http.Handler {
-	// 	r := chi.NewRouter()
-	// 	r.Post("/file", uploadHandler.Upload())
-	// 	r.Get("/{id}", uploadHandler.GetItemByID())
-	// 	r.Delete("/{id}", uploadHandler.DeleteItemByID())
-	// 	return r
-	// }())
-
-	// call on the ROOT path
-	std.Get("/ok", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
 
 	std.NotFound(templateHandler.Show404())
 
@@ -137,7 +106,7 @@ func setupRouter(opts HTTPHandlerOptions, logger logging.Logger) (router chi.Rou
 		Log:           logger,
 		Auth:          jwtAuth,
 		Options:       jwtOptions,
-		ErrorRedirect: "/core/403",
+		ErrorRedirect: forbiddenPath,
 	}
 
 	secureRouter = chi.NewRouter()

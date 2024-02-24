@@ -8,8 +8,8 @@ baseconfig:
 
     # static assets
     assets:
-        assetDir: "./assets"
-        assetPrefix: "/assets"
+        assetDir: "../../assets"
+        assetPrefix: "/public"
 
     # configuration for JWT authentication
     security:
@@ -21,31 +21,31 @@ baseconfig:
             name: mydms
             url: http://localhost:3002
             roles:
-            - User
-            - Admin
+                - User
+                - Admin
         cacheDuration: 10m
 
     # allow cross-origin requests
     cors:
         origins:
-        - "http://localhost:8080"
-        - "http://localhost:3000"
-        - "http://localhost:4200"
-        - "http://dev.binggl.net"
-        - "https://dev.binggl.net"
-        - "http://dev.binggl.net:4200"
+            - "http://localhost:8080"
+            - "http://localhost:3000"
+            - "http://localhost:4200"
+            - "http://dev.binggl.net"
+            - "https://dev.binggl.net"
+            - "http://dev.binggl.net:4200"
         methods:
-        - "GET"
-        - "POST"
-        - "PUT"
-        - "DELETE"
-        - "OPTIONS"
+            - "GET"
+            - "POST"
+            - "PUT"
+            - "DELETE"
+            - "OPTIONS"
         headers:
-        - "cache-control"
-        - "content-type"
-        - "pragma"
-        - "accept"
-        - "authorization"
+            - "cache-control"
+            - "content-type"
+            - "pragma"
+            - "accept"
+            - "authorization"
         credentials: true
         maxAge: 500
 
@@ -65,13 +65,18 @@ baseconfig:
 database:
     connectionString: "DATABASE"
 
-upload:
-   endpointURL: http://localhost:3000/
-
 filestore:
     region: "region"
     bucket: "bucket"
     key: "key"
     secret: "secret"
 
-
+upload:
+    allowedFileTypes:
+        - "pdf"
+        - "jpg"
+        - "jpeg"
+        - "png"
+        - "gif"
+    maxUploadSize: 500000
+    uploadPath: "/tmp/"

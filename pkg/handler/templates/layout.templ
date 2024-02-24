@@ -21,7 +21,7 @@ type NavItem struct {
 	Active      bool
 }
 
-templ Layout(model LayoutModel, style, application_navigation, content templ.Component) {
+templ Layout(model LayoutModel, style, application_navigation, content templ.Component, searchUrl string) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -53,7 +53,7 @@ templ Layout(model LayoutModel, style, application_navigation, content templ.Com
 							<span class="navbar-toggler-icon"></span>
 						</button>
 						<div class="collapse navbar-collapse" id="navbarCollapse">
-							<form class="w-100 me-3" role="search" method="GET" action="/bm/search">
+							<form class="w-100 me-3" role="search" method="GET" action={ templ.URL(searchUrl) }>
 								<div class="input-group">
 									<span class="input-group-text search-field-prefix" id="search-addon"><i class="bi bi-search"></i></span>
 									<input type="search" name="q" class="form-control search-field" placeholder="Search..." aria-label="Search" control-id="search-field" value={ model.Search }/>
@@ -61,7 +61,7 @@ templ Layout(model LayoutModel, style, application_navigation, content templ.Com
 							</form>
 							&nbsp;
 							<div class="application_version">
-								<span class="badge text-bg-info"><i class="bi bi-git"></i> { model.Version }</span>
+								<span class="badge text-bg-warning"><i class="bi bi-git"></i> { model.Version }</span>
 							</div>
 							&nbsp;
 							<span class="badge d-flex align-items-center p-1 pe-2 text-dark-emphasis bg-light-subtle border border-dark-subtle rounded-pill">

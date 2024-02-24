@@ -70,14 +70,3 @@ oidc:
     clientSecret: clientSecret
     redirectURL: "http://dev.binggl.net:3001/oidc/signin"
     provider: "https://accounts.google.com"
-
-upload:
-    allowedFileTypes:
-        - "pdf"
-        - "jpg"
-        - "jpeg"
-        - "png"
-        - "gif"
-    maxUploadSize: 500000
-    uploadPath: "/tmp/"
-    encGrpcConn: "localhost:3001"

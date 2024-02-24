@@ -7,14 +7,10 @@ import (
 	"golang.binggl.net/monorepo/internal/core/app/oidc"
 	"golang.binggl.net/monorepo/internal/core/app/sites"
 	"golang.binggl.net/monorepo/internal/core/app/store"
-	"golang.binggl.net/monorepo/internal/core/app/upload"
-	"golang.binggl.net/monorepo/internal/crypter"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/develop"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/server"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"gorm.io/gorm"
 
 	"gorm.io/driver/sqlite"
@@ -36,36 +32,12 @@ func Run(version, build, appName string) error {
 		panic(fmt.Sprintf("cannot create database connection: %v", err))
 	}
 
-	// Build the layers of the gateway-server "onion" from the inside out. First, the
-	// business logic store.Repository; oidc.Service; sites.Service; ...
-	// and finally, a series of concrete transport adapters.
-	var (
-		encService crypter.EncryptionService
-		client     *grpc.ClientConn
-	)
-	if appCfg.Upload.EncGrpcConn != "" {
-		client, err = grpc.Dial(appCfg.Upload.EncGrpcConn, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			panic(fmt.Sprintf("could not connect: %v", err))
-		}
-		encService = crypter.NewClient(client)
-	}
-
 	var (
 		repo                     = store.NewDBStore(con)
 		oidcConfig, oidcVerifier = oidc.NewConfigAndVerifier(appCfg.OIDC)
 		oidcSvc                  = oidc.New(oidcConfig, oidcVerifier, appCfg.Security, repo)
 		siteSvc                  = sites.New(appCfg.Security.Claim.Roles[0], repo)
-		uploadSvc                = upload.NewService(upload.ServiceOptions{
-			Logger:           logger,
-			Store:            upload.NewStore(appCfg.Upload.UploadPath),
-			MaxUploadSize:    appCfg.Upload.MaxUploadSize,
-			AllowedFileTypes: appCfg.Upload.AllowedFileTypes,
-			Crypter:          encService,
-			TimeOut:          "30s",
-		},
-		)
-		handler = MakeHTTPHandler(oidcSvc, siteSvc, uploadSvc, logger, HTTPHandlerOptions{
+		handler                  = MakeHTTPHandler(oidcSvc, siteSvc, logger, HTTPHandlerOptions{
 			BasePath:  basePath,
 			ErrorPath: appCfg.ErrorPath,
 			Config:    appCfg,

@@ -18,24 +18,6 @@ services:
             REDIRECT_URL: https://dev.binggl.net
             PORT: 3000
 
-    crypter:
-        build:
-            context: .
-            dockerfile: ./crypter.Dockerfile
-            args:
-                buildtime_variable_arch: $ARCH
-        image: crypter
-        volumes:
-            - ./internal/crypter:/opt/crypter/etc
-            - ./_logs:/opt/crypter/logs
-        restart: always
-        environment:
-            CR_BASECONFIG__ENVIRONMENT: Production
-            CR_BASECONFIG__SECURITY__JWTISSUER: $JWT_ISSUER
-            CR_BASECONFIG__SECURITY__JWTSECRET: $JWT_SECRET
-            CR_BASECONFIG__LOGGING__FILEPATH: /opt/crypter/logs/crypter-grpc-api.log
-            CR_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
-
     core-3001:
         build:
             context: .
@@ -94,12 +76,14 @@ services:
             MY_BASECONFIG__SECURITY__CLAIM.URL: http://localhost:3002
             MY_BASECONFIG__LOGGING__FILEPATH: /opt/mydms/logs/mydms-api.log
             MY_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
+            MY_BASECONFIG__ASSETS__ASSETDIR: ./assets
             MY_FILESTORE__REGION: $FILESTORE_REGION
             MY_FILESTORE__BUCKET: $FILESTORE_BUCKET
             MY_FILESTORE__KEY: $FILESTORE_KEY
             MY_FILESTORE__SECRET: $FILESTORE_SECRET
-            MY_UPLOAD__ENDPOINTURL: http://core-3001:3000/api/v1
             MY_DATABASE__CONNECTIONSTRING: /opt/mydms/db/mydms.db
+            MY_UPLOAD__UPLOADPATH: /opt/mydms/uploads
+            MY_UPLOAD__MAXUPLOADSIZE: 5000000
             CONNECTIONSTRING: /opt/mydms/db/mydms.db
             REPLICA_URL: $MYDMS_REPLICA_URL
             LITESTREAM_ACCESS_KEY_ID: $LITESTREAM_ACCESS_KEY_ID

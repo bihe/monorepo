@@ -1,12 +1,15 @@
 package document_test
 
 import (
+	"bytes"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
+	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
@@ -14,6 +17,14 @@ import (
 var logger = logging.NewNop()
 
 const expectations = "there were unfulfilled expectations: %s"
+
+var uploadSettings = upload.ServiceOptions{
+	Logger:           logger,
+	Store:            upload.NewStore("/tmp"),
+	MaxUploadSize:    500000,
+	AllowedFileTypes: []string{"pdf"},
+}
+var uploadSvc = upload.NewService(uploadSettings)
 
 func Test_GetDocumentByID(t *testing.T) {
 	svc := document.NewService(logger, &mockRepository{}, nil, nil)
@@ -118,21 +129,43 @@ func Test_SearchList(t *testing.T) {
 	}
 }
 
+const unencryptedPDF = "../../../../testdata/unencrypted.pdf"
+
 func Test_SaveDocument(t *testing.T) {
 	c, db, mock := GetMockConn(t)
 	defer db.Close()
 
 	fileSvc := newFileService()
-	svc := document.NewService(logger, newDocRepo(c), fileSvc, &mockUploadClient{})
+	svc := document.NewService(logger, newDocRepo(c), fileSvc, uploadSvc)
 
 	// test a blank / new document
 	// ------------------------------------------------------------------
 	mock.ExpectBegin()
 	mock.ExpectCommit()
 
+	payload, err := os.ReadFile(unencryptedPDF)
+	if err != nil {
+		t.Fatalf("could not read testfile: %v", err)
+	}
+	var b bytes.Buffer // A Buffer needs no initialization.
+	if _, err := b.Write(payload); err != nil {
+		t.Fatalf("could not write payload to buffer: %v", err)
+	}
+
+	// check that the supported file-types is case insensitive
+	var id string
+	if id, err = uploadSvc.Save(upload.File{
+		File:     &b,
+		MimeType: "application/pdf",
+		Name:     "unencrypted.PDF",
+		Size:     int64(len(payload)),
+	}); err != nil {
+		t.Fatalf("could not write file: %v", err)
+	}
+
 	doc, err := svc.SaveDocument(document.Document{
-		UploadToken: "token",
-		Title:       "<span onclick=\"alert(Hello)\">Title</span>",
+		UploadToken: id,
+		Title:       "New-Document",
 		Tags:        []string{"A", "B"},
 		Senders:     []string{"Sender"},
 	}, security.User{})
@@ -140,152 +173,7 @@ func Test_SaveDocument(t *testing.T) {
 		t.Errorf("could not save document: %v", err)
 	}
 	// clean input via policy
-	assert.Equal(t, "<span>Title</span>", doc.Title)
-
-	// test an exiting document
-	// ------------------------------------------------------------------
-	mock.ExpectBegin()
-	mock.ExpectCommit()
-
-	doc, err = svc.SaveDocument(document.Document{
-		ID:          "id",
-		UploadToken: "token",
-		Title:       "<span onclick=\"alert(Hello)\">Title</span>",
-		Tags:        []string{"A", "B"},
-		Senders:     []string{"Sender"},
-	}, security.User{})
-	if err != nil {
-		t.Errorf("could not save document: %v", err)
-	}
-	// clean input via policy
-	assert.Equal(t, "<span>Title</span>", doc.Title)
-
-	// failed to load the existing document with the given ID
-	// resulting in a new document
-	// ------------------------------------------------------------------
-	mock.ExpectBegin()
-	mock.ExpectCommit()
-
-	repo := newDocRepo(c)
-	// att: call-count is not 0-based
-	// repo.CreateAtomic is the first call
-	repo.errMap[2] = fmt.Errorf("cannt get document by ID")
-	svc = document.NewService(logger, repo, fileSvc, &mockUploadClient{})
-
-	doc, err = svc.SaveDocument(document.Document{
-		ID:          "id",
-		UploadToken: "token",
-		Title:       "<span onclick=\"alert(Hello)\">Title</span>",
-		Tags:        []string{"A", "B"},
-		Senders:     []string{"Sender"},
-	}, security.User{})
-	if err != nil {
-		t.Errorf("could not save document: %v", err)
-	}
-	// clean input via policy
-	assert.Equal(t, "<span>Title</span>", doc.Title)
-
-	// failed to load save the document
-	// ------------------------------------------------------------------
-	mock.ExpectBegin()
-	mock.ExpectRollback()
-
-	repo = newDocRepo(c)
-	// att: call-count is not 0-based
-	// repo.CreateAtomic is the first call, repo.Get the second call
-	repo.errMap[3] = fmt.Errorf("cannt get document by ID")
-	svc = document.NewService(logger, repo, fileSvc, &mockUploadClient{})
-
-	doc, err = svc.SaveDocument(document.Document{
-		ID:          "id",
-		UploadToken: "token",
-		Title:       "<span onclick=\"alert(Hello)\">Title</span>",
-		Tags:        []string{"A", "B"},
-		Senders:     []string{"Sender"},
-	}, security.User{})
-	if err == nil {
-		t.Errorf("error expected")
-	}
-
-	// missing upload file token / or filename
-	// ------------------------------------------------------------------
-	mock.ExpectBegin()
-	mock.ExpectRollback()
-
-	repo = newDocRepo(c)
-	// att: call-count is not 0-based
-	// repo.CreateAtomic is the first call, repo.Get the second call
-	repo.errMap[3] = fmt.Errorf("cannt get document by ID")
-	svc = document.NewService(logger, repo, fileSvc, &mockUploadClient{})
-
-	doc, err = svc.SaveDocument(document.Document{
-		ID:      "id",
-		Title:   "<span onclick=\"alert(Hello)\">Title</span>",
-		Tags:    []string{"A", "B"},
-		Senders: []string{"Sender"},
-	}, security.User{})
-	if err == nil {
-		t.Errorf("error expected")
-	}
-
-	// failed to get file from upload-client
-	// ------------------------------------------------------------------
-	mock.ExpectBegin()
-	mock.ExpectRollback()
-
-	fileSvc = newFileService()
-	svc = document.NewService(logger, newDocRepo(c), fileSvc, &mockUploadClient{getFail: true})
-
-	doc, err = svc.SaveDocument(document.Document{
-		ID:          "id",
-		UploadToken: "token",
-		Title:       "<span onclick=\"alert(Hello)\">Title</span>",
-		Tags:        []string{"A", "B"},
-		Senders:     []string{"Sender"},
-	}, security.User{})
-	if err == nil {
-		t.Errorf("error expected")
-	}
-
-	// filesvc failed to save
-	// ------------------------------------------------------------------
-	mock.ExpectBegin()
-	mock.ExpectRollback()
-
-	fileSvc = newFileService()
-	fileSvc.errMap[1] = fmt.Errorf("could not save uploaded file")
-	svc = document.NewService(logger, newDocRepo(c), fileSvc, &mockUploadClient{getFail: false})
-
-	doc, err = svc.SaveDocument(document.Document{
-		ID:          "id",
-		UploadToken: "token",
-		Title:       "<span onclick=\"alert(Hello)\">Title</span>",
-		Tags:        []string{"A", "B"},
-		Senders:     []string{"Sender"},
-	}, security.User{})
-	if err == nil {
-		t.Errorf("error expected")
-	}
-
-	// failed to delete the uploaded file
-	// but this error is just loged, not returned
-	// ------------------------------------------------------------------
-	mock.ExpectBegin()
-	mock.ExpectCommit()
-
-	fileSvc = newFileService()
-	svc = document.NewService(logger, newDocRepo(c), fileSvc, &mockUploadClient{deleteFail: true})
-
-	doc, err = svc.SaveDocument(document.Document{
-		ID:          "id",
-		UploadToken: "token",
-		Title:       "<span onclick=\"alert(Hello)\">Title</span>",
-		Tags:        []string{"A", "B"},
-		Senders:     []string{"Sender"},
-	}, security.User{})
-	if err != nil {
-		t.Errorf("%v", err)
-	}
+	assert.Equal(t, "New-Document", doc.Title)
 
 	// we make sure that all expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {

@@ -28,6 +28,8 @@ type TemplateHandler struct {
 	Build   string
 }
 
+const searchURL = "/sites/search"
+
 // DisplaySites determined the sites of the current user and displays them
 func (t *TemplateHandler) DisplaySites() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -44,6 +46,7 @@ func (t *TemplateHandler) DisplaySites() http.HandlerFunc {
 			templates.SiteStyles(),
 			templates.SiteNavigation(search),
 			templates.SiteContent(usrSites),
+			searchURL,
 		).Render(r.Context(), w)
 	}
 }
@@ -66,6 +69,7 @@ func (t *TemplateHandler) ShowEditSites() http.HandlerFunc {
 			templates.SiteEditStyles(),
 			templates.SiteEditNavigation(search),
 			templates.SiteEditContent(jsonPayload, ""),
+			searchURL,
 		).Render(r.Context(), w)
 	}
 }

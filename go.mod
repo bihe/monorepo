@@ -1,34 +1,29 @@
 module golang.binggl.net/monorepo
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.2 // done
-	github.com/PuerkitoBio/goquery v1.9.0 // done
-	github.com/aws/aws-sdk-go v1.50.25 // done
-	github.com/bihe/go-gelf v1.0.0 // done
-	github.com/coreos/go-oidc/v3 v3.9.0 // done
-	github.com/go-chi/chi/v5 v5.0.12 // done
-	github.com/google/uuid v1.6.0 // done
-	github.com/jmoiron/sqlx v1.3.5 // done
-	github.com/lestrrat-go/jwx v1.2.28 // done
-	github.com/mattn/go-sqlite3 v1.14.22 // done
-	github.com/microcosm-cc/bluemonday v1.0.26 // done
-	github.com/pdfcpu/pdfcpu v0.6.0 // done
-	github.com/rs/cors v1.10.1 // done
-	github.com/spf13/pflag v1.0.5 // done
-	github.com/spf13/viper v1.18.2 // done
-	github.com/stretchr/testify v1.8.4 // done
-	go.uber.org/zap v1.27.0 // done
-	golang.org/x/oauth2 v0.17.0
-	google.golang.org/grpc v1.62.0 // done
-	google.golang.org/protobuf v1.32.0 // done
-	gorm.io/driver/mysql v1.5.4 // done
-	gorm.io/driver/sqlite v1.5.5 // done
-	gorm.io/gorm v1.25.7 // done
-)
-
-require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2
+	github.com/PuerkitoBio/goquery v1.9.0
 	github.com/a-h/templ v0.2.543
+	github.com/aws/aws-sdk-go v1.50.25
+	github.com/bihe/go-gelf v1.0.0
+	github.com/coreos/go-oidc/v3 v3.9.0
+	github.com/go-chi/chi/v5 v5.0.12
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.1
+	github.com/jmoiron/sqlx v1.3.5
+	github.com/lestrrat-go/jwx v1.2.28
+	github.com/mattn/go-sqlite3 v1.14.22
+	github.com/microcosm-cc/bluemonday v1.0.26
+	github.com/pdfcpu/pdfcpu v0.6.0
+	github.com/rs/cors v1.10.1
+	github.com/spf13/pflag v1.0.5
+	github.com/spf13/viper v1.18.2
+	github.com/stretchr/testify v1.8.4
+	go.uber.org/zap v1.27.0
+	golang.org/x/oauth2 v0.17.0
+	gorm.io/driver/mysql v1.5.4
+	gorm.io/driver/sqlite v1.5.5
+	gorm.io/gorm v1.25.7
 )
 
 require (
@@ -74,7 +69,7 @@ require (
 	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240221002015-b0ce06bbee7c // indirect
+	google.golang.org/protobuf v1.32.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

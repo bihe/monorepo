@@ -42,9 +42,6 @@ clean: ## clean caches and build output
 mod-update: ## update to latest compatible packages (yes golang!)
 	@-$(MAKE) -s go-update
 
-proto: ## generate protobuf code for grpc
-	@-$(MAKE) -s go-protogen
-
 build: ## compile the whole repo
 	@-$(MAKE) -s go-build
 
@@ -77,22 +74,7 @@ go-clean:
 go-update:
 	@echo "  >  Go update dependencies ..."
 	go get -d -u -t ./...
-	go mod tidy -compat=1.20
-
-go-protogen:
-	@echo "  >  Compiline protobuf files ..."
-	rm -f ./proto/*pb.go
-	## protoc
-	# Install protoc: https://protobuf.dev/downloads/
-	#
-	## Protobuf
-	# https://developers.google.com/protocol-buffers/docs/gotutorial
-	# go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-	#
-	## GRPC
-	# https://grpc.io/docs/languages/go/quickstart/
-	# go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-	protoc --go_out=./proto --go-grpc_out=./proto ./proto/filecrypt.proto
+	go mod tidy -compat=1.22
 
 go-build:
 	@echo "  >  Building the monorepo ..."

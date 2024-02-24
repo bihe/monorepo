@@ -52,7 +52,7 @@ func Run(version, build, appName string) error {
 			TimeOut:          "30s",
 		})
 		docSvc  = document.NewService(logger, repo, fileSvc, uploadSvc)
-		handler = MakeHTTPHandler(docSvc, uploadSvc, logger, HTTPHandlerOptions{
+		handler = MakeHTTPHandler(docSvc, uploadSvc, fileSvc, logger, HTTPHandlerOptions{
 			BasePath:  basePath,
 			ErrorPath: appCfg.ErrorPath,
 			Config:    appCfg,

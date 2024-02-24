@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"golang.binggl.net/monorepo/internal/mydms/app/config"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
+	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
 	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	"golang.binggl.net/monorepo/internal/mydms/web"
 	conf "golang.binggl.net/monorepo/pkg/config"
@@ -29,7 +30,7 @@ type HTTPHandlerOptions struct {
 const forbiddenPath = "/mydms/403"
 
 // MakeHTTPHandler creates a new handler implementation which is used together with the HTTP server
-func MakeHTTPHandler(docSvc document.Service, uploadSvc upload.Service, logger logging.Logger, opts HTTPHandlerOptions) http.Handler {
+func MakeHTTPHandler(docSvc document.Service, uploadSvc upload.Service, fileSvc filestore.FileService, logger logging.Logger, opts HTTPHandlerOptions) http.Handler {
 	std, sec := setupRouter(opts, logger)
 
 	templateHandler := &web.TemplateHandler{
@@ -44,6 +45,11 @@ func MakeHTTPHandler(docSvc document.Service, uploadSvc upload.Service, logger l
 		Version:       opts.Version,
 		Build:         opts.Build,
 		MaxUploadSize: opts.Config.Upload.MaxUploadSize,
+	}
+
+	fileHandler := &web.FileHandler{
+		Logger:  logger,
+		FileSvc: fileSvc,
 	}
 
 	// use this for development purposes only!
@@ -74,6 +80,7 @@ func MakeHTTPHandler(docSvc document.Service, uploadSvc upload.Service, logger l
 		r.Post("/confirm/{id}", templateHandler.ShowDeleteConfirmDialog())
 		r.Delete("/{id}", templateHandler.DeleteDocument())
 		r.Get("/list/{type}", templateHandler.SearchListItems())
+		r.Get("/file/{path}", fileHandler.GetDocumentPayload())
 
 		return r
 	}())

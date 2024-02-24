@@ -102,7 +102,7 @@ func handler(repo document.Repository) http.Handler {
 		uploadSvc, /* upload.Service */
 	)
 
-	return mydms.MakeHTTPHandler(svc, uploadSvc, logger, mydms.HTTPHandlerOptions{
+	return mydms.MakeHTTPHandler(svc, uploadSvc, fileStore, logger, mydms.HTTPHandlerOptions{
 		BasePath:  "./",
 		ErrorPath: "/error",
 		Config: config.AppConfig{

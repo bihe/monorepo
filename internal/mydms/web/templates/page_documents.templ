@@ -4,7 +4,14 @@ templ DocumentsContent(documentList templ.Component, search string) {
 	<div class="container-fluid">
 		<form>
 			<input type="hidden" name="q" value={ search }/>
-			<div class="row be_my_center" id="document_list" hx-put={ "/mydms/partial/list" } hx-trigger="refreshDocumentList from:body" hx-swap="innerHTML">
+			<div
+				class="row be_my_center"
+				id="document_list"
+				hx-put={ "/mydms/partial/list" }
+				hx-trigger="refreshDocumentList from:body"
+				hx-params="q"
+				hx-swap="innerHTML"
+			>
 				@documentList
 			</div>
 		</form>

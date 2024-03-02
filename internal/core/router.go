@@ -44,11 +44,6 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, logger logging
 		JwtExpiryDays: opts.Config.Security.Expiry,
 	}
 
-	// uploadHandler := &api.UploadHandler{
-	// 	Service: uploadSvc,
-	// 	Logger:  logger,
-	// }
-
 	templateHandler := &web.TemplateHandler{
 		TemplateHandler: &handler.TemplateHandler{
 			Logger:    logger,
@@ -95,14 +90,6 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, logger logging
 		r.Post("/", templateHandler.SaveSites())
 		return r
 	}())
-	// the following APIs have the base-URL /api/v1
-	// sec.Mount("/api/v1/upload", func() http.Handler {
-	// 	r := chi.NewRouter()
-	// 	r.Post("/file", uploadHandler.Upload())
-	// 	r.Get("/{id}", uploadHandler.GetItemByID())
-	// 	r.Delete("/{id}", uploadHandler.DeleteItemByID())
-	// 	return r
-	// }())
 
 	// call on the ROOT path
 	std.Get("/ok", func(w http.ResponseWriter, r *http.Request) {

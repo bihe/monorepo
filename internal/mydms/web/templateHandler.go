@@ -57,7 +57,7 @@ func (t *TemplateHandler) DisplayDocuments() http.HandlerFunc {
 			templates.DocumentsStyles(),
 			templates.DocumentsNavigation(search),
 			templates.DocumentsContent(
-				templates.DocumentList(numDocs, next, search, documents), search),
+				templates.DocumentList(numDocs, next, documents), search),
 			searchURL,
 		).Render(r.Context(), w)
 	}
@@ -68,12 +68,11 @@ func (t *TemplateHandler) DisplayDocumentsPartial() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
 			next      int
-			search    string
 			numDocs   int
 			documents document.PagedDocument
 		)
-		documents, search, numDocs, next = t.getDocuments(r)
-		templates.DocumentList(numDocs, next, search, documents).Render(r.Context(), w)
+		documents, _, numDocs, next = t.getDocuments(r)
+		templates.DocumentList(numDocs, next, documents).Render(r.Context(), w)
 	}
 }
 

@@ -68,6 +68,7 @@ services:
             - ./_logs:/opt/mydms/logs
             - ./testdata/sqlite/integration:/opt/mydms/db
             - ./litestream/litestream-integration.yml:/etc/litestream.yml
+            - /tmp:/opt/mydms/uploads
         restart: always
         environment:
             MY_BASECONFIG__ENVIRONMENT: Integration
@@ -129,11 +130,10 @@ services:
             dockerfile: ./caddy.Dockerfile
             args:
                 buildtime_variable_arch: $ARCH
-                FRONTEND_MODE: integration
         image: frontend
         ports:
             - "443:443"
         volumes:
-            - ./caddy/Caddyfile.integration:/etc/caddy/Caddyfile
+            - ./caddy/Caddyfile:/etc/caddy/Caddyfile
             - ./caddy/certs:/opt/caddy/certs
         restart: on-failure

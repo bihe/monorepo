@@ -4,7 +4,7 @@ import "golang.binggl.net/monorepo/internal/mydms/app/document"
 import "golang.binggl.net/monorepo/pkg/handler/templates"
 import "fmt"
 
-templ DocumentList(docNum, skip int, search string, pd document.PagedDocument) {
+templ DocumentList(docNum, skip int, pd document.PagedDocument) {
 	for _, doc := range pd.Documents {
 		<div class="card by_my_document">
 			<div class="card-body">
@@ -83,27 +83,25 @@ templ DocumentList(docNum, skip int, search string, pd document.PagedDocument) {
 	}
 	<div id="page_content" class="show_more_results">
 		if docNum > 0 {
-			<form name="paging_form">
-				<input type="hidden" name="skip" value={ fmt.Sprintf("%d", skip) }/>
-				<input type="hidden" name="q" value={ search }/>
-				<p>Currently showing { fmt.Sprintf("%d", docNum ) } results of total { fmt.Sprintf("%d", pd.TotalEntries) }</p>
-				<div id="request_indicator" class="request_indicator htmx-indicator">
-					<div class="spinner-border text-light" role="status">
-						<span class="visually-hidden">Loading...</span>
-					</div>
+			<input type="hidden" name="skip" value={ fmt.Sprintf("%d", skip) }/>
+			<p>Currently showing { fmt.Sprintf("%d", docNum ) } results of total { fmt.Sprintf("%d", pd.TotalEntries) }</p>
+			<div id="request_indicator" class="request_indicator htmx-indicator">
+				<div class="spinner-border text-light" role="status">
+					<span class="visually-hidden">Loading...</span>
 				</div>
-				if skip > 0 {
-					<button
-						type="button"
-						class="btn btn-light btn-sm"
-						hx-put={ "/mydms/partial/list" }
-						hx-target="#page_content"
-						hx-swap="outerHTML"
-					>
-						...
-					</button>
-				}
-			</form>
+			</div>
+			if skip > 0 {
+				<button
+					type="button"
+					class="btn btn-light btn-sm"
+					hx-put={ "/mydms/partial/list" }
+					hx-target="#page_content"
+					hx-swap="outerHTML"
+					hx-params="q,skip"
+				>
+					...
+				</button>
+			}
 		} else {
 			<div class="center_aligned">
 				<p class="noitems"><i class="bigger bi bi-balloon"></i> No results available!</p>

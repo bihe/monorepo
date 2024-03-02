@@ -113,6 +113,58 @@ type encryptionSvc struct {
 	logger logging.Logger
 }
 
+// Encrypt performs the encryption operation for different file-types.
+// currently only PDF encryption is possible.
+// When deployed in a containerized environment the PDF library pdfcpu needs some configuration.
+// This configuration can be done in a yaml file; the path to the file can be provided as an
+// environement variable.
+// For the current setup this is done in this way:
+//
+//	"XDG_CONFIG_HOME=/opt/mydms/etc"
+//
+// where the configuration file is located in the directory
+//
+//	pdfcpu/config.yml
+//
+// The configuration file is needed for a headless/server mode for pdfcpu: https://github.com/pdfcpu/pdfcpu/blob/873542105220142fae8e44e5a5a52a16cd391d2e/pkg/pdfcpu/model/resources/config.yml#L4
+//
+//	#########################
+//	# Default configuration #
+//	#########################
+//
+//	reader15: true
+//	decodeAllStreams: false
+//
+//	# validationMode:
+//	# ValidationStrict,
+//	# ValidationRelaxed,
+//	# ValidationNone
+//	validationMode: ValidationRelaxed
+//
+//	# eol for writing:
+//	# EolLF
+//	# EolCR
+//	# EolCRLF
+//	eol: EolLF
+//
+//	writeObjectStream: true
+//	writeXRefStream: true
+//	encryptUsingAES: true
+//
+//	# encryptKeyLength: max 256
+//	encryptKeyLength: 256
+//
+//	# permissions for encrypted files:
+//	# -3901 = 0xF0C3 (PermissionsNone)
+//	#    -1 = 0xFFFF (PermissionsAll)
+//	permissions: -3901
+//
+//	# displayUnits:
+//	# points
+//	# inches
+//	# cm
+//	# mm
+//	units: points
 func (e *encryptionSvc) Encrypt(ctx context.Context, req Request) ([]byte, error) {
 	err := validateEncryptionRequest(req.NewPass, req.Payload)
 	if err != nil {

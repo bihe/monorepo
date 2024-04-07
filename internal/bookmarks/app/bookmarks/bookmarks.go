@@ -13,6 +13,7 @@ import (
 	"golang.binggl.net/monorepo/internal/bookmarks/app/favicon"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
 	"golang.binggl.net/monorepo/pkg/logging"
+	"golang.binggl.net/monorepo/pkg/persistence"
 	"golang.binggl.net/monorepo/pkg/security"
 )
 
@@ -53,7 +54,8 @@ func (s *Application) CreateBookmark(bm Bookmark, user security.User) (*Bookmark
 			return nil, fmt.Errorf("could not access the specified favicon")
 		}
 		// got a payload which should be persisted in the store
-		err = s.FavStore.InUnitOfWork(func(favRepo store.FaviconRepository) error {
+		err = s.FavStore.InUnitOfWork(func(u persistence.Unit) error {
+			favRepo := store.CreateFaviconRepoUnit(u, s.Logger)
 			if _, e := favRepo.Save(store.Favicon{
 				ID:           obj.Name,
 				Payload:      obj.Payload,
@@ -75,7 +77,8 @@ func (s *Application) CreateBookmark(bm Bookmark, user security.User) (*Bookmark
 		}
 	}
 
-	if err := s.BookmarkStore.InUnitOfWork(func(repo store.BookmarkRepository) error {
+	if err := s.BookmarkStore.InUnitOfWork(func(u persistence.Unit) error {
+		repo := store.CreateBookmarkRepoUnit(u, s.Logger)
 		item, err := repo.Create(store.Bookmark{
 			DisplayName:        bm.DisplayName,
 			Path:               bm.Path,
@@ -189,7 +192,8 @@ func (s *Application) FetchAndForward(id string, user security.User) (string, er
 
 	s.Logger.Info(fmt.Sprintf("try to fetch bookmark with ID '%s'", id))
 	redirectURL := ""
-	if err := s.BookmarkStore.InUnitOfWork(func(repo store.BookmarkRepository) error {
+	if err := s.BookmarkStore.InUnitOfWork(func(u persistence.Unit) error {
+		repo := store.CreateBookmarkRepoUnit(u, s.Logger)
 		existing, err := repo.GetBookmarkByID(id, user.Username)
 		if err != nil {
 			s.Logger.Error(fmt.Sprintf("could not find bookmark by id '%s': %v", id, err))
@@ -226,7 +230,8 @@ func (s *Application) Delete(id string, user security.User) error {
 
 	faviconId := ""
 	s.Logger.Info(fmt.Sprintf("will try to delete bookmark with ID '%s'", id))
-	if err := s.BookmarkStore.InUnitOfWork(func(repo store.BookmarkRepository) error {
+	if err := s.BookmarkStore.InUnitOfWork(func(u persistence.Unit) error {
+		repo := store.CreateBookmarkRepoUnit(u, s.Logger)
 		// 1) fetch the existing bookmark by id
 		existing, err := repo.GetBookmarkByID(id, user.Username)
 		if err != nil {
@@ -254,7 +259,8 @@ func (s *Application) Delete(id string, user security.User) error {
 
 	// when a favicon is available remove it, if it is the only remaining one
 	if faviconId != "" {
-		err := s.FavStore.InUnitOfWork(func(favRepo store.FaviconRepository) error {
+		err := s.FavStore.InUnitOfWork(func(u persistence.Unit) error {
+			favRepo := store.CreateFaviconRepoUnit(u, s.Logger)
 			obj, e := favRepo.Get(faviconId)
 			if e != nil {
 				s.Logger.Warn(fmt.Sprintf("the specified favicon '%s' was not available in the store", faviconId))
@@ -279,7 +285,8 @@ func (s *Application) UpdateSortOrder(sort BookmarksSortOrder, user security.Use
 	}
 
 	var updates int
-	if err := s.BookmarkStore.InUnitOfWork(func(repo store.BookmarkRepository) error {
+	if err := s.BookmarkStore.InUnitOfWork(func(u persistence.Unit) error {
+		repo := store.CreateBookmarkRepoUnit(u, s.Logger)
 		for i, item := range sort.IDs {
 			bm, err := repo.GetBookmarkByID(item, user.Username)
 			if err != nil {
@@ -332,7 +339,8 @@ func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark
 			return nil, fmt.Errorf("could not access the specified favicon")
 		}
 		// got a payload which should be persisted in the store
-		err = s.FavStore.InUnitOfWork(func(favRepo store.FaviconRepository) error {
+		err = s.FavStore.InUnitOfWork(func(u persistence.Unit) error {
+			favRepo := store.CreateFaviconRepoUnit(u, s.Logger)
 			if _, e := favRepo.Save(store.Favicon{
 				ID:           obj.Name,
 				Payload:      obj.Payload,
@@ -358,7 +366,8 @@ func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark
 	}
 
 	s.Logger.Info(fmt.Sprintf("will try to update existing bookmark entry: '%s (%s)'", bm.DisplayName, bm.ID))
-	if err := s.BookmarkStore.InUnitOfWork(func(repo store.BookmarkRepository) error {
+	if err := s.BookmarkStore.InUnitOfWork(func(u persistence.Unit) error {
+		repo := store.CreateBookmarkRepoUnit(u, s.Logger)
 		childCount := existing.ChildCount
 		if existing.Type == store.Folder {
 			// 2) ensure that the existing folder is not moved to itself

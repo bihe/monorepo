@@ -6,18 +6,18 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"golang.binggl.net/monorepo/pkg/logging"
+	"golang.binggl.net/monorepo/pkg/persistence"
 )
 
 // BookmarkRepository defines methods to interact with a store
 type BookmarkRepository interface {
-	InUnitOfWork(fn func(repo BookmarkRepository) error) error
+	persistence.DBRepository
 	Create(item Bookmark) (Bookmark, error)
 	Update(item Bookmark) (Bookmark, error)
 	Delete(item Bookmark) error
@@ -34,12 +34,24 @@ type BookmarkRepository interface {
 	GetFolderByPath(path, username string) (Bookmark, error)
 }
 
-// CreateBookmarkRepo a new repository
-func CreateBookmarkRepo(db *gorm.DB, logger logging.Logger) BookmarkRepository {
+// CreateBookmarkRepoRW creates a new repository using read and write connections
+func CreateBookmarkRepoRW(read, write *gorm.DB, logger logging.Logger) BookmarkRepository {
 	return &dbBookmarkRepository{
-		transient: db,
-		shared:    nil,
-		logger:    logger,
+		GormRepository: persistence.GormRepository{
+			Read:  read,
+			Write: write,
+		},
+		logger: logger,
+	}
+}
+
+// CreateBookmarkRepoUnit creates a new repository for transactional work
+func CreateBookmarkRepoUnit(u persistence.Unit, logger logging.Logger) BookmarkRepository {
+	return &dbBookmarkRepository{
+		GormRepository: persistence.GormRepository{
+			Tx: u.Tx,
+		},
+		logger: logger,
 	}
 }
 
@@ -48,30 +60,8 @@ func CreateBookmarkRepo(db *gorm.DB, logger logging.Logger) BookmarkRepository {
 // --------------------------------------------------------------------------
 
 type dbBookmarkRepository struct {
-	transient *gorm.DB
-	shared    *gorm.DB
-	logger    logging.Logger
-	sync.Mutex
-}
-
-// InUnitOfWork uses a transaction to execute the supplied function
-func (r *dbBookmarkRepository) InUnitOfWork(fn func(repo BookmarkRepository) error) error {
-	return r.con().Transaction(func(tx *gorm.DB) error {
-		// be sure the stop recursion here
-		if r.shared != nil {
-			return fmt.Errorf("a shared connection/transaction is already available, will not start a new one")
-		}
-
-		// lock concurrent access for transactional tasks
-		r.Lock()
-		defer r.Unlock()
-
-		return fn(&dbBookmarkRepository{
-			transient: r.transient,
-			shared:    tx, // the transaction is used as the shared connection
-			logger:    r.logger,
-		})
-	})
+	persistence.GormRepository
+	logger logging.Logger
 }
 
 // query data
@@ -80,14 +70,14 @@ func (r *dbBookmarkRepository) InUnitOfWork(fn func(repo BookmarkRepository) err
 // GetAllBookmarks retrieves all available bookmarks for the given user
 func (r *dbBookmarkRepository) GetAllBookmarks(username string) ([]Bookmark, error) {
 	var bookmarks []Bookmark
-	h := r.con().Order("sort_order").Order("display_name").Where(&Bookmark{UserName: username}).Find(&bookmarks)
+	h := r.Con().Order("sort_order").Order("display_name").Where(&Bookmark{UserName: username}).Find(&bookmarks)
 	return bookmarks, h.Error
 }
 
 // GetBookmarksByPath return the bookmark elements which have the given path
 func (r *dbBookmarkRepository) GetBookmarksByPath(path, username string) ([]Bookmark, error) {
 	var bookmarks []Bookmark
-	h := r.con().Order("sort_order").Order("display_name").Where(&Bookmark{
+	h := r.Con().Order("sort_order").Order("display_name").Where(&Bookmark{
 		UserName: username,
 		Path:     path,
 	}).Find(&bookmarks)
@@ -97,7 +87,7 @@ func (r *dbBookmarkRepository) GetBookmarksByPath(path, username string) ([]Book
 // GetBookmarksByPathStart return the bookmark elements which path starts with
 func (r *dbBookmarkRepository) GetBookmarksByPathStart(path, username string) ([]Bookmark, error) {
 	var bookmarks []Bookmark
-	h := r.con().
+	h := r.Con().
 		Order("type desc").
 		Order("sort_order").
 		Order("display_name").
@@ -108,7 +98,7 @@ func (r *dbBookmarkRepository) GetBookmarksByPathStart(path, username string) ([
 // GetBookmarksByName searches for bookmarks by the given name
 func (r *dbBookmarkRepository) GetBookmarksByName(name, username string) ([]Bookmark, error) {
 	var bookmarks []Bookmark
-	h := r.con().Order("sort_order").Order("display_name").
+	h := r.Con().Order("sort_order").Order("display_name").
 		Where("user_name = ? AND lower(display_name) LIKE ?", username, "%"+strings.ToLower(name)+"%").Find(&bookmarks)
 	return bookmarks, h.Error
 }
@@ -116,7 +106,7 @@ func (r *dbBookmarkRepository) GetBookmarksByName(name, username string) ([]Book
 // GetBookmarkByID returns the bookmark specified by the given id - for the user
 func (r *dbBookmarkRepository) GetBookmarkByID(id, username string) (Bookmark, error) {
 	var bookmark Bookmark
-	h := r.con().Where(&Bookmark{ID: id, UserName: username}).First(&bookmark)
+	h := r.Con().Where(&Bookmark{ID: id, UserName: username}).First(&bookmark)
 	return bookmark, h.Error
 }
 
@@ -134,7 +124,7 @@ func (r *dbBookmarkRepository) GetFolderByPath(path, username string) (Bookmark,
 		return Bookmark{}, fmt.Errorf("could not get parent/folder of path '%s'", path)
 	}
 
-	h := r.con().Where(&Bookmark{
+	h := r.Con().Where(&Bookmark{
 		UserName:    username,
 		Path:        parent,
 		DisplayName: folderName,
@@ -158,7 +148,7 @@ func (r *dbBookmarkRepository) GetPathChildCount(path, username string) ([]NodeC
 
 	// Folder, Username, Path
 	var nodes []NodeCount
-	h := r.con().Raw(query, Folder, username, path).Scan(&nodes)
+	h := r.Con().Raw(query, Folder, username, path).Scan(&nodes)
 	if h.Error != nil {
 		return nil, fmt.Errorf("could not get nodecount for path '%s': %v", path, h.Error)
 	}
@@ -214,7 +204,7 @@ func (r *dbBookmarkRepository) Create(item Bookmark) (Bookmark, error) {
 		}
 	}
 
-	if h := r.con().Create(&item); h.Error != nil {
+	if h := r.WriteCon().Create(&item); h.Error != nil {
 		return Bookmark{}, h.Error
 	}
 
@@ -245,7 +235,7 @@ func (r *dbBookmarkRepository) Update(item Bookmark) (Bookmark, error) {
 		return Bookmark{}, fmt.Errorf("path is empty")
 	}
 
-	h := r.con().Where(&Bookmark{ID: item.ID, UserName: item.UserName}).First(&bm)
+	h := r.Con().Where(&Bookmark{ID: item.ID, UserName: item.UserName}).First(&bm)
 	if h.Error != nil {
 		return Bookmark{}, fmt.Errorf("cannot get bookmark by id '%s': %v", item.ID, h.Error)
 	}
@@ -285,7 +275,7 @@ func (r *dbBookmarkRepository) Update(item Bookmark) (Bookmark, error) {
 	bm.ChildCount = item.ChildCount
 	bm.InvertFaviconColor = item.InvertFaviconColor
 
-	h = r.con().Save(&bm)
+	h = r.WriteCon().Save(&bm)
 	if h.Error != nil {
 		return Bookmark{}, fmt.Errorf("cannot update bookmark with id '%s': %v", item.ID, h.Error)
 	}
@@ -299,7 +289,7 @@ func (r *dbBookmarkRepository) Delete(item Bookmark) error {
 		err error
 	)
 
-	h := r.con().Where(&Bookmark{ID: item.ID, UserName: item.UserName}).First(&bm)
+	h := r.Con().Where(&Bookmark{ID: item.ID, UserName: item.UserName}).First(&bm)
 	if h.Error != nil {
 		return fmt.Errorf("cannot get bookmark by id '%s': %v", item.ID, h.Error)
 	}
@@ -317,7 +307,7 @@ func (r *dbBookmarkRepository) Delete(item Bookmark) error {
 		}
 	}
 
-	h = r.con().Delete(&bm)
+	h = r.WriteCon().Delete(&bm)
 	if h.Error != nil {
 		return fmt.Errorf("cannot delete bookmark by id '%s': %v", item.ID, h.Error)
 	}
@@ -334,7 +324,7 @@ func (r *dbBookmarkRepository) DeletePath(path, username string) error {
 		return fmt.Errorf("cannot delete the root path")
 	}
 
-	h := r.con().Where("user_name = ? AND path LIKE ?", username, path+"%").Delete(Bookmark{})
+	h := r.Con().Where("user_name = ? AND path LIKE ?", username, path+"%").Delete(Bookmark{})
 	if h.Error != nil {
 		return fmt.Errorf("no bookmarks available for path '%s': %v", path, h.Error)
 	}
@@ -343,7 +333,7 @@ func (r *dbBookmarkRepository) DeletePath(path, username string) error {
 	if err != nil {
 		return fmt.Errorf("could not get folder of given path '%s'", path)
 	}
-	h = r.con().Delete(&folder)
+	h = r.WriteCon().Delete(&folder)
 	if h.Error != nil {
 		return fmt.Errorf("cannot delete folder '%s': %v", path, h.Error)
 	}
@@ -379,18 +369,8 @@ func (r *dbBookmarkRepository) DeletePath(path, username string) error {
 // internal logic / helpers
 // --------------------------------------------------------------------------
 
-func (r *dbBookmarkRepository) con() *gorm.DB {
-	if r.shared != nil {
-		return r.shared
-	}
-	if r.transient == nil {
-		panic("no database connection is available")
-	}
-	return r.transient
-}
-
 func (r *dbBookmarkRepository) updateChildCount(folder *Bookmark, count int) error {
-	if h := r.con().Model(folder).Updates(
+	if h := r.WriteCon().Model(folder).Updates(
 		map[string]interface{}{"child_count": count, "modified": time.Now().UTC()}); h.Error != nil {
 		return fmt.Errorf("cannot update item '%+v': %v", *folder, h.Error)
 	}
@@ -418,7 +398,7 @@ func (r *dbBookmarkRepository) availablePaths(username string) (paths []string, 
 		rows *sql.Rows
 	)
 
-	rows, err = r.con().Raw(nativeHierarchyQuery, Folder, username).Rows() // (*sql.Rows, error)
+	rows, err = r.Con().Raw(nativeHierarchyQuery, Folder, username).Rows() // (*sql.Rows, error)
 	defer func(ro *sql.Rows) {
 		if ro != nil {
 			err = ro.Close()
@@ -447,7 +427,7 @@ func (r *dbBookmarkRepository) calcChildCount(path, username string, fn func(i i
 		return fmt.Errorf("invalid path encountered '%s'", path)
 	}
 	var bm Bookmark
-	if h := r.con().Where(&Bookmark{
+	if h := r.Con().Where(&Bookmark{
 		UserName:    username,
 		Path:        parentPath,
 		Type:        Folder,

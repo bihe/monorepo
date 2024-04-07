@@ -9,27 +9,28 @@ import (
 	"golang.binggl.net/monorepo/internal/bookmarks/app"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
 	"golang.binggl.net/monorepo/pkg/logging"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
+	"golang.binggl.net/monorepo/pkg/persistence"
 )
 
 var logger = logging.NewNop()
 
 func favRepo(t *testing.T) (store.FaviconRepository, *sql.DB) {
 	var (
-		DB  *gorm.DB
 		err error
 	)
-	if DB, err = gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{}); err != nil {
+	params := make([]persistence.SqliteParam, 0)
+	_, write, err := persistence.CreateGormSqliteRWCon(":memory:", params)
+	if err != nil {
 		t.Fatalf("cannot create database connection: %v", err)
 	}
 	// Migrate the schema
-	DB.AutoMigrate(&store.Favicon{})
-	db, err := DB.DB()
+	write.AutoMigrate(&store.Favicon{})
+	db, err := write.DB()
 	if err != nil {
 		t.Fatalf("could not get DB handle; %v", err)
 	}
-	return store.CreateFaviconRepo(DB, logger), db
+	favRepo := store.CreateFaviconRepoRW(write, write, logger)
+	return favRepo, db
 }
 
 func Test_CRUD_Favicon(t *testing.T) {
@@ -118,12 +119,12 @@ func Test_CRUD_Favicon(t *testing.T) {
 }
 
 func Test_InUnitOfWork(t *testing.T) {
-	repo, db := favRepo(t)
+	r, db := favRepo(t)
 	defer db.Close()
 
 	// create
-	err := repo.InUnitOfWork(func(repo store.FaviconRepository) error {
-
+	err := r.InUnitOfWork(func(u persistence.Unit) error {
+		repo := store.CreateFaviconRepoUnit(u, logger)
 		fav, err := repo.Save(store.Favicon{
 			ID:           "favicon_id",
 			Payload:      app.DefaultFavicon,

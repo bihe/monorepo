@@ -3,7 +3,6 @@ package bookmarks
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/conf"
@@ -11,10 +10,8 @@ import (
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/develop"
 	"golang.binggl.net/monorepo/pkg/logging"
+	"golang.binggl.net/monorepo/pkg/persistence"
 	"golang.binggl.net/monorepo/pkg/server"
-	"gorm.io/gorm"
-
-	"gorm.io/driver/sqlite"
 )
 
 // run is the entry-point for the bookmarks service
@@ -77,31 +74,11 @@ func logConfig(cfg conf.AppConfig) logging.Logger {
 const journalMode = "_journal_mode"
 const journalModeValue = "WAL"
 
-// setupRepositories enables the SQLITE repository for bookmark storage
+// setupRepositories enables the SQLITE repositories for the application
 func setupRepositories(config *conf.AppConfig, logger logging.Logger) (store.BookmarkRepository, store.FaviconRepository) {
-	// Documentation for DNS based SQLITE PRAGMAS: https://github.com/mattn/go-sqlite3
-	// add the WAL mode for SQLITE
-	dbConnStr := config.Database.ConnectionString
-	if !strings.Contains(dbConnStr, journalMode) {
-		paramDelim := "?"
-		if strings.Contains(dbConnStr, "?") {
-			paramDelim = "&"
-		}
-		dbConnStr += fmt.Sprintf("%s%s=%s", paramDelim, journalMode, journalModeValue)
-	}
-
-	con, err := gorm.Open(sqlite.Open(dbConnStr), &gorm.Config{})
+	read, write, err := persistence.CreateGormSqliteRWCon(config.Database.ConnectionString, make([]persistence.SqliteParam, 0))
 	if err != nil {
 		panic(fmt.Sprintf("cannot create database connection: %v", err))
 	}
-
-	db, err := con.DB()
-	if err != nil {
-		panic(fmt.Sprintf("cannot access underlying database: %v", err))
-	}
-	// this is done because of SQLITE WAL
-	// found here: https://stackoverflow.com/questions/35804884/sqlite-concurrent-writing-performance
-	db.SetMaxOpenConns(1)
-
-	return store.CreateBookmarkRepo(con, logger), store.CreateFaviconRepo(con, logger)
+	return store.CreateBookmarkRepoRW(read, write, logger), store.CreateFaviconRepoRW(read, write, logger)
 }

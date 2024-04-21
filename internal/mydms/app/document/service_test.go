@@ -21,7 +21,7 @@ const expectations = "there were unfulfilled expectations: %s"
 var uploadSettings = upload.ServiceOptions{
 	Logger:           logger,
 	Store:            upload.NewStore("/tmp"),
-	MaxUploadSize:    500000,
+	MaxUploadSize:    5000000,
 	AllowedFileTypes: []string{"pdf"},
 }
 var uploadSvc = upload.NewService(uploadSettings)

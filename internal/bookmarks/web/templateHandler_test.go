@@ -21,8 +21,7 @@ import (
 	"golang.binggl.net/monorepo/internal/bookmarks/web"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/logging"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
+	"golang.binggl.net/monorepo/pkg/persistence"
 )
 
 const validToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4MjcyMDE0NDUsImlhdCI6MTYyNjU5NjY0NSwiaXNzIjoiaXNzdWVyIiwianRpIjoiZmI1ZThjNDMtZDEwMi00MGU3LTljM2EtNTkwYzA3ODAzNzUwIiwic3ViIjoiaGVucmlrLmJpbmdnbEBnbWFpbC5jb20iLCJDbGFpbXMiOlsiQXxodHRwOi8vQXxBIl0sIkRpc3BsYXlOYW1lIjoiVXNlciBBIiwiRW1haWwiOiJ1c2VyQGEuY29tIiwiR2l2ZW5OYW1lIjoidXNlciIsIlN1cm5hbWUiOiJBIiwiVHlwZSI6ImxvZ2luLlVzZXIiLCJVc2VySWQiOiIxMiIsIlVzZXJOYW1lIjoidXNlckBhLmNvbSJ9.JcZ9-ImQieOWW1KaLJGR_Pqol2MQviFDdjqbIfhAlek"
@@ -83,20 +82,22 @@ func bookmarkHandler(bRepo store.BookmarkRepository, fRepo store.FaviconReposito
 
 func repositories(t *testing.T) (store.BookmarkRepository, store.FaviconRepository, *sql.DB) {
 	var (
-		DB  *gorm.DB
 		err error
 	)
-	if DB, err = gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{}); err != nil {
+	params := make([]persistence.SqliteParam, 0)
+	con, err := persistence.CreateGormSqliteCon(":memory:", params)
+	if err != nil {
 		t.Fatalf("cannot create database connection: %v", err)
 	}
 	// Migrate the schema
-	DB.AutoMigrate(&store.Bookmark{}, &store.Favicon{})
-	db, err := DB.DB()
+	con.W().AutoMigrate(&store.Bookmark{}, &store.Favicon{})
+	db, err := con.W().DB()
 	if err != nil {
 		t.Fatalf("cannot access database handle: %v", err)
 	}
+	con.Read = con.Write
 	logger := logging.NewNop()
-	return store.CreateBookmarkRepo(DB, logger), store.CreateFaviconRepo(DB, logger), db
+	return store.CreateBookmarkRepo(con, logger), store.CreateFaviconRepo(con, logger), db
 }
 
 func addJwtAuth(req *http.Request) {

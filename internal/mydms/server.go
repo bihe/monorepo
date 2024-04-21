@@ -7,11 +7,11 @@ import (
 	"golang.binggl.net/monorepo/internal/mydms/app/crypter"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
 	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
+	"golang.binggl.net/monorepo/internal/mydms/app/shared"
 	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	conf "golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/develop"
 	"golang.binggl.net/monorepo/pkg/logging"
-	"golang.binggl.net/monorepo/pkg/persistence"
 	"golang.binggl.net/monorepo/pkg/server"
 
 	// include the sqlite driver for runtime
@@ -28,8 +28,8 @@ func Run(version, build, appName string) error {
 	// ensure closing of logfile on exit
 	defer logger.Close()
 
-	// persistence store && application version
-	con := persistence.NewConnForDb("sqlite3", appCfg.Database.ConnectionString)
+	// shared.store && application version
+	con := shared.NewConnForDb("sqlite3", appCfg.Database.ConnectionString)
 	repo, err := document.NewRepository(con)
 	if err != nil {
 		panic(fmt.Sprintf("cannot establish database connection: %v", err))

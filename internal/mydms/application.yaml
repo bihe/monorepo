@@ -78,5 +78,5 @@ upload:
         - "jpeg"
         - "png"
         - "gif"
-    maxUploadSize: 500000
+    maxUploadSize: 5000000
     uploadPath: "/tmp/"

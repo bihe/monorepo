@@ -199,6 +199,7 @@ func encryptPdfPayload(payload []byte, initPass, newPass string) ([]byte, error)
 	)
 
 	conf = pdfModel.NewRC4Configuration(initPass, initPass, 40)
+	conf.ValidationMode = pdfModel.ValidationRelaxed
 	conf.Cmd = pdfModel.CHANGEUPW
 	conf.UserPW = initPass
 	conf.UserPWNew = &newPass

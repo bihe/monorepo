@@ -11,7 +11,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"golang.binggl.net/monorepo/internal/mydms/app/shared"
-	"golang.binggl.net/monorepo/pkg/persistence"
 )
 
 // DocEntity represents a record in the persistence store
@@ -79,9 +78,9 @@ type OrderBy struct {
 type Repository interface {
 	shared.BaseRepository
 	Get(id string) (d DocEntity, err error)
-	Exists(id string, a persistence.Atomic) (filePath string, err error)
-	Save(doc DocEntity, a persistence.Atomic) (d DocEntity, err error)
-	Delete(id string, a persistence.Atomic) (err error)
+	Exists(id string, a shared.Atomic) (filePath string, err error)
+	Save(doc DocEntity, a shared.Atomic) (d DocEntity, err error)
+	Delete(id string, a shared.Atomic) (err error)
 	Search(s DocSearch, order []OrderBy) (PagedDocResult, error)
 	SearchLists(s string, st SearchType) ([]string, error)
 }
@@ -90,7 +89,7 @@ type Repository interface {
 var _ Repository = (*dbRepository)(nil)
 
 // NewRepository creates a new instance using an existing connection
-func NewRepository(c persistence.Connection) (Repository, error) {
+func NewRepository(c shared.Connection) (Repository, error) {
 	if !c.Active {
 		return nil, fmt.Errorf("no repository connection available")
 	}
@@ -98,29 +97,29 @@ func NewRepository(c persistence.Connection) (Repository, error) {
 }
 
 type dbRepository struct {
-	c persistence.Connection
+	c shared.Connection
 }
 
 // CreateAtomic returns a new atomic object
-func (rw *dbRepository) CreateAtomic() (persistence.Atomic, error) {
+func (rw *dbRepository) CreateAtomic() (shared.Atomic, error) {
 	return rw.c.CreateAtomic()
 }
 
 // Save a document entry. Either create or update the entry, based on availability
 // if a valid/active atomic object is supplied the transaction handling is done by the caller
 // otherwise a new transaction is created for the scope of the method
-func (rw *dbRepository) Save(doc DocEntity, a persistence.Atomic) (d DocEntity, err error) {
+func (rw *dbRepository) Save(doc DocEntity, a shared.Atomic) (d DocEntity, err error) {
 	var (
-		atomic  *persistence.Atomic
+		atomic  *shared.Atomic
 		newEnty bool
 		r       sql.Result
 	)
 
 	defer func() {
-		err = persistence.HandleTX(!a.Active, atomic, err)
+		err = shared.HandleTX(!a.Active, atomic, err)
 	}()
 
-	if atomic, err = persistence.CheckTX(rw.c, &a); err != nil {
+	if atomic, err = shared.CheckTX(rw.c, &a); err != nil {
 		return
 	}
 
@@ -180,16 +179,16 @@ func (rw *dbRepository) Get(id string) (d DocEntity, err error) {
 }
 
 // Exists checks if a given id is available
-func (rw *dbRepository) Exists(id string, a persistence.Atomic) (filePath string, err error) {
+func (rw *dbRepository) Exists(id string, a shared.Atomic) (filePath string, err error) {
 	var (
-		atomic *persistence.Atomic
+		atomic *shared.Atomic
 	)
 
 	defer func() {
-		err = persistence.HandleTX(!a.Active, atomic, err)
+		err = shared.HandleTX(!a.Active, atomic, err)
 	}()
 
-	if atomic, err = persistence.CheckTX(rw.c, &a); err != nil {
+	if atomic, err = shared.CheckTX(rw.c, &a); err != nil {
 		return
 	}
 
@@ -204,16 +203,16 @@ func (rw *dbRepository) Exists(id string, a persistence.Atomic) (filePath string
 }
 
 // Delete a document by its id
-func (rw *dbRepository) Delete(id string, a persistence.Atomic) (err error) {
+func (rw *dbRepository) Delete(id string, a shared.Atomic) (err error) {
 	var (
-		atomic *persistence.Atomic
+		atomic *shared.Atomic
 	)
 
 	defer func() {
-		err = persistence.HandleTX(!a.Active, atomic, err)
+		err = shared.HandleTX(!a.Active, atomic, err)
 	}()
 
-	if atomic, err = persistence.CheckTX(rw.c, &a); err != nil {
+	if atomic, err = shared.CheckTX(rw.c, &a); err != nil {
 		return
 	}
 
@@ -359,7 +358,7 @@ func (rw *dbRepository) SearchLists(s string, st SearchType) ([]string, error) {
 	return found, nil
 }
 
-func prepareQuery(c persistence.Connection, q string, args map[string]interface{}) (string, []interface{}, error) {
+func prepareQuery(c shared.Connection, q string, args map[string]interface{}) (string, []interface{}, error) {
 	namedq, namedargs, err := sqlx.Named(q, args)
 	if err != nil {
 		return "", nil, fmt.Errorf("query error: %v", err)

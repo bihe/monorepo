@@ -13,10 +13,10 @@ import (
 	"golang.binggl.net/monorepo/internal/mydms/app/config"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
 	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
+	"golang.binggl.net/monorepo/internal/mydms/app/shared"
 	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	conf "golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/logging"
-	"golang.binggl.net/monorepo/pkg/persistence"
 )
 
 const validToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4MjcyMDE0NDUsImlhdCI6MTYyNjU5NjY0NSwiaXNzIjoiaXNzdWVyIiwianRpIjoiZmI1ZThjNDMtZDEwMi00MGU3LTljM2EtNTkwYzA3ODAzNzUwIiwic3ViIjoiaGVucmlrLmJpbmdnbEBnbWFpbC5jb20iLCJDbGFpbXMiOlsiQXxodHRwOi8vQXxBIl0sIkRpc3BsYXlOYW1lIjoiVXNlciBBIiwiRW1haWwiOiJ1c2VyQGEuY29tIiwiR2l2ZW5OYW1lIjoidXNlciIsIlN1cm5hbWUiOiJBIiwiVHlwZSI6ImxvZ2luLlVzZXIiLCJVc2VySWQiOiIxMiIsIlVzZXJOYW1lIjoidXNlckBhLmNvbSJ9.JcZ9-ImQieOWW1KaLJGR_Pqol2MQviFDdjqbIfhAlek"
@@ -133,8 +133,8 @@ func handler(repo document.Repository) http.Handler {
 	})
 }
 
-func memRepo(t *testing.T) (document.Repository, persistence.Connection) {
-	con := persistence.NewConnForDb("sqlite3", "file::memory:")
+func memRepo(t *testing.T) (document.Repository, shared.Connection) {
+	con := shared.NewConnForDb("sqlite3", "file::memory:")
 	repo, err := document.NewRepository(con)
 	if err != nil {
 		t.Fatalf("cannot establish database connection: %v", err)

@@ -48,3 +48,7 @@ func (m *MockRepo) StoreSiteForUser(sites []UserSiteEntity) (err error) {
 	m.sites[user] = sites
 	return nil
 }
+
+func (m *MockRepo) InUnitOfWork(handle func(repo Repository) error) error {
+	return handle(m)
+}

@@ -1,77 +1,58 @@
-// Package persistence simplifies the database interaction by providing helper functions
-// it uses sqlx internally
 package persistence
 
 import (
 	"fmt"
-	"log"
 
-	"github.com/jmoiron/sqlx"
+	"gorm.io/gorm"
 )
 
-// Connection defines a storage/database/... connection
+// A Connection struct abstracts the access to the underlying database connections
+// It is used for reading from a database connection and writing to a database connection.
+// The writing is assumed is always in the context of a database transaction.
 type Connection struct {
-	*sqlx.DB
-	Active bool
+	// Read is a read connection used for fast access to the underlying database transaction
+	Read *gorm.DB
+	// Write is a write connection which is used primarily to write in particular to create a transaction connection
+	Write *gorm.DB
+	// Tx is a transaction which enables atomic access with rollback
+	Tx *gorm.DB
 }
 
-// NewConnForDb creates a connection to a store/repository
-func NewConnForDb(dbType, connstr string) Connection {
-	db := sqlx.MustConnect(dbType, connstr)
-	return Connection{DB: db, Active: true}
-}
-
-// NewFromDB creates a new connection based on existing DB handle
-func NewFromDB(db *sqlx.DB) Connection {
-	return Connection{DB: db, Active: true}
-}
-
-// Atomic defines a transactional operation - like the A in ACID https://en.wikipedia.org/wiki/ACID
-type Atomic struct {
-	*sqlx.Tx
-	Active bool
-}
-
-// CreateAtomic starts a new transaction
-func (c Connection) CreateAtomic() (Atomic, error) {
-	tx, err := c.Beginx()
-	if err != nil {
-		return Atomic{}, err
+// R returns a suitable connection. It is either read focused connection
+// or a transaction.
+// The func panics if no read connection is available
+func (c Connection) R() *gorm.DB {
+	if c.Tx != nil {
+		return c.Tx
 	}
-	return Atomic{Tx: tx, Active: true}, nil
+	if c.Read == nil {
+		panic("no read database connection is available")
+	}
+	return c.Read
 }
 
-// HandleTX completes the given transaction
-// if an error is supplied a rollback is performed
-func HandleTX(complete bool, atomic *Atomic, err error) error {
-	if complete {
-		switch err {
-		case nil:
-			return atomic.Commit()
-		default:
-			log.Printf("could not complete the tx: %v", err)
-			if atomic != nil {
-				log.Printf("will try to rollback the tx")
-				if e := atomic.Rollback(); e != nil {
-					return fmt.Errorf("%v; could not rollback tx: %v", err, e)
-				}
-			} else {
-				log.Printf("cannot rollback the tx, no atomic object available")
-			}
-		}
+// W retrieves a write connection. If this is a transaction use the tx connection
+// The func panics if no write connection is available
+func (c Connection) W() *gorm.DB {
+	if c.Tx != nil {
+		return c.Tx
 	}
-	return err
+	if c.Write == nil {
+		panic("no write database connection is available")
+	}
+	return c.Write
 }
 
-// CheckTX returns a new Atomic object if the supplied object is inactive
-// if the supplied object is active - the same object is returned
-func CheckTX(c Connection, a *Atomic) (*Atomic, error) {
-	if !a.Active {
-		atomic, err := c.CreateAtomic()
-		if err != nil {
-			return nil, err
-		}
-		return &atomic, nil
+// Begin starts a transaction and executes the provided handle function in a transaction context
+func (c Connection) Begin(handle func(c Connection) error) error {
+	if c.Tx != nil {
+		return fmt.Errorf("a transaction is already available, will not start a new one")
 	}
-	return a, nil
+	return c.Write.Transaction(func(tx *gorm.DB) error {
+		return handle(Connection{
+			Read:  c.Read,
+			Write: c.Write,
+			Tx:    tx,
+		})
+	})
 }

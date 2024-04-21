@@ -10,10 +10,8 @@ import (
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/develop"
 	"golang.binggl.net/monorepo/pkg/logging"
+	"golang.binggl.net/monorepo/pkg/persistence"
 	"golang.binggl.net/monorepo/pkg/server"
-	"gorm.io/gorm"
-
-	"gorm.io/driver/sqlite"
 )
 
 // run is the entry-point for the core/auth service
@@ -27,7 +25,7 @@ func Run(version, build, appName string) error {
 	defer logger.Close()
 
 	// persistence store && application version
-	con, err := gorm.Open(sqlite.Open(appCfg.Database.ConnectionString), &gorm.Config{})
+	con, err := persistence.CreateGormSqliteCon(appCfg.Database.ConnectionString, make([]persistence.SqliteParam, 0))
 	if err != nil {
 		panic(fmt.Sprintf("cannot create database connection: %v", err))
 	}

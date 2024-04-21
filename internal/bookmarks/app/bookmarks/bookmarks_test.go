@@ -10,9 +10,8 @@ import (
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
 	"golang.binggl.net/monorepo/pkg/logging"
+	"golang.binggl.net/monorepo/pkg/persistence"
 	"golang.binggl.net/monorepo/pkg/security"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 )
 
 const faviconPath = "/tmp"
@@ -35,16 +34,18 @@ func app(t *testing.T) bookmarks.Application {
 
 func repositories(t *testing.T) (store.BookmarkRepository, store.FaviconRepository) {
 	var (
-		DB  *gorm.DB
 		err error
 	)
-	if DB, err = gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{}); err != nil {
+	params := make([]persistence.SqliteParam, 0)
+	con, err := persistence.CreateGormSqliteCon(":memory:", params)
+	if err != nil {
 		t.Fatalf("cannot create database connection: %v", err)
 	}
 	// Migrate the schema
-	DB.AutoMigrate(&store.Bookmark{}, &store.Favicon{})
+	con.W().AutoMigrate(&store.Bookmark{}, &store.Favicon{})
+	con.Read = con.Write
 	logger := logging.NewNop()
-	return store.CreateBookmarkRepo(DB, logger), store.CreateFaviconRepo(DB, logger)
+	return store.CreateBookmarkRepo(con, logger), store.CreateFaviconRepo(con, logger)
 }
 
 func Test_GetBookmark_NotFound(t *testing.T) {

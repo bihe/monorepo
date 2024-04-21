@@ -9,10 +9,9 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/internal/core/app/store"
-	"golang.binggl.net/monorepo/pkg/logging"
+	"golang.binggl.net/monorepo/pkg/persistence"
 
 	"gorm.io/driver/mysql"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -22,53 +21,58 @@ const errExpected = "error expected!"
 
 var Err = fmt.Errorf("error")
 
-var logger = logging.NewNop()
-
-func repo(t *testing.T) (store.Repository, *gorm.DB) {
+func repo(t *testing.T) (store.Repository, *sql.DB) {
 	var (
-		DB  *gorm.DB
 		err error
 	)
-	//if DB, err = gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{}); err != nil {
-	if DB, err = gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{}); err != nil {
+	params := make([]persistence.SqliteParam, 0)
+	con, err := persistence.CreateGormSqliteCon(":memory:", params)
+	if err != nil {
 		t.Fatalf("cannot create database connection: %v", err)
 	}
 	// Migrate the schema
-	DB.AutoMigrate(&store.UserSiteEntity{})
-	return store.NewDBStore(DB), DB
+	con.Write.AutoMigrate(&store.UserSiteEntity{})
+	con.Read.AutoMigrate(&store.UserSiteEntity{})
+	db, err := con.Write.DB()
+	if err != nil {
+		t.Fatalf("could not get DB handle; %v", err)
+	}
+	con.Read = con.Write
+	repo := store.NewDBStore(con)
+	return repo, db
 }
 
-func mockRepo(t *testing.T, useTx bool) (store.Repository, *gorm.DB, sqlmock.Sqlmock) {
+func mockRepo(t *testing.T, useTx bool) (store.Repository, *sql.DB, sqlmock.Sqlmock) {
 	var (
-		DB   *gorm.DB
-		db   *sql.DB
-		err  error
-		mock sqlmock.Sqlmock
+		DB     *gorm.DB
+		mockDB *sql.DB
+		err    error
+		mock   sqlmock.Sqlmock
 	)
 
-	if db, mock, err = sqlmock.New(); err != nil {
+	if mockDB, mock, err = sqlmock.New(); err != nil {
 		t.Fatalf("could not create a db-mock; %v", err)
 	}
 
-	if DB, err = gorm.Open(mysql.New(mysql.Config{Conn: db, SkipInitializeWithVersion: true}), &gorm.Config{
+	if DB, err = gorm.Open(mysql.New(mysql.Config{Conn: mockDB, SkipInitializeWithVersion: true}), &gorm.Config{
 		SkipDefaultTransaction: !useTx,
 	}); err != nil {
 		t.Fatalf("cannot create database connection: %v", err)
 	}
-	return store.NewDBStore(DB), DB, mock
-}
-
-func closeRepo(db *gorm.DB, t *testing.T) {
-	c, err := db.DB()
+	db, err := DB.DB()
 	if err != nil {
-		t.Fatalf("could not close connection: %v", err)
+		t.Fatalf("could not get DB handle; %v", err)
 	}
-	c.Close()
+	con := persistence.Connection{
+		Read:  DB,
+		Write: DB,
+	}
+	return store.NewDBStore(con), db, mock
 }
 
 func Test_New_Repository(t *testing.T) {
 	repo, DB := repo(t)
-	defer closeRepo(DB, t)
+	defer DB.Close()
 	if repo == nil {
 		t.Errorf("cannot create a new repository")
 	}
@@ -76,7 +80,7 @@ func Test_New_Repository(t *testing.T) {
 
 func Test_Create_Site(t *testing.T) {
 	repo, DB := repo(t)
-	defer closeRepo(DB, t)
+	defer DB.Close()
 
 	user := "test_" + time.Now().String()
 	var sites []store.UserSiteEntity
@@ -106,7 +110,7 @@ func Test_Create_Site(t *testing.T) {
 
 func Test_Get_Users_For_Site(t *testing.T) {
 	repo, DB := repo(t)
-	defer closeRepo(DB, t)
+	defer DB.Close()
 
 	user1 := "user1_" + time.Now().String()
 	var sites1 []store.UserSiteEntity
@@ -148,11 +152,79 @@ func Test_Get_Users_For_Site(t *testing.T) {
 	assert.True(t, found)
 }
 
+func Test_Create_Site_UnitOfWork(t *testing.T) {
+	repo, DB := repo(t)
+	defer DB.Close()
+
+	user := "test_" + time.Now().String()
+	var sites []store.UserSiteEntity
+	sites = append(sites, store.UserSiteEntity{
+		Name:     "site1",
+		User:     user,
+		URL:      "http://www.site.com",
+		PermList: "role1;role2",
+	})
+
+	err := repo.InUnitOfWork(func(r store.Repository) error {
+		err := r.StoreSiteForUser(sites)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		t.Errorf("could not perform within transaction: %v", err)
+	}
+	sites, err = repo.GetSitesForUser(user)
+	if err != nil {
+		t.Errorf("could not get site: %v", err)
+	}
+
+	assert.Equal(t, 1, len(sites))
+	assert.Equal(t, "site1", sites[0].Name)
+	assert.Equal(t, user, sites[0].User)
+	assert.Equal(t, "http://www.site.com", sites[0].URL)
+	assert.Equal(t, "role1;role2", sites[0].PermList)
+	assert.True(t, sites[0].String() != "")
+
+	// perform with transaction rollback
+	err = repo.InUnitOfWork(func(r store.Repository) error {
+		sites, err = r.GetSitesForUser(user)
+		if err != nil {
+			t.Errorf("could not get site: %v", err)
+		}
+
+		sites[0].Name = "site_changed!"
+		err := r.StoreSiteForUser(sites)
+		if err != nil {
+			return err
+		}
+
+		sites, err = r.GetSitesForUser(user)
+		if err != nil {
+			t.Errorf("could not get site: %v", err)
+		}
+		assert.Equal(t, "site_changed!", sites[0].Name)
+
+		// forcefully roll back
+		return fmt.Errorf("could not update within transaction")
+	})
+
+	// outsite of the rolled-back transaction we should get the old name
+	sites, err = repo.GetSitesForUser(user)
+	if err != nil {
+		t.Errorf("could not get site: %v", err)
+	}
+	assert.Equal(t, "site1", sites[0].Name)
+
+}
+
 const skipTransactionUsage = false
 
 func Test_Errors_Using_Mock(t *testing.T) {
 	repo, DB, mock := mockRepo(t, skipTransactionUsage)
-	defer closeRepo(DB, t)
+	defer DB.Close()
 
 	// -- wrong number of results after insert for USERSITES
 	// ------------------------------------------------------------------------------------------------------------

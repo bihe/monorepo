@@ -70,11 +70,13 @@ var _ crypter.EncryptionService = &mockEncService{}
 
 // --------------------------------------------------------------------------
 
+const maxUploadSize = 5000000
+
 func TestService_FileType_CaseInsensitive(t *testing.T) {
 	svc := upload.NewService(upload.ServiceOptions{
 		Logger:           logger,
 		Store:            &mockStore{},
-		MaxUploadSize:    10000,
+		MaxUploadSize:    maxUploadSize,
 		AllowedFileTypes: []string{"pdf"},
 	})
 	payload, err := os.ReadFile(unencryptedPDF)
@@ -103,7 +105,7 @@ func TestService_Write_Read_Delete(t *testing.T) {
 	svc := upload.NewService(upload.ServiceOptions{
 		Logger:           logger,
 		Store:            &mockStore{},
-		MaxUploadSize:    10000,
+		MaxUploadSize:    maxUploadSize,
 		AllowedFileTypes: []string{"pdf", "png"},
 	})
 
@@ -188,7 +190,7 @@ func TestService_Write_Encrypt(t *testing.T) {
 	svc := upload.NewService(upload.ServiceOptions{
 		Logger:           logger,
 		Store:            &mockStore{},
-		MaxUploadSize:    10000,
+		MaxUploadSize:    maxUploadSize,
 		AllowedFileTypes: []string{"pdf", "png"},
 		Crypter:          &mockEncService{},
 		TimeOut:          "10s",
@@ -247,7 +249,7 @@ func Test_Service_Errors_Store(t *testing.T) {
 	svc := upload.NewService(upload.ServiceOptions{
 		Logger:           logger,
 		Store:            &mockStore{fail: true},
-		MaxUploadSize:    10000,
+		MaxUploadSize:    maxUploadSize,
 		AllowedFileTypes: []string{"pdf", "png"},
 	})
 

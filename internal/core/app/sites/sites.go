@@ -93,7 +93,10 @@ func (s *siteService) SaveSitesForUser(sites UserSites, user security.User) erro
 			PermList: strings.Join(s.Perm, security.RoleDelimiter),
 		})
 	}
-	if err := s.repo.StoreSiteForUser(storeEntities); err != nil {
+	err := s.repo.InUnitOfWork(func(repo store.Repository) error {
+		return repo.StoreSiteForUser(storeEntities)
+	})
+	if err != nil {
 		return fmt.Errorf("could not store the supplied sites; %v", err)
 	}
 	return nil

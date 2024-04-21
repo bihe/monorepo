@@ -128,10 +128,11 @@ templ EditBookmarks(bm Bookmark, paths []string) {
 									type="file"
 									name="bookmark_customFaviconUpload"
 									id="customFaviconUpload"
-									accept="image/*,.png,.jpeg,.jpg,.gif"
+									accept="image/*,.png,.jpeg,.jpg,.gif,.svg"
 								/>
 								<button
 									type="button"
+									id="btnUploadCustomFavicon"
 									class="btn btn-outline-secondary"
 									hx-post="/bm/favicon/upload"
 									hx-encoding="multipart/form-data"
@@ -199,6 +200,32 @@ templ EditBookmarks(bm Bookmark, paths []string) {
 						document.querySelector('#bookmark_favicon_display').classList.remove('invert');
 						}
 					});
+				}
+
+				if (document.querySelector('.bookmark_edit_form')) {
+					document.querySelector('.bookmark_edit_form').addEventListener('paste', e => {
+						if (!e.clipboardData.items || e.clipboardData.items.length == 0) {
+							return;
+						}
+						try {
+							// get the first item of the clipboard
+							var item = e.clipboardData.items[0];
+							if (item.type.indexOf("image") === 0 || item.type.indexOf("svg") === 0) {
+								let fileInput = document.querySelector('#customFaviconUpload');
+								let dataTransfer = new DataTransfer();
+								let blob = item.getAsFile();
+								let uuid = window.crypto.randomUUID()
+								dataTransfer.items.add(blob);
+								fileInput.files = dataTransfer.files;
+
+								console.log('files for upload: ' + fileInput.files.length)
+							}
+						} catch (e) {
+							console.log("could not set clipboard image!");
+							console.log(e);
+						}
+
+					})
 				}
 			</script>
 		}

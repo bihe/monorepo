@@ -85,18 +85,19 @@ func repositories(t *testing.T) (store.BookmarkRepository, store.FaviconReposito
 		err error
 	)
 	params := make([]persistence.SqliteParam, 0)
-	_, write, err := persistence.CreateGormSqliteRWCon(":memory:", params)
+	con, err := persistence.CreateGormSqliteCon(":memory:", params)
 	if err != nil {
 		t.Fatalf("cannot create database connection: %v", err)
 	}
 	// Migrate the schema
-	write.AutoMigrate(&store.Bookmark{}, &store.Favicon{})
-	db, err := write.DB()
+	con.W().AutoMigrate(&store.Bookmark{}, &store.Favicon{})
+	db, err := con.W().DB()
 	if err != nil {
 		t.Fatalf("cannot access database handle: %v", err)
 	}
+	con.Read = con.Write
 	logger := logging.NewNop()
-	return store.CreateBookmarkRepoRW(write, write, logger), store.CreateFaviconRepoRW(write, write, logger), db
+	return store.CreateBookmarkRepo(con, logger), store.CreateFaviconRepo(con, logger), db
 }
 
 func addJwtAuth(req *http.Request) {

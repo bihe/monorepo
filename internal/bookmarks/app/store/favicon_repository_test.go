@@ -19,17 +19,19 @@ func favRepo(t *testing.T) (store.FaviconRepository, *sql.DB) {
 		err error
 	)
 	params := make([]persistence.SqliteParam, 0)
-	_, write, err := persistence.CreateGormSqliteRWCon(":memory:", params)
+	con, err := persistence.CreateGormSqliteCon(":memory:", params)
 	if err != nil {
 		t.Fatalf("cannot create database connection: %v", err)
 	}
 	// Migrate the schema
-	write.AutoMigrate(&store.Favicon{})
-	db, err := write.DB()
+	con.W().AutoMigrate(&store.Favicon{})
+	db, err := con.W().DB()
 	if err != nil {
 		t.Fatalf("could not get DB handle; %v", err)
 	}
-	favRepo := store.CreateFaviconRepoRW(write, write, logger)
+	// use the write connection for both read/write to prevent issues with in-memory sqlite
+	con.Read = con.Write
+	favRepo := store.CreateFaviconRepo(con, logger)
 	return favRepo, db
 }
 
@@ -121,10 +123,7 @@ func Test_CRUD_Favicon(t *testing.T) {
 func Test_InUnitOfWork(t *testing.T) {
 	r, db := favRepo(t)
 	defer db.Close()
-
-	// create
-	err := r.InUnitOfWork(func(u persistence.Unit) error {
-		repo := store.CreateFaviconRepoUnit(u, logger)
+	err := r.InUnitOfWork(func(repo store.FaviconRepository) error {
 		fav, err := repo.Save(store.Favicon{
 			ID:           "favicon_id",
 			Payload:      app.DefaultFavicon,

@@ -37,14 +37,15 @@ func repositories(t *testing.T) (store.BookmarkRepository, store.FaviconReposito
 		err error
 	)
 	params := make([]persistence.SqliteParam, 0)
-	_, write, err := persistence.CreateGormSqliteRWCon(":memory:", params)
+	con, err := persistence.CreateGormSqliteCon(":memory:", params)
 	if err != nil {
 		t.Fatalf("cannot create database connection: %v", err)
 	}
 	// Migrate the schema
-	write.AutoMigrate(&store.Bookmark{}, &store.Favicon{})
+	con.W().AutoMigrate(&store.Bookmark{}, &store.Favicon{})
+	con.Read = con.Write
 	logger := logging.NewNop()
-	return store.CreateBookmarkRepoRW(write, write, logger), store.CreateFaviconRepoRW(write, write, logger)
+	return store.CreateBookmarkRepo(con, logger), store.CreateFaviconRepo(con, logger)
 }
 
 func Test_GetBookmark_NotFound(t *testing.T) {

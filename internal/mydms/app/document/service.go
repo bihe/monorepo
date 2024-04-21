@@ -12,7 +12,6 @@ import (
 	"golang.binggl.net/monorepo/internal/mydms/app/shared"
 	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	"golang.binggl.net/monorepo/pkg/logging"
-	"golang.binggl.net/monorepo/pkg/persistence"
 	"golang.binggl.net/monorepo/pkg/security"
 )
 
@@ -88,7 +87,7 @@ func (s documentService) DeleteDocumentByID(id string) (err error) {
 	}
 	// complete the atomic method
 	defer func() {
-		err = persistence.HandleTX(true, &atomic, err)
+		err = shared.HandleTX(true, &atomic, err)
 	}()
 
 	fileName, err := s.repo.Exists(id, atomic)
@@ -171,7 +170,7 @@ func (s documentService) SaveDocument(doc Document, user security.User) (d Docum
 
 	// complete the atomic method
 	defer func() {
-		err = persistence.HandleTX(true, &atomic, err)
+		err = shared.HandleTX(true, &atomic, err)
 	}()
 
 	cleanDoc := s.sanitize(&doc)

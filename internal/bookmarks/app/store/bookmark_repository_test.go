@@ -25,18 +25,19 @@ func repositoryFile(file string, t *testing.T) (store.BookmarkRepository, *sql.D
 		err error
 	)
 	params := make([]persistence.SqliteParam, 0)
-	read, write, err := persistence.CreateGormSqliteRWCon(file, params)
+	con, err := persistence.CreateGormSqliteCon(file, params)
 	if err != nil {
 		t.Fatalf("cannot create database connection: %v", err)
 	}
 	// Migrate the schema
-	write.AutoMigrate(&store.Bookmark{})
-	read.AutoMigrate(&store.Bookmark{})
-	db, err := write.DB()
+	con.Write.AutoMigrate(&store.Bookmark{})
+	con.Read.AutoMigrate(&store.Bookmark{})
+	db, err := con.Write.DB()
 	if err != nil {
 		t.Fatalf("could not get DB handle; %v", err)
 	}
-	repo := store.CreateBookmarkRepoRW(write, write, logger)
+	con.Read = con.Write
+	repo := store.CreateBookmarkRepo(con, logger)
 	return repo, db
 }
 
@@ -162,8 +163,7 @@ func TestCreateBookmarkInUnitOfWork(t *testing.T) {
 	}
 
 	id := ""
-	err := repo.InUnitOfWork(func(u persistence.Unit) error {
-		r := store.CreateBookmarkRepoUnit(u, logger)
+	err := repo.InUnitOfWork(func(r store.BookmarkRepository) error {
 		bm, err := r.Create(folder)
 		if err != nil {
 			return err
@@ -197,8 +197,7 @@ func TestCreateBookmarkInUnitOfWork(t *testing.T) {
 		UserName:    userName,
 	}
 	var bm store.Bookmark
-	err = repo.InUnitOfWork(func(u persistence.Unit) error {
-		r := store.CreateBookmarkRepoUnit(u, logger)
+	err = repo.InUnitOfWork(func(r store.BookmarkRepository) error {
 		bm, err = r.Create(folderRollback)
 		if err != nil {
 			return err
@@ -808,8 +807,7 @@ func TestConcurrentWriteForConnection(t *testing.T) {
 				InvertFaviconColor: 1,
 			}
 
-			errGo := repo.InUnitOfWork(func(u persistence.Unit) error {
-				r := store.CreateBookmarkRepoUnit(u, logger)
+			errGo := repo.InUnitOfWork(func(r store.BookmarkRepository) error {
 				_, err = r.Create(item)
 				return err
 			})

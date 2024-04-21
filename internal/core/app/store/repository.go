@@ -9,4 +9,5 @@ type Repository interface {
 	GetSitesForUser(user string) ([]UserSiteEntity, error)
 	GetUsersForSite(site string) ([]string, error)
 	StoreSiteForUser(sites []UserSiteEntity) (err error)
+	InUnitOfWork(handle func(repo Repository) error) error
 }

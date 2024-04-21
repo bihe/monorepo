@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
-	"golang.binggl.net/monorepo/pkg/persistence"
+	"golang.binggl.net/monorepo/internal/mydms/app/shared"
 )
 
 const fatalErr = "an error '%s' was not expected when opening a stub database connection"
@@ -32,7 +32,7 @@ func TestAtomic(t *testing.T) {
 	defer db.Close()
 
 	dbx := sqlx.NewDb(db, "mysql")
-	repo, err := NewRepository(persistence.NewFromDB(dbx))
+	repo, err := NewRepository(shared.NewFromDB(dbx))
 	if err != nil {
 		t.Errorf("could not get a repository: %v", err)
 	}
@@ -51,7 +51,7 @@ func TestAtomic(t *testing.T) {
 }
 
 func TestNewRepository(t *testing.T) {
-	_, err := NewRepository(persistence.Connection{})
+	_, err := NewRepository(shared.Connection{})
 	if err == nil {
 		t.Errorf("no reader without connection possible")
 	}
@@ -63,7 +63,7 @@ func TestNewRepository(t *testing.T) {
 	defer db.Close()
 
 	dbx := sqlx.NewDb(db, "mysql")
-	_, err = NewRepository(persistence.NewFromDB(dbx))
+	_, err = NewRepository(shared.NewFromDB(dbx))
 	if err != nil {
 		t.Errorf("could not get a repository: %v", err)
 	}
@@ -79,7 +79,7 @@ func TestSave(t *testing.T) {
 	var now = time.Now().UTC().Add(-(time.Second * 10))
 
 	dbx := sqlx.NewDb(db, "mysql")
-	c := persistence.NewFromDB(dbx)
+	c := shared.NewFromDB(dbx)
 	rw := dbRepository{c}
 
 	item := DocEntity{
@@ -98,7 +98,7 @@ func TestSave(t *testing.T) {
 	mock.ExpectCommit()
 
 	var d DocEntity
-	if d, err = rw.Save(item, persistence.Atomic{}); err != nil {
+	if d, err = rw.Save(item, shared.Atomic{}); err != nil {
 		t.Errorf(errInsert, err)
 	}
 	assert.Equal(t, item.Title, d.Title)
@@ -121,7 +121,7 @@ func TestSave(t *testing.T) {
 	mock.ExpectCommit()
 
 	var up DocEntity
-	if up, err = rw.Save(item, persistence.Atomic{}); err != nil {
+	if up, err = rw.Save(item, shared.Atomic{}); err != nil {
 		t.Errorf(errInsert, err)
 	}
 	assert.Equal(t, item.ID, up.ID)
@@ -145,7 +145,7 @@ func TestSave(t *testing.T) {
 	mock.ExpectExec(stmtInsertDocs).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	if up, err = rw.Save(item, persistence.Atomic{}); err != nil {
+	if up, err = rw.Save(item, shared.Atomic{}); err != nil {
 		t.Errorf(errInsert, err)
 	}
 
@@ -187,7 +187,7 @@ func TestSaveError(t *testing.T) {
 	defer db.Close()
 
 	dbx := sqlx.NewDb(db, "mysql")
-	c := persistence.NewFromDB(dbx)
+	c := shared.NewFromDB(dbx)
 	rw := dbRepository{c}
 
 	item := DocEntity{
@@ -205,7 +205,7 @@ func TestSaveError(t *testing.T) {
 	mock.ExpectExec(stmtInsertDocs).WillReturnError(fmt.Errorf("does not work"))
 	mock.ExpectRollback()
 
-	if _, err = rw.Save(item, persistence.Atomic{}); err == nil {
+	if _, err = rw.Save(item, shared.Atomic{}); err == nil {
 		t.Errorf(errInsert)
 	}
 
@@ -214,7 +214,7 @@ func TestSaveError(t *testing.T) {
 	mock.ExpectExec(stmtInsertDocs).WillReturnResult(sqlmock.NewErrorResult(fmt.Errorf("result error")))
 	mock.ExpectRollback()
 
-	if _, err = rw.Save(item, persistence.Atomic{}); err == nil {
+	if _, err = rw.Save(item, shared.Atomic{}); err == nil {
 		t.Errorf(errInsert)
 	}
 
@@ -223,7 +223,7 @@ func TestSaveError(t *testing.T) {
 	mock.ExpectExec(stmtInsertDocs).WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectRollback()
 
-	if _, err = rw.Save(item, persistence.Atomic{}); err == nil {
+	if _, err = rw.Save(item, shared.Atomic{}); err == nil {
 		t.Errorf(errInsert)
 	}
 }
@@ -236,7 +236,7 @@ func TestRead(t *testing.T) {
 	defer db.Close()
 
 	dbx := sqlx.NewDb(db, "mysql")
-	c := persistence.NewFromDB(dbx)
+	c := shared.NewFromDB(dbx)
 	rw := dbRepository{c}
 	columns := []string{"id", "title", "filename", "alternativeid", "previewlink", "amount", "taglist", "senderlist", "created", "modified", "invoicenumber"}
 	q := queryDocs
@@ -301,7 +301,7 @@ func TestDelete(t *testing.T) {
 	defer db.Close()
 
 	dbx := sqlx.NewDb(db, "mysql")
-	c := persistence.NewFromDB(dbx)
+	c := shared.NewFromDB(dbx)
 	rw := dbRepository{c}
 	stmt := "DELETE FROM DOCUMENTS"
 
@@ -314,7 +314,7 @@ func TestDelete(t *testing.T) {
 	mock.ExpectCommit()
 
 	// now we execute our method
-	if err = rw.Delete(item.ID, persistence.Atomic{}); err != nil {
+	if err = rw.Delete(item.ID, shared.Atomic{}); err != nil {
 		t.Errorf(deleteExpErr, err)
 	}
 
@@ -341,7 +341,7 @@ func TestExists(t *testing.T) {
 	defer db.Close()
 
 	dbx := sqlx.NewDb(db, "mysql")
-	c := persistence.NewFromDB(dbx)
+	c := shared.NewFromDB(dbx)
 	rw := dbRepository{c}
 	q := "SELECT filename FROM DOCUMENTS"
 	id := "id"
@@ -354,7 +354,7 @@ func TestExists(t *testing.T) {
 
 	// now we execute our method
 	var f string
-	if f, err = rw.Exists(id, persistence.Atomic{}); err != nil {
+	if f, err = rw.Exists(id, shared.Atomic{}); err != nil {
 		t.Errorf(existsErr, err)
 	}
 	if f != fileName {
@@ -375,7 +375,7 @@ func TestExists(t *testing.T) {
 	mock.ExpectQuery(q).WithArgs(id).WillReturnError(fmt.Errorf("error"))
 	mock.ExpectRollback()
 
-	if _, err = rw.Exists(id, persistence.Atomic{}); err == nil {
+	if _, err = rw.Exists(id, shared.Atomic{}); err == nil {
 		t.Errorf(expectedErr)
 	}
 
@@ -393,7 +393,7 @@ func TestDeleteError(t *testing.T) {
 	defer db.Close()
 
 	dbx := sqlx.NewDb(db, "mysql")
-	c := persistence.NewFromDB(dbx)
+	c := shared.NewFromDB(dbx)
 	rw := dbRepository{c}
 
 	item := DocEntity{
@@ -404,7 +404,7 @@ func TestDeleteError(t *testing.T) {
 	mock.ExpectRollback()
 
 	// now we execute our method
-	if err = rw.Delete(item.ID, persistence.Atomic{}); err == nil {
+	if err = rw.Delete(item.ID, shared.Atomic{}); err == nil {
 		t.Errorf("error was expected for insert item")
 	}
 
@@ -422,7 +422,7 @@ func TestSearch(t *testing.T) {
 	defer db.Close()
 
 	dbx := sqlx.NewDb(db, "mysql")
-	c := persistence.NewFromDB(dbx)
+	c := shared.NewFromDB(dbx)
 	rw := dbRepository{c}
 	columns := []string{"id", "title", "filename", "alternativeid", "previewlink", "amount", "taglist", "senderlist", "created", "modified", "invoicenumber"}
 
@@ -519,7 +519,7 @@ func TestSearchLists(t *testing.T) {
 	defer db.Close()
 
 	dbx := sqlx.NewDb(db, "mysql")
-	c := persistence.NewFromDB(dbx)
+	c := shared.NewFromDB(dbx)
 	rw := dbRepository{c}
 	q := "SELECT distinct\\(taglist\\) as search FROM DOCUMENTS"
 	columns := []string{"search"}

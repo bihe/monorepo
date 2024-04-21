@@ -76,9 +76,9 @@ const journalModeValue = "WAL"
 
 // setupRepositories enables the SQLITE repositories for the application
 func setupRepositories(config *conf.AppConfig, logger logging.Logger) (store.BookmarkRepository, store.FaviconRepository) {
-	read, write, err := persistence.CreateGormSqliteRWCon(config.Database.ConnectionString, make([]persistence.SqliteParam, 0))
+	con, err := persistence.CreateGormSqliteCon(config.Database.ConnectionString, make([]persistence.SqliteParam, 0))
 	if err != nil {
 		panic(fmt.Sprintf("cannot create database connection: %v", err))
 	}
-	return store.CreateBookmarkRepoRW(read, write, logger), store.CreateFaviconRepoRW(read, write, logger)
+	return store.CreateBookmarkRepo(con, logger), store.CreateFaviconRepo(con, logger)
 }

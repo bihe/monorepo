@@ -10,7 +10,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
 	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
-	"golang.binggl.net/monorepo/pkg/persistence"
+	"golang.binggl.net/monorepo/internal/mydms/app/shared"
 )
 
 var errTx = fmt.Errorf("start transaction failed")
@@ -44,13 +44,13 @@ startxref
 var _ document.Repository = (*mockRepository)(nil)
 
 type mockRepository struct {
-	c         persistence.Connection
+	c         shared.Connection
 	fail      bool
 	errMap    map[int]error
 	callCount int
 }
 
-func newDocRepo(c persistence.Connection) *mockRepository {
+func newDocRepo(c shared.Connection) *mockRepository {
 	return &mockRepository{
 		c:      c,
 		errMap: make(map[int]error),
@@ -69,12 +69,12 @@ func (m *mockRepository) Get(id string) (d document.DocEntity, err error) {
 	}, m.errMap[m.callCount]
 }
 
-func (m *mockRepository) Save(doc document.DocEntity, a persistence.Atomic) (d document.DocEntity, err error) {
+func (m *mockRepository) Save(doc document.DocEntity, a shared.Atomic) (d document.DocEntity, err error) {
 	m.callCount++
 	return doc, m.errMap[m.callCount]
 }
 
-func (m *mockRepository) Delete(id string, a persistence.Atomic) (err error) {
+func (m *mockRepository) Delete(id string, a shared.Atomic) (err error) {
 	m.callCount++
 	if id == noDelete {
 		return fmt.Errorf("delete error")
@@ -113,7 +113,7 @@ func (m *mockRepository) Search(s document.DocSearch, order []document.OrderBy) 
 	}, nil
 }
 
-func (m *mockRepository) Exists(id string, a persistence.Atomic) (filePath string, err error) {
+func (m *mockRepository) Exists(id string, a shared.Atomic) (filePath string, err error) {
 	m.callCount++
 	if id == notExists {
 		return "", fmt.Errorf("exists error")
@@ -124,10 +124,10 @@ func (m *mockRepository) Exists(id string, a persistence.Atomic) (filePath strin
 	return "file", nil
 }
 
-func (m *mockRepository) CreateAtomic() (persistence.Atomic, error) {
+func (m *mockRepository) CreateAtomic() (shared.Atomic, error) {
 	m.callCount++
 	if m.fail {
-		return persistence.Atomic{}, errTx
+		return shared.Atomic{}, errTx
 	}
 	return m.c.CreateAtomic()
 }
@@ -139,14 +139,14 @@ func (m *mockRepository) SearchLists(s string, st document.SearchType) ([]string
 	return []string{"one", "two"}, nil
 }
 
-func GetMockConn(t *testing.T) (persistence.Connection, *sql.DB, sqlmock.Sqlmock) {
+func GetMockConn(t *testing.T) (shared.Connection, *sql.DB, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("could not create a new SQL mock; %v", err)
 	}
 
 	dbx := sqlx.NewDb(db, "mysql")
-	con := persistence.NewFromDB(dbx)
+	con := shared.NewFromDB(dbx)
 
 	return con, db, mock
 }

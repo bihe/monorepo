@@ -128,10 +128,11 @@ templ EditBookmarks(bm Bookmark, paths []string) {
 									type="file"
 									name="bookmark_customFaviconUpload"
 									id="customFaviconUpload"
-									accept="image/*,.png,.jpeg,.jpg,.gif"
+									accept="image/*,.png,.jpeg,.jpg,.gif,.svg"
 								/>
 								<button
 									type="button"
+									id="btnUploadCustomFavicon"
 									class="btn btn-outline-secondary"
 									hx-post="/bm/favicon/upload"
 									hx-encoding="multipart/form-data"
@@ -146,6 +147,10 @@ templ EditBookmarks(bm Bookmark, paths []string) {
 						<div id="error_section" class={ "error_text", templ.KV("d-none", bm.Error == "") }>
 							<div class="spacer"></div>
 							<i class="bi bi-exclamation-diamond"></i>&nbsp;<span>{ bm.Error }</span>
+						</div>
+						<div id="info_section" class="info_text d-none">
+							<div class="spacer"></div>
+							<i class="bi bi-info-circle"></i>&nbsp;<span id="info_section_text">TEXT</span>
 						</div>
 					</div>
 					<div class="modal-footer">
@@ -199,6 +204,50 @@ templ EditBookmarks(bm Bookmark, paths []string) {
 						document.querySelector('#bookmark_favicon_display').classList.remove('invert');
 						}
 					});
+				}
+
+				if (document.querySelector('.bookmark_edit_form')) {
+					document.querySelector('.bookmark_edit_form').addEventListener('paste', e => {
+						if (!e.clipboardData.items || e.clipboardData.items.length == 0) {
+							showInfoText(`Nothing to paste from clipboard!`);
+							return;
+						}
+						try {
+							// get the first item of the clipboard
+							var item = e.clipboardData.items[0];
+							if (item.type.indexOf("image") === 0 || item.type.indexOf("svg") === 0) {
+								let fileInput = document.querySelector('#customFaviconUpload');
+								let dataTransfer = new DataTransfer();
+								let blob = item.getAsFile();
+								let uuid = window.crypto.randomUUID()
+								dataTransfer.items.add(blob);
+								fileInput.files = dataTransfer.files;
+
+								console.log('files for upload: ' + fileInput.files.length);
+								showInfoText(`Pasted file '${blob.name}' from clipboard!`);
+							} else {
+								showInfoText(`No image in clipboard!`);
+							}
+						} catch (e) {
+							console.log("could not set clipboard image!");
+							console.log(e);
+						}
+
+					})
+				}
+
+				function showInfoText(text) {
+					if (document.querySelector('#info_section')) {
+						if (document.querySelector('#info_section_text')) {
+							document.querySelector('#info_section_text').textContent = text;
+							document.querySelector('#info_section').classList.remove('d-none');
+
+							setTimeout(() => {
+								document.querySelector('#info_section_text').textContent = '';
+								document.querySelector('#info_section').classList.add('d-none')
+							}, 2000);
+						}
+					}
 				}
 			</script>
 		}

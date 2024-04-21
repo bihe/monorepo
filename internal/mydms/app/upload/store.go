@@ -3,7 +3,6 @@ package upload
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"time"
@@ -43,11 +42,13 @@ func NewStore(path string) Store {
 // jsonStore implements the Store interface by serializing the data into a JSON structure
 // the jsonStore saves files using the following structur
 // /basepath
-//     /json
-//	    id.json
-//     /files
-//         /id
-//             <file>
+//
+//	    /json
+//		    id.json
+//	    /files
+//	        /id
+//	            <file>
+//
 // the folder /json is used like a database where the metadata of each upload is stored
 // the "payload" is stored in the folder /files with an folder per id and the <file> payload saved within the folder
 type jsonStore struct {
@@ -88,7 +89,7 @@ func (s *jsonStore) Write(item Upload) (err error) {
 	if err != nil {
 		return fmt.Errorf("could not marshall JSON: %v", err)
 	}
-	if err = ioutil.WriteFile(metaPath, mety, 0660); err != nil {
+	if err = os.WriteFile(metaPath, mety, 0660); err != nil {
 		return fmt.Errorf("could not store item metadata: %v", err)
 	}
 
@@ -102,7 +103,7 @@ func (s *jsonStore) Write(item Upload) (err error) {
 	}
 
 	filePathName := path.Join(s.path, filesPath, item.ID, item.FileName)
-	if err = ioutil.WriteFile(filePathName, payload, 0660); err != nil {
+	if err = os.WriteFile(filePathName, payload, 0660); err != nil {
 		return fmt.Errorf("could not save payload: %v", err)
 	}
 
@@ -122,7 +123,7 @@ func (s *jsonStore) Read(id string) (Upload, error) {
 		return item, fmt.Errorf("could not ensure path for meta-data: %v", err)
 	}
 	metaPath = getMetaPathFile(s.path, id)
-	metaPayload, err := ioutil.ReadFile(metaPath)
+	metaPayload, err := os.ReadFile(metaPath)
 	if err != nil {
 		return item, fmt.Errorf("could not read meta-data file '%s': %v", id, err)
 	}
@@ -133,7 +134,7 @@ func (s *jsonStore) Read(id string) (Upload, error) {
 	// read the payload file
 	payloadPath := getFilePath(s.path, id)
 	payloadFile := path.Join(payloadPath, item.FileName)
-	filePayload, err := ioutil.ReadFile(payloadFile)
+	filePayload, err := os.ReadFile(payloadFile)
 	if err != nil {
 		return item, fmt.Errorf("could not read payload file: %v", err)
 	}

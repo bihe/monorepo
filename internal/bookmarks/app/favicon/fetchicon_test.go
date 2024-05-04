@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -135,79 +136,112 @@ func TestFetchFavicon(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 	})
+	mux.HandleFunc("/pathNoFile", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(pngFavicon)))
+		if _, err := w.Write(pngFavicon); err != nil {
+			t.Fatalf("%v", err)
+		}
+	})
+	mux.HandleFunc("/disposition", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(pngFavicon)))
+		w.Header().Set("Content-Disposition", "attachment; filename="+strconv.Quote("favicon-disposition.png"))
+		if _, err := w.Write(pngFavicon); err != nil {
+			t.Fatalf("%v", err)
+		}
+	})
 	ts := httptest.NewServer(mux)
 	defer ts.Close()
 
 	// default, use basepath favicon.ico
 	// ------------------------------------------------------------------
-	fileName, payload, err := GetFaviconFromURL(ts.URL)
+	content, err := GetFaviconFromURL(ts.URL)
 	if err != nil {
 		t.Errorf("could not get default favicon: %v", err)
 	}
-	assert.Equal(t, "favicon.ico", fileName)
-	assert.True(t, len(payload) > 0)
-	assert.Equal(t, len(icoFavicon), len(payload))
+	assert.Equal(t, "favicon.ico", content.FileName)
+	assert.True(t, len(content.Payload) > 0)
+	assert.Equal(t, len(icoFavicon), len(content.Payload))
 
 	// use html content1
 	// ------------------------------------------------------------------
-	fileName, payload, err = GetFaviconFromURL(ts.URL + "/pageAbs")
+	content, err = GetFaviconFromURL(ts.URL + "/pageAbs")
 	if err != nil {
 		t.Errorf("could not get favicon: %v", err)
 	}
-	assert.Equal(t, "favicon.png", fileName)
-	assert.True(t, len(payload) > 0)
-	assert.Equal(t, len(pngFavicon), len(payload))
+	assert.Equal(t, "favicon.png", content.FileName)
+	assert.True(t, len(content.Payload) > 0)
+	assert.Equal(t, len(pngFavicon), len(content.Payload))
 
 	// use html content2
 	// ------------------------------------------------------------------
-	fileName, payload, err = GetFaviconFromURL(ts.URL + "/pageRel")
+	content, err = GetFaviconFromURL(ts.URL + "/pageRel")
 	if err != nil {
 		t.Errorf("could not get favicon: %v", err)
 	}
-	assert.Equal(t, "favicon32x32.png", fileName)
-	assert.True(t, len(payload) > 0)
-	assert.Equal(t, len(pngFavicon), len(payload))
+	assert.Equal(t, "favicon32x32.png", content.FileName)
+	assert.True(t, len(content.Payload) > 0)
+	assert.Equal(t, len(pngFavicon), len(content.Payload))
 
 	// use html content3
 	// ------------------------------------------------------------------
-	fileName, payload, err = GetFaviconFromURL(ts.URL + "/cdn")
+	content, err = GetFaviconFromURL(ts.URL + "/cdn")
 	if err != nil {
 		t.Errorf("could not get favicon: %v", err)
 	}
-	assert.Equal(t, "favicon.png", fileName)
-	assert.True(t, len(payload) > 0)
-	assert.Equal(t, len(pngFavicon), len(payload))
+	assert.Equal(t, "favicon.png", content.FileName)
+	assert.True(t, len(content.Payload) > 0)
+	assert.Equal(t, len(pngFavicon), len(content.Payload))
 
 	// single file
 	// ------------------------------------------------------------------
-	fileName, payload, err = GetFaviconFromURL(ts.URL + "/singleFile/index.html")
+	content, err = GetFaviconFromURL(ts.URL + "/singleFile/index.html")
 	if err != nil {
 		t.Errorf("could not get favicon: %v", err)
 	}
-	assert.Equal(t, "favicon.ico", fileName)
-	assert.True(t, len(payload) > 0)
-	assert.Equal(t, len(icoFavicon), len(payload))
+	assert.Equal(t, "favicon.ico", content.FileName)
+	assert.True(t, len(content.Payload) > 0)
+	assert.Equal(t, len(icoFavicon), len(content.Payload))
 
 	// html parse error
 	// ------------------------------------------------------------------
-	fileName, payload, err = GetFaviconFromURL(ts.URL + "/parseErr")
+	content, err = GetFaviconFromURL(ts.URL + "/parseErr")
 	if err != nil {
 		t.Errorf("could not get default favicon: %v", err)
 	}
-	assert.Equal(t, "favicon.ico", fileName)
-	assert.True(t, len(payload) > 0)
-	assert.Equal(t, len(icoFavicon), len(payload))
+	assert.Equal(t, "favicon.ico", content.FileName)
+	assert.True(t, len(content.Payload) > 0)
+	assert.Equal(t, len(icoFavicon), len(content.Payload))
+
+	// DefaultFaviconName because not filename in path
+	// ------------------------------------------------------------------
+	content, err = FetchURL(ts.URL+"/pathNoFile", FetchImage)
+	if err != nil {
+		t.Errorf("could not get favicon: %v", err)
+	}
+	assert.Equal(t, "favicon.ico", content.FileName)
+	assert.True(t, len(content.Payload) > 0)
+	assert.Equal(t, len(pngFavicon), len(content.Payload))
+
+	// parse content-disposition
+	// ------------------------------------------------------------------
+	content, err = FetchURL(ts.URL+"/disposition", FetchImage)
+	if err != nil {
+		t.Errorf("could not get favicon: %v", err)
+	}
+	assert.Equal(t, "favicon-disposition.png", content.FileName)
+	assert.True(t, len(content.Payload) > 0)
+	assert.Equal(t, len(pngFavicon), len(content.Payload))
 
 	// http error
 	// ------------------------------------------------------------------
-	_, _, err = GetFaviconFromURL(ts.URL + "/errorFavicon")
+	_, err = GetFaviconFromURL(ts.URL + "/errorFavicon")
 	if err == nil {
 		t.Errorf("expected error")
 	}
 
 	// invalid url
 	// ------------------------------------------------------------------
-	_, _, err = GetFaviconFromURL("udp://this should be an invalid URL /")
+	_, err = GetFaviconFromURL("udp://this should be an invalid URL /")
 	if err == nil {
 		t.Errorf("expected error")
 	}

@@ -333,7 +333,7 @@ func (t *TemplateHandler) UploadCustomFavicon() http.HandlerFunc {
 			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
 			return
 		}
-		fav, err := t.App.WriteLocalFavicon(meta.Filename, payload)
+		fav, err := t.App.WriteLocalFavicon(meta.Filename, cType, payload)
 		if err != nil {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
 			t.Logger.ErrorRequest(fmt.Sprintf("could not fetch the custom favicon; '%v'", err), r)

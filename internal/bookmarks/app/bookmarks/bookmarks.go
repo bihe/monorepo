@@ -602,24 +602,16 @@ func (s *Application) LocalFetchFaviconURL(url string) (*ObjectInfo, error) {
 		return nil, app.ErrValidation("empty URL provided")
 	}
 
-	payload, err := favicon.FetchURL(url, favicon.FetchImage)
+	content, err := favicon.FetchURL(url, favicon.FetchImage)
 	if err != nil {
 		return nil, fmt.Errorf("cannot fetch favicon from URL '%s': %v", url, err)
 	}
-	if len(payload) == 0 {
+	if len(content.Payload) == 0 {
 		return nil, fmt.Errorf("not payload for favicon from URL '%s'", url)
 	}
 
-	favi := ""
-	parts := strings.Split(url, "/")
-	if len(parts) > 0 {
-		favi = parts[len(parts)-1] // last element
-	} else {
-		return nil, fmt.Errorf("cannot get favicon-filename from URL '%s': %v", url, err)
-	}
-
-	s.Logger.Info(fmt.Sprintf("got favicon payload length of '%d' for URL '%s'", len(payload), url))
-	return s.WriteLocalFavicon(favi, payload)
+	s.Logger.Info(fmt.Sprintf("got favicon payload length of '%d' for URL '%s'", len(content.Payload), url))
+	return s.WriteLocalFavicon(content.FileName, content.MimeType, content.Payload)
 }
 
 // LocalExtractFaviconFromURL retrieves the Favicon from the bookmarks URL and stores the payload locally
@@ -628,21 +620,35 @@ func (s *Application) LocalExtractFaviconFromURL(baseURL string) (*ObjectInfo, e
 		return nil, app.ErrValidation("empty URL provided")
 	}
 
-	favi, payload, err := favicon.GetFaviconFromURL(baseURL)
+	content, err := favicon.GetFaviconFromURL(baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("cannot fetch favicon from URL '%s': %v", baseURL, err)
 	}
-	if len(payload) == 0 {
+	if len(content.Payload) == 0 {
 		return nil, fmt.Errorf("no payload for favicon from URL '%s'", baseURL)
 	}
 
-	s.Logger.Info(fmt.Sprintf("got favicon payload length of '%d' for URL '%s'", len(payload), baseURL))
-	return s.WriteLocalFavicon(favi, payload)
+	s.Logger.Info(fmt.Sprintf("got favicon payload length of '%d' for URL '%s'", len(content.Payload), baseURL))
+	return s.WriteLocalFavicon(content.FileName, content.MimeType, content.Payload)
 }
 
+const faviconSizeX = 50
+const faviconSizeY = 50
+
 // WriteLocalFavicon takes a payload and stores it locally using a generated hash-code
-func (s *Application) WriteLocalFavicon(name string, payload []byte) (*ObjectInfo, error) {
-	hashPayload, err := hashInput(payload)
+func (s *Application) WriteLocalFavicon(name, mimeType string, payload []byte) (*ObjectInfo, error) {
+	content := favicon.Content{
+		FileName: name,
+		MimeType: mimeType,
+		Payload:  payload,
+	}
+	resized, err := favicon.ResizeImage(content, faviconSizeX, faviconSizeY)
+	if err != nil {
+		s.Logger.Error("could not resize favicon", logging.ErrV(err))
+		resized = content
+	}
+
+	hashPayload, err := hashInput(resized.Payload)
 	if err != nil {
 		return nil, fmt.Errorf("could not hash payload: '%v'", err)
 	}
@@ -654,19 +660,28 @@ func (s *Application) WriteLocalFavicon(name string, payload []byte) (*ObjectInf
 	filename := fmt.Sprintf("%s_%s%s", hashFilename, hashPayload, ext)
 	fullPath := path.Join(s.FaviconPath, filename)
 
-	if err := os.WriteFile(fullPath, payload, 0644); err != nil {
+	if err := os.WriteFile(fullPath, resized.Payload, 0644); err != nil {
 		return nil, fmt.Errorf("could not write favicon to file '%s': %v", fullPath, err)
 	}
 
 	fi := ObjectInfo{
 		Name:     filename,
-		Payload:  payload,
+		Payload:  resized.Payload,
 		Modified: time.Now(),
 	}
 	return &fi, nil
 }
 
 // ---- Internals ----
+
+func (s *Application) resize(content favicon.Content, x, y int) favicon.Content {
+	resized, err := favicon.ResizeImage(content, x, y)
+	if err != nil {
+		s.Logger.Error("could not resize favicon", logging.ErrV(err))
+		return content
+	}
+	return resized
+}
 
 func hashInput(input []byte) (string, error) {
 	hash := sha1.New()

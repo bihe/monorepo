@@ -5,8 +5,10 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -21,8 +23,15 @@ const (
 	FetchAll   FetchType = "*"
 )
 
+// Content defines the content of a URI response
+type Content struct {
+	Payload  []byte
+	FileName string
+	MimeType string
+}
+
 // GetFaviconFromURL tries to find and fetch the favicon from the given URL
-func GetFaviconFromURL(url string) (fileName string, payload []byte, err error) {
+func GetFaviconFromURL(url string) (content Content, err error) {
 	var (
 		scheme  string
 		baseURL string
@@ -34,15 +43,19 @@ func GetFaviconFromURL(url string) (fileName string, payload []byte, err error) 
 		return
 	}
 
-	if iconURL, fileName, err = parseHtmlPageForFavicon(url); err != nil {
+	if iconURL, _, err = parseHtmlPageForFavicon(url); err != nil {
 		// no favicon found on page
 		// fall back to the standard to get the favicon from the base-path
 		iconURL = fmt.Sprintf("%s/%s", baseURL, DefaultFaviconName)
-		if payload, err = FetchURL(iconURL, FetchImage); err != nil {
+		if content, err = FetchURL(iconURL, FetchImage); err != nil {
 			err = fmt.Errorf("could not fetch favicon '%s': %v", iconURL, err)
 			return
 		}
-		return DefaultFaviconName, payload, nil
+		return Content{
+			Payload:  content.Payload,
+			FileName: content.FileName,
+			MimeType: content.MimeType,
+		}, nil
 	}
 
 	// we have parsed the favicon from the html
@@ -64,7 +77,7 @@ func GetFaviconFromURL(url string) (fileName string, payload []byte, err error) 
 		iconURL = pageURL + iconURL
 	}
 
-	if payload, err = FetchURL(iconURL, FetchImage); err != nil {
+	if content, err = FetchURL(iconURL, FetchImage); err != nil {
 		err = fmt.Errorf("could not fetch favicon '%s': %v", iconURL, err)
 		return
 	}
@@ -72,27 +85,54 @@ func GetFaviconFromURL(url string) (fileName string, payload []byte, err error) 
 }
 
 // FetchURL retrieves the payload of the specified URL
-func FetchURL(url string, what FetchType) ([]byte, error) {
-	resp, err := http.Get(url)
+func FetchURL(uri string, what FetchType) (Content, error) {
+	u, err := url.Parse(uri)
 	if err != nil {
-		return nil, fmt.Errorf("could not fetch page: %v", err)
+		return Content{}, fmt.Errorf("could not parse the supplied uri: %v", err)
+	}
+	fileName := path.Base(u.Path)
+	// determine if fileName has an extension or is just the base-name
+	if path.Ext(fileName) == "" {
+		fileName = ""
+	}
+
+	resp, err := http.Get(uri)
+	if err != nil {
+		return Content{}, fmt.Errorf("could not fetch page: %v", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("got status %d", resp.StatusCode)
+		return Content{}, fmt.Errorf("got status %d", resp.StatusCode)
 	}
+	mimeType := resp.Header.Get("Content-Type")
 	if what == FetchImage {
-		mimeType := resp.Header.Get("Content-Type")
 		if !strings.HasPrefix(mimeType, "image/") {
-			return nil, fmt.Errorf("the payload needs to be an image mime-type; got '%s'", mimeType)
+			return Content{}, fmt.Errorf("the payload needs to be an image mime-type; got '%s'", mimeType)
+		}
+	}
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return Content{}, fmt.Errorf("could not read content body: %v", err)
+	}
+	if fileName == "" {
+		// try to parse the filename from a content-disposition header
+		dispHeader := resp.Header.Get("Content-Disposition")
+		if dispHeader != "" {
+			var params map[string]string
+			if _, params, err = mime.ParseMediaType(dispHeader); err == nil {
+				fileName = params["filename"]
+			}
+		}
+		if fileName == "" {
+			fileName = DefaultFaviconName
 		}
 	}
 
-	content, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("could not read content body: %v", err)
-	}
-	return content, nil
+	return Content{
+		FileName: fileName,
+		Payload:  content,
+		MimeType: mimeType,
+	}, nil
 }
 
 func parseURL(uri string) (scheme, baseURL, pageURL string, err error) {
@@ -112,13 +152,13 @@ func parseURL(uri string) (scheme, baseURL, pageURL string, err error) {
 
 func parseHtmlPageForFavicon(url string) (iconUrl, fileName string, err error) {
 	var (
-		page []byte
+		page Content
 	)
 
 	if page, err = FetchURL(url, FetchAll); err != nil {
 		return
 	}
-	if iconUrl, err = tryFaviconDefinitions(page); err != nil {
+	if iconUrl, err = tryFaviconDefinitions(page.Payload); err != nil {
 		return
 	}
 

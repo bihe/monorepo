@@ -112,7 +112,13 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 				t.RenderErr(r, w, fmt.Sprintf("could not get bookmark folder for path '%s'; '%v'", path, err))
 				return
 			}
-			favicon = "/bm/favicon/" + folder.ID
+			favicon = fmt.Sprintf("/bm/favicon/%s?t=%s", folder.ID, folder.TStamp())
+
+			// we need to treat the root folder in a "special" way
+			if path == "/" && strings.HasSuffix(folder.ID, "ROOT") {
+				// use a "default" favicon for the root folder
+				favicon = "/public/Clone_white.png"
+			}
 		}
 
 		ell := GetEllipsisValues(r)

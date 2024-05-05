@@ -23,6 +23,7 @@ type Bookmark struct {
 	UseCustomFavicon   bool
 	Error              string
 	Close              bool
+	TStamp             string
 }
 
 type ValidatorInput struct {
@@ -66,7 +67,7 @@ func EditBookmarks(bm Bookmark, paths []string) templ.Component {
 				var templ_7745c5c3_Var2 string
 				templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(bm.DisplayName.Val)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit_bookmark.templ`, Line: 33, Col: 65}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit_bookmark.templ`, Line: 34, Col: 65}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 				if templ_7745c5c3_Err != nil {
@@ -199,7 +200,7 @@ func EditBookmarks(bm Bookmark, paths []string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString("/bm/favicon/" + bm.ID.Val))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString("/bm/favicon/" + bm.ID.Val + "?t=" + bm.TStamp))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -294,7 +295,7 @@ func EditBookmarks(bm Bookmark, paths []string) templ.Component {
 					var templ_7745c5c3_Var10 string
 					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit_bookmark.templ`, Line: 84, Col: 64}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit_bookmark.templ`, Line: 85, Col: 64}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 					if templ_7745c5c3_Err != nil {
@@ -321,7 +322,7 @@ func EditBookmarks(bm Bookmark, paths []string) templ.Component {
 				var templ_7745c5c3_Var11 string
 				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(bm.Path.Val)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit_bookmark.templ`, Line: 87, Col: 61}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit_bookmark.templ`, Line: 88, Col: 61}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 				if templ_7745c5c3_Err != nil {
@@ -418,7 +419,7 @@ func EditBookmarks(bm Bookmark, paths []string) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(bm.Error)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit_bookmark.templ`, Line: 148, Col: 70}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `component_dialog_edit_bookmark.templ`, Line: 149, Col: 70}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {

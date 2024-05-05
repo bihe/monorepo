@@ -642,11 +642,7 @@ func (s *Application) WriteLocalFavicon(name, mimeType string, payload []byte) (
 		MimeType: mimeType,
 		Payload:  payload,
 	}
-	resized, err := favicon.ResizeImage(content, faviconSizeX, faviconSizeY)
-	if err != nil {
-		s.Logger.Error("could not resize favicon", logging.ErrV(err))
-		resized = content
-	}
+	resized := s.resize(content, faviconSizeX, faviconSizeY)
 
 	hashPayload, err := hashInput(resized.Payload)
 	if err != nil {

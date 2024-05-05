@@ -32,9 +32,12 @@ func ResizeImage(content Content, x, y int) (Content, error) {
 	if err != nil {
 		return Content{}, err
 	}
-	// half of the original size
-	// dst := image.NewRGBA(image.Rect(0, 0, src.Bounds().Max.X/2, src.Bounds().Max.Y/2))
-	dst := image.NewRGBA(image.Rect(0, 0, x, y))
+
+	// stay true to the original aspect fo the image
+	aspect_orig := float32(src.Bounds().Dx()) / float32(src.Bounds().Dy())
+	aspect_y := float32(x) / aspect_orig
+
+	dst := image.NewRGBA(image.Rect(0, 0, x, int(aspect_y)))
 	draw.NearestNeighbor.Scale(dst, dst.Rect, src, src.Bounds(), draw.Over, nil)
 
 	var buf bytes.Buffer

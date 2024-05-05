@@ -21,8 +21,17 @@ const (
 )
 
 // ResizeImage uses the image payload and resizes the image.
-// If the payload is not supported the same content is resturned without any resize operation
+// If the payload is not supported the same content is resturned without any resize operation.
+// The resize function honors the aspect-ratio of the original image if one of the values x/y is 0.
+// Aspect is not considered if both values for x and y are set (!= 0)
 func ResizeImage(content Content, x, y int) (Content, error) {
+	if x == 0 && y == 0 {
+		return Content{}, fmt.Errorf("x and y of the resize operation are 0")
+	}
+	if x < 0 || y < 0 {
+		return Content{}, fmt.Errorf("x or y of the resize operation are less than 0")
+	}
+
 	imageType := determineImage(content)
 	if imageType == OTHER {
 		return content, nil
@@ -33,11 +42,24 @@ func ResizeImage(content Content, x, y int) (Content, error) {
 		return Content{}, err
 	}
 
-	// stay true to the original aspect fo the image
-	aspect_orig := float32(src.Bounds().Dx()) / float32(src.Bounds().Dy())
-	aspect_y := float32(x) / aspect_orig
+	aspect_x := float32(x)
+	aspect_y := float32(y)
 
-	dst := image.NewRGBA(image.Rect(0, 0, x, int(aspect_y)))
+	if aspect_x == 0 || aspect_y == 0 {
+		// stay true to the original aspect of the image
+		aspect := float32(src.Bounds().Dx()) / float32(src.Bounds().Dy())
+
+		if aspect_x == 0 {
+			// y is set
+			aspect_x = float32(y) * aspect
+		}
+		if aspect_y == 0 {
+			// x is set
+			aspect_y = float32(x) / aspect
+		}
+	}
+
+	dst := image.NewRGBA(image.Rect(0, 0, int(aspect_x), int(aspect_y)))
 	draw.NearestNeighbor.Scale(dst, dst.Rect, src, src.Bounds(), draw.Over, nil)
 
 	var buf bytes.Buffer

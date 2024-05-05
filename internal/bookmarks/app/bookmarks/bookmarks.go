@@ -633,7 +633,6 @@ func (s *Application) LocalExtractFaviconFromURL(baseURL string) (*ObjectInfo, e
 }
 
 const faviconSizeX = 50
-const faviconSizeY = 50
 
 // WriteLocalFavicon takes a payload and stores it locally using a generated hash-code
 func (s *Application) WriteLocalFavicon(name, mimeType string, payload []byte) (*ObjectInfo, error) {
@@ -642,7 +641,7 @@ func (s *Application) WriteLocalFavicon(name, mimeType string, payload []byte) (
 		MimeType: mimeType,
 		Payload:  payload,
 	}
-	resized := s.resize(content, faviconSizeX, faviconSizeY)
+	resized := s.resize(content, faviconSizeX, 0 /* keep aspect ratio */)
 
 	hashPayload, err := hashInput(resized.Payload)
 	if err != nil {

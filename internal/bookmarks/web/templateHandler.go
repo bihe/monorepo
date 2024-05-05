@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
@@ -233,6 +234,7 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 			bm.URL = templates.ValidatorInput{Valid: true}
 			bm.CustomFavicon = templates.ValidatorInput{Valid: true}
 			bm.Type = bookmarks.Node
+			bm.TStamp = fmt.Sprintf("%d", time.Now().Unix())
 		} else {
 			// fetch an existing bookmark
 			b, err = t.App.GetBookmarkByID(id, *user)
@@ -248,6 +250,7 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 			bm.Type = b.Type
 			bm.CustomFavicon = templates.ValidatorInput{Valid: true}
 			bm.InvertFaviconColor = (b.InvertFaviconColor == 1)
+			bm.TStamp = b.TStamp()
 
 			paths, err = t.App.GetAllPaths(*user)
 			if err != nil {
@@ -414,6 +417,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 
 		// validation
 		validData := true
+		formBm.TStamp = fmt.Sprintf("%d", time.Now().Unix())
 		formBm.ID = templates.ValidatorInput{Val: recv.ID, Valid: true}
 		formBm.DisplayName = templates.ValidatorInput{Val: recv.DisplayName, Valid: true}
 		if recv.DisplayName == "" {
@@ -513,7 +517,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			existing.InvertFaviconColor = recv.InvertFaviconColor
 			existing.URL = recv.URL
 			existing.Favicon = recv.Favicon
-
+			formBm.TStamp = existing.TStamp()
 			updated, err := t.App.UpdateBookmark(*existing, *user)
 			if err != nil {
 				t.Logger.ErrorRequest(fmt.Sprintf("could not update bookmark entry '%s'; '%v'", recv.ID, err), r)

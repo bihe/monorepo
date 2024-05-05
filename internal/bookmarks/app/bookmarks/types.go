@@ -1,6 +1,7 @@
 package bookmarks
 
 import (
+	"fmt"
 	"time"
 
 	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
@@ -34,6 +35,16 @@ type Bookmark struct {
 	Highlight          int        `json:"highlight"`
 	Favicon            string     `json:"favicon"`
 	InvertFaviconColor int        `json:"invertFaviconColor"`
+}
+
+// TStamp returns either the modified or created timesstamp of the bookmark as unix time
+func (b Bookmark) TStamp() string {
+	var tstamp time.Time
+	tstamp = b.Created
+	if b.Modified != nil {
+		tstamp = *b.Modified
+	}
+	return fmt.Sprintf("%d", tstamp.Unix())
 }
 
 // BookmarksSortOrder contains a sorting for a list of ids

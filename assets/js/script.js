@@ -49,3 +49,26 @@
     // const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
     // const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
 })();
+/* focus search-bar with shortcut */
+; (function searchShortcut() {
+    // https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent
+    document.addEventListener(
+        "keydown",
+        (event) => {
+            const keyName = event.key;
+
+            if (keyName === "Control") {
+                // do not alert when only Control key is pressed.
+                return;
+            }
+
+            if (event.ctrlKey) {
+                // CTRL or CMD pressed
+                if (keyName === 'b') {
+                    document.querySelector('#search-field').focus();
+                }
+            }
+        },
+        false,
+    );
+})();

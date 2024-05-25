@@ -1,5 +1,44 @@
 package templates
 
+css appcontent() {
+	padding-top: 0px;
+}
+
+css contentArea() {
+	height: 100%;
+	overflow: hidden;
+}
+
+css bodyContent() {
+	overflow: auto;
+	height: 100vh;
+	background-color: #ffffff;
+	padding-left: 0px;
+	padding-right: 0px;
+}
+
+css container() {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+}
+
+css applicationError() {
+	padding: 20px;
+}
+
+css errorText() {
+	color: var(--bs-form-invalid-border-color);
+}
+
+css errorDetails() {
+	padding: 7px;
+	background-color: #eeeeee;
+	border: 1px dashed #999999;
+	border-radius: 7px;
+}
+
 templ ErrorPageLayout(basePath string, content templ.Component) {
 	<!DOCTYPE html>
 	<html lang="en">
@@ -11,14 +50,16 @@ templ ErrorPageLayout(basePath string, content templ.Component) {
 			<link rel="shortcut icon" id="site-favicon" type="image/x-icon" href="public/folder.svg"/>
 			<link href={ basePath + "/bootstrap/css/bootstrap.min.css" } rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"/>
 			<link href={ basePath + "/fonts/local.css" } rel="stylesheet"/>
-			<link href={ basePath + "/css/error_pages.css" } rel="stylesheet"/>
+			<style type="text/css">
+			body,html{margin:0;padding:0;height:100%;font-family:'Roboto Mono', monospace;font-size:0.9em}.container .item{text-align:center}.container h2{font-size:1.5rem;font-weight:500;letter-spacing:0.041875rem}
+			</style>
 		</head>
 		<body>
-			<div class="appcontent container-fluid" style="height: 100%;">
-				<div class="row contentArea">
-					<div class="col-main body-content">
+			<div class={ appcontent(), "container" } style="height: 100%;">
+				<div class={ "row", contentArea() }>
+					<div class={ "col-main", bodyContent() }>
 						<!-- content here -->
-						{! content }
+						@content
 						<!-- end -->
 					</div>
 				</div>

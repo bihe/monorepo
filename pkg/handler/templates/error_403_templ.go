@@ -25,7 +25,20 @@ func Error403(env config.Environment) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"container\"><div class=\"item\"><img src=\"/public/access-denied.svg\" width=\"100px\"><h2>Access denied</h2><p>You are not loged in or you do not have permission to access this page!</p><a id=\"link-oidc-start\" href=\"https://one.binggl.net/oidc/start\"><button type=\"button\" class=\"btn btn-lg btn-warning\">Login to access the page</button></a> ")
+		var templ_7745c5c3_Var2 = []any{container()}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var2...)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ.CSSClasses(templ_7745c5c3_Var2).String()))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"><div class=\"item\"><img src=\"/public/access-denied.svg\" width=\"100px\"><h2>Access denied</h2><p>You are not loged in or you do not have permission to access this page!</p><a id=\"link-oidc-start\" href=\"https://one.binggl.net/oidc/start\"><button type=\"button\" class=\"btn btn-lg btn-warning\">Login to access the page</button></a> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

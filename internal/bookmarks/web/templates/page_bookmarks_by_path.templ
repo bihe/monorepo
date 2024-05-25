@@ -6,45 +6,7 @@ templ BookmarksByPathContent(bookmarkList templ.Component) {
 
 templ BookmarksByPathStyles() {
 	<style type="text/css">
-    .breadcrumb-item {
-        --bs-breadcrumb-divider-color: #ffffff !important;
-        --bs-breadcrumb-divider: '>';
-        font-size: medium;
-    }
-    .breadcrumb-item.active {
-        color: #ffffff;
-    }
-    li.breadcrumb-item > a {
-        color: #ffffff;
-    }
-    div.btn-group > button.btn.dropdown-toggle {
-        --bs-btn-color: #ffffff;
-    }
-    .delete {
-        font-weight: bold;
-        color: red;
-    }
-    .right-action {
-        position: absolute;
-        right: 20px;
-    }
-	.sortInput {
-		position: relative;
-    	top: 18px;
-	}
-	@media only screen and (min-device-width: 375px) and (max-device-width: 812px) {
-	.breadcrumb-item {
-        --bs-breadcrumb-divider-color: #ffffff !important;
-        --bs-breadcrumb-divider: '>';
-        font-size: smaller;
-    }
-	.breadcrumb-item.active {
-        color: #ffffff;
-    }
-    li.breadcrumb-item > a {
-        color: #ffffff;
-    }
-	}
+    .breadcrumb-item{--bs-breadcrumb-divider-color:#ffffff !important;--bs-breadcrumb-divider:'>';font-size:medium}.breadcrumb-item.active{color:#ffffff}li.breadcrumb-item > a{color:#ffffff}div.btn-group > button.btn.dropdown-toggle{--bs-btn-color:#ffffff}.delete{font-weight:bold;color:red}.right-action{position:absolute;right:20px}.sortInput{position:relative;top:18px}@media only screen and (min-device-width: 375px) and (max-device-width: 812px){.breadcrumb-item{--bs-breadcrumb-divider-color:#ffffff !important;--bs-breadcrumb-divider:'>';font-size:smaller}.breadcrumb-item.active{color:#ffffff}li.breadcrumb-item > a{color:#ffffff}}
     </style>
 }
 
@@ -109,26 +71,28 @@ templ BookmarksByPathNavigation(entries []BookmarkPathEntry) {
 				hx-get={ "/bm/-1?path=" + getPath(entries) }
 			><i class="bi bi-plus"></i> Add</button>
 		</span>
-		<script type="text/javascript">
-			try {
-				document.querySelector('#btn_toggle_sorting').addEventListener('click', (event) => {
-					if (event.target.classList.contains('active')) {
-						console.log('Activate sorting');
-						sortableRefresh(document);
-					} else {
-						console.log('Disable sorting - refresh the list');
-						document.querySelector('#save_list_sort_order').classList.add('d-none');
-						htmx.trigger('#btn_toggle_sorting', 'refreshBookmarkList');
-					}
-				});
-				document.querySelector('#btn_save_sorting').addEventListener('click', (event) => {
-					htmx.trigger('#btn_save_sorting', 'sortBookmarkList');
-					document.querySelector('#btn_toggle_sorting').classList.remove('active');
-					document.querySelector('#save_list_sort_order').classList.add('d-none');
-				});
-			} catch(error) {
-				console.error(error);
-			}
-		</script>
+		@sortingLogic()
 	</div>
+}
+
+script sortingLogic() {
+	try {
+		document.querySelector('#btn_toggle_sorting').addEventListener('click', (event) => {
+			if (event.target.classList.contains('active')) {
+				console.log('Activate sorting');
+				sortableRefresh(document);
+			} else {
+				console.log('Disable sorting - refresh the list');
+				document.querySelector('#save_list_sort_order').classList.add('d-none');
+				htmx.trigger('#btn_toggle_sorting', 'refreshBookmarkList');
+			}
+		});
+		document.querySelector('#btn_save_sorting').addEventListener('click', (event) => {
+			htmx.trigger('#btn_save_sorting', 'sortBookmarkList');
+			document.querySelector('#btn_toggle_sorting').classList.remove('active');
+			document.querySelector('#save_list_sort_order').classList.add('d-none');
+		});
+	} catch(error) {
+		console.error(error);
+	}
 }

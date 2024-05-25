@@ -47,7 +47,7 @@ func BookmarksByPathStyles() templ.Component {
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<style type=\"text/css\">\n    .breadcrumb-item {\n        --bs-breadcrumb-divider-color: #ffffff !important;\n        --bs-breadcrumb-divider: '>';\n        font-size: medium;\n    }\n    .breadcrumb-item.active {\n        color: #ffffff;\n    }\n    li.breadcrumb-item > a {\n        color: #ffffff;\n    }\n    div.btn-group > button.btn.dropdown-toggle {\n        --bs-btn-color: #ffffff;\n    }\n    .delete {\n        font-weight: bold;\n        color: red;\n    }\n    .right-action {\n        position: absolute;\n        right: 20px;\n    }\n\t.sortInput {\n\t\tposition: relative;\n    \ttop: 18px;\n\t}\n\t@media only screen and (min-device-width: 375px) and (max-device-width: 812px) {\n\t.breadcrumb-item {\n        --bs-breadcrumb-divider-color: #ffffff !important;\n        --bs-breadcrumb-divider: '>';\n        font-size: smaller;\n    }\n\t.breadcrumb-item.active {\n        color: #ffffff;\n    }\n    li.breadcrumb-item > a {\n        color: #ffffff;\n    }\n\t}\n    </style>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<style type=\"text/css\">\n    .breadcrumb-item{--bs-breadcrumb-divider-color:#ffffff !important;--bs-breadcrumb-divider:'>';font-size:medium}.breadcrumb-item.active{color:#ffffff}li.breadcrumb-item > a{color:#ffffff}div.btn-group > button.btn.dropdown-toggle{--bs-btn-color:#ffffff}.delete{font-weight:bold;color:red}.right-action{position:absolute;right:20px}.sortInput{position:relative;top:18px}@media only screen and (min-device-width: 375px) and (max-device-width: 812px){.breadcrumb-item{--bs-breadcrumb-divider-color:#ffffff !important;--bs-breadcrumb-divider:'>';font-size:smaller}.breadcrumb-item.active{color:#ffffff}li.breadcrumb-item > a{color:#ffffff}}\n    </style>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -100,7 +100,7 @@ func BookmarksByPathNavigation(entries []BookmarkPathEntry) templ.Component {
 					var templ_7745c5c3_Var4 string
 					templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(e.DisplayName)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `page_bookmarks_by_path.templ`, Line: 69, Col: 77}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `page_bookmarks_by_path.templ`, Line: 31, Col: 77}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 					if templ_7745c5c3_Err != nil {
@@ -143,7 +143,7 @@ func BookmarksByPathNavigation(entries []BookmarkPathEntry) templ.Component {
 					var templ_7745c5c3_Var7 string
 					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(e.DisplayName)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `page_bookmarks_by_path.templ`, Line: 75, Col: 93}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `page_bookmarks_by_path.templ`, Line: 37, Col: 93}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 					if templ_7745c5c3_Err != nil {
@@ -164,7 +164,15 @@ func BookmarksByPathNavigation(entries []BookmarkPathEntry) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"><i class=\"bi bi-plus\"></i> Add</button></span><script type=\"text/javascript\">\n\t\t\ttry {\n\t\t\t\tdocument.querySelector('#btn_toggle_sorting').addEventListener('click', (event) => {\n\t\t\t\t\tif (event.target.classList.contains('active')) {\n\t\t\t\t\t\tconsole.log('Activate sorting');\n\t\t\t\t\t\tsortableRefresh(document);\n\t\t\t\t\t} else {\n\t\t\t\t\t\tconsole.log('Disable sorting - refresh the list');\n\t\t\t\t\t\tdocument.querySelector('#save_list_sort_order').classList.add('d-none');\n\t\t\t\t\t\thtmx.trigger('#btn_toggle_sorting', 'refreshBookmarkList');\n\t\t\t\t\t}\n\t\t\t\t});\n\t\t\t\tdocument.querySelector('#btn_save_sorting').addEventListener('click', (event) => {\n\t\t\t\t\thtmx.trigger('#btn_save_sorting', 'sortBookmarkList');\n\t\t\t\t\tdocument.querySelector('#btn_toggle_sorting').classList.remove('active');\n\t\t\t\t\tdocument.querySelector('#save_list_sort_order').classList.add('d-none');\n\t\t\t\t});\n\t\t\t} catch(error) {\n\t\t\t\tconsole.error(error);\n\t\t\t}\n\t\t</script></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"><i class=\"bi bi-plus\"></i> Add</button></span>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = sortingLogic().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -173,4 +181,32 @@ func BookmarksByPathNavigation(entries []BookmarkPathEntry) templ.Component {
 		}
 		return templ_7745c5c3_Err
 	})
+}
+
+func sortingLogic() templ.ComponentScript {
+	return templ.ComponentScript{
+		Name: `__templ_sortingLogic_d070`,
+		Function: `function __templ_sortingLogic_d070(){try {
+		document.querySelector('#btn_toggle_sorting').addEventListener('click', (event) => {
+			if (event.target.classList.contains('active')) {
+				console.log('Activate sorting');
+				sortableRefresh(document);
+			} else {
+				console.log('Disable sorting - refresh the list');
+				document.querySelector('#save_list_sort_order').classList.add('d-none');
+				htmx.trigger('#btn_toggle_sorting', 'refreshBookmarkList');
+			}
+		});
+		document.querySelector('#btn_save_sorting').addEventListener('click', (event) => {
+			htmx.trigger('#btn_save_sorting', 'sortBookmarkList');
+			document.querySelector('#btn_toggle_sorting').classList.remove('active');
+			document.querySelector('#save_list_sort_order').classList.add('d-none');
+		});
+	} catch(error) {
+		console.error(error);
+	}
+}`,
+		Call:       templ.SafeScript(`__templ_sortingLogic_d070`),
+		CallInline: templ.SafeScriptInline(`__templ_sortingLogic_d070`),
+	}
 }

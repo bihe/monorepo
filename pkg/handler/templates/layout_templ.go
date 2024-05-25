@@ -139,7 +139,7 @@ func Layout(model LayoutModel, style, application_navigation, content templ.Comp
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"><div class=\"input-group\"><span class=\"input-group-text search-field-prefix\" id=\"search-addon\"><i class=\"bi bi-search\"></i></span> <input type=\"search\" name=\"q\" class=\"form-control search-field\" placeholder=\"Search...\" aria-label=\"Search\" id=\"search-field\" control-id=\"search-field\" value=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"><div class=\"input-group\"><span class=\"input-group-text search-field-prefix\" id=\"search-addon\"><i class=\"bi bi-search\"></i></span> <input type=\"search\" name=\"q\" class=\"form-control search-field\" placeholder=\"Search... (Ctrl+B)\" aria-label=\"Search\" id=\"search-field\" control-id=\"search-field\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

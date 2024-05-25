@@ -3,7 +3,7 @@ package templates
 import "golang.binggl.net/monorepo/pkg/config"
 
 templ Error403(env config.Environment) {
-	<div class="container">
+	<div class={ container() }>
 		<div class="item">
 			<img src="/public/access-denied.svg" width="100px"/>
 			<h2>Access denied</h2>

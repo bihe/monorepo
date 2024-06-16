@@ -15,7 +15,7 @@ templ SearchContent(items []bookmarks.Bookmark, ell EllipsisValues) {
 		for _, b := range items {
 			<div class="bookmark_item">
 				<span>
-					<img width="24px" height="24px" alt="favicon" class={ "bookmark_favicon", templ.KV("invert", (b.InvertFaviconColor == 1)) } src={ fmt.Sprintf("/bm/favicon/%s", b.ID) }/>
+					<img width="24px" height="24px" alt="favicon" class={ "bookmark_favicon", templ.KV("invert", (b.InvertFaviconColor == 1)) } src={ fmt.Sprintf("/bm/favicon/%s?t=%s", b.ID, b.TStamp()) }/>
 					if b.ChildCount > 0 {
 						<span class="top-0 start-100 translate-middle badge rounded-pill bg-danger">
 							{ fmt.Sprintf("%d", b.ChildCount) }

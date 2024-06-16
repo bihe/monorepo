@@ -27,7 +27,8 @@ templ Layout(model LayoutModel, style, application_navigation, content templ.Com
 		<head>
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
-			<link rel="shortcut icon" id="site-favicon" type="image/x-icon" href={ model.Favicon }/>
+			<link sizes="48x48" rel="icon" href={ model.Favicon }/>
+			<link rel="shortcut icon" id="site-favicon" href={ model.Favicon }/>
 			<title>{ model.PageTitle }</title>
 			<link href="/public/bootstrap/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"/>
 			<link href="/public/css/styles.css" rel="stylesheet"/>

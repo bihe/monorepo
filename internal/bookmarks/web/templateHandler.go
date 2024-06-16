@@ -51,7 +51,7 @@ func (t *TemplateHandler) SearchBookmarks() http.HandlerFunc {
 
 		ell := GetEllipsisValues(r)
 		tmpl.Layout(
-			t.layoutModel("Bookmark Search", search, "/public/folder.svg", *user),
+			t.layoutModel("Bookmark Search", search, "/public/search_icon.svg", *user),
 			templates.SearchStyles(),
 			templates.SearchNavigation(search),
 			templates.SearchContent(bms, ell),

@@ -3,11 +3,11 @@ module golang.binggl.net/monorepo
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/PuerkitoBio/goquery v1.9.2
-	github.com/a-h/templ v0.2.707
-	github.com/aws/aws-sdk-go v1.54.2
+	github.com/a-h/templ v0.2.731
+	github.com/aws/aws-sdk-go v1.54.10
 	github.com/bihe/go-gelf v1.0.0
 	github.com/coreos/go-oidc/v3 v3.10.0
-	github.com/go-chi/chi/v5 v5.0.12
+	github.com/go-chi/chi/v5 v5.0.14
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/jmoiron/sqlx v1.4.0
@@ -20,7 +20,7 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/image v0.17.0
+	golang.org/x/image v0.18.0
 	golang.org/x/oauth2 v0.21.0
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/driver/sqlite v1.5.6

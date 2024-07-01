@@ -82,12 +82,19 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, logger logging
 
 	std.Mount("/", sec)
 
-	// mount the server-side rendering paths
+	// mount the server-side rendering paths /sites
 	sec.Mount("/sites", func() http.Handler {
 		r := chi.NewRouter()
 		r.Get("/", templateHandler.DisplaySites())
 		r.Get("/edit", templateHandler.ShowEditSites())
 		r.Post("/", templateHandler.SaveSites())
+		return r
+	}())
+
+	// mount the server-side rendering paths /tools
+	sec.Mount("/tools", func() http.Handler {
+		r := chi.NewRouter()
+		r.Get("/", templateHandler.DisplayTools())
 		return r
 	}())
 

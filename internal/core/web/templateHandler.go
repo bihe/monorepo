@@ -42,10 +42,27 @@ func (t *TemplateHandler) DisplaySites() http.HandlerFunc {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get sites for user '%s'; '%v'", user.Username, err), r)
 		}
 		tmpl.Layout(
-			t.layoutModel("Available Apps", search, "/public/folder.svg", *user),
+			t.layoutModel(r, "Available Apps", search, "/public/folder.svg", *user),
 			templates.SiteStyles(),
 			templates.SiteNavigation(search),
 			templates.SiteContent(usrSites),
+			searchURL,
+		).Render(r.Context(), w)
+	}
+}
+
+// DisplayTools shows a site for some tools I use
+func (t *TemplateHandler) DisplayTools() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := ensureUser(r)
+		search := ""
+		t.Logger.InfoRequest(fmt.Sprintf("display tools site for user: '%s'", user.Username), r)
+
+		tmpl.Layout(
+			t.layoutModel(r, "Tools", search, "/public/Clone_white.png", *user),
+			templates.ToolsStyles(),
+			templates.ToolsNavigation(search),
+			templates.ToolsContent(),
 			searchURL,
 		).Render(r.Context(), w)
 	}
@@ -65,7 +82,7 @@ func (t *TemplateHandler) ShowEditSites() http.HandlerFunc {
 		// for simple edit purposes we display the whole payload as JSON
 		jsonPayload := tmpl.JsonIndent[sites.UserSites](usrSites)
 		tmpl.Layout(
-			t.layoutModel("Edit Apps", search, "/public/folder.svg", *user),
+			t.layoutModel(r, "Edit Apps", search, "/public/folder.svg", *user),
 			templates.SiteEditStyles(),
 			templates.SiteEditNavigation(search),
 			templates.SiteEditContent(jsonPayload, ""),
@@ -118,11 +135,12 @@ func (t *TemplateHandler) versionString() string {
 	return fmt.Sprintf("%s-%s", t.Version, t.Build)
 }
 
-func (t *TemplateHandler) layoutModel(pageTitle, search, favicon string, user security.User) tmpl.LayoutModel {
+func (t *TemplateHandler) layoutModel(r *http.Request, pageTitle, search, favicon string, user security.User) tmpl.LayoutModel {
 	appNav := make([]tmpl.NavItem, 0)
 	var title string
+	currUrl := r.URL
 	for _, a := range common.AvailableApps {
-		if a.URL == "/sites" {
+		if a.URL == currUrl.Path {
 			a.Active = true
 			title = a.DisplayName
 		}

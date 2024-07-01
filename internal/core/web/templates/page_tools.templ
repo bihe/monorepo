@@ -1,0 +1,77 @@
+package templates
+
+templ ToolsContent() {
+	<div class="container-fluid">
+		<div class="row">
+			<h2>Markdown Preview</h2>
+			<div class="col">
+				<h5>Markdown</h5>
+				<div>
+					<textarea class="markdown_editor" id="markdown_content"></textarea>
+				</div>
+			</div>
+			<div class="col text-end">
+				<h5>Preview</h5>
+				<div class="text-start markdown_output" id="markdown_preview_content"></div>
+			</div>
+		</div>
+	</div>
+	<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+	<script type="text/javascript">
+        markdownContent = document.getElementById('markdown_content');
+        if (markdown_content) {
+            try {
+                markdownContent.addEventListener("input", (event) => {
+                    content = event.target.value;
+                    if (content && content !== '') {
+                        htmlContent = marked.parse(content);
+                        if (htmlContent) {
+                            document.getElementById('markdown_preview_content').innerHTML = htmlContent;
+                        }
+                    }
+                });
+            } catch (ex) {
+                console.log('error during markdown parsing! ' + ex)
+            }
+        }
+
+
+    </script>
+}
+
+templ ToolsStyles() {
+	<style type="text/css">
+    .markdown_editor {
+        width: 48vw;
+        height: calc(100vh - 200px);
+        background-color: #ffffff;
+        font-family: monospace;
+        font-size: 1.4em;
+        color: black;
+    }
+
+    .markdown_output {
+        padding-left:5px;
+        width: 48vw;
+        height: calc(100vh - 200px);
+        background-color: #dddddd;
+        font-family: monospace;
+        font-size: 1.4em;
+        color: black;
+        overflow:auto;
+    }
+    </style>
+}
+
+templ ToolsNavigation(search string) {
+	<div class="application_name">
+		<div>~ tools:</div>
+		<span class="right-action">
+			<div id="request_indicator" class="request_indicator htmx-indicator">
+				<div class="spinner-border text-light" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
+			</div>
+		</span>
+	</div>
+}

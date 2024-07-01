@@ -16,7 +16,12 @@ var AvailableApps = []templates.NavItem{
 	},
 	{
 		DisplayName: "Sites",
-		Icon:        "<i class=\"bi bi-diagram-2\"></i> ",
+		Icon:        "<i class=\"bi bi-shield-check\"></i> ",
 		URL:         "/sites",
+	},
+	{
+		DisplayName: "Tools",
+		Icon:        "<i class=\"bi bi-wrench-adjustable-circle\"></i> ",
+		URL:         "/tools",
 	},
 }

@@ -87,6 +87,7 @@ go-test:
 
 go-coverage:
 	@echo "  >  Testing the monorepo (coverage) ..."
+	# tparse: https://github.com/mfridman/tparse
 	go test -race -coverprofile="coverage.txt" -covermode atomic -count=1 -json ./... | tparse -all
 
 

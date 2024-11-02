@@ -4,11 +4,11 @@ import (
 	"net/http"
 
 	"golang.binggl.net/monorepo/pkg/config"
-	"golang.binggl.net/monorepo/pkg/handler/templates"
+	"golang.binggl.net/monorepo/pkg/handler/html"
 	"golang.binggl.net/monorepo/pkg/logging"
 )
 
-// TemplateHanlder provides some basics for HTML template based handlers
+// TemplateHandler provides some basics for HTML template based handlers
 type TemplateHandler struct {
 	Logger    logging.Logger
 	Env       config.Environment
@@ -20,7 +20,7 @@ type TemplateHandler struct {
 func (t *TemplateHandler) Show403() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
-		templates.ErrorPageLayout(t.BasePath, templates.Error403(t.Env)).Render(r.Context(), w)
+		html.ErrorPage403(t.BasePath, t.Env).Render(w)
 	}
 }
 
@@ -28,15 +28,11 @@ func (t *TemplateHandler) Show403() http.HandlerFunc {
 func (t *TemplateHandler) Show404() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
-		templates.ErrorPageLayout(t.BasePath, templates.Error404(t.Env)).Render(r.Context(), w)
+		html.ErrorPage404(t.BasePath).Render(w)
 	}
 }
 
 // RenderErr uses the application template to render the error-page
 func (t *TemplateHandler) RenderErr(r *http.Request, w http.ResponseWriter, message string) {
-	templates.ErrorPageLayout(t.BasePath, templates.ErrorApplication(
-		t.StartPage,
-		t.Env,
-		r,
-		message)).Render(r.Context(), w)
+	html.ErrorApplication(t.BasePath, t.Env, t.StartPage, r, message).Render(w)
 }

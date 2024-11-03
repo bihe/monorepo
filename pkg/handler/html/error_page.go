@@ -1,6 +1,7 @@
 package html
 
 import (
+	_ "embed"
 	"net/http"
 
 	"golang.binggl.net/monorepo/pkg/config"
@@ -9,6 +10,7 @@ import (
 	h "maragu.dev/gomponents/html"
 )
 
+// ErrorPage404 creates a HTML page used to indicate that a resource cannot be found
 func ErrorPage404(basePath string) g.Node {
 	body := h.Div(
 		h.Class("container"),
@@ -29,6 +31,7 @@ func ErrorPage404(basePath string) g.Node {
 	return errorLayout(basePath, body)
 }
 
+// ErrorPage403 is used to indicate that the request lacks the necessary authorization to access the resource
 func ErrorPage403(basePath string, env config.Environment) g.Node {
 	body := h.Div(
 		h.Class("container"),
@@ -55,6 +58,7 @@ func ErrorPage403(basePath string, env config.Environment) g.Node {
 	return errorLayout(basePath, body)
 }
 
+// ErrorApplication is used for general errors
 func ErrorApplication(basePath string, env config.Environment, startPage string, r *http.Request, err string) g.Node {
 	headerKeys := make([]string, 0)
 	for k := range r.Header {
@@ -127,7 +131,8 @@ func errorLayout(basePath string, body g.Node) g.Node {
 	})
 }
 
-const errorCSS = `body,html{margin:0;padding:0;height:100%;font-family:'Roboto Mono', monospace;font-size:0.9em}.container .item{text-align:center}.container h2{font-size:1.5rem;font-weight:500;letter-spacing:0.041875rem}.appcontent{padding-top:0}.contentArea{height:100%;overflow:hidden}.bodyContent{overflow:auto;height:100vh;background-color:#ffffff;padding-left:0;padding-right:0}.container{display:flex;justify-content:center;align-items:center;height:100%}.applicationError{padding:20px}.errorText{color:var(--bs-form-invalid-border-color)}.errorDetails{padding:7px;background-color:#eeeeee;border:1px dashed #999999;border-radius:7px}`
+//go:embed error.css
+var errorCSS string
 
 func errorStyles() g.Node {
 	return h.StyleEl(

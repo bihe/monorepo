@@ -6,26 +6,26 @@ tmp_dir = "./tmp"
   # -------------------------------------------------------------------------
   # core
   # -------------------------------------------------------------------------
-  #args_bin = [
-  #  "--port",
-  #  "3003",
-  #  "--basepath",
-  #  "./internal/core"
-  #]
-  #bin = "./tmp/core.api"
-  #cmd = "go build -ldflags=\"-X main.Version=NOW -X main.Build=DEV\" -o ./tmp/core.api ./cmd/core/server/main.go"
-
-  # -------------------------------------------------------------------------
-  # bookmarks
-  # -------------------------------------------------------------------------
   args_bin = [
     "--port",
     "3003",
     "--basepath",
-    "./internal/bookmarks"
+    "./internal/core"
   ]
-  bin = "./tmp/bookmarks.api"
-  cmd = "go build -ldflags=\"-X main.Version=NOW -X main.Build=DEV\" -o ./tmp/bookmarks.api ./cmd/bookmarks/server/main.go"
+  bin = "./tmp/core.api"
+  cmd = "go build -ldflags=\"-X main.Version=NOW -X main.Build=DEV\" -o ./tmp/core.api ./cmd/core/server/main.go"
+
+  # -------------------------------------------------------------------------
+  # bookmarks
+  # -------------------------------------------------------------------------
+  # args_bin = [
+  #  "--port",
+  #  "3003",
+  #  "--basepath",
+  #  "./internal/bookmarks"
+  #]
+  #bin = "./tmp/bookmarks.api"
+  #cmd = "go build -ldflags=\"-X main.Version=NOW -X main.Build=DEV\" -o ./tmp/bookmarks.api ./cmd/bookmarks/server/main.go"
 
 
   # -------------------------------------------------------------------------

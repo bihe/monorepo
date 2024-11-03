@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"golang.binggl.net/monorepo/pkg/config"
@@ -35,4 +37,22 @@ func (t *TemplateHandler) Show404() http.HandlerFunc {
 // RenderErr uses the application template to render the error-page
 func (t *TemplateHandler) RenderErr(r *http.Request, w http.ResponseWriter, message string) {
 	html.ErrorApplication(t.BasePath, t.Env, t.StartPage, r, message).Render(w)
+}
+
+// Json serialized the given data
+func Json[T any](data T) string {
+	payload, err := json.Marshal(data)
+	if err != nil {
+		panic(fmt.Sprintf("could not marshall data; %v", err))
+	}
+	return string(payload)
+}
+
+// JsonIndent serialized the given data and used pretty formatting
+func JsonIndent[T any](data T) string {
+	payload, err := json.MarshalIndent(data, "", "\t")
+	if err != nil {
+		panic(fmt.Sprintf("could not marshall data; %v", err))
+	}
+	return string(payload)
 }

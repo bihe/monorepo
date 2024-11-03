@@ -7,11 +7,9 @@ import (
 
 	"golang.binggl.net/monorepo/internal/common"
 	"golang.binggl.net/monorepo/internal/core/app/sites"
-	"golang.binggl.net/monorepo/internal/core/web/templates"
-	"golang.binggl.net/monorepo/pkg/config"
-	"golang.binggl.net/monorepo/pkg/develop"
+	"golang.binggl.net/monorepo/internal/core/web/html"
 	"golang.binggl.net/monorepo/pkg/handler"
-	tmpl "golang.binggl.net/monorepo/pkg/handler/templates"
+	base "golang.binggl.net/monorepo/pkg/handler/html"
 	"golang.binggl.net/monorepo/pkg/security"
 )
 
@@ -41,13 +39,14 @@ func (t *TemplateHandler) DisplaySites() http.HandlerFunc {
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get sites for user '%s'; '%v'", user.Username, err), r)
 		}
-		tmpl.Layout(
-			t.layoutModel("Available Apps", search, "/public/folder.svg", *user),
-			templates.SiteStyles(),
-			templates.SiteNavigation(search),
-			templates.SiteContent(usrSites),
+
+		base.Layout(
+			t.getPageModel("Available Apps", search, "/public/folder.svg", *user),
+			html.SiteStyles(),
+			html.SiteNavigation(search),
+			html.SiteContent(usrSites),
 			searchURL,
-		).Render(r.Context(), w)
+		).Render(w)
 	}
 }
 
@@ -63,14 +62,15 @@ func (t *TemplateHandler) ShowEditSites() http.HandlerFunc {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get sites for user '%s'; '%v'", user.Username, err), r)
 		}
 		// for simple edit purposes we display the whole payload as JSON
-		jsonPayload := tmpl.JsonIndent[sites.UserSites](usrSites)
-		tmpl.Layout(
-			t.layoutModel("Edit Apps", search, "/public/folder.svg", *user),
-			templates.SiteEditStyles(),
-			templates.SiteEditNavigation(search),
-			templates.SiteEditContent(jsonPayload, ""),
+		jsonPayload := handler.JsonIndent[sites.UserSites](usrSites)
+
+		base.Layout(
+			t.getPageModel("Edit Apps", search, "/public/folder.svg", *user),
+			html.SiteEditStyles(),
+			html.SiteEditNavigation(search),
+			html.SiteEditContent(jsonPayload, ""),
 			searchURL,
-		).Render(r.Context(), w)
+		).Render(w)
 	}
 }
 
@@ -93,7 +93,7 @@ func (t *TemplateHandler) SaveSites() http.HandlerFunc {
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("the supplied JSON payload is invalid and cannot be processed; '%v'", err), r)
 			// return to edit page
-			templates.SiteEditContent(payload, fmt.Sprintf("the supplied JSON payload is invalid and cannot be processed; '%v'", err)).Render(r.Context(), w)
+			html.SiteEditContent(payload, fmt.Sprintf("the supplied JSON payload is invalid and cannot be processed; '%v'", err)).Render(w)
 			return
 		}
 
@@ -101,7 +101,7 @@ func (t *TemplateHandler) SaveSites() http.HandlerFunc {
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not save the sites; '%v'", err), r)
 			// return to edit page
-			templates.SiteEditContent(payload, fmt.Sprintf("could not save the sites; '%v'", err)).Render(r.Context(), w)
+			html.SiteEditContent(payload, fmt.Sprintf("could not save the sites; '%v'", err)).Render(w)
 			return
 		}
 
@@ -118,20 +118,20 @@ func (t *TemplateHandler) versionString() string {
 	return fmt.Sprintf("%s-%s", t.Version, t.Build)
 }
 
-func (t *TemplateHandler) layoutModel(pageTitle, search, favicon string, user security.User) tmpl.LayoutModel {
-	appNav := make([]tmpl.NavItem, 0)
+func (t *TemplateHandler) getPageModel(pageTitle, search, favicon string, user security.User) base.LayoutModel {
+	appNav := make([]base.NavItem, 0)
 	var title string
 	for _, a := range common.AvailableApps {
 		if a.URL == "/sites" {
 			a.Active = true
 			title = a.DisplayName
 		}
-		appNav = append(appNav, a)
+		appNav = append(appNav, base.NavItem{DisplayName: a.DisplayName, Icon: a.Icon, URL: a.URL, Active: a.Active})
 	}
 	if pageTitle == "" {
 		pageTitle = title
 	}
-	model := tmpl.LayoutModel{
+	model := base.LayoutModel{
 		PageTitle:  pageTitle,
 		Favicon:    favicon,
 		Version:    t.versionString(),
@@ -139,15 +139,10 @@ func (t *TemplateHandler) layoutModel(pageTitle, search, favicon string, user se
 		Search:     search,
 		Navigation: appNav,
 	}
-
+	model.Env = t.Env
 	if model.Favicon == "" {
 		model.Favicon = "/public/folder.svg"
 	}
-	var jsReloadLogic string
-	if t.Env == config.Development {
-		jsReloadLogic = develop.PageReloadClientJS
-	}
-	model.PageReloadClientJS = tmpl.PageReloadClientJS(jsReloadLogic)
 	return model
 }
 

@@ -45,6 +45,7 @@ func Layout(model LayoutModel, style, navigation, content g.Node, searchURL stri
 		Language: "en",
 		Head: []g.Node{
 			h.Base(h.Href("/")),
+			h.Meta(g.Attr("creator", "https://www.gomponents.com/")),
 			// page icon definition
 			h.Link(h.Rel("icon"), h.Href(model.Favicon), g.Attr("size", "48x48")),
 			h.Link(h.Rel("shortcut icon"), h.ID("site-favicon"), h.Type("image/x-icon"), h.Href(model.Favicon)),

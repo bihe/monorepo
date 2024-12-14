@@ -1,139 +1,137 @@
-version: "3"
-
 services:
-    tokentest:
-        build:
-            context: .
-            dockerfile: ./tokentest.Dockerfile
-            args:
-                buildtime_variable_arch: $ARCH
-        image: tokentest
-        restart: always
-        environment:
-            JWT_COOKIE_NAME: $JWT_COOKIE_NAME
-            JWT_ISSUER: $JWT_ISSUER
-            JWT_SECRET: $JWT_SECRET
-            JWT_USER_EMAIL: $JWT_USER_EMAIL
-            JWT_COOKIE_DOMAIN: $JWT_COOKIE_DOMAIN
-            REDIRECT_URL: https://dev.binggl.net
-            PORT: 3000
+        tokentest:
+                build:
+                        context: .
+                        dockerfile: ./tokentest.Dockerfile
+                        args:
+                                buildtime_variable_arch: $ARCH
+                image: tokentest
+                restart: always
+                environment:
+                        JWT_COOKIE_NAME: $JWT_COOKIE_NAME
+                        JWT_ISSUER: $JWT_ISSUER
+                        JWT_SECRET: $JWT_SECRET
+                        JWT_USER_EMAIL: $JWT_USER_EMAIL
+                        JWT_COOKIE_DOMAIN: $JWT_COOKIE_DOMAIN
+                        REDIRECT_URL: https://dev.binggl.net
+                        PORT: 3000
 
-    core-3001:
-        build:
-            context: .
-            dockerfile: ./core.Dockerfile
-            args:
-                buildtime_variable_arch: $ARCH
-        image: core
-        volumes:
-            - ./internal/core:/opt/core/etc
-            - ./_logs:/opt/core/logs
-            - ./upload:/opt/core/uploads
-            - ./testdata/sqlite/integration:/opt/core/db
-            - ./litestream/litestream-integration.yml:/etc/litestream.yml
-        restart: always
-        environment:
-            CO_BASECONFIG__ENVIRONMENT: Integration
-            CO_BASECONFIG__LOGGING__FILEPATH: /opt/core/logs/core-api.log
-            CO_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
-            CO_BASECONFIG__ASSETS__ASSETDIR: ./assets
-            CO_SECURITY__JWTISSUER: $JWT_ISSUER
-            CO_SECURITY__JWTSECRET: $JWT_SECRET
-            CO_SECURITY__LOGINREDIRECT: https://dev.binggl.net
-            CO_OIDC__REDIRECTURL: "https://dev.binggl.net/oidc/signin"
-            CO_OIDC__CLIENTID: $OIDC_CLIENTID
-            CO_OIDC__CLIENTSECRET: $OIDC_CLIENTSECRET
-            CO_UPLOAD__UPLOADPATH: /opt/core/uploads
-            CO_UPLOAD__ENCGRPCCONN: crypter:3000
-            CO_UPLOAD__MAXUPLOADSIZE: 5000000
-            CO_DATABASE__CONNECTIONSTRING: /opt/core/db/core.db
-            CONNECTIONSTRING: /opt/core/db/core.db
-            REPLICA_URL: $CORE_REPLICA_URL
-            LITESTREAM_ACCESS_KEY_ID: $LITESTREAM_ACCESS_KEY_ID
-            LITESTREAM_SECRET_ACCESS_KEY: $LITESTREAM_SECRET_ACCESS_KEY
-            BASEPATH: /opt/core
-            BINARYNAME: core.api
-            PORT: 3000
-            HOST: 0.0.0.0
+        core-3001:
+                build:
+                        context: .
+                        dockerfile: ./core.Dockerfile
+                        args:
+                                buildtime_variable_arch: $ARCH
+                image: core
+                volumes:
+                        - ./internal/core:/opt/core/etc
+                        - ./_logs:/opt/core/logs
+                        - ./upload:/opt/core/uploads
+                        - ./testdata/sqlite/integration:/opt/core/db
+                        - ./litestream/litestream-integration.yml:/etc/litestream.yml
+                restart: always
+                environment:
+                        CO_BASECONFIG__ENVIRONMENT: Integration
+                        CO_BASECONFIG__LOGGING__FILEPATH: /opt/core/logs/core-api.log
+                        CO_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
+                        CO_BASECONFIG__ASSETS__ASSETDIR: ./assets
+                        CO_SECURITY__JWTISSUER: $JWT_ISSUER
+                        CO_SECURITY__JWTSECRET: $JWT_SECRET
+                        CO_SECURITY__LOGINREDIRECT: https://dev.binggl.net
+                        CO_OIDC__REDIRECTURL: "https://dev.binggl.net/oidc/signin"
+                        CO_OIDC__CLIENTID: $OIDC_CLIENTID
+                        CO_OIDC__CLIENTSECRET: $OIDC_CLIENTSECRET
+                        CO_UPLOAD__UPLOADPATH: /opt/core/uploads
+                        CO_UPLOAD__ENCGRPCCONN: crypter:3000
+                        CO_UPLOAD__MAXUPLOADSIZE: 5000000
+                        CO_DATABASE__CONNECTIONSTRING: /opt/core/db/core.db
+                        CONNECTIONSTRING: /opt/core/db/core.db
+                        REPLICA_URL: $CORE_REPLICA_URL
+                        LITESTREAM_ACCESS_KEY_ID: $LITESTREAM_ACCESS_KEY_ID
+                        LITESTREAM_SECRET_ACCESS_KEY: $LITESTREAM_SECRET_ACCESS_KEY
+                        BASEPATH: /opt/core
+                        BINARYNAME: core.api
+                        PORT: 3000
+                        HOST: 0.0.0.0
 
-    mydms-3002:
-        build:
-            context: .
-            dockerfile: ./mydms.Dockerfile
-            args:
-                buildtime_variable_arch: $ARCH
-        image: mydms
-        volumes:
-            - ./internal/mydms:/opt/mydms/etc
-            - ./_logs:/opt/mydms/logs
-            - ./testdata/sqlite/integration:/opt/mydms/db
-            - ./litestream/litestream-integration.yml:/etc/litestream.yml
-            - /tmp:/opt/mydms/uploads
-        restart: always
-        environment:
-            MY_BASECONFIG__ENVIRONMENT: Integration
-            MY_BASECONFIG__SECURITY__JWTISSUER: $JWT_ISSUER
-            MY_BASECONFIG__SECURITY__JWTSECRET: $JWT_SECRET
-            MY_BASECONFIG__SECURITY__CLAIM.URL: http://localhost:3002
-            MY_BASECONFIG__LOGGING__FILEPATH: /opt/mydms/logs/mydms-api.log
-            MY_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
-            MY_BASECONFIG__ASSETS__ASSETDIR: ./assets
-            MY_FILESTORE__REGION: $FILESTORE_REGION
-            MY_FILESTORE__BUCKET: $FILESTORE_BUCKET
-            MY_FILESTORE__KEY: $FILESTORE_KEY
-            MY_FILESTORE__SECRET: $FILESTORE_SECRET
-            MY_DATABASE__CONNECTIONSTRING: /opt/mydms/db/mydms.db
-            MY_UPLOAD__UPLOADPATH: /opt/mydms/uploads
-            MY_UPLOAD__MAXUPLOADSIZE: 5000000
-            CONNECTIONSTRING: /opt/mydms/db/mydms.db
-            REPLICA_URL: $MYDMS_REPLICA_URL
-            LITESTREAM_ACCESS_KEY_ID: $LITESTREAM_ACCESS_KEY_ID
-            LITESTREAM_SECRET_ACCESS_KEY: $LITESTREAM_SECRET_ACCESS_KEY
-            BASEPATH: /opt/mydms
-            BINARYNAME: mydms.api
-            PORT: 3000
-            HOST: 0.0.0.0
+        mydms-3002:
+                build:
+                        context: .
+                        dockerfile: ./mydms.Dockerfile
+                        args:
+                                buildtime_variable_arch: $ARCH
+                image: mydms
+                volumes:
+                        - ./internal/mydms:/opt/mydms/etc
+                        - ./_logs:/opt/mydms/logs
+                        - ./testdata/sqlite/integration:/opt/mydms/db
+                        - ./litestream/litestream-integration.yml:/etc/litestream.yml
+                        - /tmp:/opt/mydms/uploads
+                restart: always
+                environment:
+                        MY_BASECONFIG__ENVIRONMENT: Integration
+                        MY_BASECONFIG__SECURITY__JWTISSUER: $JWT_ISSUER
+                        MY_BASECONFIG__SECURITY__JWTSECRET: $JWT_SECRET
+                        MY_BASECONFIG__SECURITY__CLAIM.URL: http://localhost:3002
+                        MY_BASECONFIG__LOGGING__FILEPATH: /opt/mydms/logs/mydms-api.log
+                        MY_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
+                        MY_BASECONFIG__ASSETS__ASSETDIR: ./assets
+                        MY_FILESTORE__REGION: $FILESTORE_REGION
+                        MY_FILESTORE__BUCKET: $FILESTORE_BUCKET
+                        MY_FILESTORE__KEY: $FILESTORE_KEY
+                        MY_FILESTORE__SECRET: $FILESTORE_SECRET
+                        MY_DATABASE__CONNECTIONSTRING: /opt/mydms/db/mydms.db
+                        MY_UPLOAD__UPLOADPATH: /opt/mydms/uploads
+                        MY_UPLOAD__MAXUPLOADSIZE: 5000000
+                        CONNECTIONSTRING: /opt/mydms/db/mydms.db
+                        REPLICA_URL: $MYDMS_REPLICA_URL
+                        LITESTREAM_ACCESS_KEY_ID: $LITESTREAM_ACCESS_KEY_ID
+                        LITESTREAM_SECRET_ACCESS_KEY: $LITESTREAM_SECRET_ACCESS_KEY
+                        BASEPATH: /opt/mydms
+                        BINARYNAME: mydms.api
+                        PORT: 3000
+                        HOST: 0.0.0.0
 
-    bookmarks-3003:
-        build:
-            context: .
-            dockerfile: ./bookmarks.Dockerfile
-            args:
-                buildtime_variable_arch: $ARCH
-        image: bookmarks
-        volumes:
-            - ./internal/bookmarks:/opt/bookmarks/etc
-            - ./_logs:/opt/bookmarks/logs
-            - ./testdata/sqlite/integration:/opt/bookmarks/db
-            - ./litestream/litestream-integration.yml:/etc/litestream.yml
-        restart: always
-        environment:
-            BM_BASECONFIG__ENVIRONMENT: Integration
-            BM_BASECONFIG__SECURITY__JWTISSUER: $JWT_ISSUER
-            BM_BASECONFIG__SECURITY__JWTSECRET: $JWT_SECRET
-            BM_BASECONFIG__LOGGING__FILEPATH: /opt/bookmarks/logs/bookmarks-api.log
-            BM_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
-            BM_BASECONFIG__ASSETS__ASSETDIR: ./assets
-            BM_DATABASE__CONNECTIONSTRING: /opt/bookmarks/db/bookmarks.db
-            CONNECTIONSTRING: /opt/bookmarks/db/bookmarks.db
-            REPLICA_URL: $BOOKMARKS_REPLICA_URL
-            LITESTREAM_ACCESS_KEY_ID: $LITESTREAM_ACCESS_KEY_ID
-            LITESTREAM_SECRET_ACCESS_KEY: $LITESTREAM_SECRET_ACCESS_KEY
-            BASEPATH: /opt/bookmarks
-            BINARYNAME: bookmarks.api
-            PORT: 3000
-            HOST: 0.0.0.0
+        bookmarks-3003:
+                build:
+                        context: .
+                        dockerfile: ./bookmarks.Dockerfile
+                        args:
+                                buildtime_variable_arch: $ARCH
+                image: bookmarks
+                volumes:
+                        - ./internal/bookmarks:/opt/bookmarks/etc
+                        - ./_logs:/opt/bookmarks/logs
+                        - ./testdata/sqlite/integration:/opt/bookmarks/db
+                        - ./litestream/litestream-integration.yml:/etc/litestream.yml
+                restart: always
+                environment:
+                        BM_BASECONFIG__ENVIRONMENT: Integration
+                        BM_BASECONFIG__SECURITY__JWTISSUER: $JWT_ISSUER
+                        BM_BASECONFIG__SECURITY__JWTSECRET: $JWT_SECRET
+                        BM_BASECONFIG__LOGGING__FILEPATH: /opt/bookmarks/logs/bookmarks-api.log
+                        BM_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
+                        BM_BASECONFIG__ASSETS__ASSETDIR: ./assets
+                        BM_DATABASE__CONNECTIONSTRING: /opt/bookmarks/db/bookmarks.db
+                        CONNECTIONSTRING: /opt/bookmarks/db/bookmarks.db
+                        REPLICA_URL: $BOOKMARKS_REPLICA_URL
+                        LITESTREAM_ACCESS_KEY_ID: $LITESTREAM_ACCESS_KEY_ID
+                        LITESTREAM_SECRET_ACCESS_KEY: $LITESTREAM_SECRET_ACCESS_KEY
+                        BASEPATH: /opt/bookmarks
+                        BINARYNAME: bookmarks.api
+                        PORT: 3000
+                        HOST: 0.0.0.0
 
-    caddy-integration-frontend-443:
-        build:
-            context: .
-            dockerfile: ./caddy.Dockerfile
-            args:
-                buildtime_variable_arch: $ARCH
-        image: frontend
-        ports:
-            - "443:443"
-        volumes:
-            - ./caddy/Caddyfile:/etc/caddy/Caddyfile
-            - ./caddy/certs:/opt/caddy/certs
-        restart: on-failure
+        caddy-integration-frontend-443:
+                build:
+                        context: .
+                        dockerfile: ./caddy.Dockerfile
+                        args:
+                                buildtime_variable_arch: $ARCH
+                image: frontend
+                ports:
+                        - "443:443"
+                volumes:
+                        - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+                        - ./caddy/certs:/opt/caddy/certs
+                restart: on-failure

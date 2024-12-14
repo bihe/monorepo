@@ -108,6 +108,7 @@ func errorLayout(basePath string, body g.Node) g.Node {
 		Description: "The specified resource could not be found",
 		Head: []g.Node{
 			h.Base(h.Href("/")),
+			h.Meta(g.Attr("creator", "https://www.gomponents.com/")),
 			h.Link(h.Rel("shortcut icon"), h.ID("site-favicon"), h.Type("image/x-icon"), h.Href("public/folder.svg")),
 			h.Link(h.Href(basePath+"/bootstrap/css/bootstrap.min.css"), h.Rel("stylesheet")),
 			h.Link(h.Href(basePath+"/fonts/local.css"), h.Rel("stylesheet")),

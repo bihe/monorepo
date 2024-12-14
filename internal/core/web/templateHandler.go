@@ -10,7 +10,6 @@ import (
 	"golang.binggl.net/monorepo/internal/core/web/html"
 	"golang.binggl.net/monorepo/pkg/handler"
 	base "golang.binggl.net/monorepo/pkg/handler/html"
-	"golang.binggl.net/monorepo/pkg/security"
 )
 
 // TemplateHandler takes care of providing HTML templates.
@@ -31,7 +30,7 @@ const searchURL = "/sites/search"
 // DisplaySites determined the sites of the current user and displays them
 func (t *TemplateHandler) DisplaySites() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := ensureUser(r)
+		user := common.EnsureUser(r)
 		search := ""
 		t.Logger.InfoRequest(fmt.Sprintf("display the sites for user: '%s'", user.Username), r)
 
@@ -41,7 +40,7 @@ func (t *TemplateHandler) DisplaySites() http.HandlerFunc {
 		}
 
 		base.Layout(
-			t.getPageModel("Available Apps", search, "/public/folder.svg", *user),
+			common.CreatePageModel("/sites", "Available Apps", search, "/public/folder.svg", t.versionString(), t.Env, *user),
 			html.SiteStyles(),
 			html.SiteNavigation(search),
 			html.SiteContent(usrSites),
@@ -53,7 +52,7 @@ func (t *TemplateHandler) DisplaySites() http.HandlerFunc {
 // ShowEditSites displays the edit form to change the application JSON
 func (t *TemplateHandler) ShowEditSites() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := ensureUser(r)
+		user := common.EnsureUser(r)
 		search := ""
 		t.Logger.InfoRequest(fmt.Sprintf("display the sites for user: '%s'", user.Username), r)
 
@@ -65,7 +64,7 @@ func (t *TemplateHandler) ShowEditSites() http.HandlerFunc {
 		jsonPayload := handler.JsonIndent[sites.UserSites](usrSites)
 
 		base.Layout(
-			t.getPageModel("Edit Apps", search, "/public/folder.svg", *user),
+			common.CreatePageModel("/sites", "Edit Apps", search, "/public/folder.svg", t.versionString(), t.Env, *user),
 			html.SiteEditStyles(),
 			html.SiteEditNavigation(search),
 			html.SiteEditContent(jsonPayload, ""),
@@ -77,7 +76,7 @@ func (t *TemplateHandler) ShowEditSites() http.HandlerFunc {
 // SaveSites processed the provided JSON payload and saves the applications
 func (t *TemplateHandler) SaveSites() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := ensureUser(r)
+		user := common.EnsureUser(r)
 		t.Logger.InfoRequest(fmt.Sprintf("receive the payload to save the applications: '%s'", user.Username), r)
 
 		err := r.ParseForm()
@@ -116,40 +115,4 @@ func (t *TemplateHandler) SaveSites() http.HandlerFunc {
 
 func (t *TemplateHandler) versionString() string {
 	return fmt.Sprintf("%s-%s", t.Version, t.Build)
-}
-
-func (t *TemplateHandler) getPageModel(pageTitle, search, favicon string, user security.User) base.LayoutModel {
-	appNav := make([]base.NavItem, 0)
-	var title string
-	for _, a := range common.AvailableApps {
-		if a.URL == "/sites" {
-			a.Active = true
-			title = a.DisplayName
-		}
-		appNav = append(appNav, base.NavItem{DisplayName: a.DisplayName, Icon: a.Icon, URL: a.URL, Active: a.Active})
-	}
-	if pageTitle == "" {
-		pageTitle = title
-	}
-	model := base.LayoutModel{
-		PageTitle:  pageTitle,
-		Favicon:    favicon,
-		Version:    t.versionString(),
-		User:       user,
-		Search:     search,
-		Navigation: appNav,
-	}
-	model.Env = t.Env
-	if model.Favicon == "" {
-		model.Favicon = "/public/folder.svg"
-	}
-	return model
-}
-
-func ensureUser(r *http.Request) *security.User {
-	user, ok := security.UserFromContext(r.Context())
-	if !ok || user == nil {
-		panic("the security context user is not available!")
-	}
-	return user
 }

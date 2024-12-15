@@ -112,7 +112,7 @@ func DisplayDocumentDownload(doc Document) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" type=\"file\" name=\"doc-fileupload\" id=\"documentFileUpload\"> <button type=\"button\" class=\"btn btn-outline-secondary\" hx-post=\"/mydms/upload\" hx-encoding=\"multipart/form-data\" hx-trigger=\"click\" hx-target=\"#document_upload_area\" hx-swap=\"outerHTML\" hx-params=\"doc-fileupload,doc-initPass,doc-newPass\" hx-indicator=\"#indicator\"><i class=\"bi bi-upload\"></i></button></div></div>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" type=\"file\" name=\"doc-fileupload\" id=\"documentFileUpload\"> <button id=\"btn-doc-fileupload\" type=\"button\" class=\"btn btn-outline-secondary\" hx-post=\"/mydms/upload\" hx-encoding=\"multipart/form-data\" hx-trigger=\"click\" hx-target=\"#document_upload_area\" hx-swap=\"outerHTML\" hx-params=\"doc-fileupload,doc-initPass,doc-newPass\" hx-indicator=\"#indicator\"><i class=\"bi bi-upload\"></i></button></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

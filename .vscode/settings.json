@@ -1,6 +1,24 @@
 {
     "editor.formatOnSave": true,
-    "[templ]": {
-        "editor.defaultFormatter": "a-h.templ"
-    }
+    "cSpell.enabled": false,
+    "black-formatter.args": [
+        "--line-length",
+        "119",
+    ],
+    "flake8.args": [
+        "--max-line-length",
+        "119",
+        "--extend-ignore",
+        "E203"
+    ],
+    "[python]": {
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "always"
+        },
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true,
+    },
+    "files.exclude": {
+        "**/**/__pycache__/": true
+    },
 }

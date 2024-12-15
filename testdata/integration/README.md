@@ -6,8 +6,7 @@ We are use [playwright](https://playwright.dev/) from Microsoft to perform integ
 We use the `python` variant of playwright and according to the website [playwright-python](https://playwright.dev/python/docs/intro) the installation is as follows.
 
 ```bash
-# python3 and pip need to be available!
-# on mac os those versions are called python3 and pip3
-pip install pytest-playwright
+# use a package manager (e.g. uv -> https://docs.astral.sh/uv/)
+# and install dependencies; after that execute the install
 playwright install
 ```

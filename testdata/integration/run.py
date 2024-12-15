@@ -1,5 +1,6 @@
-import bookmarks
-import navigation
+from bookmarks import validate_bookmarks
+from mydms import validate_mydms
+from navigation import validate_basic_navigation
 from playwright.sync_api import sync_playwright
 
 # the URL for local testing.
@@ -16,9 +17,7 @@ IGNORE_HTTPS_ERRORS = True
 
 def main():
     with sync_playwright() as p:
-        browser = p.chromium.launch(
-            headless=WORKHEADLESS,
-            devtools=USEDEVTOOLS)
+        browser = p.chromium.launch(headless=WORKHEADLESS, devtools=USEDEVTOOLS)
         try:
             page = browser.new_page(ignore_https_errors=IGNORE_HTTPS_ERRORS)
             page.goto(STARTUPURL)
@@ -29,8 +28,14 @@ def main():
             page.wait_for_url(STARTUPURL + "/bm")
 
             # start specific validation
-            navigation.validate(STARTUPURL, page)
-            bookmarks.validate(STARTUPURL, page)
+            validate_basic_navigation(STARTUPURL, page)
+
+            page.goto(STARTUPURL + "/bm")
+            page.wait_for_timeout(500)
+            validate_bookmarks(STARTUPURL, page)
+            page.goto(STARTUPURL + "/mydms")
+            page.wait_for_timeout(500)
+            validate_mydms(STARTUPURL, page)
 
             page.wait_for_timeout(1000)
         except Exception as e:

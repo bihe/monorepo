@@ -1,0 +1,23 @@
+.noitems {
+    margin-top: 25px;
+    font-size: large;
+}
+
+.bigger {
+    font-size: xx-large;
+}
+
+.edit_document {
+    cursor: pointer;
+}
+
+.delete {
+    font-weight: bold;
+    color: red;
+}
+
+.card_menu {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+}

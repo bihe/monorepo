@@ -15,13 +15,15 @@ var partial_document_list_styles string
 
 func DocumentList(docNum, skip int, pd document.PagedDocument) g.Node {
 	elements := make([]g.Node, 0)
+
 	doclist := g.Map(pd.Documents, func(doc document.Document) g.Node {
-		return h.Div(h.Class("card by_my_document"),
+		return h.Div(h.Class("card be_my_document"),
 			h.Div(h.Class("card-body"),
 				h.H5(h.Class("card-title"), h.Title(doc.Title),
 					h.A(h.Href("/mydms/file/"+doc.PreviewLink), h.Target("_NEW"),
 						h.I(h.Class("bi bi-cloud-download")),
 					),
+					g.Text(" "),
 					h.Span(
 						h.Class("edit_document"),
 						g.Attr("data-testid", "edit-document"),

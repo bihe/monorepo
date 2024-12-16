@@ -18,3 +18,12 @@ func EnsureTrailingSlash(entry string) string {
 	}
 	return entry + "/"
 }
+
+func ClassCond(starter, conditional string, condition bool) string {
+	classes := make([]string, 1)
+	classes = append(classes, starter)
+	if condition {
+		classes = append(classes, conditional)
+	}
+	return strings.Join(classes, " ")
+}

@@ -1,0 +1,52 @@
+.be_my_center {
+    align-items: center;
+    justify-content: center;
+}
+
+.be_my_document {
+    width: 25rem;
+    margin: 10px;
+    height: 12rem;
+}
+
+.tag {
+    margin: 2px;
+}
+
+.invoice-number {
+    font-size: 1em;
+    font-weight: 700;
+    color: #ff9800;
+    font-style: italic;
+    font-family: Roboto Mono, monospace;
+}
+
+.amount {
+    position: absolute;
+    right: 25px;
+    top: 93px;
+    font-weight: 700;
+    font-size: 1.2em;
+    color: #3aa677;
+}
+
+.doc-content {
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+.meta {
+    position: absolute;
+    right: 25px;
+    font-size: 0.8em;
+    bottom: 20px;
+}
+
+.meta_date {
+    font-weight: bold;
+    color: white;
+}
+
+.show_more_results {
+    text-align: center;
+}

@@ -3,9 +3,9 @@ package html
 import (
 	_ "embed"
 	"fmt"
-	"strings"
 
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
+	"golang.binggl.net/monorepo/pkg/handler/html"
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 )
@@ -45,18 +45,9 @@ func nodeTypeInput(bm Bookmark, t bookmarks.NodeType) g.Node {
 	}
 
 	return h.Div(h.Class("form-check form-check-inline"),
-		h.Input(h.Class(classCond("form-check-input", "disable", bm.ID.Val != "-1")), h.Type("radio"), h.Name("bookmark_Type"), h.ID(id_bookmark_type), h.Value(bookmark_type), checked),
-		h.Label(h.Class(classCond("form-check-label", "disable", bm.ID.Val != "-1")), h.For(id_bookmark_type), g.Text(label)),
+		h.Input(h.Class(html.ClassCond("form-check-input", "disable", bm.ID.Val != "-1")), h.Type("radio"), h.Name("bookmark_Type"), h.ID(id_bookmark_type), h.Value(bookmark_type), checked),
+		h.Label(h.Class(html.ClassCond("form-check-label", "disable", bm.ID.Val != "-1")), h.For(id_bookmark_type), g.Text(label)),
 	)
-}
-
-func classCond(starter, conditional string, condition bool) string {
-	classes := make([]string, 1)
-	classes = append(classes, starter)
-	if condition {
-		classes = append(classes, conditional)
-	}
-	return strings.Join(classes, " ")
 }
 
 func selected(condition bool) g.Node {
@@ -98,16 +89,16 @@ func EditBookmarks(bm Bookmark, paths []string) g.Node {
 						h.Div(h.Class("spacer")),
 						h.Div(h.Class("flex_layout"),
 							h.Div(h.Class("bookmark_edit_layout_flex_5"),
-								h.Img(h.ID("bookmark_favicon_display"), h.Class(classCond("bookmark_favicon_preview", "invert", bm.InvertFaviconColor)), h.Src("/bm/favicon/"+bm.ID.Val+"?t="+bm.TStamp))),
+								h.Img(h.ID("bookmark_favicon_display"), h.Class(html.ClassCond("bookmark_favicon_preview", "invert", bm.InvertFaviconColor)), h.Src("/bm/favicon/"+bm.ID.Val+"?t="+bm.TStamp))),
 							h.Div(h.Class("bookmark_edit_layout_flex_95 form-floating mb-3"),
-								h.Input(h.Type("text"), h.Class(classCond("form-control", "control_invalid", !bm.DisplayName.Valid)), h.ID("bookmark_DisplayName"), h.Placeholder("Displayname"), h.Name("bookmark_DisplayName"), h.Value(bm.DisplayName.Val), h.Required()),
+								h.Input(h.Type("text"), h.Class(html.ClassCond("form-control", "control_invalid", !bm.DisplayName.Valid)), h.ID("bookmark_DisplayName"), h.Placeholder("Displayname"), h.Name("bookmark_DisplayName"), h.Value(bm.DisplayName.Val), h.Required()),
 								h.Label(h.For("bookmark_DisplayName"), g.Text("Displayname")),
 							),
 						),
 						g.If(bm.Type == bookmarks.Node,
 							h.Div(h.Class("input-group mb-3"), h.ID("url_section"),
 								h.Span(h.Class("input-group-text"), h.ID("url"), h.I(h.Class("bi bi-link-45deg"))),
-								h.Input(h.Type("text"), h.ID("bookmark_URL"), h.Class(classCond("form-control", "control_invalid", !bm.URL.Valid)), h.Placeholder("URL"), h.Name("bookmark_URL"), h.Value(bm.URL.Val)),
+								h.Input(h.Type("text"), h.ID("bookmark_URL"), h.Class(html.ClassCond("form-control", "control_invalid", !bm.URL.Valid)), h.Placeholder("URL"), h.Name("bookmark_URL"), h.Value(bm.URL.Val)),
 								h.Button(
 									h.Type("button"),
 									h.Class("btn btn-outline-secondary"),
@@ -142,12 +133,12 @@ func EditBookmarks(bm Bookmark, paths []string) g.Node {
 							h.Input(h.Class("form-check-input"), h.Type("checkbox"), h.Role("switch"), h.ID("bookmark_Custom_Favicon"), h.Name("bookmark_UseCustomFavicon"), h.Value("1"), checked(bm.UseCustomFavicon)),
 							h.Label(h.Class("form-check-label"), h.For("bookmark_Custom_Favicon"), g.Text("Custom Favicon")),
 						),
-						h.Div(h.ID("custom_favicon_section"), h.Class(classCond("", "d-none", !bm.UseCustomFavicon)),
+						h.Div(h.ID("custom_favicon_section"), h.Class(html.ClassCond("", "d-none", !bm.UseCustomFavicon)),
 							h.Div(h.Class("spacer")),
 							h.Div(h.Class("input-group mb-3"),
 								h.Input(
 									h.Type("text"),
-									h.Class(classCond("form-control", "control_invalid", !bm.CustomFavicon.Valid)),
+									h.Class(html.ClassCond("form-control", "control_invalid", !bm.CustomFavicon.Valid)),
 									h.Placeholder("Favicon URL"),
 									h.Name("bookmark_CustomFavicon"),
 									h.Value(bm.CustomFavicon.Val),
@@ -189,7 +180,7 @@ func EditBookmarks(bm Bookmark, paths []string) g.Node {
 								),
 							),
 						),
-						h.Div(h.ID("error_section"), h.Class(classCond("", "d-none", bm.Error == "")),
+						h.Div(h.ID("error_section"), h.Class(html.ClassCond("", "d-none", bm.Error == "")),
 							h.Div(h.Class("spacer")),
 							h.I(h.Class("bi bi-exclamation-diamond")),
 							g.Raw("&nbsp;"),

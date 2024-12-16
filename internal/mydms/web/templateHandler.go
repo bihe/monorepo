@@ -11,10 +11,12 @@ import (
 	"golang.binggl.net/monorepo/internal/common"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
 	"golang.binggl.net/monorepo/internal/mydms/app/upload"
+	"golang.binggl.net/monorepo/internal/mydms/html"
 	"golang.binggl.net/monorepo/internal/mydms/web/templates"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/develop"
 	"golang.binggl.net/monorepo/pkg/handler"
+	base "golang.binggl.net/monorepo/pkg/handler/html"
 	tmpl "golang.binggl.net/monorepo/pkg/handler/templates"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
@@ -52,14 +54,15 @@ func (t *TemplateHandler) DisplayDocuments() http.HandlerFunc {
 		)
 
 		documents, search, numDocs, next = t.getDocuments(r)
-		tmpl.Layout(
-			t.layoutModel("Documents", search, "/public/folder.svg", *user),
-			templates.DocumentsStyles(),
-			templates.DocumentsNavigation(search),
-			templates.DocumentsContent(
-				templates.DocumentList(numDocs, next, documents), search),
-			searchURL,
-		).Render(r.Context(), w)
+
+		base.Layout(
+			t.pageModel("Documents", search, "/public/folder.svg", *user),
+			html.DocumentsStyles(),
+			html.DocumentsNavigation(search),
+			html.DocumentsContent(
+				html.DocumentList(numDocs, next, documents), search,
+			), search,
+		).Render(w)
 	}
 }
 
@@ -72,7 +75,7 @@ func (t *TemplateHandler) DisplayDocumentsPartial() http.HandlerFunc {
 			documents document.PagedDocument
 		)
 		documents, _, numDocs, next = t.getDocuments(r)
-		templates.DocumentList(numDocs, next, documents).Render(r.Context(), w)
+		html.DocumentList(numDocs, next, documents).Render(w)
 	}
 }
 
@@ -367,7 +370,7 @@ func (t *TemplateHandler) ShowDeleteConfirmDialog() http.HandlerFunc {
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get document for id '%s'; '%v'", id, err), r)
 		}
-		templates.DialogConfirmDelete(doc.Title, doc.ID).Render(r.Context(), w)
+		base.DialogConfirmDeleteHx(doc.Title, doc.ID, "#document_list", "/mydms/").Render(w)
 	}
 }
 
@@ -440,6 +443,10 @@ func (t *TemplateHandler) layoutModel(pageTitle, search, favicon string, user se
 	}
 	model.PageReloadClientJS = tmpl.PageReloadClientJS(jsReloadLogic)
 	return model
+}
+
+func (t *TemplateHandler) pageModel(pageTitle, searchstring, favicon string, user security.User) base.LayoutModel {
+	return common.CreatePageModel("/mydms", pageTitle, searchstring, favicon, t.versionString(), t.Env, user)
 }
 
 func ensureUser(r *http.Request) *security.User {

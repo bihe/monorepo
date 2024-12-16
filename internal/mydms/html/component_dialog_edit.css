@@ -1,0 +1,31 @@
+span.tags-badge {
+    font-size: large;
+}
+
+.document_download {
+    font-size: larger;
+}
+
+.document_download_link {
+    text-decoration: none;
+    color: white;
+}
+
+.document_download_link:hover {
+    text-decoration: none;
+    background-color: lightgrey;
+    color: black;
+    cursor: pointer;
+}
+
+.remove_document_link {
+    cursor: pointer;
+    text-decoration: none;
+    color: white;
+}
+
+.remove_document_link:hover {
+    cursor: pointer;
+    text-decoration: underline;
+    color: white;
+}

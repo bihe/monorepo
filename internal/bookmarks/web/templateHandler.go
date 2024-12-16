@@ -158,7 +158,7 @@ func (t *TemplateHandler) DeleteConfirm() http.HandlerFunc {
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for id '%s'; '%v'", id, err), r)
 		}
-		html.DialogConfirmDelete(bm.DisplayName, bm.ID).Render(w)
+		base.DialogConfirmDeleteHx(bm.DisplayName, bm.ID, "#bookmark_list", "/bm/delete/").Render(w)
 	}
 }
 

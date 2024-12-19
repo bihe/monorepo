@@ -1,6 +1,8 @@
 package common
 
 import (
+	"strings"
+
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/handler/html"
 	"golang.binggl.net/monorepo/pkg/security"
@@ -85,4 +87,22 @@ func SubString(entry string, length int) string {
 		return entry
 	}
 	return entry[:length]
+}
+
+// EnsureTrailingSlash checks the entry to end with a slash
+func EnsureTrailingSlash(entry string) string {
+	if strings.HasSuffix(entry, "/") {
+		return entry
+	}
+	return entry + "/"
+}
+
+// ClassCond adds the conditional class as a sring if the provided condition evaluates true
+func ClassCond(starter, conditional string, condition bool) string {
+	classes := make([]string, 1)
+	classes = append(classes, starter)
+	if condition {
+		classes = append(classes, conditional)
+	}
+	return strings.Join(classes, " ")
 }

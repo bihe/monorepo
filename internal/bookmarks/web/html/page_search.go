@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
-	"golang.binggl.net/monorepo/pkg/handler/html"
+	"golang.binggl.net/monorepo/internal/common"
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 )
@@ -41,7 +41,7 @@ func SearchContent(items []bookmarks.Bookmark, ell EllipsisValues) g.Node {
 						h.Class("bookmark_path"),
 						h.Href("/bm/~"+b.Path),
 						h.Title(b.Path),
-						g.Text(html.Ellipsis(b.Path, ell.PathLen, "")),
+						g.Text(common.Ellipsis(b.Path, ell.PathLen, "")),
 					),
 				),
 				g.Text(" "),
@@ -49,13 +49,13 @@ func SearchContent(items []bookmarks.Bookmark, ell EllipsisValues) g.Node {
 					h.Class("bookmark_name"),
 					h.Href(b.URL),
 					h.Title(b.DisplayName),
-					g.Text(html.Ellipsis(b.DisplayName, ell.NodeLen, "...")),
+					g.Text(common.Ellipsis(b.DisplayName, ell.NodeLen, "...")),
 				)),
 				g.If(b.Type == bookmarks.Folder, h.A(
 					h.Class("bookmark_name"),
-					h.Href("/bm/~"+html.EnsureTrailingSlash(b.Path)+b.DisplayName),
+					h.Href("/bm/~"+common.EnsureTrailingSlash(b.Path)+b.DisplayName),
 					h.Title(b.DisplayName),
-					g.Text(html.Ellipsis(b.DisplayName, ell.FolderLen, "...")),
+					g.Text(common.Ellipsis(b.DisplayName, ell.FolderLen, "...")),
 				)),
 			)
 		}),
@@ -68,7 +68,7 @@ func SearchStyles() g.Node {
 
 func SearchNavigation(search string) g.Node {
 	return h.Div(h.Class("application_name"),
-		h.Div(g.Text("~ searching for:"),
+		h.Div(g.Text("~ searching for: "),
 			h.Span(h.Class("badge text-bg-success"), h.Style("font-size:small"), g.Text(search)),
 		),
 	)

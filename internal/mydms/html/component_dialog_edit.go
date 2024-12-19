@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"golang.binggl.net/monorepo/internal/common"
-	"golang.binggl.net/monorepo/pkg/handler/html"
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 )
@@ -83,7 +82,7 @@ func EditDocumentDialog(doc Document, docDownload g.Node) g.Node {
 						h.Div(h.Class("mb-3"),
 							h.Div(h.Class("input-group"),
 								h.Span(h.Class("input-group-text"), g.Text("Document Title")),
-								h.Input(h.Type("text"), h.ID("document_title"), h.Placeholder("Document Title"), h.Name("doc-title"), h.Class(html.ClassCond("form-control", "control_invalid", !doc.Title.Valid)), h.Value(doc.Title.Val), h.Required()),
+								h.Input(h.Type("text"), h.ID("document_title"), h.Placeholder("Document Title"), h.Name("doc-title"), h.Class(common.ClassCond("form-control", "control_invalid", !doc.Title.Valid)), h.Value(doc.Title.Val), h.Required()),
 							),
 						),
 						h.Div(h.Class("row"),
@@ -105,8 +104,8 @@ func EditDocumentDialog(doc Document, docDownload g.Node) g.Node {
 							docDownload,
 						),
 						h.Div(h.Class("mb-3"),
-							h.Div(h.Class(html.ClassCond("input-group", "control_invalid", !doc.Tags.Valid)),
-								h.Span(h.Class(html.ClassCond("input-group-text", "control_invalid", !doc.Tags.Valid)), g.Text("#Tag")),
+							h.Div(h.Class(common.ClassCond("input-group", "control_invalid", !doc.Tags.Valid)),
+								h.Span(h.Class(common.ClassCond("input-group-text", "control_invalid", !doc.Tags.Valid)), g.Text("#Tag")),
 								h.Select(
 									h.ID("tags-input"),
 									h.Class("form-select"),
@@ -126,8 +125,8 @@ func EditDocumentDialog(doc Document, docDownload g.Node) g.Node {
 							h.Div(h.Class("invalid-feedback"), g.Text("Please select a valid tag.")),
 						),
 						h.Div(h.Class("mb-3"),
-							h.Div(h.Class(html.ClassCond("input-group", "control_invalid", !doc.Senders.Valid)),
-								h.Span(h.Class(html.ClassCond("input-group-text", "control_invalid", !doc.Senders.Valid)), h.I(h.Class("bi bi-truck")), g.Text(" Sender")),
+							h.Div(h.Class(common.ClassCond("input-group", "control_invalid", !doc.Senders.Valid)),
+								h.Span(h.Class(common.ClassCond("input-group-text", "control_invalid", !doc.Senders.Valid)), h.I(h.Class("bi bi-truck")), g.Text(" Sender")),
 								h.Select(
 									h.ID("senders-input"),
 									h.Class("form-select"),

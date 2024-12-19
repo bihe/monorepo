@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"golang.binggl.net/monorepo/internal/common"
-	"golang.binggl.net/monorepo/pkg/handler/html"
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 )
@@ -63,7 +62,7 @@ func DisplayDocumentDownload(doc Document) g.Node {
 					),
 				),
 				g.Raw("&nbsp;"),
-				h.Input(h.Class(html.ClassCond("form-control", "control_invalid", !doc.UploadToken.Valid)),
+				h.Input(h.Class(common.ClassCond("form-control", "control_invalid", !doc.UploadToken.Valid)),
 					h.Type("file"), h.Name("doc-fileupload"), h.ID("documentFileUpload"),
 				),
 				h.Button(

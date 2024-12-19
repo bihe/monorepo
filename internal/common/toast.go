@@ -1,48 +1,9 @@
-package templates
+package common
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"strings"
-
-	"github.com/a-h/templ"
 )
-
-func PageReloadClientJS(jsBlock string) templ.Component {
-	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		_, err := io.WriteString(w, jsBlock)
-		return err
-	})
-}
-
-func EnsureTrailingSlash(entry string) string {
-	if strings.HasSuffix(entry, "/") {
-		return entry
-	}
-	return entry + "/"
-}
-
-func Ellipsis(entry string, length int, indicator string) string {
-	if entry == "" {
-		return ""
-	}
-	if len(entry) < length {
-		return entry
-	}
-	return entry[:length] + indicator
-}
-
-func SubString(entry string, length int) string {
-	if entry == "" {
-		return ""
-	}
-	if len(entry) < length {
-		return entry
-	}
-	return entry[:length]
-}
 
 const (
 	MsgSuccess = "success"
@@ -80,14 +41,6 @@ func createToastMessage(title, message, msgType string) string {
 
 func Json[T any](data T) string {
 	payload, err := json.Marshal(data)
-	if err != nil {
-		panic(fmt.Sprintf("could not marshall data; %v", err))
-	}
-	return string(payload)
-}
-
-func JsonIndent[T any](data T) string {
-	payload, err := json.MarshalIndent(data, "", "\t")
 	if err != nil {
 		panic(fmt.Sprintf("could not marshall data; %v", err))
 	}

@@ -4,8 +4,8 @@ import (
 	_ "embed"
 	"fmt"
 
+	"golang.binggl.net/monorepo/internal/common"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
-	"golang.binggl.net/monorepo/pkg/handler/templates"
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 )
@@ -32,7 +32,7 @@ func DocumentList(docNum, skip int, pd document.PagedDocument) g.Node {
 						g.Attr("hx-post", "/mydms/dialog/"+doc.ID),
 						g.Attr("hx-target", "#modals-here"),
 						g.Attr("hx-trigger", "click"),
-						g.Text(templates.Ellipsis(doc.Title, 23, "~")),
+						g.Text(common.Ellipsis(doc.Title, 23, "~")),
 					),
 				),
 				h.Div(h.Class("btn-group card_menu"), h.Role("group"),
@@ -76,7 +76,7 @@ func DocumentList(docNum, skip int, pd document.PagedDocument) g.Node {
 						return h.Span(h.Class("badge text-bg-light tag"),
 							h.A(h.Title(s),
 								h.I(h.Class("bi bi-truck")),
-								g.Text(fmt.Sprintf(" %s", templates.Ellipsis(s, 30, "~"))),
+								g.Text(fmt.Sprintf(" %s", common.Ellipsis(s, 30, "~"))),
 							),
 						)
 					}),
@@ -84,12 +84,12 @@ func DocumentList(docNum, skip int, pd document.PagedDocument) g.Node {
 				h.Div(h.Class("meta"),
 					h.Span(
 						g.Text("c:"),
-						h.Span(h.Class("meta_date"), g.Text(templates.SubString(doc.Created, 10))),
+						h.Span(h.Class("meta_date"), g.Text(common.SubString(doc.Created, 10))),
 						g.Iff(doc.Modified != "", func() g.Node {
 							children := []g.Node{
 								h.Br(),
 								g.Text("m:"),
-								h.Span(h.Class("meta_date"), g.Text(templates.SubString(doc.Modified, 10))),
+								h.Span(h.Class("meta_date"), g.Text(common.SubString(doc.Modified, 10))),
 							}
 							return g.Group(children)
 

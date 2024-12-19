@@ -3,12 +3,13 @@ package common
 import (
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/handler/html"
-	"golang.binggl.net/monorepo/pkg/handler/templates"
 	"golang.binggl.net/monorepo/pkg/security"
+	g "maragu.dev/gomponents"
+	h "maragu.dev/gomponents/html"
 )
 
-// statically define the available Applications/Navigation-Pages
-var AvailableApps = []templates.NavItem{
+// AvailableApps statically defines the available Applications/Navigation-Pages
+var AvailableApps = []html.NavItem{
 	{
 		DisplayName: "Bookmarks",
 		Icon:        "<i class=\"bi bi-bookmark-star\"></i> ",
@@ -26,6 +27,7 @@ var AvailableApps = []templates.NavItem{
 	},
 }
 
+// CreatePageModel provides the needed data for a page using the shared Layout
 func CreatePageModel(pageURL, pageTitle, search, favicon, version string, env config.Environment, user security.User) html.LayoutModel {
 	appNav := make([]html.NavItem, 0)
 	var title string
@@ -52,4 +54,35 @@ func CreatePageModel(pageURL, pageTitle, search, favicon, version string, env co
 		model.Favicon = "/public/folder.svg"
 	}
 	return model
+}
+
+// HtmxIndicatorNode provides the gomponents code for a htmx indicator element
+func HtmxIndicatorNode() g.Node {
+	return h.Div(h.ID("indicator"), h.Class("htmx-indicator"),
+		h.Div(h.Class("spinner-border text-light"), h.Role("status"),
+			h.Span(h.Class("visually-hidden"), g.Text("Loading...")),
+		),
+	)
+}
+
+// Ellipsis cuts a string at a given length
+func Ellipsis(entry string, length int, indicator string) string {
+	if entry == "" {
+		return ""
+	}
+	if len(entry) < length {
+		return entry
+	}
+	return entry[:length] + indicator
+}
+
+// SubString cuts a given string at a length
+func SubString(entry string, length int) string {
+	if entry == "" {
+		return ""
+	}
+	if len(entry) < length {
+		return entry
+	}
+	return entry[:length]
 }

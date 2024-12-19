@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
+	"golang.binggl.net/monorepo/internal/common"
 	"golang.binggl.net/monorepo/pkg/handler/html"
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
@@ -75,11 +76,7 @@ func EditBookmarks(bm Bookmark, paths []string) g.Node {
 				h.Div(h.Class("modal-header"),
 					g.If(bm.ID.Val != "-1", h.H5(h.Class("modal-title"), g.Text(fmt.Sprintf("Edit Bookmark '%s'", bm.DisplayName.Val)))),
 					g.If(bm.ID.Val == "-1", h.H5(h.Class("modal-title"), g.Text("Create Bookmark"))),
-					h.Div(h.ID("indicator"), h.Class("htmx-indicator"),
-						h.Div(h.Class("spinner-border text-light"), h.Role("status"),
-							h.Span(h.Class("visually-hidden"), g.Text("Loading...")),
-						),
-					),
+					common.HtmxIndicatorNode(),
 				),
 				h.Form(h.Class("bookmark_edit_form"),
 					h.Input(h.Type("hidden"), h.Name("bookmark_ID"), h.Value(bm.ID.Val)),

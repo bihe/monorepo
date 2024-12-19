@@ -14,7 +14,6 @@ import (
 	"golang.binggl.net/monorepo/internal/common"
 	"golang.binggl.net/monorepo/pkg/handler"
 	base "golang.binggl.net/monorepo/pkg/handler/html"
-	tmpl "golang.binggl.net/monorepo/pkg/handler/templates"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
@@ -184,7 +183,7 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 			}
 
 			// show a notification-toast about the error!
-			w.Header().Add("HX-Trigger", tmpl.ErrorToast("Bookmark delete error", fmt.Sprintf("Error: '%s'", err)))
+			w.Header().Add("HX-Trigger", common.ErrorToast("Bookmark delete error", fmt.Sprintf("Error: '%s'", err)))
 			html.BookmarkList(
 				bm.Path,
 				bms,
@@ -200,7 +199,7 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 
 		// show a notification-toast about the update!
 		// https://htmx.org/headers/hx-trigger/
-		w.Header().Add("HX-Trigger", tmpl.SuccessToast("Bookmark deleted", fmt.Sprintf("The bookmark '%s' was deleted.", bm.DisplayName)))
+		w.Header().Add("HX-Trigger", common.SuccessToast("Bookmark deleted", fmt.Sprintf("The bookmark '%s' was deleted.", bm.DisplayName)))
 		html.BookmarkList(
 			bm.Path,
 			bms,
@@ -375,7 +374,7 @@ func (t *TemplateHandler) GetTempFaviconByID() http.HandlerFunc {
 }
 
 type triggerDef struct {
-	tmpl.ToastMessage
+	common.ToastMessage
 	Refresh string `json:"refreshBookmarkList,omitempty"`
 }
 
@@ -478,9 +477,9 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			t.Logger.Info("new bookmark created", logging.LogV("ID", created.ID))
 
 			triggerEvent := triggerDef{
-				ToastMessage: tmpl.ToastMessage{
-					Event: tmpl.ToastMessageContent{
-						Type:  tmpl.MsgSuccess,
+				ToastMessage: common.ToastMessage{
+					Event: common.ToastMessageContent{
+						Type:  common.MsgSuccess,
 						Title: "Bookmark saved!",
 						Text:  fmt.Sprintf("The bookmark '%s' was created.", created.DisplayName),
 					},
@@ -488,7 +487,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 				Refresh: "now",
 			}
 			// https://htmx.org/headers/hx-trigger/
-			w.Header().Add("HX-Trigger", tmpl.Json(triggerEvent))
+			w.Header().Add("HX-Trigger", common.Json(triggerEvent))
 			formBm.Close = true
 			html.EditBookmarks(formBm, paths).Render(w)
 			return
@@ -525,9 +524,9 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			t.Logger.Info("bookmark updated", logging.LogV("ID", updated.ID))
 
 			triggerEvent := triggerDef{
-				ToastMessage: tmpl.ToastMessage{
-					Event: tmpl.ToastMessageContent{
-						Type:  tmpl.MsgSuccess,
+				ToastMessage: common.ToastMessage{
+					Event: common.ToastMessageContent{
+						Type:  common.MsgSuccess,
 						Title: "Bookmark saved!",
 						Text:  fmt.Sprintf("The bookmark '%s' (%s) was updated.", existing.DisplayName, existing.ID),
 					},
@@ -535,7 +534,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 				Refresh: "now",
 			}
 			// https://htmx.org/headers/hx-trigger/
-			w.Header().Add("HX-Trigger", tmpl.Json(triggerEvent))
+			w.Header().Add("HX-Trigger", common.Json(triggerEvent))
 			formBm.Close = true
 			html.EditBookmarks(formBm, paths).Render(w)
 			return
@@ -570,23 +569,23 @@ func (t *TemplateHandler) SortBookmarks() http.HandlerFunc {
 		updates, err := t.App.UpdateSortOrder(sortOrder, *user)
 		if err != nil {
 			triggerEvent := triggerDef{
-				ToastMessage: tmpl.ToastMessage{
-					Event: tmpl.ToastMessageContent{
-						Type:  tmpl.MsgError,
+				ToastMessage: common.ToastMessage{
+					Event: common.ToastMessageContent{
+						Type:  common.MsgError,
 						Title: "Error sorting!",
 						Text:  fmt.Sprintf("Could not perform sorting: %v", err),
 					},
 				},
 			}
 			// https://htmx.org/headers/hx-trigger/
-			w.Header().Add("HX-Trigger", tmpl.Json(triggerEvent))
+			w.Header().Add("HX-Trigger", common.Json(triggerEvent))
 			return
 		}
 
 		triggerEvent := triggerDef{
-			ToastMessage: tmpl.ToastMessage{
-				Event: tmpl.ToastMessageContent{
-					Type:  tmpl.MsgSuccess,
+			ToastMessage: common.ToastMessage{
+				Event: common.ToastMessageContent{
+					Type:  common.MsgSuccess,
 					Title: "List sorted!",
 					Text:  fmt.Sprintf("%d bookmarks were successfully sorted", updates),
 				},
@@ -594,7 +593,7 @@ func (t *TemplateHandler) SortBookmarks() http.HandlerFunc {
 			Refresh: "now",
 		}
 		// https://htmx.org/headers/hx-trigger/
-		w.Header().Add("HX-Trigger", tmpl.Json(triggerEvent))
+		w.Header().Add("HX-Trigger", common.Json(triggerEvent))
 
 	}
 }

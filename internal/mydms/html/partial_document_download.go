@@ -4,8 +4,8 @@ import (
 	_ "embed"
 	"fmt"
 
+	"golang.binggl.net/monorepo/internal/common"
 	"golang.binggl.net/monorepo/pkg/handler/html"
-	"golang.binggl.net/monorepo/pkg/handler/templates"
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 )
@@ -25,7 +25,7 @@ func DisplayDocumentDownload(doc Document) g.Node {
 
 	if doc.ID != "" && doc.FileName.Val != "" {
 		documentDownload = h.Div(h.Class("document_download"), h.ID("document_download_link"),
-			h.I(h.Class("bi bi-cloud-arrow-down")),
+			h.I(h.Class("bi bi-cloud-arrow-down")), g.Text(" "),
 			h.A(h.Class("document_download_link"), h.Href("/mydms/file/"+doc.PreviewLink.Val), h.Target("_NEW"), g.Text(doc.FileName.Val)),
 			h.Input(h.Type("hidden"), h.Name("doc-tempID"), h.Value("-")),
 			h.Input(h.Type("hidden"), h.Name("doc-filename"), h.Value(doc.FileName.Val)),
@@ -35,7 +35,7 @@ func DisplayDocumentDownload(doc Document) g.Node {
 	} else if doc.UploadToken.Val != "" && doc.FileName.Val != "" {
 		documentDownload = h.Div(h.Class("document_download"), h.ID("document_download_link"),
 			h.I(h.Class("bi bi-cloud-arrow-down")),
-			h.A(h.Class("document_download_link"), g.Text(doc.FileName.Val)),
+			h.A(h.Class("document_download_link"), g.Text(" "), g.Text(doc.FileName.Val)),
 			h.Input(h.Type("hidden"), h.Name("doc-tempID"), h.Value(doc.UploadToken.Val)),
 			h.Input(h.Type("hidden"), h.Name("doc-filename"), h.Value(doc.FileName.Val)),
 			removeLink,
@@ -87,7 +87,7 @@ func DisplayDocumentDownload(doc Document) g.Node {
 
 func DisplayTempDocumentUpload(fileName, tempID, errMsg string) g.Node {
 	elements := []g.Node{
-		h.I(h.Class("bi bi-cloud-arrow-down")),
+		h.I(h.Class("bi bi-cloud-arrow-down")), g.Text(" "),
 		h.A(h.Class("document_download_link"), g.Text(fileName)),
 		h.Input(h.Type("hidden"), h.Name("doc-tempID"), h.Value(tempID)),
 		h.Input(h.Type("hidden"), h.Name("doc-filename"), h.Value(fileName)),
@@ -100,7 +100,7 @@ func DisplayTempDocumentUpload(fileName, tempID, errMsg string) g.Node {
 		),
 		g.If(errMsg != "",
 			h.Div(h.Class("alert alert-danger"), h.Role("alert"),
-				h.I(h.Class("bi bi-exclamation-triangle"), g.Text(fmt.Sprintf(" %s", templates.Ellipsis(errMsg, 60, "...")))),
+				h.I(h.Class("bi bi-exclamation-triangle"), g.Text(fmt.Sprintf(" %s", common.Ellipsis(errMsg, 60, "...")))),
 				removeLink,
 			),
 		),

@@ -1,0 +1,57 @@
+body,
+html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.9em
+}
+
+.container .item {
+    text-align: center
+}
+
+.container h2 {
+    font-size: 1.5rem;
+    font-weight: 500;
+    letter-spacing: 0.041875rem
+}
+
+.appcontent {
+    padding-top: 0
+}
+
+.contentArea {
+    height: 100%;
+    overflow: hidden
+}
+
+.bodyContent {
+    overflow: auto;
+    height: 100vh;
+    background-color: #ffffff;
+    padding-left: 0;
+    padding-right: 0
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%
+}
+
+.applicationError {
+    padding: 20px
+}
+
+.errorText {
+    color: var(--bs-form-invalid-border-color)
+}
+
+.errorDetails {
+    padding: 7px;
+    background-color: #eeeeee;
+    border: 1px dashed #999999;
+    border-radius: 7px
+}

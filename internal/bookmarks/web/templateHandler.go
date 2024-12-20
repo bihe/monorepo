@@ -5,18 +5,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
-	"golang.binggl.net/monorepo/internal/bookmarks/web/templates"
+	"golang.binggl.net/monorepo/internal/bookmarks/web/html"
 	"golang.binggl.net/monorepo/internal/common"
-	"golang.binggl.net/monorepo/pkg/config"
-	"golang.binggl.net/monorepo/pkg/develop"
 	"golang.binggl.net/monorepo/pkg/handler"
-	tmpl "golang.binggl.net/monorepo/pkg/handler/templates"
+	base "golang.binggl.net/monorepo/pkg/handler/html"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
@@ -40,7 +37,7 @@ const searchURL = "/bm/search"
 func (t *TemplateHandler) SearchBookmarks() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		search := queryParam(r, "q")
-		user := ensureUser(r)
+		user := common.EnsureUser(r)
 
 		t.Logger.InfoRequest(fmt.Sprintf("get bookmarks by name: '%s' for user: '%s'", search, user.Username), r)
 
@@ -49,14 +46,32 @@ func (t *TemplateHandler) SearchBookmarks() http.HandlerFunc {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for search '%s'; '%v'", search, err), r)
 		}
 
-		ell := GetEllipsisValues(r)
-		tmpl.Layout(
-			t.layoutModel("Bookmark Search", search, "/public/search_icon.svg", *user),
-			templates.SearchStyles(),
-			templates.SearchNavigation(search),
-			templates.SearchContent(bms, ell),
+		ell := html.GetEllipsisValues(r)
+
+		base.Layout(
+			t.pageModel("Bookmark Search", search, "/public/search_icon.svg", *user),
+			html.SearchStyles(),
+			html.SearchNavigation(search),
+			html.SearchContent(search, bms, ell),
 			searchURL,
-		).Render(r.Context(), w)
+		).Render(w)
+	}
+}
+
+// SearchBookmarksPartial is used to return only the bookmark list for a search
+func (t *TemplateHandler) SearchBookmarksPartial() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		search := queryParam(r, "q")
+		user := common.EnsureUser(r)
+
+		t.Logger.InfoRequest(fmt.Sprintf("get search bookmark-list partial by name: '%s' for user: '%s'", search, user.Username), r)
+
+		bms, err := t.App.GetBookmarksByName(search, *user)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for search '%s'; '%v'", search, err), r)
+		}
+		ell := html.GetEllipsisValues(r)
+		html.SearchContent(search, bms, ell).Render(w)
 	}
 }
 
@@ -68,11 +83,11 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 			// start with the root path
 			path = "/"
 		}
-		user := ensureUser(r)
+		user := common.EnsureUser(r)
 
-		pathHierarchy := make([]templates.BookmarkPathEntry, 1)
+		pathHierarchy := make([]html.BookmarkPathEntry, 1)
 		// always start with the root item
-		pathHierarchy[0] = templates.BookmarkPathEntry{
+		pathHierarchy[0] = html.BookmarkPathEntry{
 			UrlPath:     "/",
 			DisplayName: "/root",
 		}
@@ -85,7 +100,7 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 			if p == "" {
 				continue
 			}
-			pathHierarchy = append(pathHierarchy, templates.BookmarkPathEntry{
+			pathHierarchy = append(pathHierarchy, html.BookmarkPathEntry{
 				UrlPath:     lastPath + "/" + p,
 				DisplayName: p,
 			})
@@ -121,18 +136,14 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 			}
 		}
 
-		ell := GetEllipsisValues(r)
-		tmpl.Layout(
-			t.layoutModel(curFolder, "", favicon, *user),
-			templates.BookmarksByPathStyles(),
-			templates.BookmarksByPathNavigation(pathHierarchy),
-			templates.BookmarksByPathContent(templates.BookmarkList(
-				path,
-				bms,
-				ell,
-			)),
+		ell := html.GetEllipsisValues(r)
+		base.Layout(
+			t.pageModel(curFolder, "", favicon, *user),
+			html.BookmarksByPathStyles(),
+			html.BookmarksByPathNavigation(pathHierarchy),
+			html.BookmarkList(path, bms, ell),
 			searchURL,
-		).Render(r.Context(), w)
+		).Render(w)
 	}
 }
 
@@ -140,7 +151,7 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 func (t *TemplateHandler) GetBookmarksForPathPartial() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		path := pathParam(r, "*")
-		user := ensureUser(r)
+		user := common.EnsureUser(r)
 
 		t.Logger.InfoRequest(fmt.Sprintf("get bookmark-list partial for path: '%s' for user: '%s'", path, user.Username), r)
 
@@ -148,12 +159,7 @@ func (t *TemplateHandler) GetBookmarksForPathPartial() http.HandlerFunc {
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", path, err), r)
 		}
-		ell := GetEllipsisValues(r)
-		templates.BookmarkList(
-			path,
-			bms,
-			ell,
-		).Render(r.Context(), w)
+		html.BookmarkList(path, bms, html.GetEllipsisValues(r)).Render(w)
 	}
 }
 
@@ -161,14 +167,14 @@ func (t *TemplateHandler) GetBookmarksForPathPartial() http.HandlerFunc {
 func (t *TemplateHandler) DeleteConfirm() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := pathParam(r, "id")
-		user := ensureUser(r)
+		user := common.EnsureUser(r)
 		t.Logger.InfoRequest(fmt.Sprintf("get bookmarks by id: '%s' for user: '%s'", id, user.Username), r)
 
 		bm, err := t.App.GetBookmarkByID(id, *user)
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for id '%s'; '%v'", id, err), r)
 		}
-		templates.DialogConfirmDelete(bm.DisplayName, bm.ID).Render(r.Context(), w)
+		base.DialogConfirmDeleteHx(bm.DisplayName, "/bm/delete/"+bm.ID).Render(w)
 	}
 }
 
@@ -176,8 +182,7 @@ func (t *TemplateHandler) DeleteConfirm() http.HandlerFunc {
 func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := pathParam(r, "id")
-		user := ensureUser(r)
-		ell := GetEllipsisValues(r)
+		user := common.EnsureUser(r)
 
 		t.Logger.InfoRequest(fmt.Sprintf("get bookmark by id: '%s' for user: '%s'", id, user.Username), r)
 		bm, err := t.App.GetBookmarkByID(id, *user)
@@ -187,35 +192,16 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 		err = t.App.Delete(bm.ID, *user)
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not delete bookmark with id '%s'; '%v'", id, err), r)
-
-			bms, bErr := t.App.GetBookmarksByPath(bm.Path, *user)
-			if bErr != nil {
-				t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", bm.Path, bErr), r)
-			}
-
-			// show a notification-toast about the error!
-			w.Header().Add("HX-Trigger", tmpl.ErrorToast("Bookmark delete error", fmt.Sprintf("Error: '%s'", err)))
-			templates.BookmarkList(
-				bm.Path,
-				bms,
-				ell,
-			).Render(r.Context(), w)
+			triggerRefreshWithToast(w,
+				common.MsgError,
+				"Bookmark delete error!",
+				fmt.Sprintf("Error: '%s'", err))
 			return
 		}
-
-		bms, err := t.App.GetBookmarksByPath(bm.Path, *user)
-		if err != nil {
-			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", bm.Path, err), r)
-		}
-
-		// show a notification-toast about the update!
-		// https://htmx.org/headers/hx-trigger/
-		w.Header().Add("HX-Trigger", tmpl.SuccessToast("Bookmark deleted", fmt.Sprintf("The bookmark '%s' was deleted.", bm.DisplayName)))
-		templates.BookmarkList(
-			bm.Path,
-			bms,
-			ell,
-		).Render(r.Context(), w)
+		triggerRefreshWithToast(w,
+			common.MsgSuccess,
+			"Bookmark deleted!",
+			fmt.Sprintf("The bookmark '%s' was deleted.", bm.DisplayName))
 
 	}
 }
@@ -224,21 +210,21 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := pathParam(r, "id")
-		user := ensureUser(r)
+		user := common.EnsureUser(r)
 		t.Logger.InfoRequest(fmt.Sprintf("get bookmarks by id: '%s' for user: '%s'", id, user.Username), r)
 
 		var (
-			bm    templates.Bookmark
+			bm    html.Bookmark
 			b     *bookmarks.Bookmark
 			paths []string
 			err   error
 		)
 		if id == "-1" {
-			bm.ID = templates.ValidatorInput{Val: "-1", Valid: true}
-			bm.Path = templates.ValidatorInput{Val: queryParam(r, "path"), Valid: true}
-			bm.DisplayName = templates.ValidatorInput{Valid: true}
-			bm.URL = templates.ValidatorInput{Valid: true}
-			bm.CustomFavicon = templates.ValidatorInput{Valid: true}
+			bm.ID = html.ValidatorInput{Val: "-1", Valid: true}
+			bm.Path = html.ValidatorInput{Val: queryParam(r, "path"), Valid: true}
+			bm.DisplayName = html.ValidatorInput{Valid: true}
+			bm.URL = html.ValidatorInput{Valid: true}
+			bm.CustomFavicon = html.ValidatorInput{Valid: true}
 			bm.Type = bookmarks.Node
 			bm.TStamp = fmt.Sprintf("%d", time.Now().Unix())
 		} else {
@@ -249,12 +235,12 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 				t.RenderErr(r, w, fmt.Sprintf("could not get bookmarks for id '%s'; '%v'", id, err))
 				return
 			}
-			bm.ID = templates.ValidatorInput{Val: b.ID, Valid: true}
-			bm.Path = templates.ValidatorInput{Val: b.Path, Valid: true}
-			bm.DisplayName = templates.ValidatorInput{Val: b.DisplayName, Valid: true}
-			bm.URL = templates.ValidatorInput{Val: b.URL, Valid: true}
+			bm.ID = html.ValidatorInput{Val: b.ID, Valid: true}
+			bm.Path = html.ValidatorInput{Val: b.Path, Valid: true}
+			bm.DisplayName = html.ValidatorInput{Val: b.DisplayName, Valid: true}
+			bm.URL = html.ValidatorInput{Val: b.URL, Valid: true}
 			bm.Type = b.Type
-			bm.CustomFavicon = templates.ValidatorInput{Valid: true}
+			bm.CustomFavicon = html.ValidatorInput{Valid: true}
 			bm.InvertFaviconColor = (b.InvertFaviconColor == 1)
 			bm.TStamp = b.TStamp()
 
@@ -263,7 +249,7 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 				t.Logger.ErrorRequest(fmt.Sprintf("could not get all paths for bookmarks; '%v'", err), r)
 			}
 		}
-		templates.EditBookmarks(bm, paths).Render(r.Context(), w)
+		html.EditBookmarks(bm, paths).Render(w)
 	}
 }
 
@@ -356,7 +342,7 @@ func (t *TemplateHandler) UploadCustomFavicon() http.HandlerFunc {
 // GetFaviconByID returns a stored favicon for the provided ID
 func (t *TemplateHandler) GetFaviconByID() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := ensureUser(r)
+		user := common.EnsureUser(r)
 		id := pathParam(r, "id")
 		t.Logger.InfoRequest(fmt.Sprintf("try to get favicon with the given ID '%s'", id), r)
 		favicon, err := t.App.GetBookmarkFavicon(id, *user)
@@ -385,7 +371,7 @@ func (t *TemplateHandler) GetTempFaviconByID() http.HandlerFunc {
 }
 
 type triggerDef struct {
-	tmpl.ToastMessage
+	common.ToastMessage
 	Refresh string `json:"refreshBookmarkList,omitempty"`
 }
 
@@ -394,7 +380,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
 			recv       bookmarks.Bookmark
-			formBm     templates.Bookmark
+			formBm     html.Bookmark
 			paths      []string
 			err        error
 			formPrefix string = "bookmark_"
@@ -406,7 +392,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			t.RenderErr(r, w, fmt.Sprintf("could not parse supplied form data; '%v'", err))
 			return
 		}
-		user := ensureUser(r)
+		user := common.EnsureUser(r)
 		t.Logger.InfoRequest(fmt.Sprintf("save the bookmark data for user: '%s'", user.Username), r)
 
 		customFavicon := false
@@ -424,14 +410,14 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 		// validation
 		validData := true
 		formBm.TStamp = fmt.Sprintf("%d", time.Now().Unix())
-		formBm.ID = templates.ValidatorInput{Val: recv.ID, Valid: true}
-		formBm.DisplayName = templates.ValidatorInput{Val: recv.DisplayName, Valid: true}
+		formBm.ID = html.ValidatorInput{Val: recv.ID, Valid: true}
+		formBm.DisplayName = html.ValidatorInput{Val: recv.DisplayName, Valid: true}
 		if recv.DisplayName == "" {
 			formBm.DisplayName.Valid = false
 			formBm.DisplayName.Message = "missing value!"
 			validData = false
 		}
-		formBm.Path = templates.ValidatorInput{Val: recv.Path, Valid: true}
+		formBm.Path = html.ValidatorInput{Val: recv.Path, Valid: true}
 		if recv.Path == "" {
 			formBm.Path.Valid = false
 			formBm.Path.Message = "missing value!"
@@ -439,7 +425,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 		}
 		formBm.Type = recv.Type
 		if formBm.Type == bookmarks.Node {
-			formBm.URL = templates.ValidatorInput{Val: recv.URL, Valid: true}
+			formBm.URL = html.ValidatorInput{Val: recv.URL, Valid: true}
 			if recv.URL == "" {
 				formBm.URL.Valid = false
 				formBm.URL.Message = "missing value!"
@@ -448,7 +434,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 		}
 		if customFavicon {
 			formBm.UseCustomFavicon = customFavicon
-			formBm.CustomFavicon = templates.ValidatorInput{Val: recv.Favicon, Valid: true}
+			formBm.CustomFavicon = html.ValidatorInput{Val: recv.Favicon, Valid: true}
 			if recv.Favicon == "" {
 				formBm.CustomFavicon.Valid = false
 				formBm.CustomFavicon.Message = "missing value!"
@@ -460,7 +446,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 		if !validData {
 			// show the same form again!
 			t.Logger.ErrorRequest("the supplied data for creating bookmark entry is not valid!", r)
-			templates.EditBookmarks(formBm, paths).Render(r.Context(), w)
+			html.EditBookmarks(formBm, paths).Render(w)
 			return
 		}
 
@@ -482,25 +468,18 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			if err != nil {
 				t.Logger.ErrorRequest(fmt.Sprintf("could not create a new bookmark entry; '%v'", err), r)
 				formBm.Error = "Error: " + err.Error()
-				templates.EditBookmarks(formBm, paths).Render(r.Context(), w)
+				html.EditBookmarks(formBm, paths).Render(w)
 				return
 			}
 			t.Logger.Info("new bookmark created", logging.LogV("ID", created.ID))
 
-			triggerEvent := triggerDef{
-				ToastMessage: tmpl.ToastMessage{
-					Event: tmpl.ToastMessageContent{
-						Type:  tmpl.MsgSuccess,
-						Title: "Bookmark saved!",
-						Text:  fmt.Sprintf("The bookmark '%s' was created.", created.DisplayName),
-					},
-				},
-				Refresh: "now",
-			}
-			// https://htmx.org/headers/hx-trigger/
-			w.Header().Add("HX-Trigger", tmpl.Json(triggerEvent))
+			triggerRefreshWithToast(w,
+				common.MsgSuccess,
+				"Bookmark saved!",
+				fmt.Sprintf("The bookmark '%s' was created.", created.DisplayName))
+
 			formBm.Close = true
-			templates.EditBookmarks(formBm, paths).Render(r.Context(), w)
+			html.EditBookmarks(formBm, paths).Render(w)
 			return
 
 		} else {
@@ -528,26 +507,19 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			if err != nil {
 				t.Logger.ErrorRequest(fmt.Sprintf("could not update bookmark entry '%s'; '%v'", recv.ID, err), r)
 				formBm.Error = "Error: " + err.Error()
-				templates.EditBookmarks(formBm, paths).Render(r.Context(), w)
+				html.EditBookmarks(formBm, paths).Render(w)
 				return
 			}
 
 			t.Logger.Info("bookmark updated", logging.LogV("ID", updated.ID))
 
-			triggerEvent := triggerDef{
-				ToastMessage: tmpl.ToastMessage{
-					Event: tmpl.ToastMessageContent{
-						Type:  tmpl.MsgSuccess,
-						Title: "Bookmark saved!",
-						Text:  fmt.Sprintf("The bookmark '%s' (%s) was updated.", existing.DisplayName, existing.ID),
-					},
-				},
-				Refresh: "now",
-			}
-			// https://htmx.org/headers/hx-trigger/
-			w.Header().Add("HX-Trigger", tmpl.Json(triggerEvent))
+			triggerRefreshWithToast(w,
+				common.MsgSuccess,
+				"Bookmark saved!",
+				fmt.Sprintf("The bookmark '%s' (%s) was updated.", existing.DisplayName, existing.ID))
+
 			formBm.Close = true
-			templates.EditBookmarks(formBm, paths).Render(r.Context(), w)
+			html.EditBookmarks(formBm, paths).Render(w)
 			return
 		}
 	}
@@ -556,7 +528,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 // SortBookmarks performs a reordering of the bookmark list
 func (t *TemplateHandler) SortBookmarks() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := ensureUser(r)
+		user := common.EnsureUser(r)
 		err := r.ParseForm()
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not parse supplied form data; '%v'", err), r)
@@ -579,84 +551,19 @@ func (t *TemplateHandler) SortBookmarks() http.HandlerFunc {
 
 		updates, err := t.App.UpdateSortOrder(sortOrder, *user)
 		if err != nil {
-			triggerEvent := triggerDef{
-				ToastMessage: tmpl.ToastMessage{
-					Event: tmpl.ToastMessageContent{
-						Type:  tmpl.MsgError,
-						Title: "Error sorting!",
-						Text:  fmt.Sprintf("Could not perform sorting: %v", err),
-					},
-				},
-			}
-			// https://htmx.org/headers/hx-trigger/
-			w.Header().Add("HX-Trigger", tmpl.Json(triggerEvent))
+
+			triggerToast(w,
+				common.MsgError,
+				"Error sorting!",
+				fmt.Sprintf("Could not perform sorting: %v", err))
 			return
 		}
 
-		triggerEvent := triggerDef{
-			ToastMessage: tmpl.ToastMessage{
-				Event: tmpl.ToastMessageContent{
-					Type:  tmpl.MsgSuccess,
-					Title: "List sorted!",
-					Text:  fmt.Sprintf("%d bookmarks were successfully sorted", updates),
-				},
-			},
-			Refresh: "now",
-		}
-		// https://htmx.org/headers/hx-trigger/
-		w.Header().Add("HX-Trigger", tmpl.Json(triggerEvent))
-
+		triggerRefreshWithToast(w,
+			common.MsgSuccess,
+			"List sorted!",
+			fmt.Sprintf("%d bookmarks were successfully sorted", updates))
 	}
-}
-
-// --------------------------------------------------------------------------
-//  UI Ellipsis Handling
-// --------------------------------------------------------------------------
-
-// Desktop Browser
-var StdEllipsis = templates.EllipsisValues{
-	PathLen:   50,
-	NodeLen:   60,
-	FolderLen: 50,
-}
-
-// Mobile View
-var MobileEllipsis = templates.EllipsisValues{
-	PathLen:   5,
-	NodeLen:   30,
-	FolderLen: 20,
-}
-
-func GetEllipsisValues(r *http.Request) (ell templates.EllipsisValues) {
-	vX, _ := getViewPort(r)
-	ell = StdEllipsis
-	if vX == 0 {
-		// this looks odd - use the std
-		return
-	}
-	// iPhone 12 Pro
-	if vX <= 390 {
-		ell = MobileEllipsis
-	}
-	return
-}
-
-const cookieViewPortName = "viewport"
-
-func getViewPort(r *http.Request) (x, y int) {
-	cookie, _ := r.Cookie(cookieViewPortName)
-	if cookie != nil && cookie.Value != "" {
-		dim := strings.Split(cookie.Value, ":")
-		if len(dim) == 2 {
-			if v, err := strconv.Atoi(dim[0]); err == nil {
-				x = v
-			}
-			if v, err := strconv.Atoi(dim[1]); err == nil {
-				y = v
-			}
-		}
-	}
-	return
 }
 
 // --------------------------------------------------------------------------
@@ -667,40 +574,9 @@ func (t *TemplateHandler) versionString() string {
 	return fmt.Sprintf("%s-%s", t.Version, t.Build)
 }
 
-func (t *TemplateHandler) layoutModel(pageTitle, search, favicon string, user security.User) tmpl.LayoutModel {
-	appNav := make([]tmpl.NavItem, 0)
-	var title string
-	for _, a := range common.AvailableApps {
-		if a.URL == "/bm" {
-			a.Active = true
-			title = a.DisplayName
-		}
-		appNav = append(appNav, a)
-	}
-	if pageTitle == "" {
-		pageTitle = title
-	}
-	model := tmpl.LayoutModel{
-		PageTitle:  pageTitle,
-		Favicon:    favicon,
-		Version:    t.versionString(),
-		User:       user,
-		Search:     search,
-		Navigation: appNav,
-	}
-
-	if model.Favicon == "" {
-		model.Favicon = "/public/folder.svg"
-	}
-	var jsReloadLogic string
-	if t.Env == config.Development {
-		jsReloadLogic = develop.PageReloadClientJS
-	}
-	model.PageReloadClientJS = tmpl.PageReloadClientJS(jsReloadLogic)
-	return model
+func (t *TemplateHandler) pageModel(pageTitle, searchstring, favicon string, user security.User) base.LayoutModel {
+	return common.CreatePageModel("/bm", pageTitle, searchstring, favicon, t.versionString(), t.Env, user)
 }
-
-// --------------------------------------------------------------------------
 
 func queryParam(r *http.Request, name string) string {
 	keys, ok := r.URL.Query()[name]
@@ -714,17 +590,42 @@ func pathParam(r *http.Request, name string) string {
 	return chi.URLParam(r, name)
 }
 
-func ensureUser(r *http.Request) *security.User {
-	user, ok := security.UserFromContext(r.Context())
-	if !ok || user == nil {
-		panic("the security context user is not available!")
-	}
-	return user
-}
-
 func getIntFromString(val string) int {
 	if val == "1" {
 		return 1
 	}
 	return 0
+}
+
+// define a header for htmx to trigger events
+// https://htmx.org/headers/hx-trigger/
+const htmxHeaderTrigger = "HX-Trigger"
+
+func triggerRefreshWithToast(w http.ResponseWriter, errType, title, text string) {
+	triggerEvent := triggerDef{
+		ToastMessage: common.ToastMessage{
+			Event: common.ToastMessageContent{
+				Type:  errType,
+				Title: title,
+				Text:  text,
+			},
+		},
+		Refresh: "now",
+	}
+	triggerJson := common.Json(triggerEvent)
+	w.Header().Add(htmxHeaderTrigger, triggerJson)
+}
+
+func triggerToast(w http.ResponseWriter, errType, title, text string) {
+	triggerEvent := triggerDef{
+		ToastMessage: common.ToastMessage{
+			Event: common.ToastMessageContent{
+				Type:  errType,
+				Title: title,
+				Text:  text,
+			},
+		},
+	}
+	triggerJson := common.Json(triggerEvent)
+	w.Header().Add(htmxHeaderTrigger, triggerJson)
 }

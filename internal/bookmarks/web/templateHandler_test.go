@@ -18,7 +18,7 @@ import (
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/conf"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
-	"golang.binggl.net/monorepo/internal/bookmarks/web"
+	"golang.binggl.net/monorepo/internal/bookmarks/web/html"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/persistence"
@@ -183,12 +183,12 @@ func Test_Bookmark_ForPath(t *testing.T) {
 
 func Test_EllipsisValue(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/bm/~", nil)
-	el := web.GetEllipsisValues(req)
+	el := html.GetEllipsisValues(req)
 
 	// for the standard case without anything the standard ellipsis values should be returned
-	if el.PathLen != web.StdEllipsis.PathLen &&
-		el.NodeLen != web.StdEllipsis.NodeLen &&
-		el.FolderLen != web.StdEllipsis.FolderLen {
+	if el.PathLen != html.StdEllipsis.PathLen &&
+		el.NodeLen != html.StdEllipsis.NodeLen &&
+		el.FolderLen != html.StdEllipsis.FolderLen {
 		t.Errorf("expected the std ellipsis - got something different")
 	}
 
@@ -199,10 +199,10 @@ func Test_EllipsisValue(t *testing.T) {
 		Value: "1024:768",
 	})
 
-	el = web.GetEllipsisValues(req)
-	if el.PathLen != web.StdEllipsis.PathLen &&
-		el.NodeLen != web.StdEllipsis.NodeLen &&
-		el.FolderLen != web.StdEllipsis.FolderLen {
+	el = html.GetEllipsisValues(req)
+	if el.PathLen != html.StdEllipsis.PathLen &&
+		el.NodeLen != html.StdEllipsis.NodeLen &&
+		el.FolderLen != html.StdEllipsis.FolderLen {
 		t.Errorf("expected the std ellipsis - got something different")
 	}
 
@@ -213,10 +213,10 @@ func Test_EllipsisValue(t *testing.T) {
 		Value: "320:560",
 	})
 
-	el = web.GetEllipsisValues(req)
-	if el.PathLen != web.MobileEllipsis.PathLen &&
-		el.NodeLen != web.MobileEllipsis.NodeLen &&
-		el.FolderLen != web.MobileEllipsis.FolderLen {
+	el = html.GetEllipsisValues(req)
+	if el.PathLen != html.MobileEllipsis.PathLen &&
+		el.NodeLen != html.MobileEllipsis.NodeLen &&
+		el.FolderLen != html.MobileEllipsis.FolderLen {
 		t.Errorf("expected the std ellipsis - got something different")
 	}
 }

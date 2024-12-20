@@ -36,3 +36,4 @@ litestream/litestream.yml
 internal/crypter/testresult.pdf
 
 tmp/
+.venv/

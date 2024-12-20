@@ -58,7 +58,7 @@ compose-int: ## start the whole application for integration testing
 
 integration: ## run the integration test with playwright. NOTE: the compose setup needs to be running
 	@echo "  >  Starting integration tests ..."
-	python3 ./testdata/integration/test_application.py
+	uv run ./testdata/integration/run.py
 
 # internal tasks
 
@@ -73,8 +73,8 @@ go-clean:
 
 go-update:
 	@echo "  >  Go update dependencies ..."
-	go get -d -u -t ./...
-	go mod tidy -compat=1.22
+	go get -u -t ./...
+	go mod tidy -compat=1.23
 
 go-build:
 	@echo "  >  Building the monorepo ..."
@@ -87,6 +87,7 @@ go-test:
 
 go-coverage:
 	@echo "  >  Testing the monorepo (coverage) ..."
+	# tparse: https://github.com/mfridman/tparse
 	go test -race -coverprofile="coverage.txt" -covermode atomic -count=1 -json ./... | tparse -all
 
 

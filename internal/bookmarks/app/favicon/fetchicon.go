@@ -11,7 +11,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/PuerkitoBio/goquery"
+	"golang.org/x/net/html"
 )
 
 const DefaultFaviconName = "favicon.ico"
@@ -180,24 +180,56 @@ func tryFaviconDefinitions(page []byte) (string, error) {
 }
 
 func parsePageForFavicon(page []byte, faviconDef string) (string, error) {
-	var (
-		iconUrl string
-		err     error
-		doc     *goquery.Document
-		ok      bool
-	)
-
-	doc, err = goquery.NewDocumentFromReader(bytes.NewReader(page))
+	doc, err := html.Parse(bytes.NewReader(page))
 	if err != nil {
 		return "", fmt.Errorf("could not parse page: %v", err)
 	}
-
-	doc.Find(fmt.Sprintf(`link[rel="%s"]`, faviconDef)).EachWithBreak(func(i int, s *goquery.Selection) bool {
-		iconUrl, ok = s.Attr("href")
-		return !ok
-	})
-	if iconUrl == "" || !ok {
+	icon, err := faviconParser(doc, faviconDef)
+	if err != nil || icon == "" {
 		return "", fmt.Errorf("could not find a favicon definition on page")
 	}
-	return iconUrl, nil
+	return icon, nil
+}
+
+func faviconParser(doc *html.Node, faviconDef string) (string, error) {
+	var link *html.Node
+	var crawler func(*html.Node)
+
+	extractFavIconURL := func(node *html.Node, faviconDef string) string {
+		foundFavDev := false
+		favHrf := ""
+		for _, a := range node.Attr {
+
+			switch a.Key {
+			case "rel":
+				foundFavDev = a.Val == faviconDef
+			case "href":
+				favHrf = a.Val
+			}
+		}
+		if foundFavDev && favHrf != "" {
+			return favHrf
+		}
+		return ""
+	}
+
+	crawler = func(node *html.Node) {
+		if node.Type == html.ElementNode && node.Data == "link" {
+			link = node
+			if extractFavIconURL(link, faviconDef) != "" {
+				return
+			}
+			for child := node.FirstChild; child != nil; child = child.NextSibling {
+				crawler(child)
+			}
+		}
+		for child := node.FirstChild; child != nil; child = child.NextSibling {
+			crawler(child)
+		}
+	}
+	crawler(doc)
+	if link != nil {
+		return extractFavIconURL(link, faviconDef), nil
+	}
+	return "", fmt.Errorf("could not find a favicon definition on page")
 }

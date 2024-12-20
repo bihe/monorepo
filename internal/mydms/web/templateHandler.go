@@ -11,11 +11,9 @@ import (
 	"golang.binggl.net/monorepo/internal/common"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
 	"golang.binggl.net/monorepo/internal/mydms/app/upload"
-	"golang.binggl.net/monorepo/internal/mydms/web/templates"
-	"golang.binggl.net/monorepo/pkg/config"
-	"golang.binggl.net/monorepo/pkg/develop"
+	"golang.binggl.net/monorepo/internal/mydms/html"
 	"golang.binggl.net/monorepo/pkg/handler"
-	tmpl "golang.binggl.net/monorepo/pkg/handler/templates"
+	base "golang.binggl.net/monorepo/pkg/handler/html"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
@@ -35,7 +33,6 @@ type TemplateHandler struct {
 	MaxUploadSize int64
 }
 
-const searchURL = "/mydms"
 const defaultPageSize = 20
 const searchParam = "q"
 const skipParam = "skip"
@@ -52,14 +49,15 @@ func (t *TemplateHandler) DisplayDocuments() http.HandlerFunc {
 		)
 
 		documents, search, numDocs, next = t.getDocuments(r)
-		tmpl.Layout(
-			t.layoutModel("Documents", search, "/public/folder.svg", *user),
-			templates.DocumentsStyles(),
-			templates.DocumentsNavigation(search),
-			templates.DocumentsContent(
-				templates.DocumentList(numDocs, next, documents), search),
-			searchURL,
-		).Render(r.Context(), w)
+
+		base.Layout(
+			t.pageModel("Documents", search, "/public/folder.svg", *user),
+			html.DocumentsStyles(),
+			html.DocumentsNavigation(search),
+			html.DocumentsContent(
+				html.DocumentList(numDocs, next, documents), search,
+			), search,
+		).Render(w)
 	}
 }
 
@@ -72,7 +70,7 @@ func (t *TemplateHandler) DisplayDocumentsPartial() http.HandlerFunc {
 			documents document.PagedDocument
 		)
 		documents, _, numDocs, next = t.getDocuments(r)
-		templates.DocumentList(numDocs, next, documents).Render(r.Context(), w)
+		html.DocumentList(numDocs, next, documents).Render(w)
 	}
 }
 
@@ -147,7 +145,7 @@ func (t *TemplateHandler) ShowEditDocumentDialog() http.HandlerFunc {
 			}
 		}
 		validDoc := prepValidDoc(doc)
-		templates.EditDocumentDialog(validDoc, templates.DisplayDocumentDownload(validDoc)).Render(r.Context(), w)
+		html.EditDocumentDialog(validDoc, html.DisplayDocumentDownload(validDoc)).Render(w)
 	}
 }
 
@@ -194,7 +192,7 @@ func (t *TemplateHandler) SearchListItems() http.HandlerFunc {
 			})
 		}
 
-		json := tmpl.Json(listItems)
+		json := common.Json(listItems)
 		w.Header().Add("content-type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(json))
@@ -204,7 +202,7 @@ func (t *TemplateHandler) SearchListItems() http.HandlerFunc {
 // DisplayDocumentUploadPartial is used to display the upload elements for documents
 func (t *TemplateHandler) DisplayDocumentUploadPartial() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		templates.DisplayDocumentDownload(templates.Document{}).Render(r.Context(), w)
+		html.DisplayDocumentDownload(html.Document{}).Render(w)
 	}
 }
 
@@ -218,7 +216,7 @@ func (t *TemplateHandler) UploadDocument() http.HandlerFunc {
 		if err != nil {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
 			t.Logger.ErrorRequest(fmt.Sprintf("could not upload document; '%v'", err), r)
-			templates.DisplayTempDocumentUpload("", "", errMsg).Render(r.Context(), w)
+			html.DisplayTempDocumentUpload("", "", errMsg).Render(w)
 			return
 		}
 		defer file.Close()
@@ -244,17 +242,17 @@ func (t *TemplateHandler) UploadDocument() http.HandlerFunc {
 		if err != nil {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
 			t.Logger.ErrorRequest(fmt.Sprintf("could not save document; '%v'", err), r)
-			templates.DisplayTempDocumentUpload("", "", errMsg).Render(r.Context(), w)
+			html.DisplayTempDocumentUpload("", "", errMsg).Render(w)
 			return
 		}
 
-		templates.DisplayTempDocumentUpload(meta.Filename, tempId, "").Render(r.Context(), w)
+		html.DisplayTempDocumentUpload(meta.Filename, tempId, "").Render(w)
 	}
 }
 
 // we define a JSON structur which is used to trigger actions on the frontend via htmx
 type triggerDef struct {
-	tmpl.ToastMessage
+	common.ToastMessage
 	Refresh string `json:"refreshDocumentList,omitempty"`
 }
 
@@ -266,7 +264,7 @@ func (t *TemplateHandler) SaveDocument() http.HandlerFunc {
 			err        error
 			formPrefix string = "doc-"
 			rcvDoc     document.Document
-			validDoc   templates.Document
+			validDoc   html.Document
 			validData  bool
 		)
 		user := ensureUser(r)
@@ -323,7 +321,7 @@ func (t *TemplateHandler) SaveDocument() http.HandlerFunc {
 		if !validData {
 			// show the same form again!
 			t.Logger.ErrorRequest("the supplied data for saving a document is not valid!", r)
-			templates.EditDocumentDialog(validDoc, templates.DisplayDocumentDownload(validDoc)).Render(r.Context(), w)
+			html.EditDocumentDialog(validDoc, html.DisplayDocumentDownload(validDoc)).Render(w)
 			return
 		}
 
@@ -331,7 +329,7 @@ func (t *TemplateHandler) SaveDocument() http.HandlerFunc {
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not save the supplied document; %v", err), r)
 			validDoc.Error = fmt.Sprintf("Cannot save the document; '%v'", err)
-			templates.EditDocumentDialog(validDoc, templates.DisplayDocumentDownload(validDoc)).Render(r.Context(), w)
+			html.EditDocumentDialog(validDoc, html.DisplayDocumentDownload(validDoc)).Render(w)
 			return
 		}
 
@@ -341,9 +339,9 @@ func (t *TemplateHandler) SaveDocument() http.HandlerFunc {
 		// one) is the toast message to show a saved indicator
 		// two) is the notification to reload the document list, because of the changes
 		triggerEvent := triggerDef{
-			ToastMessage: tmpl.ToastMessage{
-				Event: tmpl.ToastMessageContent{
-					Type:  tmpl.MsgSuccess,
+			ToastMessage: common.ToastMessage{
+				Event: common.ToastMessageContent{
+					Type:  common.MsgSuccess,
 					Title: "Document saved!",
 					Text:  fmt.Sprintf("The document with ID '%s' was saved.", savedDoc.ID),
 				},
@@ -351,9 +349,9 @@ func (t *TemplateHandler) SaveDocument() http.HandlerFunc {
 			Refresh: "now",
 		}
 		// https://htmx.org/headers/hx-trigger/
-		w.Header().Add("HX-Trigger", tmpl.Json(triggerEvent))
+		w.Header().Add("HX-Trigger", common.Json(triggerEvent))
 		validDoc.Close = true
-		templates.EditDocumentDialog(validDoc, templates.DisplayDocumentDownload(validDoc)).Render(r.Context(), w)
+		html.EditDocumentDialog(validDoc, html.DisplayDocumentDownload(validDoc)).Render(w)
 	}
 }
 
@@ -367,7 +365,7 @@ func (t *TemplateHandler) ShowDeleteConfirmDialog() http.HandlerFunc {
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get document for id '%s'; '%v'", id, err), r)
 		}
-		templates.DialogConfirmDelete(doc.Title, doc.ID).Render(r.Context(), w)
+		base.DialogConfirmDeleteHx(doc.Title, "/mydms/"+doc.ID).Render(w)
 	}
 }
 
@@ -387,9 +385,9 @@ func (t *TemplateHandler) DeleteDocument() http.HandlerFunc {
 		// one) is the toast message to show a saved indicator
 		// two) is the notification to reload the document list, because of the changes
 		triggerEvent := triggerDef{
-			ToastMessage: tmpl.ToastMessage{
-				Event: tmpl.ToastMessageContent{
-					Type:  tmpl.MsgSuccess,
+			ToastMessage: common.ToastMessage{
+				Event: common.ToastMessageContent{
+					Type:  common.MsgSuccess,
 					Title: "Document delete!",
 					Text:  fmt.Sprintf("The document with ID '%s' was removed.", id),
 				},
@@ -397,7 +395,7 @@ func (t *TemplateHandler) DeleteDocument() http.HandlerFunc {
 			Refresh: "now",
 		}
 		// https://htmx.org/headers/hx-trigger/
-		w.Header().Add("HX-Trigger", tmpl.Json(triggerEvent))
+		w.Header().Add("HX-Trigger", common.Json(triggerEvent))
 	}
 }
 
@@ -409,37 +407,8 @@ func (t *TemplateHandler) versionString() string {
 	return fmt.Sprintf("%s-%s", t.Version, t.Build)
 }
 
-func (t *TemplateHandler) layoutModel(pageTitle, search, favicon string, user security.User) tmpl.LayoutModel {
-	appNav := make([]tmpl.NavItem, 0)
-	var title string
-	for _, a := range common.AvailableApps {
-		if a.URL == "/mydms" {
-			a.Active = true
-			title = a.DisplayName
-		}
-		appNav = append(appNav, a)
-	}
-	if pageTitle == "" {
-		pageTitle = title
-	}
-	model := tmpl.LayoutModel{
-		PageTitle:  pageTitle,
-		Favicon:    favicon,
-		Version:    t.versionString(),
-		User:       user,
-		Search:     search,
-		Navigation: appNav,
-	}
-
-	if model.Favicon == "" {
-		model.Favicon = "/public/folder.svg"
-	}
-	var jsReloadLogic string
-	if t.Env == config.Development {
-		jsReloadLogic = develop.PageReloadClientJS
-	}
-	model.PageReloadClientJS = tmpl.PageReloadClientJS(jsReloadLogic)
-	return model
+func (t *TemplateHandler) pageModel(pageTitle, searchstring, favicon string, user security.User) base.LayoutModel {
+	return common.CreatePageModel("/mydms", pageTitle, searchstring, favicon, t.versionString(), t.Env, user)
 }
 
 func ensureUser(r *http.Request) *security.User {
@@ -462,38 +431,38 @@ func pathParam(r *http.Request, name string) string {
 	return chi.URLParam(r, name)
 }
 
-func prepValidDoc(doc document.Document) templates.Document {
-	return templates.Document{
+func prepValidDoc(doc document.Document) html.Document {
+	return html.Document{
 		ID: doc.ID,
-		Title: templates.ValidStr{
+		Title: html.ValidStr{
 			Val:   doc.Title,
 			Valid: true,
 		},
-		Amount: templates.ValidFloat{
+		Amount: html.ValidFloat{
 			Val:   doc.Amount,
 			Valid: true,
 		},
-		FileName: templates.ValidStr{
+		FileName: html.ValidStr{
 			Val:   doc.FileName,
 			Valid: true,
 		},
-		PreviewLink: templates.ValidStr{
+		PreviewLink: html.ValidStr{
 			Val:   doc.PreviewLink,
 			Valid: true,
 		},
-		UploadToken: templates.ValidStr{
+		UploadToken: html.ValidStr{
 			Val:   doc.UploadToken,
 			Valid: true,
 		},
-		InvoiceNumber: templates.ValidStr{
+		InvoiceNumber: html.ValidStr{
 			Val:   doc.InvoiceNumber,
 			Valid: true,
 		},
-		Tags: templates.ValidStrSlice{
+		Tags: html.ValidStrSlice{
 			Val:   doc.Tags,
 			Valid: true,
 		},
-		Senders: templates.ValidStrSlice{
+		Senders: html.ValidStrSlice{
 			Val:   doc.Senders,
 			Valid: true,
 		},

@@ -38,6 +38,19 @@ func TestFetchFavicon(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 	})
+	mux.HandleFunc("/noFavicon", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("content-type", "text/html")
+		html := ` <html>
+                <head>
+                    <meta charset="utf-8">
+                    <link rel="canonical" href="http://localhost/noFavicon">
+                </head>
+                <body>html</body>
+            </html>`
+		if _, err := w.Write([]byte(html)); err != nil {
+			t.Fatalf("%v", err)
+		}
+	})
 	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(icoFavicon)))
 		if _, err := w.Write(icoFavicon); err != nil {
@@ -252,4 +265,14 @@ func TestFetchFavicon(t *testing.T) {
 	if err == nil {
 		t.Error("error because of wrong image/* mime-type expected")
 	}
+
+	// valid HTML but no favicon
+	// ------------------------------------------------------------------
+	content, err = GetFaviconFromURL(ts.URL + "/noFavicon")
+	if err != nil {
+		t.Errorf("valid HTML expected default favicon: %v", err)
+	}
+	assert.Equal(t, "favicon.ico", content.FileName)
+	assert.True(t, len(content.Payload) > 0)
+	assert.Equal(t, len(icoFavicon), len(content.Payload))
 }

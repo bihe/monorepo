@@ -109,7 +109,7 @@ func Layout(model LayoutModel, style, navigation, content g.Node, searchURL stri
 				h.Script(h.Src("/public/bootstrap/js/bootstrap.bundle.min.js")),
 				h.Script(h.Src("/public/js/Sortable.min.js")),
 				h.Script(h.Src("/public/js/script.js")),
-				// only for development the live-reload feature should be available
+				// only during development the live-reload feature should be available
 				g.If(model.Env == config.Development,
 					g.Raw(develop.PageReloadClientJS),
 				),

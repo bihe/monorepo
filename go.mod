@@ -2,7 +2,6 @@ module golang.binggl.net/monorepo
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/PuerkitoBio/goquery v1.10.0
 	github.com/aws/aws-sdk-go v1.55.5
 	github.com/bihe/go-gelf v1.0.0
 	github.com/coreos/go-oidc/v3 v3.11.0
@@ -29,7 +28,6 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect

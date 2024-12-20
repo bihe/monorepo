@@ -52,9 +52,26 @@ func (t *TemplateHandler) SearchBookmarks() http.HandlerFunc {
 			t.pageModel("Bookmark Search", search, "/public/search_icon.svg", *user),
 			html.SearchStyles(),
 			html.SearchNavigation(search),
-			html.SearchContent(bms, ell),
+			html.SearchContent(search, bms, ell),
 			searchURL,
 		).Render(w)
+	}
+}
+
+// SearchBookmarksPartial is used to return only the bookmark list for a search
+func (t *TemplateHandler) SearchBookmarksPartial() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		search := queryParam(r, "q")
+		user := common.EnsureUser(r)
+
+		t.Logger.InfoRequest(fmt.Sprintf("get search bookmark-list partial by name: '%s' for user: '%s'", search, user.Username), r)
+
+		bms, err := t.App.GetBookmarksByName(search, *user)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for search '%s'; '%v'", search, err), r)
+		}
+		ell := html.GetEllipsisValues(r)
+		html.SearchContent(search, bms, ell).Render(w)
 	}
 }
 
@@ -157,7 +174,7 @@ func (t *TemplateHandler) DeleteConfirm() http.HandlerFunc {
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for id '%s'; '%v'", id, err), r)
 		}
-		base.DialogConfirmDeleteHx(bm.DisplayName, bm.ID, "#bookmark_list", "/bm/delete/").Render(w)
+		base.DialogConfirmDeleteHx(bm.DisplayName, "/bm/delete/"+bm.ID).Render(w)
 	}
 }
 
@@ -166,7 +183,6 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := pathParam(r, "id")
 		user := common.EnsureUser(r)
-		ell := html.GetEllipsisValues(r)
 
 		t.Logger.InfoRequest(fmt.Sprintf("get bookmark by id: '%s' for user: '%s'", id, user.Username), r)
 		bm, err := t.App.GetBookmarkByID(id, *user)
@@ -176,35 +192,16 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 		err = t.App.Delete(bm.ID, *user)
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not delete bookmark with id '%s'; '%v'", id, err), r)
-
-			bms, bErr := t.App.GetBookmarksByPath(bm.Path, *user)
-			if bErr != nil {
-				t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", bm.Path, bErr), r)
-			}
-
-			// show a notification-toast about the error!
-			w.Header().Add("HX-Trigger", common.ErrorToast("Bookmark delete error", fmt.Sprintf("Error: '%s'", err)))
-			html.BookmarkList(
-				bm.Path,
-				bms,
-				ell,
-			).Render(w)
+			triggerRefreshWithToast(w,
+				common.MsgError,
+				"Bookmark delete error!",
+				fmt.Sprintf("Error: '%s'", err))
 			return
 		}
-
-		bms, err := t.App.GetBookmarksByPath(bm.Path, *user)
-		if err != nil {
-			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for path '%s'; '%v'", bm.Path, err), r)
-		}
-
-		// show a notification-toast about the update!
-		// https://htmx.org/headers/hx-trigger/
-		w.Header().Add("HX-Trigger", common.SuccessToast("Bookmark deleted", fmt.Sprintf("The bookmark '%s' was deleted.", bm.DisplayName)))
-		html.BookmarkList(
-			bm.Path,
-			bms,
-			ell,
-		).Render(w)
+		triggerRefreshWithToast(w,
+			common.MsgSuccess,
+			"Bookmark deleted!",
+			fmt.Sprintf("The bookmark '%s' was deleted.", bm.DisplayName))
 
 	}
 }
@@ -476,18 +473,11 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			}
 			t.Logger.Info("new bookmark created", logging.LogV("ID", created.ID))
 
-			triggerEvent := triggerDef{
-				ToastMessage: common.ToastMessage{
-					Event: common.ToastMessageContent{
-						Type:  common.MsgSuccess,
-						Title: "Bookmark saved!",
-						Text:  fmt.Sprintf("The bookmark '%s' was created.", created.DisplayName),
-					},
-				},
-				Refresh: "now",
-			}
-			// https://htmx.org/headers/hx-trigger/
-			w.Header().Add("HX-Trigger", common.Json(triggerEvent))
+			triggerRefreshWithToast(w,
+				common.MsgSuccess,
+				"Bookmark saved!",
+				fmt.Sprintf("The bookmark '%s' was created.", created.DisplayName))
+
 			formBm.Close = true
 			html.EditBookmarks(formBm, paths).Render(w)
 			return
@@ -523,18 +513,11 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 
 			t.Logger.Info("bookmark updated", logging.LogV("ID", updated.ID))
 
-			triggerEvent := triggerDef{
-				ToastMessage: common.ToastMessage{
-					Event: common.ToastMessageContent{
-						Type:  common.MsgSuccess,
-						Title: "Bookmark saved!",
-						Text:  fmt.Sprintf("The bookmark '%s' (%s) was updated.", existing.DisplayName, existing.ID),
-					},
-				},
-				Refresh: "now",
-			}
-			// https://htmx.org/headers/hx-trigger/
-			w.Header().Add("HX-Trigger", common.Json(triggerEvent))
+			triggerRefreshWithToast(w,
+				common.MsgSuccess,
+				"Bookmark saved!",
+				fmt.Sprintf("The bookmark '%s' (%s) was updated.", existing.DisplayName, existing.ID))
+
 			formBm.Close = true
 			html.EditBookmarks(formBm, paths).Render(w)
 			return
@@ -568,33 +551,18 @@ func (t *TemplateHandler) SortBookmarks() http.HandlerFunc {
 
 		updates, err := t.App.UpdateSortOrder(sortOrder, *user)
 		if err != nil {
-			triggerEvent := triggerDef{
-				ToastMessage: common.ToastMessage{
-					Event: common.ToastMessageContent{
-						Type:  common.MsgError,
-						Title: "Error sorting!",
-						Text:  fmt.Sprintf("Could not perform sorting: %v", err),
-					},
-				},
-			}
-			// https://htmx.org/headers/hx-trigger/
-			w.Header().Add("HX-Trigger", common.Json(triggerEvent))
+
+			triggerToast(w,
+				common.MsgError,
+				"Error sorting!",
+				fmt.Sprintf("Could not perform sorting: %v", err))
 			return
 		}
 
-		triggerEvent := triggerDef{
-			ToastMessage: common.ToastMessage{
-				Event: common.ToastMessageContent{
-					Type:  common.MsgSuccess,
-					Title: "List sorted!",
-					Text:  fmt.Sprintf("%d bookmarks were successfully sorted", updates),
-				},
-			},
-			Refresh: "now",
-		}
-		// https://htmx.org/headers/hx-trigger/
-		w.Header().Add("HX-Trigger", common.Json(triggerEvent))
-
+		triggerRefreshWithToast(w,
+			common.MsgSuccess,
+			"List sorted!",
+			fmt.Sprintf("%d bookmarks were successfully sorted", updates))
 	}
 }
 
@@ -627,4 +595,37 @@ func getIntFromString(val string) int {
 		return 1
 	}
 	return 0
+}
+
+// define a header for htmx to trigger events
+// https://htmx.org/headers/hx-trigger/
+const htmxHeaderTrigger = "HX-Trigger"
+
+func triggerRefreshWithToast(w http.ResponseWriter, errType, title, text string) {
+	triggerEvent := triggerDef{
+		ToastMessage: common.ToastMessage{
+			Event: common.ToastMessageContent{
+				Type:  errType,
+				Title: title,
+				Text:  text,
+			},
+		},
+		Refresh: "now",
+	}
+	triggerJson := common.Json(triggerEvent)
+	w.Header().Add(htmxHeaderTrigger, triggerJson)
+}
+
+func triggerToast(w http.ResponseWriter, errType, title, text string) {
+	triggerEvent := triggerDef{
+		ToastMessage: common.ToastMessage{
+			Event: common.ToastMessageContent{
+				Type:  errType,
+				Title: title,
+				Text:  text,
+			},
+		},
+	}
+	triggerJson := common.Json(triggerEvent)
+	w.Header().Add(htmxHeaderTrigger, triggerJson)
 }

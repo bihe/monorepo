@@ -61,6 +61,7 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 	sec.Mount("/bm", func() http.Handler {
 		r := chi.NewRouter()
 		r.Get("/search", templateHandler.SearchBookmarks())
+		r.Get("/partial/search", templateHandler.SearchBookmarksPartial())
 		r.Get("/~*", templateHandler.GetBookmarksForPath())
 		r.Get("/partial/~*", templateHandler.GetBookmarksForPathPartial())
 		r.Get("/confirm/delete/{id}", templateHandler.DeleteConfirm())

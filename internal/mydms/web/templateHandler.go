@@ -365,7 +365,7 @@ func (t *TemplateHandler) ShowDeleteConfirmDialog() http.HandlerFunc {
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get document for id '%s'; '%v'", id, err), r)
 		}
-		base.DialogConfirmDeleteHx(doc.Title, doc.ID, "#document_list", "/mydms/").Render(w)
+		base.DialogConfirmDeleteHx(doc.Title, "/mydms/"+doc.ID).Render(w)
 	}
 }
 

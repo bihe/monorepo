@@ -5,7 +5,7 @@ import (
 	h "maragu.dev/gomponents/html"
 )
 
-func DialogConfirmDeleteHx(name, id, hxTarget, hxDeleteURL string) g.Node {
+func DialogConfirmDeleteHx(name, hxDeleteURL string) g.Node {
 	return h.Div(h.Class("modal-dialog modal-dialog-centered"),
 		h.Div(h.Class("modal-content"),
 			h.Div(h.Class("modal-header"),
@@ -26,8 +26,7 @@ func DialogConfirmDeleteHx(name, id, hxTarget, hxDeleteURL string) g.Node {
 					h.ID("btn-confirm"),
 					h.Class("btn btn-danger"),
 					g.Attr("data-bs-dismiss", "modal"),
-					g.Attr("hx-target", hxTarget /*"#bookmark_list"*/),
-					g.Attr("hx-delete", hxDeleteURL /*"/bm/delete/"*/ +id),
+					g.Attr("hx-delete", hxDeleteURL),
 					g.Text("Delete"),
 				),
 			),

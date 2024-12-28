@@ -41,7 +41,7 @@ type Request struct {
 // EncryptionService describes a service that encrypts payloads
 type EncryptionService interface {
 	// Encrypt uses the supplied token to validate the user and encrypts the provided payload
-	// The encryption is performend using the supplied passwords.
+	// The encryption is performed using the supplied passwords.
 	Encrypt(ctx context.Context, req Request) ([]byte, error)
 }
 
@@ -68,7 +68,7 @@ func NewService(logger logging.Logger) EncryptionService {
 
 // ServiceMiddleware describes a service middleware.
 // it is used to intercept the method execution and perform actions before/after the
-// serivce method execution
+// service method execution
 type ServiceMiddleware func(EncryptionService) EncryptionService
 
 // ServiceLoggingMiddleware takes a logger as a dependency
@@ -108,7 +108,7 @@ var (
 	_ EncryptionService = &encryptionSvc{}
 )
 
-// implment the Service
+// implement the Service
 type encryptionSvc struct {
 	logger logging.Logger
 }
@@ -117,7 +117,7 @@ type encryptionSvc struct {
 // currently only PDF encryption is possible.
 // When deployed in a containerized environment the PDF library pdfcpu needs some configuration.
 // This configuration can be done in a yaml file; the path to the file can be provided as an
-// environement variable.
+// environment variable.
 // For the current setup this is done in this way:
 //
 //	"XDG_CONFIG_HOME=/opt/mydms/etc"

@@ -9,7 +9,6 @@ import (
 	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
 	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	"golang.binggl.net/monorepo/internal/mydms/web"
-	conf "golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/develop"
 	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/security"
@@ -53,13 +52,7 @@ func MakeHTTPHandler(docSvc document.Service, uploadSvc upload.Service, fileSvc 
 	}
 
 	// use this for development purposes only!
-	if opts.Config.Environment == conf.Development {
-		devTokenHandler := develop.DevTokenHandler{
-			Logger: logger,
-			Env:    opts.Config.Environment,
-		}
-		std.Get("/gettoken", devTokenHandler.Index())
-	}
+	develop.SetupDevTokenHandler(std, logger, opts.Config.Environment)
 
 	// server-side rendered paths
 	// the following paths provide server-rendered UIs

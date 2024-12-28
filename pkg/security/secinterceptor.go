@@ -8,8 +8,8 @@ import (
 	"golang.binggl.net/monorepo/pkg/logging"
 )
 
-// secInterceptor is used the redirect to an error page if we can assume that no api-client
-// rquests the URL.
+// secInterceptor is used the redirect to an error page if it can be assumed
+// that a human requested a URL and not an api-client.
 // A middleware to "catch" security errors and present a human-readable form
 // if the client requests "application/json" just use the the problem-json format
 type SecInterceptor struct {

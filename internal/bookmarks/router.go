@@ -7,7 +7,6 @@ import (
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/conf"
 	"golang.binggl.net/monorepo/internal/bookmarks/web"
-	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/develop"
 	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/logging"
@@ -48,13 +47,7 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 	std.Get("/bm/403", templateHandler.Show403())
 
 	// use this for development purposes only!
-	if opts.Config.Environment == config.Development {
-		devTokenHandler := develop.DevTokenHandler{
-			Logger: logger,
-			Env:    opts.Config.Environment,
-		}
-		std.Get("/gettoken", devTokenHandler.Index())
-	}
+	develop.SetupDevTokenHandler(std, logger, opts.Config.Environment)
 
 	// /bm performs a server-side rendering
 	// this implementation is to supersede the client/angular-based search interaction

@@ -303,7 +303,7 @@ func Test_SearchListItemsForAutocomplete(t *testing.T) {
 	// empty database
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 
-	// missing listtype
+	// missing list-type
 
 	rec = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/mydms/list/senders", nil)

@@ -11,7 +11,7 @@ import (
 	"github.com/lestrrat-go/jwx/jwt"
 )
 
-// RoleDelimiter specifies the element used to seperate a list of roles
+// RoleDelimiter specifies the element used to separate a list of roles
 const RoleDelimiter = ";"
 
 // keys used for the custom jwt-claims
@@ -25,14 +25,14 @@ const givenName = "GivenName"
 const profileURL = "ProfileURL"
 const claims = "Claims"
 
-// JWTAuthorization handles authorizaton of supplied JWT tokens
+// JWTAuthorization handles authorization of supplied JWT tokens
 type JWTAuthorization struct {
 	Options JwtOptions
 	Cache   *MemoryCache
 }
 
 // NewJWTAuthorization creates a new JWTAuthorization instance
-// to speed up processing a cache in the form of a MemoryCache can be initilized
+// to speed up processing a cache in the form of a MemoryCache can be initialized
 func NewJWTAuthorization(options JwtOptions, useCache bool) *JWTAuthorization {
 	jwtAuth := &JWTAuthorization{}
 	jwtAuth.Options = options

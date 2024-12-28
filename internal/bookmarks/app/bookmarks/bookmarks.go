@@ -297,8 +297,8 @@ func (s *Application) UpdateSortOrder(sort BookmarksSortOrder, user security.Use
 		}
 		return nil
 	}); err != nil {
-		s.Logger.Error(fmt.Sprintf("could not update the sortorder for bookmark: %v", err))
-		return 0, fmt.Errorf("error updating sortorder of bookmark: %v", err)
+		s.Logger.Error(fmt.Sprintf("could not update the sort-order for bookmark: %v", err))
+		return 0, fmt.Errorf("error updating sort-order of bookmark: %v", err)
 	}
 	return updates, nil
 }
@@ -412,7 +412,7 @@ func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark
 		id = item.ID
 
 		if existing.Type == store.Folder && (existingDisplayName != bm.DisplayName || existingPath != bm.Path) {
-			// if we have a folder and change the displayname or the parent-path, this also affects ALL sub-elements
+			// if we have a folder and change the display-name or the parent-path, this also affects ALL sub-elements
 			// therefore all paths of sub-elements where this folder-path is present, need to be updated
 			newPath := ensureFolderPath(bm.Path, bm.DisplayName)
 			oldPath := ensureFolderPath(existingPath, existingDisplayName)
@@ -446,7 +446,7 @@ func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark
 			}
 		}
 
-		// if the path has changed - update the childcount of affected paths
+		// if the path has changed - update the child-count of affected paths
 		if existingPath != bm.Path {
 			// the affected paths are the origin-path and the destination-path
 			if err := s.updateChildCountOfPath(existingPath, user.Username, repo); err != nil {
@@ -490,7 +490,7 @@ func (s *Application) updateChildCountOfPath(path, username string, repo store.B
 
 	var childCount int
 	if len(nodeCount) > 0 {
-		// use the firest element, because the count was queried for a specific path
+		// use the first element, because the count was queried for a specific path
 		childCount = nodeCount[0].Count
 	}
 

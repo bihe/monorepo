@@ -26,11 +26,11 @@ const (
 )
 
 //go:embed livereload_client.js
-var livereloadClientJS string
+var liveReloadClientJS string
 
 var (
 	newline            = []byte{'\n'}
-	PageReloadClientJS = "<script type=\"text/javascript\">" + fmt.Sprintf(livereloadClientJS, reloadAddress) + "</script>"
+	PageReloadClientJS = "<script type=\"text/javascript\">" + fmt.Sprintf(liveReloadClientJS, reloadAddress) + "</script>"
 )
 
 // ReloadServer implements a websocket communication to implement a similar behavior like the "live-reload" package

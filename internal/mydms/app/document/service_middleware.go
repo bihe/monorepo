@@ -10,7 +10,7 @@ import (
 
 // ServiceMiddleware describes a service (as opposed to endpoint) middleware.
 // it is used to intercept the method execution and perform actions before/after the
-// serivce method execution
+// service method execution
 type ServiceMiddleware func(Service) Service
 
 // ServiceLoggingMiddleware takes a logger as a dependency

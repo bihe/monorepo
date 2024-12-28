@@ -21,7 +21,7 @@ func Run(version, build, appName string) error {
 	hostname, port, basePath, appCfg := server.ReadConfig[conf.AppConfig]("BM")
 	// use the new pkg logger implementation
 	logger := logConfig(appCfg)
-	// ensure closing of logfile on exit
+	// ensure closing of log-file on exit
 	defer logger.Close()
 
 	var (
@@ -70,9 +70,6 @@ func logConfig(cfg conf.AppConfig) logging.Logger {
 		},
 	}, cfg.Environment)
 }
-
-const journalMode = "_journal_mode"
-const journalModeValue = "WAL"
 
 // setupRepositories enables the SQLITE repositories for the application
 func setupRepositories(config *conf.AppConfig, logger logging.Logger) (store.BookmarkRepository, store.FaviconRepository) {

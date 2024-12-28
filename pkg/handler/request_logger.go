@@ -18,7 +18,7 @@ type LoggerMiddleware struct {
 	logger logging.Logger
 }
 
-// NewRequestLogger instantiats a new middleware to log requests
+// NewRequestLogger instantiates a new middleware to log requests
 func NewRequestLogger(logger logging.Logger) *LoggerMiddleware {
 	m := LoggerMiddleware{
 		logger: logger,

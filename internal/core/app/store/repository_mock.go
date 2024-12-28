@@ -1,7 +1,7 @@
 package store
 
 // MockRepo implements the repository but holds entries only in memory
-// this is a defaulf implementation which can be used for testing
+// this is a default implementation which can be used for testing
 type MockRepo struct {
 	sites  map[string][]UserSiteEntity
 	logins map[string]int64

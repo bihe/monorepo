@@ -17,7 +17,7 @@ type NodeType string
 const (
 	// Node is the standard item
 	Node NodeType = "Node"
-	// Folder is ised to group nodes
+	// Folder is used to group nodes
 	Folder NodeType = "Folder"
 )
 
@@ -37,7 +37,7 @@ type Bookmark struct {
 	InvertFaviconColor int        `json:"invertFaviconColor"`
 }
 
-// TStamp returns either the modified or created timesstamp of the bookmark as unix time
+// TStamp returns either the modified or created timestamp of the bookmark as unix time
 func (b Bookmark) TStamp() string {
 	var tstamp time.Time
 	tstamp = b.Created

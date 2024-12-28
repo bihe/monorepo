@@ -73,7 +73,7 @@ func GetFaviconFromURL(url string) (content Content, err error) {
 		iconURL = pageURL + iconURL
 	} else if !strings.HasPrefix(iconURL, "http") {
 		// if a file without anything is specified "favicon.png"
-		// then use the pageurl
+		// then use the page-url
 		iconURL = pageURL + iconURL
 	}
 

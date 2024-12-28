@@ -206,7 +206,7 @@ func TestSaveError(t *testing.T) {
 	mock.ExpectRollback()
 
 	if _, err = rw.Save(item, shared.Atomic{}); err == nil {
-		t.Errorf(errInsert)
+		t.Error(errInsert)
 	}
 
 	// Rows affected Error
@@ -215,7 +215,7 @@ func TestSaveError(t *testing.T) {
 	mock.ExpectRollback()
 
 	if _, err = rw.Save(item, shared.Atomic{}); err == nil {
-		t.Errorf(errInsert)
+		t.Error(errInsert)
 	}
 
 	// Rows affected number mismatch
@@ -224,7 +224,7 @@ func TestSaveError(t *testing.T) {
 	mock.ExpectRollback()
 
 	if _, err = rw.Save(item, shared.Atomic{}); err == nil {
-		t.Errorf(errInsert)
+		t.Error(errInsert)
 	}
 }
 
@@ -376,7 +376,7 @@ func TestExists(t *testing.T) {
 	mock.ExpectRollback()
 
 	if _, err = rw.Exists(id, shared.Atomic{}); err == nil {
-		t.Errorf(expectedErr)
+		t.Error(expectedErr)
 	}
 
 	// we make sure that all expectations were met
@@ -493,7 +493,7 @@ func TestSearch(t *testing.T) {
 	mock.ExpectQuery(qc).WillReturnError(fmt.Errorf("could not get count"))
 	_, err = rw.Search(search, order)
 	if err == nil {
-		t.Errorf(expectedErr)
+		t.Error(expectedErr)
 	}
 
 	// failure2
@@ -502,7 +502,7 @@ func TestSearch(t *testing.T) {
 	mock.ExpectQuery(queryDocs).WillReturnError(fmt.Errorf("could not get documents"))
 	_, err = rw.Search(search, order)
 	if err == nil {
-		t.Errorf(expectedErr)
+		t.Error(expectedErr)
 	}
 
 	// we make sure that all expectations were met
@@ -557,9 +557,9 @@ func TestSearchLists(t *testing.T) {
 
 	// error1
 	mock.ExpectQuery(q).WillReturnError(Err)
-	tags, err = rw.SearchLists("tag2", TAGS)
+	_, err = rw.SearchLists("tag2", TAGS)
 	if err == nil {
-		t.Errorf(expectedErr)
+		t.Error(expectedErr)
 	}
 
 	// multiple

@@ -1,6 +1,8 @@
 package app
 
-import "fmt"
+import (
+	"errors"
+)
 
 // --------------------------------------------------------------------------
 //   Error type: NotFoundError
@@ -9,7 +11,7 @@ import "fmt"
 // ErrNotFound creates a new NotFoundError instance
 func ErrNotFound(msg string) *NotFoundError {
 	return &NotFoundError{
-		Err: fmt.Errorf(msg),
+		Err: errors.New(msg),
 	}
 }
 
@@ -30,7 +32,7 @@ func (e *NotFoundError) Error() string {
 // ErrValidation creates a new ValidationError instance
 func ErrValidation(msg string) *ValidationError {
 	return &ValidationError{
-		Err: fmt.Errorf(msg),
+		Err: errors.New(msg),
 	}
 }
 
@@ -51,7 +53,7 @@ func (e *ValidationError) Error() string {
 // ErrSecurity creates a new SecurityError instance
 func ErrSecurity(msg string) *SecurityError {
 	return &SecurityError{
-		Err: fmt.Errorf(msg),
+		Err: errors.New(msg),
 	}
 }
 

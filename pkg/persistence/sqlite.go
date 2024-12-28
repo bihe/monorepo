@@ -11,13 +11,13 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-// SqliteParam is used to provide addtional parameters for the sqlite connection
+// SqliteParam is used to provide additional parameters for the sqlite connection
 type SqliteParam struct {
 	Key string
 	Val string
 }
 
-// CreateGormSqliteCon uses best practises for sqlite and creates two connections
+// CreateGormSqliteCon uses best practices for sqlite and creates two connections
 // One optimized for reading and the other optimized for writing
 // found the information here: https://kerkour.com/sqlite-for-servers
 func CreateGormSqliteCon(connURL string, params []SqliteParam) (con Connection, err error) {

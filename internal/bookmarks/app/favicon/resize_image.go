@@ -21,7 +21,7 @@ const (
 )
 
 // ResizeImage uses the image payload and resizes the image.
-// If the payload is not supported the same content is resturned without any resize operation.
+// If the payload is not supported the same content is returned without any resize operation.
 // The resize function honors the aspect-ratio of the original image if one of the values x/y is 0.
 // Aspect is not considered if both values for x and y are set (!= 0)
 func ResizeImage(content Content, x, y int) (Content, error) {

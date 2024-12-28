@@ -49,10 +49,8 @@ func (s SortDirection) String() string {
 	switch s {
 	case ASC:
 		str = "ASC"
-		break
 	case DESC:
 		str = "DESC"
-		break
 	}
 	return str
 }
@@ -110,9 +108,9 @@ func (rw *dbRepository) CreateAtomic() (shared.Atomic, error) {
 // otherwise a new transaction is created for the scope of the method
 func (rw *dbRepository) Save(doc DocEntity, a shared.Atomic) (d DocEntity, err error) {
 	var (
-		atomic  *shared.Atomic
-		newEnty bool
-		r       sql.Result
+		atomic   *shared.Atomic
+		newEntry bool
+		r        sql.Result
 	)
 
 	defer func() {
@@ -126,21 +124,21 @@ func (rw *dbRepository) Save(doc DocEntity, a shared.Atomic) (d DocEntity, err e
 	// try to fetch a document if an ID is supplied
 	// the supplied ID is checked against an existing item
 	// if the item is not found the provided data is used to create a new entry
-	newEnty = true
+	newEntry = true
 	if doc.ID != "" {
 		var find DocEntity
 		// use the database logic for row-locking to prevent issues concurrently updating entries
 		err = rw.c.Get(&find, "SELECT id,title,filename,alternativeid,previewlink,amount,taglist,senderlist,created,modified,invoicenumber FROM DOCUMENTS WHERE id=?", doc.ID)
 		if err != nil {
 			log.Printf("could not get a Document by ID '%s' - a new entry will be created", doc.ID)
-			newEnty = true
+			newEntry = true
 		} else {
-			newEnty = false
+			newEntry = false
 			doc.Created = find.Created
 		}
 	}
 
-	if newEnty {
+	if newEntry {
 		doc.ID = uuid.New().String()
 		doc.Created = time.Now().UTC()
 		doc.AltID = randomString()
@@ -290,7 +288,7 @@ func (rw *dbRepository) Search(s DocSearch, order []OrderBy) (d PagedDocResult, 
 	return PagedDocResult{Documents: docs, Count: c}, nil
 }
 
-// SearchType is used to determine if the search is performend on tags or senders
+// SearchType is used to determine if the search is performed on tags or senders
 type SearchType uint
 
 const (
@@ -373,7 +371,7 @@ func randomString() string {
 
 func orderBy(order []OrderBy) string {
 	orderby := ""
-	if order != nil && len(order) > 0 {
+	if len(order) > 0 {
 		orderby = "\nORDER BY "
 		for i, o := range order {
 			if i > 0 {

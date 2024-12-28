@@ -32,7 +32,7 @@ func Test_ResizeImage(t *testing.T) {
 
 	img, _, err := image.Decode(bytes.NewBuffer(resized.Payload))
 	if err != nil {
-		t.Errorf("could not decoed image; %v", err)
+		t.Errorf("could not decode image; %v", err)
 	}
 
 	if img.Bounds().Dx() != 50 {
@@ -55,7 +55,7 @@ func Test_ResizeImage(t *testing.T) {
 
 	img, _, err = image.Decode(bytes.NewBuffer(resized.Payload))
 	if err != nil {
-		t.Errorf("could not decoed image; %v", err)
+		t.Errorf("could not decode image; %v", err)
 	}
 
 	if img.Bounds().Dx() != 50 {
@@ -78,7 +78,7 @@ func Test_ResizeImage(t *testing.T) {
 
 	img, _, err = image.Decode(bytes.NewBuffer(resized.Payload))
 	if err != nil {
-		t.Errorf("could not decoed image; %v", err)
+		t.Errorf("could not decode image; %v", err)
 	}
 
 	if img.Bounds().Dx() != 60 {
@@ -92,7 +92,7 @@ func Test_ResizeImage(t *testing.T) {
 	// ------------------------------------------------------------------
 	img, _, err = image.Decode(bytes.NewBuffer(jpegFavicon))
 	if err != nil {
-		t.Errorf("could not decoed image; %v", err)
+		t.Errorf("could not decode image; %v", err)
 	}
 	if img.Bounds().Dx() != 172 && img.Bounds().Dy() != 178 {
 		t.Errorf("could not resize image to 50/50")
@@ -110,7 +110,7 @@ func Test_ResizeImage(t *testing.T) {
 
 	img, _, err = image.Decode(bytes.NewBuffer(resized.Payload))
 	if err != nil {
-		t.Errorf("could not decoed image; %v", err)
+		t.Errorf("could not decode image; %v", err)
 	}
 
 	if img.Bounds().Dx() != 50 && img.Bounds().Dy() != 50 {

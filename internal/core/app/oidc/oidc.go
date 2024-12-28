@@ -39,7 +39,7 @@ const OIDCInitiateURL = "/oidc/redirect"
 const OIDCInitiateRoutingPath = "/redirect"
 
 // --------------------------------------------------------------------------
-//   Service defintion
+//   Service definition
 // --------------------------------------------------------------------------
 
 // Service defines the logic of the OIDC interaction
@@ -48,7 +48,7 @@ type Service interface {
 	PrepIntOIDCRedirect() (url string, state string)
 	// GetExtOIDCRedirect returns the external auth provider url which is used to start the OIDC interaction
 	GetExtOIDCRedirect(state string) (url string, err error)
-	// LoginOIDC evaluates the returend data from the OIDC interaction and creates a token and redirect url
+	// LoginOIDC evaluates the returned data from the OIDC interaction and creates a token and redirect url
 	LoginOIDC(state, oidcState, oidcCode string) (token, url string, err error)
 	// LoginSiteOIDC performs a login via OIDC but checks if the user has permissions for the given site and redirects to the defined url
 	LoginSiteOIDC(state, oidcState, oidcCode, site, redirectURL string) (token, url string, err error)
@@ -209,7 +209,7 @@ func (o *oidcService) LoginOIDC(state, oidcState, oidcCode string) (token, url s
 	if err != nil {
 		return
 	}
-	return o.performOIDCLogin(state, oidcState, oidcCode, "", "")
+	return o.performOIDCLogin(oidcCode, "", "")
 }
 
 func (o *oidcService) LoginSiteOIDC(state, oidcState, oidcCode, site, redirectURL string) (token, url string, err error) {
@@ -225,7 +225,7 @@ func (o *oidcService) LoginSiteOIDC(state, oidcState, oidcCode, site, redirectUR
 		err = shared.ErrValidation("empty 'redirectURL' parameter supplied")
 		return
 	}
-	return o.performOIDCLogin(state, oidcState, oidcCode, site, redirectURL)
+	return o.performOIDCLogin(oidcCode, site, redirectURL)
 }
 
 func validate(state, oidcState, oidcCode string) (err error) {
@@ -248,7 +248,7 @@ func validate(state, oidcState, oidcCode string) (err error) {
 	return
 }
 
-func (o *oidcService) performOIDCLogin(state, oidcState, oidcCode, site, redirectURL string) (token, url string, err error) {
+func (o *oidcService) performOIDCLogin(oidcCode, site, redirectURL string) (token, url string, err error) {
 
 	var siteLogin bool
 	if site != "" {
@@ -284,7 +284,7 @@ func (o *oidcService) performOIDCLogin(state, oidcState, oidcCode, site, redirec
 		return
 	}
 	if len(sites) == 0 {
-		// the user was loged-in successfully by the external auth provider. but by using the given Email
+		// the user was logged-in successfully by the external auth provider. but by using the given Email
 		// as the ID, we did not find ANY site which is associated to the ID, therefor the ID is not valid!
 		err = shared.ErrSecurity(fmt.Sprintf("the given user '%s' is not allowed to access the system", oidcClaims.Email))
 		return

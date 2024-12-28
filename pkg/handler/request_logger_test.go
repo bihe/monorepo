@@ -78,7 +78,7 @@ func TestRequestLogger(t *testing.T) {
 
 	r.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusOK, rec.Code)
-	// the request-logger addes 9 entries
+	// the request-logger add 9 entries
 	assert.Equal(t, 9, len(logger.keyvals))
 
 	var keys []string

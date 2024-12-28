@@ -26,7 +26,7 @@ type KeyValue interface {
 	Read() []string
 }
 
-// optionFunc wraps a func so it satisfies the KeyValue interface.
+// keyvalueFunc wraps a func so it satisfies the KeyValue interface.
 type keyvalueFunc func() []string
 
 func (f keyvalueFunc) Read() []string {

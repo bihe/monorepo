@@ -176,14 +176,14 @@ func (s documentService) SaveDocument(doc Document, user security.User) (d Docum
 	cleanDoc := s.sanitize(&doc)
 	d = *cleanDoc
 
-	filename, err := s.procssUploadFile(d.UploadToken, d.FileName, user)
+	filename, err := s.processUploadFile(d.UploadToken, d.FileName)
 	if err != nil {
-		s.logger.Error("SaveDocuemnt: upload-processing error", logging.ErrV(fmt.Errorf("could not process the uploaded file, %v", err)))
+		s.logger.Error("SaveDocument: upload-processing error", logging.ErrV(fmt.Errorf("could not process the uploaded file, %v", err)))
 		return
 	}
 	if filename == "" {
 		s.logger.Error("SaveDocument: missing filename", logging.ErrV(fmt.Errorf("processUploadFile did not return an error, but the filename is empty")))
-		return d, fmt.Errorf("no filename is available for the documment")
+		return d, fmt.Errorf("no filename is available for the document")
 	}
 	d.FileName = filename
 
@@ -311,7 +311,7 @@ func (s documentService) sanitize(d *Document) *Document {
 	return &doc
 }
 
-func (s documentService) procssUploadFile(uploadToken, fileName string, user security.User) (string, error) {
+func (s documentService) processUploadFile(uploadToken, fileName string) (string, error) {
 	if uploadToken == "" || uploadToken == "-" {
 		return fileName, nil
 	}

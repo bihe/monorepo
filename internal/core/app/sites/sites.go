@@ -15,9 +15,9 @@ import (
 // Service defines the logic to access information about sites/permissions of
 // a specific user
 type Service interface {
-	// GetSitesForUser returns the associated sites and permissionf for the given user
+	// GetSitesForUser returns the associated sites and permission for the given user
 	GetSitesForUser(user security.User) (UserSites, error)
-	// GetUsersForSite takes the name of a site and returnes the users who have access to the given site
+	// GetUsersForSite takes the name of a site and returns the users who have access to the given site
 	// the provided user is used to check if the user has access to retrieve this information
 	GetUsersForSite(site string, user security.User) ([]string, error)
 	// SaveSitesForUsers takes the provided sites and saves the object. Either for the same user

@@ -51,6 +51,14 @@ dev.binggl.net {
     }
 
     handle_path /gettoken* {
+        rewrite * /gettoken{path}
+        reverse_proxy http://tokentest:3000 {
+            import proxy-transport
+        }
+    }
+
+    handle_path /user_profile_image.png* {
+        rewrite * /user_profile_image.png{path}
         reverse_proxy http://tokentest:3000 {
             import proxy-transport
         }

@@ -14,8 +14,6 @@ import (
 	"golang.binggl.net/monorepo/pkg/persistence"
 )
 
-const expectations = "there were unfulfilled expectations: %s"
-
 func repository(t *testing.T) (store.BookmarkRepository, *sql.DB) {
 	return repositoryFile(":memory:", t)
 }
@@ -218,7 +216,7 @@ func TestCreateBookmarkInUnitOfWork(t *testing.T) {
 	// get the created entry "out-of" the transaction
 	folder, err = repo.GetBookmarkByID(id, userName)
 	if err == nil {
-		t.Errorf("expected an error because item not availabel!")
+		t.Errorf("expected an error because item not available!")
 	}
 }
 
@@ -267,7 +265,7 @@ func TestUpdateBookmark(t *testing.T) {
 	}
 }
 
-func TestDeltteBookmark(t *testing.T) {
+func TestDeleteBookmark(t *testing.T) {
 	repo, db := repository(t)
 	defer db.Close()
 
@@ -803,7 +801,7 @@ func TestConcurrentWriteForConnection(t *testing.T) {
 				SortOrder:          0,
 				Type:               store.Node,
 				URL:                "http://url",
-				UserName:           "rando",
+				UserName:           "random",
 				InvertFaviconColor: 1,
 			}
 

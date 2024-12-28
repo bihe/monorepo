@@ -10,7 +10,7 @@ import (
 
 var _ Repository = &dbRepository{} // compile time interface check
 
-// NewDBStore creates a new DB repository intance
+// NewDBStore creates a new DB repository instance
 func NewDBStore(con persistence.Connection) *dbRepository {
 	return &dbRepository{
 		con: con,

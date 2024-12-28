@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/cookies"
 	"golang.binggl.net/monorepo/pkg/develop"
 	"golang.binggl.net/monorepo/pkg/handler"
@@ -57,13 +56,7 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, logger logging
 	}
 
 	// use this for development purposes only!
-	if opts.Config.Environment == config.Development {
-		devTokenHandler := develop.DevTokenHandler{
-			Logger: logger,
-			Env:    opts.Config.Environment,
-		}
-		std.Get("/gettoken", devTokenHandler.Index())
-	}
+	develop.SetupDevTokenHandler(std, logger, opts.Config.Environment)
 
 	// server-side rendered paths
 	// the following paths provide server-rendered UIs

@@ -28,7 +28,7 @@ type MemoryCache struct {
 	cacheDuration time.Duration
 }
 
-// Get returns an Userobject by the given key
+// Get returns an User object by the given key
 func (s *MemoryCache) Get(key string) *User {
 	s.Lock()
 	defer s.Unlock()
@@ -41,7 +41,7 @@ func (s *MemoryCache) Get(key string) *User {
 	return item.user
 }
 
-// Set puts an Userobject into the cache
+// Set puts an User object into the cache
 func (s *MemoryCache) Set(key string, user *User) {
 	s.Lock()
 	defer s.Unlock()

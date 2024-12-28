@@ -178,7 +178,7 @@ func (t *TemplateHandler) SearchListItems() http.HandlerFunc {
 			return
 		}
 
-		// custom structure requuired by
+		// custom structure required by
 		// https://github.com/lekoala/bootstrap5-tags
 		type listItem struct {
 			Value string `json:"value,omitempty"`
@@ -250,7 +250,7 @@ func (t *TemplateHandler) UploadDocument() http.HandlerFunc {
 	}
 }
 
-// we define a JSON structur which is used to trigger actions on the frontend via htmx
+// we define a JSON structure which is used to trigger actions on the frontend via htmx
 type triggerDef struct {
 	common.ToastMessage
 	Refresh string `json:"refreshDocumentList,omitempty"`
@@ -407,8 +407,8 @@ func (t *TemplateHandler) versionString() string {
 	return fmt.Sprintf("%s-%s", t.Version, t.Build)
 }
 
-func (t *TemplateHandler) pageModel(pageTitle, searchstring, favicon string, user security.User) base.LayoutModel {
-	return common.CreatePageModel("/mydms", pageTitle, searchstring, favicon, t.versionString(), t.Env, user)
+func (t *TemplateHandler) pageModel(pageTitle, searchStr, favicon string, user security.User) base.LayoutModel {
+	return common.CreatePageModel("/mydms", pageTitle, searchStr, favicon, t.versionString(), t.Env, user)
 }
 
 func ensureUser(r *http.Request) *security.User {

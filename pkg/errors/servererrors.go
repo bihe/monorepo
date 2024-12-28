@@ -83,7 +83,7 @@ func (e SecurityError) Error() string {
 }
 
 // --------------------------------------------------------------------------
-// Shortcuts for commen error responses
+// Shortcuts for common error responses
 // --------------------------------------------------------------------------
 
 const t = "about:blank"
@@ -153,8 +153,8 @@ func WriteError(w http.ResponseWriter, r *http.Request, err error) {
 		pd = ErrNotFound(notfound)
 	}
 
-	if badrequest, ok := err.(BadRequestError); ok {
-		pd = ErrBadRequest(badrequest)
+	if badReq, ok := err.(BadRequestError); ok {
+		pd = ErrBadRequest(badReq)
 	}
 
 	if security, ok := err.(SecurityError); ok {

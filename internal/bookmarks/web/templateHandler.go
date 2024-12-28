@@ -574,8 +574,8 @@ func (t *TemplateHandler) versionString() string {
 	return fmt.Sprintf("%s-%s", t.Version, t.Build)
 }
 
-func (t *TemplateHandler) pageModel(pageTitle, searchstring, favicon string, user security.User) base.LayoutModel {
-	return common.CreatePageModel("/bm", pageTitle, searchstring, favicon, t.versionString(), t.Env, user)
+func (t *TemplateHandler) pageModel(pageTitle, searchStr, favicon string, user security.User) base.LayoutModel {
+	return common.CreatePageModel("/bm", pageTitle, searchStr, favicon, t.versionString(), t.Env, user)
 }
 
 func queryParam(r *http.Request, name string) string {

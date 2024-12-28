@@ -30,7 +30,7 @@ type OidcHandler struct {
 
 // handlePrepIntOIDCRedirect creates a **state** value which is stored as a cookie
 // the **state** value is used a a correlation token during the OIDC call
-// to ensure that the cookie is written this intermediate hop is used (same host/damain/...) until the real OIDC redirect starts
+// to ensure that the cookie is written this intermediate hop is used (same host/domain/...) until the real OIDC redirect starts
 // -- handlePrepIntOIDCRedirect -- (redirect) -->  handleGetExtOIDCRedirect
 func (o OidcHandler) HandlePrepIntOIDCRedirect() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +63,7 @@ func (o OidcHandler) HandleGetExtOIDCRedirect() http.HandlerFunc {
 
 // handleLoginOIDC is called via the OIDC process (the route is configured with the OIDC implementation as the return URL)
 // the state/code parameters are retrieved state is compared to the **state** cookie value and code is used to fetch the token
-// once successfull a redirect is performed to the configured URL or the site-URL
+// once successful a redirect is performed to the configured URL or the site-URL
 // -- handleLoginOIDC -- (redirect) --> configured application URL
 func (o OidcHandler) HandleLoginOIDC(jwtCookieName string, jwtCookieExpire int) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -106,7 +106,7 @@ func (o OidcHandler) HandleLoginOIDC(jwtCookieName string, jwtCookieExpire int) 
 			token, url, err = o.OidcSvc.LoginSiteOIDC(state, oidcState, oidcCode, site, redirectURL)
 			o.Cookies.Del(authFlowCookie, w)
 		} else {
-			// this is the "normal/std" behavior - evalulate the data proviced by the OIDC process
+			// this is the "normal/std" behavior - evaluate the data provided by the OIDC process
 			// create a token and redirect to the configured URL
 			token, url, err = o.OidcSvc.LoginOIDC(state, oidcState, oidcCode)
 		}
@@ -136,8 +136,8 @@ func (o OidcHandler) HandleLoginOIDC(jwtCookieName string, jwtCookieExpire int) 
 	}
 }
 
-// handleAuthFlow is used to perform an OIDC login (all the same process as above) but in addition a site is provided which is used to check specific permisions
-// if the check is successfull (and authorization is performend via OIDC) a redirect is performed to the specific application site
+// handleAuthFlow is used to perform an OIDC login (all the same process as above) but in addition a site is provided which is used to check specific permissions
+// if the check is successful (and authorization is performed via OIDC) a redirect is performed to the specific application site
 // the first step is to save the site/URL and then kick-off the OIDC process
 // -- handleAuthFlow -- (redirect) --> handleGetExtOIDCRedirect
 func (o OidcHandler) HandleAuthFlow() http.HandlerFunc {

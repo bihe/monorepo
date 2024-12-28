@@ -5,6 +5,7 @@ import (
 	h "maragu.dev/gomponents/html"
 )
 
+// DialogConfirmDeleteHx provides a confirmation dialog using htmx
 func DialogConfirmDeleteHx(name, hxDeleteURL string) g.Node {
 	return h.Div(h.Class("modal-dialog modal-dialog-centered"),
 		h.Div(h.Class("modal-content"),

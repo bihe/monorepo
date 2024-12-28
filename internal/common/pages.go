@@ -97,7 +97,7 @@ func EnsureTrailingSlash(entry string) string {
 	return entry + "/"
 }
 
-// ClassCond adds the conditional class as a sring if the provided condition evaluates true
+// ClassCond adds the conditional class as a string if the provided condition evaluates true
 func ClassCond(starter, conditional string, condition bool) string {
 	classes := make([]string, 1)
 	classes = append(classes, starter)

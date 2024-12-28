@@ -9,7 +9,6 @@ import (
 	"golang.binggl.net/monorepo/internal/core/app/shared"
 	pkgerr "golang.binggl.net/monorepo/pkg/errors"
 	"golang.binggl.net/monorepo/pkg/logging"
-	"golang.binggl.net/monorepo/pkg/security"
 )
 
 func encodeError(err error, logger logging.Logger, w http.ResponseWriter) {
@@ -56,11 +55,6 @@ func encodeError(err error, logger logging.Logger, w http.ResponseWriter) {
 	writeProblemJSON(logger, w, pd)
 }
 
-func respondJSON(w http.ResponseWriter, response interface{}) error {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	return json.NewEncoder(w).Encode(response)
-}
-
 func writeProblemJSON(logger logging.Logger, w http.ResponseWriter, pd *pkgerr.ProblemDetail) {
 	w.Header().Set("Content-Type", "application/problem+json; charset=utf-8")
 	w.WriteHeader(pd.Status)
@@ -80,12 +74,4 @@ func queryParam(r *http.Request, name string) string {
 		return ""
 	}
 	return keys[0]
-}
-
-func ensureUser(r *http.Request) *security.User {
-	user, ok := security.UserFromContext(r.Context())
-	if !ok || user == nil {
-		panic("the sucurity context user is not available!")
-	}
-	return user
 }

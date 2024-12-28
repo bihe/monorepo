@@ -240,7 +240,7 @@ func Test_Errors_Using_Mock(t *testing.T) {
 	})
 	err := repo.StoreSiteForUser(sites)
 	if err == nil {
-		t.Errorf(errExpected)
+		t.Error(errExpected)
 	}
 
 	// // -- error deleting USERSITES
@@ -248,7 +248,7 @@ func Test_Errors_Using_Mock(t *testing.T) {
 	mock.ExpectExec("DELETE FROM `USERSITE`").WillReturnError(Err)
 	err = repo.StoreSiteForUser(sites)
 	if err == nil {
-		t.Errorf(errExpected)
+		t.Error(errExpected)
 	}
 
 	// // -- error inserting USERSITES
@@ -257,7 +257,7 @@ func Test_Errors_Using_Mock(t *testing.T) {
 	mock.ExpectExec("INSERT INTO `USERSITE`").WillReturnError(Err)
 	err = repo.StoreSiteForUser(sites)
 	if err == nil {
-		t.Errorf(errExpected)
+		t.Error(errExpected)
 	}
 
 	// we make sure that all expectations were met

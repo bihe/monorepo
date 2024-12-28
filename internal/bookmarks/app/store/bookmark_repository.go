@@ -136,7 +136,7 @@ func (r *dbBookmarkRepository) GetPathChildCount(path, username string) ([]NodeC
 	var nodes []NodeCount
 	h := r.con.R().Raw(query, Folder, username, path).Scan(&nodes)
 	if h.Error != nil {
-		return nil, fmt.Errorf("could not get nodecount for path '%s': %v", path, h.Error)
+		return nil, fmt.Errorf("could not get node-count for path '%s': %v", path, h.Error)
 	}
 
 	return nodes, nil

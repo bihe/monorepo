@@ -119,7 +119,7 @@ func SetupBasicRouter(basePath string, cookieSettings config.ApplicationCookies,
 	r.Use(middleware.RealIP)
 	//r.Use(handler.NewLoggerMiddleware(logger).LoggerContext)
 	r.Use(handler.NewRequestLogger(logger).LoggerContext)
-	// use the default list of "compressable" content-type
+	// use the default list of "compressible" content-type
 	r.Use(middleware.NewCompressor(5).Handler)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))

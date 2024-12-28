@@ -2,7 +2,7 @@ package errors
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -34,37 +34,37 @@ func TestErrorHandler(t *testing.T) {
 		{
 			Name:   "NotFoundError",
 			Status: http.StatusNotFound,
-			Error:  NotFoundError{Err: fmt.Errorf(errText), Request: errReq},
+			Error:  NotFoundError{Err: errors.New(errText), Request: errReq},
 			Accept: "application/json",
 		},
 		{
 			Name:   "BadRequestError",
 			Status: http.StatusBadRequest,
-			Error:  BadRequestError{Err: fmt.Errorf(errText), Request: errReq},
+			Error:  BadRequestError{Err: errors.New(errText), Request: errReq},
 			Accept: "application/json",
 		},
 		{
 			Name:   "ServerError",
 			Status: http.StatusInternalServerError,
-			Error:  ServerError{Err: fmt.Errorf(errText), Request: errReq},
+			Error:  ServerError{Err: errors.New(errText), Request: errReq},
 			Accept: "application/json",
 		},
 		{
 			Name:   "error",
 			Status: http.StatusInternalServerError,
-			Error:  fmt.Errorf(errText),
+			Error:  errors.New(errText),
 			Accept: "application/json",
 		},
 		{
 			Name:   "SecurityError_Forbidden",
 			Status: http.StatusForbidden,
-			Error:  SecurityError{Err: fmt.Errorf(errText), Request: errReq},
+			Error:  SecurityError{Err: errors.New(errText), Request: errReq},
 			Accept: "application/json",
 		},
 		{
 			Name:   "SecurityError_UnAuthorized",
 			Status: http.StatusUnauthorized,
-			Error:  SecurityError{Err: fmt.Errorf(errText), Request: errReq, Status: http.StatusUnauthorized},
+			Error:  SecurityError{Err: errors.New(errText), Request: errReq, Status: http.StatusUnauthorized},
 			Accept: "application/json",
 		},
 		{

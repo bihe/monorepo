@@ -6,7 +6,7 @@ ARG buildtime_variable_version=1.0.0
 ARG buildtime_variable_timestamp=20220101
 ARG buildtime_variable_commit=dev
 ARG buildtime_variable_arch=amd64
-ARG buildtime_variable_litestream_ver=v0.3.9/litestream-v0.3.9-linux-amd64-static.tar.gz
+ARG buildtime_variable_litestream_ver=v0.3.13/litestream-v0.3.13-linux-amd64.tar.gz
 
 ENV VERSION=${buildtime_variable_version}
 ENV TSTAMP=${buildtime_variable_timestamp}

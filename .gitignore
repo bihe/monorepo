@@ -37,3 +37,4 @@ internal/crypter/testresult.pdf
 
 tmp/
 .venv/
+coverage.txt

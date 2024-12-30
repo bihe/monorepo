@@ -43,7 +43,7 @@ RUN tar -C /backend-build -xzf /backend-build/litestream.tar.gz
 FROM alpine:latest
 LABEL author="henrik@binggl.net"
 WORKDIR /opt/mydms
-RUN mkdir -p /opt/litestream && mkdir -p /opt/mydms/uploads && mkdir -p /opt/mydms/etc && mkdir -p /opt/mydms/logs && mkdir -p /opt/mydms/uploads && mkdir -p /opt/mydms/db && mkdir -p /opt/mydms/assets
+RUN mkdir -p /opt/litestream && mkdir -p /opt/mydms/uploads && mkdir -p /opt/mydms/etc && mkdir -p /opt/mydms/logs && mkdir -p /opt/mydms/db && mkdir -p /opt/mydms/assets
 EXPOSE 3000
 
 RUN apk add bash

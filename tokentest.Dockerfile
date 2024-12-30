@@ -10,23 +10,17 @@ COPY ./cmd ./cmd
 COPY ./go.mod ./
 COPY ./go.sum ./
 COPY ./pkg ./pkg
-RUN GOOS=linux GOARCH=${ARCH} go build -o tokentest.server ./cmd/login/tokentest/*.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} go build -o tokentest.server ./cmd/login/tokentest/*.go
 ## --------------------------------------------------------------------------
 
 ## runtime
 ## --------------------------------------------------------------------------
-FROM alpine:latest
+FROM gcr.io/distroless/static-debian12:nonroot
+
 LABEL author="henrik@binggl.net"
 WORKDIR /opt/tokentest
-COPY --from=BACKEND-BUILD /backend-build/tokentest.server /opt/tokentest
+COPY --from=BACKEND-BUILD --chown=nonroot:nonroot /backend-build/tokentest.server /opt/tokentest
+
 EXPOSE 3000
-
-# Do not run as root user
-## alpine specific user/group creation
-RUN addgroup -g 1000 -S tokentest && \
-    adduser -u 1000 -S tokentest -G tokentest
-
-RUN chown -R tokentest:tokentest /opt/tokentest
-USER tokentest
 
 CMD ["/opt/tokentest/tokentest.server"]

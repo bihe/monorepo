@@ -1,0 +1,75 @@
+## backend build-phase
+## --------------------------------------------------------------------------
+FROM golang:bookworm AS BACKEND-BUILD
+
+ARG buildtime_variable_version=1.0.0
+ARG buildtime_variable_timestamp=20220101
+ARG buildtime_variable_commit=dev
+ARG buildtime_variable_arch=amd64
+ARG buildtime_variable_litestream_ver=v0.3.13/litestream-v0.3.13-linux-amd64.tar.gz
+
+ENV VERSION=${buildtime_variable_version}
+ENV TSTAMP=${buildtime_variable_timestamp}
+ENV COMMIT=${buildtime_variable_commit}
+ENV ARCH=${buildtime_variable_arch}
+ENV LSV=${buildtime_variable_litestream_ver}
+
+WORKDIR /backend-build
+COPY ./go.mod ./
+COPY ./go.sum ./
+COPY ./cmd/bookmarks/server ./cmd/bookmarks/server
+COPY ./internal/bookmarks  ./internal/bookmarks
+COPY ./internal/common  ./internal/common
+COPY ./pkg ./pkg
+COPY ./assets ./assets
+
+##
+## necessary to build sqlite3
+RUN apt-get update && apt-get install build-essential -y
+
+##
+## go build
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=${ARCH} go build -ldflags="-s -w -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o bookmarks.api ./cmd/bookmarks/server/main.go
+
+##
+## include litestream into the image and use the litestream replication capabilities
+ADD https://github.com/benbjohnson/litestream/releases/download/${LSV} /backend-build/litestream.tar.gz
+RUN tar -C /backend-build -xzf /backend-build/litestream.tar.gz
+
+RUN mkdir -p /opt/litestream && \
+    mkdir -p /opt/bookmarks/etc && \
+    mkdir -p /opt/bookmarks/logs && \
+    mkdir -p /opt/bookmarks/uploads && \
+    mkdir -p /opt/bookmarks/db && \
+    mkdir -p /opt/bookmarks/assets
+
+## --------------------------------------------------------------------------
+
+## runtime-helper
+## statically compiled busybox variant. we need to have a shell interpreter
+## to run the litestream script below
+## --------------------------------------------------------------------------
+FROM busybox:stable-uclibc as BUSYBOX-RUNTIME
+
+## --------------------------------------------------------------------------
+
+## runtime
+## base-debian12 because a libc is needed (sqlite, litestream need CGO)
+## --------------------------------------------------------------------------
+FROM gcr.io/distroless/base-debian12:nonroot
+LABEL author="henrik@binggl.net"
+WORKDIR /opt/bookmarks
+EXPOSE 3000
+
+COPY --chown=nonroot:nonroot --from=BACKEND-BUILD /opt/litestream /opt/litestream
+COPY --chown=nonroot:nonroot --from=BACKEND-BUILD /backend-build/litestream /opt/litestream
+
+COPY --chown=nonroot:nonroot --from=BACKEND-BUILD /opt/bookmarks/ /opt/bookmarks
+COPY --chown=nonroot:nonroot --from=BACKEND-BUILD /backend-build/bookmarks.api /opt/bookmarks
+COPY --chown=nonroot:nonroot --from=BACKEND-BUILD /backend-build/assets /opt/bookmarks/assets
+COPY --chown=nonroot:nonroot ./litestream/run_litestream.sh /opt/bookmarks
+
+# provide a shell to start the litestream script
+COPY --from=BUSYBOX-RUNTIME /bin/sh /bin/sh
+
+CMD [ "/bin/sh", "/opt/bookmarks/run_litestream.sh" ]

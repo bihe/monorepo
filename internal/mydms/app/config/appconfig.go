@@ -17,10 +17,11 @@ type Database struct {
 
 // FileStore holds configuration settings for the backend file store
 type FileStore struct {
-	Region string
-	Bucket string
-	Key    string
-	Secret string
+	Region   string
+	EndPoint string
+	Bucket   string
+	Key      string
+	Secret   string
 }
 
 // UploadSettings defines relevant values for the upload logic

@@ -1,4 +1,41 @@
 services:
+        minio:
+                image: minio/minio
+                volumes:
+                        - ./testdata/minio:/data
+                environment:
+                        - "MINIO_ROOT_USER=s3_access_key"
+                        - "MINIO_ROOT_PASSWORD=s3_access_secret"
+                command: "server /data --console-address ':9001'"
+                ports:
+                        - "9001:9001"
+                healthcheck:
+                        test:
+                                [
+                                        "CMD",
+                                        "curl",
+                                        "-f",
+                                        "http://minio:9000/minio/health/live",
+                                ]
+                        interval: 1s
+                        timeout: 10s
+                        retries: 5
+                        start_period: 60s
+
+        createbuckets:
+                image: minio/mc
+                entrypoint: >
+                        /bin/sh -c "
+                        /usr/bin/mc alias set testdata http://minio:9000 s3_access_key s3_access_secret;
+                        /usr/bin/mc mb --ignore-existing testdata/testbucket;
+                        /usr/bin/mc rm --recursive --force testdata/testbucket;
+                        exit 0;
+                        "
+                depends_on:
+                        minio:
+                                condition: service_healthy
+                                restart: true
+
         tokentest:
                 build:
                         context: .
@@ -76,10 +113,6 @@ services:
                         MY_BASECONFIG__LOGGING__FILEPATH: /opt/mydms/logs/mydms-api.log
                         MY_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
                         MY_BASECONFIG__ASSETS__ASSETDIR: ./assets
-                        MY_FILESTORE__REGION: $FILESTORE_REGION
-                        MY_FILESTORE__BUCKET: $FILESTORE_BUCKET
-                        MY_FILESTORE__KEY: $FILESTORE_KEY
-                        MY_FILESTORE__SECRET: $FILESTORE_SECRET
                         MY_DATABASE__CONNECTIONSTRING: /opt/mydms/db/mydms.db
                         MY_UPLOAD__UPLOADPATH: /opt/mydms/uploads
                         MY_UPLOAD__MAXUPLOADSIZE: 5000000
@@ -121,6 +154,8 @@ services:
                         BINARYNAME: bookmarks.api
                         PORT: 3000
                         HOST: 0.0.0.0
+
+        ## ------------------------------------------------------------------------------------------------------------------------------------------------
 
         caddy-integration-frontend-443:
                 build:

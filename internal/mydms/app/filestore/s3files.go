@@ -43,23 +43,25 @@ type FileService interface {
 
 // S3Config defines the parameters to interact with S3 storage
 type S3Config struct {
-	Region string
-	Bucket string
-	Key    string
-	Secret string
+	Region   string
+	Bucket   string
+	Key      string
+	Secret   string
+	EndPoint string
 }
 
 // NewService returns a new instance of the fileservice
 func NewService(logger logging.Logger, config S3Config) FileService {
 	var svc FileService
 	{
-		svc = &s3service{config: config}
+		svc = &s3service{config: config, logger: logger}
 		svc = ServiceLoggingMiddleware(logger)(svc)
 	}
 	return svc
 }
 
 type s3service struct {
+	logger logging.Logger
 	config S3Config
 	client s3iface.S3API
 }
@@ -68,14 +70,23 @@ type s3service struct {
 // if it is not initilized it creates a new client using the supplied config
 func (s *s3service) InitClient() (err error) {
 	if s.client == nil {
+		forcePathStyle := aws.Bool(false)
+		if s.config.EndPoint != "" {
+			forcePathStyle = aws.Bool(true)
+		}
+		s.logger.Debug(fmt.Sprintf("s3 config: endpoint=%s (forcePathStyle=%t)", s.config.EndPoint, *forcePathStyle))
+
 		sess, err := session.NewSession(&aws.Config{
-			Region:      aws.String(s.config.Region),
-			Credentials: credentials.NewStaticCredentials(s.config.Key, s.config.Secret, ""),
+			Region:           aws.String(s.config.Region),
+			S3ForcePathStyle: forcePathStyle,
+			Endpoint:         aws.String(s.config.EndPoint),
+			Credentials:      credentials.NewStaticCredentials(s.config.Key, s.config.Secret, ""),
 		},
 		)
 		if err != nil {
 			return fmt.Errorf("could not start a new S3 session. %v", err)
 		}
+
 		s.client = s3.New(sess)
 	}
 	return nil

@@ -37,10 +37,11 @@ func Run(version, build, appName string) error {
 
 	var (
 		fileSvc = filestore.NewService(logger, filestore.S3Config{
-			Bucket: appCfg.Filestore.Bucket,
-			Region: appCfg.Filestore.Region,
-			Key:    appCfg.Filestore.Key,
-			Secret: appCfg.Filestore.Secret,
+			Bucket:   appCfg.Filestore.Bucket,
+			Region:   appCfg.Filestore.Region,
+			EndPoint: appCfg.Filestore.EndPoint,
+			Key:      appCfg.Filestore.Key,
+			Secret:   appCfg.Filestore.Secret,
 		})
 		crypterSvc = crypter.NewService(logger)
 		uploadSvc  = upload.NewService(upload.ServiceOptions{

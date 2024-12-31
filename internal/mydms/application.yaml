@@ -66,10 +66,11 @@ database:
     connectionString: "DATABASE"
 
 filestore:
-    region: "region"
-    bucket: "bucket"
-    key: "key"
-    secret: "secret"
+    region: "us-east-1"
+    endpoint: "http://minio:9000"
+    bucket: "testbucket"
+    key: "s3_access_key"
+    secret: "s3_access_secret"
 
 upload:
     allowedFileTypes:

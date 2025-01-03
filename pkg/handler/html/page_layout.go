@@ -79,7 +79,7 @@ func Layout(model LayoutModel, style, navigation, content g.Node, searchURL stri
 								h.Form(h.Class("w-100 me-3"), h.Role("search"), h.Method("GET"), h.Action(searchURL),
 									h.Div(h.Class("input-group"),
 										h.Span(h.Class("input-group-text search-field-prefix"), h.ID("search-addon"), h.I(h.Class("bi bi-search"))),
-										h.Input(h.Type("search"), h.Name("q"), h.Class("form-control search-field"), h.Placeholder("Search... (Ctrl+B)"), h.ID("search-field"), g.Attr("control-id", "search-field"), h.Value(model.Search)),
+										h.Input(h.Type("search"), h.Name("q"), h.Class("form-control search-field"), h.Placeholder("Search... (Ctrl+B)"), h.ID("search-field"), g.Attr("control-id", "search-field"), h.AutoComplete("off"), h.Value(model.Search)),
 									),
 								),
 								g.Raw("&nbsp;"),

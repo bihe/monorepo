@@ -145,7 +145,7 @@ func GetMockConn(t *testing.T) (shared.Connection, *sql.DB, sqlmock.Sqlmock) {
 		t.Fatalf("could not create a new SQL mock; %v", err)
 	}
 
-	dbx := sqlx.NewDb(db, "mysql")
+	dbx := sqlx.NewDb(db, "sqlite3")
 	con := shared.NewFromDB(dbx)
 
 	return con, db, mock

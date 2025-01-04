@@ -24,21 +24,24 @@ const queryDocs = "SELECT id,title,filename,alternativeid,previewlink,amount,tag
 
 var Err = fmt.Errorf("error")
 
-func TestAtomic(t *testing.T) {
+func getDbx(t *testing.T) (dbx *sqlx.DB, db *sql.DB, mock sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf(fatalErr, err)
 	}
-	defer db.Close()
+	dbx = sqlx.NewDb(db, "sqlite3")
+	return
+}
 
-	dbx := sqlx.NewDb(db, "mysql")
+func TestAtomic(t *testing.T) {
+	dbx, db, mock := getDbx(t)
+	defer db.Close()
 	repo, err := NewRepository(shared.NewFromDB(dbx))
 	if err != nil {
 		t.Errorf("could not get a repository: %v", err)
 	}
 
 	mock.ExpectBegin()
-
 	_, err = repo.CreateAtomic()
 	if err != nil {
 		t.Errorf("could not ceate a new atomic object: %v", err)
@@ -56,13 +59,8 @@ func TestNewRepository(t *testing.T) {
 		t.Errorf("no reader without connection possible")
 	}
 
-	db, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf(fatalErr, err)
-	}
+	dbx, db, _ := getDbx(t)
 	defer db.Close()
-
-	dbx := sqlx.NewDb(db, "mysql")
 	_, err = NewRepository(shared.NewFromDB(dbx))
 	if err != nil {
 		t.Errorf("could not get a repository: %v", err)
@@ -70,15 +68,11 @@ func TestNewRepository(t *testing.T) {
 }
 
 func TestSave(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf(fatalErr, err)
-	}
+	dbx, db, mock := getDbx(t)
 	defer db.Close()
 
 	var now = time.Now().UTC().Add(-(time.Second * 10))
 
-	dbx := sqlx.NewDb(db, "mysql")
 	c := shared.NewFromDB(dbx)
 	rw := dbRepository{c}
 
@@ -97,7 +91,10 @@ func TestSave(t *testing.T) {
 	mock.ExpectExec(stmtInsertDocs).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	var d DocEntity
+	var (
+		d   DocEntity
+		err error
+	)
 	if d, err = rw.Save(item, shared.Atomic{}); err != nil {
 		t.Errorf(errInsert, err)
 	}
@@ -180,13 +177,9 @@ func TestSave(t *testing.T) {
 }
 
 func TestSaveError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf(fatalErr, err)
-	}
+	var err error
+	dbx, db, mock := getDbx(t)
 	defer db.Close()
-
-	dbx := sqlx.NewDb(db, "mysql")
 	c := shared.NewFromDB(dbx)
 	rw := dbRepository{c}
 
@@ -229,13 +222,9 @@ func TestSaveError(t *testing.T) {
 }
 
 func TestRead(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf(fatalErr, err)
-	}
+	var err error
+	dbx, db, mock := getDbx(t)
 	defer db.Close()
-
-	dbx := sqlx.NewDb(db, "mysql")
 	c := shared.NewFromDB(dbx)
 	rw := dbRepository{c}
 	columns := []string{"id", "title", "filename", "alternativeid", "previewlink", "amount", "taglist", "senderlist", "created", "modified", "invoicenumber"}
@@ -294,13 +283,9 @@ func TestRead(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf(fatalErr, err)
-	}
+	var err error
+	dbx, db, mock := getDbx(t)
 	defer db.Close()
-
-	dbx := sqlx.NewDb(db, "mysql")
 	c := shared.NewFromDB(dbx)
 	rw := dbRepository{c}
 	stmt := "DELETE FROM DOCUMENTS"
@@ -322,7 +307,7 @@ func TestDelete(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectExec(stmt).WithArgs(item.ID).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	a, err := c.CreateAtomic()
+	a, _ := c.CreateAtomic()
 	if err = rw.Delete(item.ID, a); err != nil {
 		t.Errorf("error was not expected while delete item: %v", err)
 	}
@@ -334,13 +319,9 @@ func TestDelete(t *testing.T) {
 }
 
 func TestExists(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf(fatalErr, err)
-	}
+	var err error
+	dbx, db, mock := getDbx(t)
 	defer db.Close()
-
-	dbx := sqlx.NewDb(db, "mysql")
 	c := shared.NewFromDB(dbx)
 	rw := dbRepository{c}
 	q := "SELECT filename FROM DOCUMENTS"
@@ -364,8 +345,7 @@ func TestExists(t *testing.T) {
 	// externally supplied tx
 	mock.ExpectBegin()
 	mock.ExpectQuery(q).WithArgs(id).WillReturnRows(sqlmock.NewRows(rows).AddRow(fileName))
-
-	a, err := c.CreateAtomic()
+	a, _ := c.CreateAtomic()
 	if _, err = rw.Exists(id, a); err != nil {
 		t.Errorf(existsErr, err)
 	}
@@ -386,13 +366,9 @@ func TestExists(t *testing.T) {
 }
 
 func TestDeleteError(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf(fatalErr, err)
-	}
+	var err error
+	dbx, db, mock := getDbx(t)
 	defer db.Close()
-
-	dbx := sqlx.NewDb(db, "mysql")
 	c := shared.NewFromDB(dbx)
 	rw := dbRepository{c}
 
@@ -415,13 +391,9 @@ func TestDeleteError(t *testing.T) {
 }
 
 func TestSearch(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf(fatalErr, err)
-	}
+	var err error
+	dbx, db, mock := getDbx(t)
 	defer db.Close()
-
-	dbx := sqlx.NewDb(db, "mysql")
 	c := shared.NewFromDB(dbx)
 	rw := dbRepository{c}
 	columns := []string{"id", "title", "filename", "alternativeid", "previewlink", "amount", "taglist", "senderlist", "created", "modified", "invoicenumber"}
@@ -512,13 +484,9 @@ func TestSearch(t *testing.T) {
 }
 
 func TestSearchLists(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf(fatalErr, err)
-	}
+	var err error
+	dbx, db, mock := getDbx(t)
 	defer db.Close()
-
-	dbx := sqlx.NewDb(db, "mysql")
 	c := shared.NewFromDB(dbx)
 	rw := dbRepository{c}
 	q := "SELECT distinct\\(taglist\\) as search FROM DOCUMENTS"

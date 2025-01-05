@@ -18,8 +18,8 @@ func favRepo(t *testing.T) (store.FaviconRepository, *sql.DB) {
 	var (
 		err error
 	)
-	params := make([]persistence.SqliteParam, 0)
-	con, err := persistence.CreateGormSqliteCon(":memory:", params)
+	dbCon := persistence.MustCreateSqliteConn(":memory:")
+	con, err := persistence.CreateGormSqliteCon(dbCon)
 	if err != nil {
 		t.Fatalf("cannot create database connection: %v", err)
 	}

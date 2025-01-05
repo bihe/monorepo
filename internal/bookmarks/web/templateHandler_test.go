@@ -84,8 +84,8 @@ func repositories(t *testing.T) (store.BookmarkRepository, store.FaviconReposito
 	var (
 		err error
 	)
-	params := make([]persistence.SqliteParam, 0)
-	con, err := persistence.CreateGormSqliteCon(":memory:", params)
+	dbCon := persistence.MustCreateSqliteConn(":memory:")
+	con, err := persistence.CreateGormSqliteCon(dbCon)
 	if err != nil {
 		t.Fatalf("cannot create database connection: %v", err)
 	}

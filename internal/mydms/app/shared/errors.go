@@ -1,7 +1,7 @@
 package shared
 
 import (
-	"fmt"
+	"errors"
 )
 
 // --------------------------------------------------------------------------
@@ -14,7 +14,7 @@ import (
 // ErrNotFound creates a typed error with the given message
 func ErrNotFound(msg string) *NotFoundError {
 	return &NotFoundError{
-		Err: fmt.Errorf(msg),
+		Err: errors.New(msg),
 	}
 }
 
@@ -34,7 +34,7 @@ func (e *NotFoundError) Error() string {
 // ErrValidation creates a typed error with the given message
 func ErrValidation(msg string) *ValidationError {
 	return &ValidationError{
-		Err: fmt.Errorf(msg),
+		Err: errors.New(msg),
 	}
 }
 

@@ -5,6 +5,12 @@ import (
 	"log"
 
 	"github.com/jmoiron/sqlx"
+
+	"golang.binggl.net/monorepo/pkg/persistence"
+
+	//_ "github.com/mattn/go-sqlite3"
+	_ "github.com/ncruces/go-sqlite3/driver"
+	_ "github.com/ncruces/go-sqlite3/embed"
 )
 
 // BaseRepository defines the common methods of all implementations
@@ -19,10 +25,13 @@ type Connection struct {
 	Active bool
 }
 
-// NewConnForDb creates a connection to a store/repository
-func NewConnForDb(dbType, connstr string) Connection {
-	db := sqlx.MustConnect(dbType, connstr)
-	return Connection{DB: db, Active: true}
+// NewConnForSqlite creates a connection to a store/repository
+func NewConnForSqlite(connstr string) Connection {
+	dbType := "sqlite3"
+	db := persistence.MustCreateSqliteConn(connstr)
+	persistence.SetDefaultPragmas(db)
+	dbx := sqlx.NewDb(db, dbType)
+	return Connection{DB: dbx, Active: true}
 }
 
 // NewFromDB creates a new connection based on existing DB handle

@@ -1,4 +1,30 @@
 services:
+        ## ------------------------------------------------------------------------------------------------------------------------------------------------
+        ## Infrastructure
+        ## ------------------------------------------------------------------------------------------------------------------------------------------------
+
+        litestream:
+                build:
+                        context: ./litestream
+                        dockerfile: ./litestream.Dockerfile
+                        args:
+                                buildtime_variable_arch: $ARCH
+                image: litestream
+                user: "1000:1000"
+                volumes:
+                        - ./litestream/litestream.yml:/etc/litestream.yml
+                        - ./testdata/sqlite/integration:/opt/litestream/store
+                environment:
+                        LITESTREAM_ACCESS_KEY_ID: $LITESTREAM_ACCESS_KEY_ID
+                        LITESTREAM_SECRET_ACCESS_KEY: $LITESTREAM_SECRET_ACCESS_KEY
+                restart: always
+                healthcheck:
+                        test: ["CMD", "/opt/litestream/healthcheck.sh"]
+                        interval: 1s
+                        timeout: 10s
+                        retries: 5
+                        start_period: 60s
+
         minio:
                 image: minio/minio
                 volumes:
@@ -36,6 +62,8 @@ services:
                                 condition: service_healthy
                                 restart: true
 
+        ## ------------------------------------------------------------------------------------------------------------------------------------------------
+
         tokentest:
                 build:
                         context: .
@@ -44,6 +72,7 @@ services:
                                 buildtime_variable_arch: $ARCH
                 image: tokentest
                 restart: always
+                user: "1000:1000"
                 environment:
                         JWT_COOKIE_NAME: $JWT_COOKIE_NAME
                         JWT_ISSUER: $JWT_ISSUER
@@ -53,6 +82,10 @@ services:
                         REDIRECT_URL: https://dev.binggl.net
                         PORT: 3000
 
+        ## ------------------------------------------------------------------------------------------------------------------------------------------------
+        ## Applications
+        ## ------------------------------------------------------------------------------------------------------------------------------------------------
+
         core-3001:
                 build:
                         context: .
@@ -60,11 +93,12 @@ services:
                         args:
                                 buildtime_variable_arch: $ARCH
                 image: core
+                user: "1000:1000"
                 volumes:
                         - ./internal/core:/opt/core/etc
                         - ./_logs:/opt/core/logs
                         - ./upload:/opt/core/uploads
-                        - ./testdata/sqlite/integration:/opt/core/db
+                        - ./testdata/sqlite/integration:/store
                         - ./litestream/litestream-integration.yml:/etc/litestream.yml
                 restart: always
                 environment:
@@ -81,15 +115,11 @@ services:
                         CO_UPLOAD__UPLOADPATH: /opt/core/uploads
                         CO_UPLOAD__ENCGRPCCONN: crypter:3000
                         CO_UPLOAD__MAXUPLOADSIZE: 5000000
-                        CO_DATABASE__CONNECTIONSTRING: /opt/core/db/core.db
-                        CONNECTIONSTRING: /opt/core/db/core.db
-                        REPLICA_URL: $CORE_REPLICA_URL
-                        LITESTREAM_ACCESS_KEY_ID: $LITESTREAM_ACCESS_KEY_ID
-                        LITESTREAM_SECRET_ACCESS_KEY: $LITESTREAM_SECRET_ACCESS_KEY
-                        BASEPATH: /opt/core
-                        BINARYNAME: core.api
-                        PORT: 3000
-                        HOST: 0.0.0.0
+                        CO_DATABASE__CONNECTIONSTRING: /store/core.db
+                depends_on:
+                        litestream:
+                                condition: service_healthy
+                                restart: true
 
         mydms-3002:
                 build:
@@ -98,10 +128,11 @@ services:
                         args:
                                 buildtime_variable_arch: $ARCH
                 image: mydms
+                user: "1000:1000"
                 volumes:
                         - ./internal/mydms:/opt/mydms/etc
                         - ./_logs:/opt/mydms/logs
-                        - ./testdata/sqlite/integration:/opt/mydms/db
+                        - ./testdata/sqlite/integration:/store
                         - ./litestream/litestream-integration.yml:/etc/litestream.yml
                         - /tmp:/opt/mydms/uploads
                 restart: always
@@ -113,17 +144,13 @@ services:
                         MY_BASECONFIG__LOGGING__FILEPATH: /opt/mydms/logs/mydms-api.log
                         MY_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
                         MY_BASECONFIG__ASSETS__ASSETDIR: ./assets
-                        MY_DATABASE__CONNECTIONSTRING: /opt/mydms/db/mydms.db
+                        MY_DATABASE__CONNECTIONSTRING: /store/mydms.db
                         MY_UPLOAD__UPLOADPATH: /opt/mydms/uploads
                         MY_UPLOAD__MAXUPLOADSIZE: 5000000
-                        CONNECTIONSTRING: /opt/mydms/db/mydms.db
-                        REPLICA_URL: $MYDMS_REPLICA_URL
-                        LITESTREAM_ACCESS_KEY_ID: $LITESTREAM_ACCESS_KEY_ID
-                        LITESTREAM_SECRET_ACCESS_KEY: $LITESTREAM_SECRET_ACCESS_KEY
-                        BASEPATH: /opt/mydms
-                        BINARYNAME: mydms.api
-                        PORT: 3000
-                        HOST: 0.0.0.0
+                depends_on:
+                        litestream:
+                                condition: service_healthy
+                                restart: true
 
         bookmarks-3003:
                 build:
@@ -132,10 +159,11 @@ services:
                         args:
                                 buildtime_variable_arch: $ARCH
                 image: bookmarks
+                user: "1000:1000"
                 volumes:
                         - ./internal/bookmarks:/opt/bookmarks/etc
                         - ./_logs:/opt/bookmarks/logs
-                        - ./testdata/sqlite/integration:/opt/bookmarks/db
+                        - ./testdata/sqlite/integration:/store
                         - ./litestream/litestream-integration.yml:/etc/litestream.yml
                 restart: always
                 environment:
@@ -145,15 +173,11 @@ services:
                         BM_BASECONFIG__LOGGING__FILEPATH: /opt/bookmarks/logs/bookmarks-api.log
                         BM_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
                         BM_BASECONFIG__ASSETS__ASSETDIR: ./assets
-                        BM_DATABASE__CONNECTIONSTRING: /opt/bookmarks/db/bookmarks.db
-                        CONNECTIONSTRING: /opt/bookmarks/db/bookmarks.db
-                        REPLICA_URL: $BOOKMARKS_REPLICA_URL
-                        LITESTREAM_ACCESS_KEY_ID: $LITESTREAM_ACCESS_KEY_ID
-                        LITESTREAM_SECRET_ACCESS_KEY: $LITESTREAM_SECRET_ACCESS_KEY
-                        BASEPATH: /opt/bookmarks
-                        BINARYNAME: bookmarks.api
-                        PORT: 3000
-                        HOST: 0.0.0.0
+                        BM_DATABASE__CONNECTIONSTRING: /store/bookmarks.db
+                depends_on:
+                        litestream:
+                                condition: service_healthy
+                                restart: true
 
         ## ------------------------------------------------------------------------------------------------------------------------------------------------
 

@@ -1,6 +1,7 @@
 package bookmarks
 
 import (
+	"database/sql"
 	"fmt"
 	"path"
 
@@ -24,8 +25,11 @@ func Run(version, build, appName string) error {
 	// ensure closing of log-file on exit
 	defer logger.Close()
 
+	db := persistence.MustCreateSqliteConn(appCfg.Database.ConnectionString)
+	defer db.Close()
+
 	var (
-		bRepo, fRepo = setupRepositories(&appCfg, logger)
+		bRepo, fRepo = setupRepositories(db, logger)
 		app          = &bookmarks.Application{
 			Logger:        logger,
 			BookmarkStore: bRepo,
@@ -72,8 +76,8 @@ func logConfig(cfg conf.AppConfig) logging.Logger {
 }
 
 // setupRepositories enables the SQLITE repositories for the application
-func setupRepositories(config *conf.AppConfig, logger logging.Logger) (store.BookmarkRepository, store.FaviconRepository) {
-	con, err := persistence.CreateGormSqliteCon(config.Database.ConnectionString, make([]persistence.SqliteParam, 0))
+func setupRepositories(db *sql.DB, logger logging.Logger) (store.BookmarkRepository, store.FaviconRepository) {
+	con, err := persistence.CreateGormSqliteCon(db)
 	if err != nil {
 		panic(fmt.Sprintf("cannot create database connection: %v", err))
 	}

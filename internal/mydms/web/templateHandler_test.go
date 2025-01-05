@@ -134,7 +134,7 @@ func handler(repo document.Repository) http.Handler {
 }
 
 func memRepo(t *testing.T) (document.Repository, shared.Connection) {
-	con := shared.NewConnForDb("sqlite3", "file::memory:")
+	con := shared.NewConnForSqlite("file::memory:")
 	repo, err := document.NewRepository(con)
 	if err != nil {
 		t.Fatalf("cannot establish database connection: %v", err)

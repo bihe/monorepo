@@ -116,7 +116,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: ./litestream
-          file: litestream.Dockerfile
+          file: ./litestream/litestream.Dockerfile
           build-args: |
             buildtime_variable_version=${{ env.BUILD_ID }}
             buildtime_variable_timestamp=${{ env.BUILD_DATE }}

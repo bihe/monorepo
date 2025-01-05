@@ -28,7 +28,7 @@ ifeq ($(UNAME_M), arm64)
 endif
 
 
-.PHONY: all clean mod-update proto build test coverage compose-int integration
+.PHONY: all clean mod-update build test coverage compose-integration integration
 
 all: help
 
@@ -51,14 +51,14 @@ test: ## unit-test the monorepo
 coverage: ## print coverage results for the monorepo
 	@-$(MAKE) -s go-coverage
 
-compose-int: ## start the whole application for integration testing
+compose-integration: ## start the whole application for integration testing
 	@echo "  >  Starting docker containers for integration ..."
 	@echo "  >  Remember to set the hostname **dev.binggl.net** locally or via DNS"
 	ARCH=${ARCH} LSV="${LITESTREAM_V}/litestream-${LITESTREAM_V}-linux-${ARCH}-static.tar.gz" docker compose -f compose-integration.yaml rm && ARCH=${ARCH} LSV="${LITESTREAM_V}/litestream-${LITESTREAM_V}-linux-${ARCH}-static.tar.gz" docker compose -f compose-integration.yaml up --build
 
-integration: ## run the integration test with playwright. NOTE: the compose setup needs to be running
-	@echo "  >  Starting integration tests ..."
-	uv run ./testdata/integration/run.py
+integration-test: ## run the integration test with playwright. NOTE: the compose setup needs to be running
+	@echo "  >  Starting ede tests ..."
+	uv run ./testdata/e2e/run.py
 
 # internal tasks
 

@@ -1,21 +1,52 @@
-#!/bin/sh
+#!/bin/bash
+set -e
 
-if [ ! -d ".core.db-litestream" ]; then
-  rm -rf ./.core.db-litestream
+# the first argument is the supplied mode (dev or integration)
+mode="$1"
+
+if [ -z "$mode" ]; then
+  echo "mode is required (dev|integration)"
+  exit 1
 fi
 
-if [ ! -d ".mydms.db-litestream" ]; then
-  rm -rf ./.mydms.db-litestream
+
+if [ ! -e "./litestream" ]; then
+  # get litestream binary
+  curl -L https://github.com/benbjohnson/litestream/releases/download/${LITESTREAM_VERSION} -o litestream.tar.gz
+  tar xf litestream.tar.gz && rm litestream.tar.gz
 fi
 
-if [ ! -d ".bookmarks.db-litestream" ]; then
-  rm -rf ./.bookmarks.db-litestream
+if [ -e "./litestream.tar.gz" ]; then
+  rm ./litestream.tar.gz
 fi
 
-rm mydms*
-rm core*
-rm bookmarks*
+if [ -d "./${mode}" ]; then
+  rm -rf ./${mode}
+  mkdir ./${mode}
+fi
 
-litestream restore -o ./core.db $CORE_REPLICA_URL
-litestream restore -o ./bookmarks.db $BOOKMARKS_REPLICA_URL
-litestream restore -o ./mydms.db $MYDMS_REPLICA_URL
+. ./.env
+
+if [[ -z "${LITESTREAM_ACCESS_KEY_ID}" ]]; then
+  echo "LITESTREAM_ACCESS_KEY_ID is required"
+  exit 1
+fi
+
+if [[ -z "${LITESTREAM_SECRET_ACCESS_KEY}" ]]; then
+  echo "LITESTREAM_SECRET_ACCESS_KEY is required"
+  exit 1
+fi
+
+CORE_REPLICA_URL="${CORE_REPLICA_URL//__MODE__/${mode}}"
+BOOKMARKS_REPLICA_URL="${BOOKMARKS_REPLICA_URL//__MODE__/${mode}}"
+MYDMS_REPLICA_URL="${MYDMS_REPLICA_URL//__MODE__/${mode}}"
+
+echo "will restore from s3 ..."
+echo $CORE_REPLICA_URL
+echo $BOOKMARKS_REPLICA_URL
+echo $MYDMS_REPLICA_URL
+
+./litestream restore -o ./${mode}/core.db $CORE_REPLICA_URL
+./litestream restore -o ./${mode}/bookmarks.db $BOOKMARKS_REPLICA_URL
+./litestream restore -o ./${mode}/mydms.db $MYDMS_REPLICA_URL
+

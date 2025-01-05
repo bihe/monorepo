@@ -94,18 +94,6 @@
             "output": "debug"
         },
         {
-            "name": "MIGRATE:: mysql=>sqlite",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${workspaceFolder}/cmd/mydms/sqlite/",
-            "args": [],
-            "envFile": "${workspaceFolder}/.env.migrate",
-            "internalConsoleOptions": "openOnSessionStart",
-            "showLog": true,
-            "output": "debug"
-        },
-        {
             "name": "MIGRATE:: favicons",
             "type": "go",
             "request": "launch",

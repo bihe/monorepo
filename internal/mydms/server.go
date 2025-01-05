@@ -13,9 +13,6 @@ import (
 	"golang.binggl.net/monorepo/pkg/develop"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/server"
-
-	// include the sqlite driver for runtime
-	_ "github.com/mattn/go-sqlite3"
 )
 
 // run is the entry-point for the core/auth service
@@ -29,8 +26,10 @@ func Run(version, build, appName string) error {
 	defer logger.Close()
 
 	// shared.store && application version
-	con := shared.NewConnForDb("sqlite3", appCfg.Database.ConnectionString)
-	repo, err := document.NewRepository(con)
+	db := shared.NewConnForSqlite(appCfg.Database.ConnectionString)
+	defer db.Close()
+
+	repo, err := document.NewRepository(db)
 	if err != nil {
 		panic(fmt.Sprintf("cannot establish database connection: %v", err))
 	}

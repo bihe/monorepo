@@ -22,8 +22,8 @@ func repositoryFile(file string, t *testing.T) (store.BookmarkRepository, *sql.D
 	var (
 		err error
 	)
-	params := make([]persistence.SqliteParam, 0)
-	con, err := persistence.CreateGormSqliteCon(file, params)
+	dbCon := persistence.MustCreateSqliteConn(file)
+	con, err := persistence.CreateGormSqliteCon(dbCon)
 	if err != nil {
 		t.Fatalf("cannot create database connection: %v", err)
 	}

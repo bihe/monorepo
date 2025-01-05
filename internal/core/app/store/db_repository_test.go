@@ -6,18 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/internal/core/app/store"
 	"golang.binggl.net/monorepo/pkg/persistence"
-
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 )
-
-// const fatalErr = "an error '%s' was not expected when opening a stub database connection"
-const expectations = "there were unfulfilled expectations: %s"
-const errExpected = "error expected!"
 
 var Err = fmt.Errorf("error")
 
@@ -25,8 +17,8 @@ func repo(t *testing.T) (store.Repository, *sql.DB) {
 	var (
 		err error
 	)
-	params := make([]persistence.SqliteParam, 0)
-	con, err := persistence.CreateGormSqliteCon(":memory:", params)
+	dbCon := persistence.MustCreateSqliteConn(":memory:")
+	con, err := persistence.CreateGormSqliteCon(dbCon)
 	if err != nil {
 		t.Fatalf("cannot create database connection: %v", err)
 	}
@@ -40,34 +32,6 @@ func repo(t *testing.T) (store.Repository, *sql.DB) {
 	con.Read = con.Write
 	repo := store.NewDBStore(con)
 	return repo, db
-}
-
-func mockRepo(t *testing.T, useTx bool) (store.Repository, *sql.DB, sqlmock.Sqlmock) {
-	var (
-		DB     *gorm.DB
-		mockDB *sql.DB
-		err    error
-		mock   sqlmock.Sqlmock
-	)
-
-	if mockDB, mock, err = sqlmock.New(); err != nil {
-		t.Fatalf("could not create a db-mock; %v", err)
-	}
-
-	if DB, err = gorm.Open(mysql.New(mysql.Config{Conn: mockDB, SkipInitializeWithVersion: true}), &gorm.Config{
-		SkipDefaultTransaction: !useTx,
-	}); err != nil {
-		t.Fatalf("cannot create database connection: %v", err)
-	}
-	db, err := DB.DB()
-	if err != nil {
-		t.Fatalf("could not get DB handle; %v", err)
-	}
-	con := persistence.Connection{
-		Read:  DB,
-		Write: DB,
-	}
-	return store.NewDBStore(con), db, mock
 }
 
 func Test_New_Repository(t *testing.T) {
@@ -218,50 +182,4 @@ func Test_Create_Site_UnitOfWork(t *testing.T) {
 	}
 	assert.Equal(t, "site1", sites[0].Name)
 
-}
-
-const skipTransactionUsage = false
-
-func Test_Errors_Using_Mock(t *testing.T) {
-	repo, DB, mock := mockRepo(t, skipTransactionUsage)
-	defer DB.Close()
-
-	// -- wrong number of results after insert for USERSITES
-	// ------------------------------------------------------------------------------------------------------------
-	mock.ExpectExec("DELETE FROM `USERSITE`").WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectExec("INSERT INTO `USERSITE`").WillReturnResult(sqlmock.NewResult(1, 0))
-
-	var sites []store.UserSiteEntity
-	sites = append(sites, store.UserSiteEntity{
-		Name:     "test",
-		User:     "user",
-		URL:      "url",
-		PermList: "perm",
-	})
-	err := repo.StoreSiteForUser(sites)
-	if err == nil {
-		t.Error(errExpected)
-	}
-
-	// // -- error deleting USERSITES
-	// // ------------------------------------------------------------------------------------------------------------
-	mock.ExpectExec("DELETE FROM `USERSITE`").WillReturnError(Err)
-	err = repo.StoreSiteForUser(sites)
-	if err == nil {
-		t.Error(errExpected)
-	}
-
-	// // -- error inserting USERSITES
-	// // ------------------------------------------------------------------------------------------------------------
-	mock.ExpectExec("DELETE FROM `USERSITE`").WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectExec("INSERT INTO `USERSITE`").WillReturnError(Err)
-	err = repo.StoreSiteForUser(sites)
-	if err == nil {
-		t.Error(errExpected)
-	}
-
-	// we make sure that all expectations were met
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf(expectations, err)
-	}
 }

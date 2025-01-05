@@ -11,6 +11,7 @@ on:
           - core
           - mydms
           - frontend
+          - litestream
         required: true
 
 env:
@@ -124,3 +125,20 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/frontend:latest
             ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/frontend:${{ env.GIT_HASH }}
+
+      # ---------------------------------------------------------------------
+
+      - name: "Build :: litestream"
+        if: github.event.inputs.imageName == 'litestream'
+        uses: docker/build-push-action@v4
+        with:
+          context: ./litestream
+          file: litestream.Dockerfile
+          build-args: |
+            buildtime_variable_version=${{ env.BUILD_ID }}
+            buildtime_variable_timestamp=${{ env.BUILD_DATE }}
+            buildtime_variable_commit=${{ env.GIT_HASH }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/litestream:latest
+            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/litestream:${{ env.GIT_HASH }}

@@ -25,7 +25,10 @@ func Run(version, build, appName string) error {
 	defer logger.Close()
 
 	// persistence store && application version
-	con, err := persistence.CreateGormSqliteCon(appCfg.Database.ConnectionString, make([]persistence.SqliteParam, 0))
+	db := persistence.MustCreateSqliteConn(appCfg.Database.ConnectionString)
+	defer db.Close()
+
+	con, err := persistence.CreateGormSqliteCon(db)
 	if err != nil {
 		panic(fmt.Sprintf("cannot create database connection: %v", err))
 	}

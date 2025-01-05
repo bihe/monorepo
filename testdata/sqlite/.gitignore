@@ -2,3 +2,7 @@ dev_*.db
 litestream_use.txt
 dev/
 integration/
+litestream
+.env.dev
+.env.integration
+litestream.yml

@@ -5,7 +5,7 @@ set -e
 mode="$1"
 
 if [ -z "$mode" ]; then
-  echo "mode is required (dev|integration)"
+  echo "mode is required (dev|integration|prod)"
   exit 1
 fi
 

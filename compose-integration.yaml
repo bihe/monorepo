@@ -99,7 +99,6 @@ services:
                         - ./_logs:/opt/core/logs
                         - ./upload:/opt/core/uploads
                         - ./testdata/sqlite/integration:/store
-                        - ./litestream/litestream-integration.yml:/etc/litestream.yml
                 restart: always
                 environment:
                         CO_BASECONFIG__ENVIRONMENT: Integration
@@ -133,7 +132,6 @@ services:
                         - ./internal/mydms:/opt/mydms/etc
                         - ./_logs:/opt/mydms/logs
                         - ./testdata/sqlite/integration:/store
-                        - ./litestream/litestream-integration.yml:/etc/litestream.yml
                         - /tmp:/opt/mydms/uploads
                 restart: always
                 environment:
@@ -164,7 +162,6 @@ services:
                         - ./internal/bookmarks:/opt/bookmarks/etc
                         - ./_logs:/opt/bookmarks/logs
                         - ./testdata/sqlite/integration:/store
-                        - ./litestream/litestream-integration.yml:/etc/litestream.yml
                 restart: always
                 environment:
                         BM_BASECONFIG__ENVIRONMENT: Integration

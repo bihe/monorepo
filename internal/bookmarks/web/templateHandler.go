@@ -255,9 +255,6 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 
 const errorFavicon = `<span id="bookmark_favicon_display" class="error_icon">
 <i id="error_tooltip_favicon" class="position_error_icon bi bi-exclamation-square-fill" data-bs-toggle="tooltip" data-bs-title="%s"></i>
-<div class="bookmark_favicon_error_text">
-	<span class="alert alert-danger">%s</span>
-</div>
 </span>
 
 <script type="text/javascript">
@@ -266,6 +263,13 @@ const errorFavicon = `<span id="bookmark_favicon_display" class="error_icon">
 `
 const favIconImage = `<img id="bookmark_favicon_display" class="bookmark_favicon_preview" src="/bm/favicon/temp/%s">
 <input type="hidden" name="bookmark_Favicon" value="%s"/>`
+
+// FaviconEditDialog shows the dialog to edit favicons
+func (t *TemplateHandler) FaviconEditDialog() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		html.FaviconDialog().Render(w)
+	}
+}
 
 // FetchCustomFaviconURL fetches the given custom favicon URL and returns a new image
 func (t *TemplateHandler) FetchCustomFaviconURL() http.HandlerFunc {
@@ -276,7 +280,11 @@ func (t *TemplateHandler) FetchCustomFaviconURL() http.HandlerFunc {
 		if err != nil {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
 			t.Logger.ErrorRequest(fmt.Sprintf("could not fetch the custom favicon; '%v'", err), r)
-			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
+			triggerToast(w,
+				common.MsgError,
+				"Favicon error!",
+				fmt.Sprintf("Could not fetch favicon: %v", errMsg))
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
 			return
 		}
 		w.Write([]byte(fmt.Sprintf(favIconImage, fav.Name, fav.Name)))
@@ -291,8 +299,12 @@ func (t *TemplateHandler) FetchCustomFaviconFromPage() http.HandlerFunc {
 		fav, err := t.App.LocalExtractFaviconFromURL(pageUrl)
 		if err != nil {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
-			t.Logger.ErrorRequest(fmt.Sprintf("could not fetch the custom favicon; '%v'", err), r)
-			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
+			t.Logger.ErrorRequest(fmt.Sprintf("could not fetch the page favicon; '%v'", err), r)
+			triggerToast(w,
+				common.MsgError,
+				"Favicon error!",
+				fmt.Sprintf("Could not fetch favicon: %v", errMsg))
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
 			return
 		}
 		w.Write([]byte(fmt.Sprintf(favIconImage, fav.Name, fav.Name)))
@@ -310,7 +322,11 @@ func (t *TemplateHandler) UploadCustomFavicon() http.HandlerFunc {
 		if err != nil {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
 			t.Logger.ErrorRequest(fmt.Sprintf("could not upload the custom favicon; '%v'", err), r)
-			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
+			triggerToast(w,
+				common.MsgError,
+				"Favicon error!",
+				fmt.Sprintf("Could not upload the custom favicon: %v", errMsg))
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
 			return
 		}
 		defer file.Close()
@@ -318,21 +334,33 @@ func (t *TemplateHandler) UploadCustomFavicon() http.HandlerFunc {
 		cType := meta.Header.Get("Content-Type")
 		if !strings.HasPrefix(cType, "image") {
 			t.Logger.ErrorRequest(fmt.Sprintf("only image types are supported - got '%s'", cType), r)
-			w.Write([]byte(fmt.Sprintf(errorFavicon, "Only an image mimetype is supported!", "Only an image mimetype is supported!")))
+			triggerToast(w,
+				common.MsgError,
+				"Favicon error!",
+				"Only an image mimetype is supported!")
+			w.Write([]byte(fmt.Sprintf(errorFavicon, "Only an image mimetype is supported!")))
 			return
 		}
 		payload, err := io.ReadAll(file)
 		if err != nil {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
 			t.Logger.ErrorRequest(fmt.Sprintf("could not read data of upload '%s'", cType), r)
-			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
+			triggerToast(w,
+				common.MsgError,
+				"Favicon error!",
+				fmt.Sprintf("Could not read data of upload: %v!", errMsg))
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
 			return
 		}
 		fav, err := t.App.WriteLocalFavicon(meta.Filename, cType, payload)
 		if err != nil {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
-			t.Logger.ErrorRequest(fmt.Sprintf("could not fetch the custom favicon; '%v'", err), r)
-			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
+			t.Logger.ErrorRequest(fmt.Sprintf("could not write the custom favicon; '%v'", err), r)
+			triggerToast(w,
+				common.MsgError,
+				"Favicon error!",
+				fmt.Sprintf("Could not write the custom favicon: %v!", errMsg))
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
 			return
 		}
 		w.Write([]byte(fmt.Sprintf(favIconImage, fav.Name, fav.Name)))

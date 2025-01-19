@@ -39,6 +39,11 @@ func GetFaviconFromURL(url string) (content Content, err error) {
 		iconURL string
 	)
 
+	if !strings.HasPrefix(url, "http") {
+		// if no scheme is supplied "assume" https as standard
+		url = "https://" + url
+	}
+
 	if scheme, baseURL, pageURL, err = parseURL(url); err != nil {
 		return
 	}
@@ -71,6 +76,11 @@ func GetFaviconFromURL(url string) (content Content, err error) {
 		// local to the page-URL
 		iconURL = strings.ReplaceAll(iconURL, "./", "/")
 		iconURL = pageURL + iconURL
+	} else if strings.HasPrefix(iconURL, ":///") {
+		// in this case neither the scheme nor the base-URL is provided
+		// add the known-existing parts
+		favFile := strings.ReplaceAll(iconURL, ":///", "")
+		iconURL = baseURL + "/" + favFile
 	} else if !strings.HasPrefix(iconURL, "http") {
 		// if a file without anything is specified "favicon.png"
 		// then use the page-url

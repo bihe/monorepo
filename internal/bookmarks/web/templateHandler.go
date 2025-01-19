@@ -2,6 +2,7 @@ package web
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
@@ -264,10 +265,15 @@ const errorFavicon = `<span id="bookmark_favicon_display" class="error_icon">
 const favIconImage = `<img id="bookmark_favicon_display" class="bookmark_favicon_preview" src="/bm/favicon/temp/%s">
 <input type="hidden" name="bookmark_Favicon" value="%s"/>`
 
-// FaviconEditDialog shows the dialog to edit favicons
-func (t *TemplateHandler) FaviconEditDialog() http.HandlerFunc {
+// AvailableFaviconsDialog shows the dialog to edit favicons
+func (t *TemplateHandler) AvailableFaviconsDialog() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		html.FaviconDialog().Render(w)
+		user := common.EnsureUser(r)
+		favicons, err := t.App.GetAvailableFavicons(*user)
+		if err != nil {
+			t.Logger.Error(fmt.Sprintf("could not get available favicons for user '%s'", user.DisplayName), logging.ErrV(err), logging.LogV("username", user.Username))
+		}
+		html.FaviconDialog(favicons).Render(w)
 	}
 }
 
@@ -367,13 +373,37 @@ func (t *TemplateHandler) UploadCustomFavicon() http.HandlerFunc {
 	}
 }
 
-// GetFaviconByID returns a stored favicon for the provided ID
-func (t *TemplateHandler) GetFaviconByID() http.HandlerFunc {
+// GetFaviconByBookmarkID returns the favicon of a given bookmark
+func (t *TemplateHandler) GetFaviconByBookmarkID() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := common.EnsureUser(r)
 		id := pathParam(r, "id")
-		t.Logger.InfoRequest(fmt.Sprintf("try to get favicon with the given ID '%s'", id), r)
+		t.Logger.InfoRequest(fmt.Sprintf("try to get bookmark's favicon with the given ID '%s'", id), r)
 		favicon, err := t.App.GetBookmarkFavicon(id, *user)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get favicon by ID; '%v'", err), r)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		http.ServeContent(w, r, favicon.Name, favicon.Modified, bytes.NewReader(favicon.Payload))
+	}
+}
+
+// GetFaviconByID returns a stored favicon by the provided object-ID
+// the object-ID is base64 encoded
+func (t *TemplateHandler) GetFaviconByID() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		encodedID := pathParam(r, "id")
+		decodedBytes, err := base64.StdEncoding.DecodeString(encodedID)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get decode ID; '%v'", err), r)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		id := string(decodedBytes)
+
+		t.Logger.InfoRequest(fmt.Sprintf("try to get favicon with the given ID '%s'", id), r)
+		favicon, err := t.App.GetFaviconByID(id)
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get favicon by ID; '%v'", err), r)
 			w.WriteHeader(http.StatusNotFound)

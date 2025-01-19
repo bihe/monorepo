@@ -84,6 +84,9 @@ func GetFaviconFromURL(url string) (content Content, err error) {
 	} else if !strings.HasPrefix(iconURL, "http") {
 		// if a file without anything is specified "favicon.png"
 		// then use the page-url
+		if !strings.HasSuffix(pageURL, "/") {
+			pageURL += "/"
+		}
 		iconURL = pageURL + iconURL
 	}
 
@@ -209,7 +212,6 @@ func faviconParser(doc *html.Node, faviconDef string) (string, error) {
 		foundFavDev := false
 		favHrf := ""
 		for _, a := range node.Attr {
-
 			switch a.Key {
 			case "rel":
 				foundFavDev = a.Val == faviconDef
@@ -223,10 +225,15 @@ func faviconParser(doc *html.Node, faviconDef string) (string, error) {
 		return ""
 	}
 
+	foundIcon := false
 	crawler = func(node *html.Node) {
+		if foundIcon {
+			return
+		}
 		if node.Type == html.ElementNode && node.Data == "link" {
 			link = node
 			if extractFavIconURL(link, faviconDef) != "" {
+				foundIcon = true
 				return
 			}
 			for child := node.FirstChild; child != nil; child = child.NextSibling {

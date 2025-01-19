@@ -2,6 +2,7 @@ package bookmarks
 
 import (
 	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path"
@@ -511,7 +512,7 @@ const defaultFaviconName = "default_bookmark_favicon.svg"
 // GetBookmarkFavicon returns the payload of the found favicon or the default favicon
 func (s *Application) GetBookmarkFavicon(bookmarkID string, user security.User) (*ObjectInfo, error) {
 	if bookmarkID == "" {
-		return nil, app.ErrValidation("missing id parameter")
+		return nil, app.ErrValidation("missing bookmark id parameter")
 	}
 
 	s.Logger.Info(fmt.Sprintf("try to fetch bookmark with ID '%s'", bookmarkID))
@@ -540,6 +541,79 @@ func (s *Application) GetBookmarkFavicon(bookmarkID string, user security.User) 
 	fi.Name = favicon.ID
 	fi.Modified = favicon.LastModified
 	fi.Payload = favicon.Payload
+
+	return &fi, nil
+}
+
+// GetAvailableFavicons retrieves all available favicons of the stored bookmarks.
+// It does not return duplicates, but focuses on unique favicons by comparing the stored payload.
+func (s *Application) GetAvailableFavicons(user security.User) ([]ObjectInfo, error) {
+	bookmarks, err := s.BookmarkStore.GetAllBookmarks(user.Username)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve bookmarks for user '%s'; %v", user.Username, err)
+	}
+
+	// iterate of the full list and determine the faviconIDs which are unique
+	uniqueFavicons := make(map[string]int16)
+	for _, b := range bookmarks {
+		if b.Favicon == "" {
+			continue
+		}
+		if _, avail := uniqueFavicons[b.Favicon]; !avail {
+			uniqueFavicons[b.Favicon] = 1
+		}
+	}
+
+	// determine via a hash-function if the payload is unique as well
+	uniquePayload := make(map[string]store.Favicon)
+	for faviconID := range uniqueFavicons {
+		favicon, err := s.FavStore.Get(faviconID)
+		if err != nil {
+			return nil, fmt.Errorf("could not get the favicon by id '%s'; %v", faviconID, err)
+		}
+		if len(favicon.Payload) == 0 {
+			continue
+		}
+
+		hashVal := hash(favicon.Payload)
+		if _, avail := uniqueFavicons[hashVal]; !avail {
+			uniquePayload[hashVal] = favicon
+		}
+	}
+
+	// finally we have the complete list of unique favicons
+	favicons := make([]ObjectInfo, len(uniquePayload))
+	i := 0
+	for key := range uniquePayload {
+		favicon := uniquePayload[key]
+		favicons[i] = ObjectInfo{
+			Payload:  favicon.Payload,
+			Name:     favicon.ID,
+			Modified: favicon.LastModified,
+		}
+		i += 1
+	}
+	return favicons, nil
+}
+
+// GetFaviconByID retrievs the favicon payload from the store
+func (s *Application) GetFaviconByID(faviconID string) (*ObjectInfo, error) {
+	if faviconID == "" {
+		return nil, app.ErrValidation("missing favicon id parameter")
+	}
+
+	s.Logger.Info(fmt.Sprintf("try to fetch favicon with ID '%s'", faviconID))
+	favicon, err := s.FavStore.Get(faviconID)
+	if err != nil {
+		s.Logger.Error(fmt.Sprintf("could not find favicon by id '%s': %v", faviconID, err))
+		return nil, app.ErrNotFound(fmt.Sprintf("could not find favicon with ID '%s'", faviconID))
+	}
+
+	fi := ObjectInfo{
+		Payload:  favicon.Payload,
+		Name:     favicon.ID,
+		Modified: favicon.LastModified,
+	}
 
 	return &fi, nil
 }
@@ -700,4 +774,13 @@ func ensureFolderPath(path, displayName string) string {
 	}
 	folderPath += displayName
 	return folderPath
+}
+
+func hash(payload []byte) string {
+	// Create a new SHA-1 hash object
+	hasher := sha1.New()
+	hasher.Write(payload)
+	checksum := hasher.Sum(nil)
+	hexChecksum := hex.EncodeToString(checksum)
+	return hexChecksum
 }

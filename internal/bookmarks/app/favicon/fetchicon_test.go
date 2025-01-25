@@ -52,14 +52,14 @@ func TestFetchFavicon(t *testing.T) {
 		}
 	})
 	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(icoFavicon)))
+		w.Header().Add("content-length", fmt.Sprintf("%d", len(icoFavicon)))
 		if _, err := w.Write(icoFavicon); err != nil {
 			t.Fatalf("%v", err)
 		}
 
 	})
 	mux.HandleFunc("/wrong-mimetype", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(icoFavicon)))
+		w.Header().Add("content-length", fmt.Sprintf("%d", len(icoFavicon)))
 		w.Header().Add("content-type", "application/octet-stream")
 		if _, err := w.Write(icoFavicon); err != nil {
 			t.Fatalf("%v", err)
@@ -67,20 +67,20 @@ func TestFetchFavicon(t *testing.T) {
 
 	})
 	mux.HandleFunc("/singleFile/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(icoFavicon)))
+		w.Header().Add("content-length", fmt.Sprintf("%d", len(icoFavicon)))
 		if _, err := w.Write(icoFavicon); err != nil {
 			t.Fatalf("%v", err)
 		}
 
 	})
 	mux.HandleFunc("/img/favicon.png", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(pngFavicon)))
+		w.Header().Add("content-length", fmt.Sprintf("%d", len(pngFavicon)))
 		if _, err := w.Write(pngFavicon); err != nil {
 			t.Fatalf("%v", err)
 		}
 	})
 	mux.HandleFunc("/pageRel/img/favicon32x32.png", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(pngFavicon)))
+		w.Header().Add("content-length", fmt.Sprintf("%d", len(pngFavicon)))
 		if _, err := w.Write(pngFavicon); err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -150,18 +150,32 @@ func TestFetchFavicon(t *testing.T) {
 		}
 	})
 	mux.HandleFunc("/pathNoFile", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(pngFavicon)))
+		w.Header().Add("content-length", fmt.Sprintf("%d", len(pngFavicon)))
 		if _, err := w.Write(pngFavicon); err != nil {
 			t.Fatalf("%v", err)
 		}
 	})
 	mux.HandleFunc("/disposition", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("content-lenght", fmt.Sprintf("%d", len(pngFavicon)))
+		w.Header().Add("content-length", fmt.Sprintf("%d", len(pngFavicon)))
 		w.Header().Set("Content-Disposition", "attachment; filename="+strconv.Quote("favicon-disposition.png"))
 		if _, err := w.Write(pngFavicon); err != nil {
 			t.Fatalf("%v", err)
 		}
 	})
+	mux.HandleFunc("/missing_schema", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("content-type", "text/html")
+		html := ` <html>
+	        <head>
+	            <meta charset="utf-8">
+	            <link rel="icon" href=":///favicon.ico">
+	        </head>
+	        <body>html</body>
+	    </html>`
+		if _, err := w.Write([]byte(html)); err != nil {
+			t.Fatalf("%v", err)
+		}
+	})
+
 	ts := httptest.NewServer(mux)
 	defer ts.Close()
 
@@ -271,6 +285,16 @@ func TestFetchFavicon(t *testing.T) {
 	content, err = GetFaviconFromURL(ts.URL + "/noFavicon")
 	if err != nil {
 		t.Errorf("valid HTML expected default favicon: %v", err)
+	}
+	assert.Equal(t, "favicon.ico", content.FileName)
+	assert.True(t, len(content.Payload) > 0)
+	assert.Equal(t, len(icoFavicon), len(content.Payload))
+
+	// missing schema
+	// ------------------------------------------------------------------
+	content, err = GetFaviconFromURL(ts.URL + "/missing_schema")
+	if err != nil {
+		t.Errorf("could not get favicon: %v", err)
 	}
 	assert.Equal(t, "favicon.ico", content.FileName)
 	assert.True(t, len(content.Payload) > 0)

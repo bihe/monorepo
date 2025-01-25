@@ -1,6 +1,10 @@
 package bookmarks_test
 
 import (
+	_ "embed"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path"
 	"testing"
@@ -78,7 +82,7 @@ func Test_CreateBookmark(t *testing.T) {
 		Type:               bookmarks.Node,
 		Path:               "/" + folder.DisplayName,
 		DisplayName:        "test",
-		URL:                "https://www.orf.at",
+		URL:                "http://www.example.com",
 		InvertFaviconColor: 1,
 	}, user)
 	if err != nil {
@@ -312,13 +316,16 @@ func Test_GetBookmarksByName(t *testing.T) {
 
 func Test_FetchFavicon(t *testing.T) {
 	svc := app(t)
-	obj, err := svc.LocalFetchFaviconURL("https://upload.wikimedia.org/wikipedia/commons/6/63/Wikipedia-logo.png")
+	server := hostTestWebserver(t)
+	defer server.Close()
+
+	obj, err := svc.LocalFetchFaviconURL(server.URL + "/Wikipedia-logo.png")
 	if err != nil {
 		t.Errorf("error fetching favicon: %v", err)
 	}
 	assert.True(t, len(obj.Payload) > 0)
 
-	obj, err = svc.LocalExtractFaviconFromURL("https://orf.at")
+	obj, err = svc.LocalExtractFaviconFromURL(server.URL + "/orf.at")
 	if err != nil {
 		t.Errorf("error fetching favicon: %v", err)
 	}
@@ -425,8 +432,10 @@ func Test_FetchBookmark(t *testing.T) {
 
 func Test_GetFavicon(t *testing.T) {
 	svc := app(t)
+	server := hostTestWebserver(t)
+	defer server.Close()
 
-	obj, err := svc.LocalFetchFaviconURL("https://upload.wikimedia.org/wikipedia/commons/6/63/Wikipedia-logo.png")
+	obj, err := svc.LocalFetchFaviconURL(server.URL + "/Wikipedia-logo.png")
 	if err != nil {
 		t.Errorf("error fetching favicon: %v", err)
 	}
@@ -477,8 +486,10 @@ func Test_GetFavicon(t *testing.T) {
 
 func Test_DeleteBookmark(t *testing.T) {
 	svc := app(t)
+	server := hostTestWebserver(t)
+	defer server.Close()
 
-	obj, err := svc.LocalFetchFaviconURL("https://upload.wikimedia.org/wikipedia/commons/6/63/Wikipedia-logo.png")
+	obj, err := svc.LocalFetchFaviconURL(server.URL + "/Wikipedia-logo.png")
 	if err != nil {
 		t.Errorf("error fetching favicon: %v", err)
 	}
@@ -743,8 +754,10 @@ func Test_UpdateBookmark(t *testing.T) {
 
 func Test_UpateBookmarks_WithFavicons(t *testing.T) {
 	svc := app(t)
+	server := hostTestWebserver(t)
+	defer server.Close()
 
-	obj, err := svc.LocalFetchFaviconURL("https://upload.wikimedia.org/wikipedia/commons/6/63/Wikipedia-logo.png")
+	obj, err := svc.LocalFetchFaviconURL(server.URL + "/Wikipedia-logo.png")
 	if err != nil {
 		t.Errorf("error fetching favicon: %v", err)
 	}
@@ -764,7 +777,7 @@ func Test_UpateBookmarks_WithFavicons(t *testing.T) {
 	}
 
 	// fetch a new favicon
-	obj, err = svc.LocalFetchFaviconURL("https://upload.wikimedia.org/wikipedia/commons/7/70/Example.png")
+	obj, err = svc.LocalFetchFaviconURL(server.URL + "/Example.png")
 	if err != nil {
 		t.Errorf("error fetching favicon: %v", err)
 	}
@@ -775,4 +788,180 @@ func Test_UpateBookmarks_WithFavicons(t *testing.T) {
 		t.Errorf("could not update bookmark; %v", err)
 	}
 	assert.Equal(t, obj.Name, bm.Favicon)
+}
+
+func Test_GetAllAvailableFavicons(t *testing.T) {
+	svc := app(t)
+	server := hostTestWebserver(t)
+	defer server.Close()
+
+	var favUser = security.User{
+		Username:    uuid.NewString(),
+		Email:       "a.b@c.de",
+		DisplayName: "Test_" + uuid.NewString(),
+	}
+
+	// 1)
+	obj, err := svc.LocalFetchFaviconURL(server.URL + "/Wikipedia-logo.png")
+	if err != nil {
+		t.Errorf("error fetching favicon: %v", err)
+	}
+
+	_, err = svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		DisplayName: uuid.NewString(),
+		URL:         "http://localhost1",
+		Path:        "/",
+		Favicon:     obj.Name,
+	}, favUser)
+	if err != nil {
+		t.Errorf("could not store bookmark; %v", err)
+	}
+
+	// 2)
+	obj, err = svc.LocalFetchFaviconURL(server.URL + "/Example.png")
+	if err != nil {
+		t.Errorf("error fetching favicon: %v", err)
+	}
+
+	_, err = svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		DisplayName: uuid.NewString(),
+		URL:         "http://localhost2",
+		Path:        "/",
+		Favicon:     obj.Name,
+	}, favUser)
+	if err != nil {
+		t.Errorf("could not store bookmark; %v", err)
+	}
+
+	// 3)
+	obj, err = svc.LocalFetchFaviconURL(server.URL + "/Wikipedia-logo.png")
+	if err != nil {
+		t.Errorf("error fetching favicon: %v", err)
+	}
+
+	_, err = svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		DisplayName: uuid.NewString(),
+		URL:         "http://localhost3",
+		Path:        "/",
+		Favicon:     obj.Name,
+	}, favUser)
+	if err != nil {
+		t.Errorf("could not store bookmark; %v", err)
+	}
+
+	// 4)
+	obj, err = svc.LocalFetchFaviconURL(server.URL + "/Example.png")
+	if err != nil {
+		t.Errorf("error fetching favicon: %v", err)
+	}
+
+	_, err = svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		DisplayName: uuid.NewString(),
+		URL:         "http://localhost4",
+		Path:        "/",
+		Favicon:     obj.Name,
+	}, favUser)
+	if err != nil {
+		t.Errorf("could not store bookmark; %v", err)
+	}
+
+	// 5)
+	_, err = svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Folder,
+		DisplayName: uuid.NewString(),
+		Path:        "/",
+	}, favUser)
+	if err != nil {
+		t.Errorf("could not store bookmark; %v", err)
+	}
+
+	// we created 4 bookmarks with 2 different favicons. The result of all available favicons should be just 2
+	// 4were saved but 2 used the same favicon, therefor the unique result should be only 2.
+
+	favicons, err := svc.GetAvailableFavicons(favUser)
+	if err != nil {
+		t.Errorf("could not get available favicons; %v", err)
+	}
+
+	if len(favicons) != 2 {
+		t.Errorf("expected 2 results but got %d", len(favicons))
+	}
+
+	// single favicon
+	// -------------------------------------------------------------------------------------------------
+	favicon, err := svc.GetFaviconByID(favicons[0].Name)
+	if err != nil {
+		t.Errorf("could not get a favicon by it's ID; %v", err)
+	}
+	if len(favicon.Payload) <= 0 {
+		t.Errorf("the fetched favicon has no payload")
+	}
+
+	_, err = svc.GetFaviconByID("random_ID")
+	if err == nil {
+		t.Errorf("expected error because of wrong ID")
+	}
+
+	_, err = svc.GetFaviconByID("")
+	if err == nil {
+		t.Errorf("expected error because of missing ID")
+	}
+
+	// no favicons
+	// -------------------------------------------------------------------------------------------------
+	var unknownUser = security.User{
+		Username:    uuid.NewString(),
+		Email:       "a.b@c.de",
+		DisplayName: "Unknown_" + uuid.NewString(),
+	}
+	favicons, err = svc.GetAvailableFavicons(unknownUser)
+	if err != nil {
+		t.Errorf("could not get available favicons; %v", err)
+	}
+	if len(favicons) != 0 {
+		t.Errorf("expected 0 results but got %d", len(favicons))
+	}
+}
+
+//go:embed Wikipedia-logo.png
+var wikipediaLogo []byte
+
+//go:embed Example.png
+var examplePng []byte
+
+//go:embed orf.at.html
+var orfAT []byte
+
+//go:embed favicon-32x32.png
+var orfFavicon []byte
+
+// hostTestWebserver is used to prevent the use of external resources when downloading images and other content
+func hostTestWebserver(t *testing.T) *httptest.Server {
+	// setup a test-server
+	// ------------------------------------------------------------------
+	mux := http.NewServeMux()
+	writePayload := func(w http.ResponseWriter, payload []byte) {
+		w.Header().Add("content-length", fmt.Sprintf("%d", len(payload)))
+		if _, err := w.Write(payload); err != nil {
+			t.Fatalf("%v", err)
+		}
+	}
+	writeHTMLPayload := func(w http.ResponseWriter, payload []byte) {
+		w.Header().Add("content-length", fmt.Sprintf("%d", len(payload)))
+		w.Header().Add("content-type", "text/html")
+		if _, err := w.Write(payload); err != nil {
+			t.Fatalf("%v", err)
+		}
+	}
+
+	mux.HandleFunc("/Wikipedia-logo.png", func(w http.ResponseWriter, r *http.Request) { writePayload(w, wikipediaLogo) })
+	mux.HandleFunc("/Example.png", func(w http.ResponseWriter, r *http.Request) { writePayload(w, examplePng) })
+	mux.HandleFunc("/orf.at/favicon-32x32.png", func(w http.ResponseWriter, r *http.Request) { writePayload(w, orfFavicon) })
+	mux.HandleFunc("/orf.at", func(w http.ResponseWriter, r *http.Request) { writeHTMLPayload(w, orfAT) })
+
+	return httptest.NewServer(mux)
 }

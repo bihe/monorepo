@@ -105,6 +105,7 @@ func Layout(model LayoutModel, style, navigation, content g.Node, searchURL stri
 				// scripts
 				// TODO: extension point to combine/minify scripts
 				h.Script(h.Src("/public/js/htmx.min.js")),
+				h.Script(h.Src("/public/js/_hyperscript.min.js")),
 				h.Script(h.Src("/public/bootstrap/js/popper.min.js")),
 				h.Script(h.Src("/public/bootstrap/js/bootstrap.bundle.min.js")),
 				h.Script(h.Src("/public/js/Sortable.min.js")),

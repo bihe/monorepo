@@ -2,6 +2,7 @@ package web
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
@@ -255,9 +256,6 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 
 const errorFavicon = `<span id="bookmark_favicon_display" class="error_icon">
 <i id="error_tooltip_favicon" class="position_error_icon bi bi-exclamation-square-fill" data-bs-toggle="tooltip" data-bs-title="%s"></i>
-<div class="bookmark_favicon_error_text">
-	<span class="alert alert-danger">%s</span>
-</div>
 </span>
 
 <script type="text/javascript">
@@ -266,6 +264,47 @@ const errorFavicon = `<span id="bookmark_favicon_display" class="error_icon">
 `
 const favIconImage = `<img id="bookmark_favicon_display" class="bookmark_favicon_preview" src="/bm/favicon/temp/%s">
 <input type="hidden" name="bookmark_Favicon" value="%s"/>`
+
+const existingFaviconImage = `<img id="bookmark_favicon_display" class="bookmark_favicon_preview" src="/bm/favicon/raw/%s">
+<input type="hidden" name="bookmark_Favicon" value="%s"/>`
+
+// AvailableFaviconsDialog shows the dialog to edit favicons
+func (t *TemplateHandler) AvailableFaviconsDialog() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := common.EnsureUser(r)
+		favicons, err := t.App.GetAvailableFavicons(*user)
+		if err != nil {
+			t.Logger.Error(fmt.Sprintf("could not get available favicons for user '%s'", user.DisplayName), logging.ErrV(err), logging.LogV("username", user.Username))
+		}
+		html.FaviconDialog(favicons).Render(w)
+	}
+}
+
+func decodeBase64(input string) string {
+	decode, err := base64.StdEncoding.DecodeString(input)
+	if err != nil {
+		return ""
+	}
+	return string(decode)
+}
+
+// SelectExistingFavicon uses an already existing favicon
+func (t *TemplateHandler) SelectExistingFavicon() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		base64_id := pathParam(r, "id")
+		id := decodeBase64(base64_id)
+		if id == "" {
+			t.Logger.ErrorRequest("could not get the favicon ID", r)
+			triggerToast(w,
+				common.MsgError,
+				"Favicon error!",
+				"Could not select the favicon")
+			w.Write([]byte(fmt.Sprintf(errorFavicon, "Could not select favicon")))
+			return
+		}
+		w.Write([]byte(fmt.Sprintf(existingFaviconImage, base64_id, bookmarks.ExistingFavicon+id)))
+	}
+}
 
 // FetchCustomFaviconURL fetches the given custom favicon URL and returns a new image
 func (t *TemplateHandler) FetchCustomFaviconURL() http.HandlerFunc {
@@ -276,7 +315,11 @@ func (t *TemplateHandler) FetchCustomFaviconURL() http.HandlerFunc {
 		if err != nil {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
 			t.Logger.ErrorRequest(fmt.Sprintf("could not fetch the custom favicon; '%v'", err), r)
-			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
+			triggerToast(w,
+				common.MsgError,
+				"Favicon error!",
+				fmt.Sprintf("Could not fetch favicon: %v", errMsg))
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
 			return
 		}
 		w.Write([]byte(fmt.Sprintf(favIconImage, fav.Name, fav.Name)))
@@ -291,8 +334,12 @@ func (t *TemplateHandler) FetchCustomFaviconFromPage() http.HandlerFunc {
 		fav, err := t.App.LocalExtractFaviconFromURL(pageUrl)
 		if err != nil {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
-			t.Logger.ErrorRequest(fmt.Sprintf("could not fetch the custom favicon; '%v'", err), r)
-			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
+			t.Logger.ErrorRequest(fmt.Sprintf("could not fetch the page favicon; '%v'", err), r)
+			triggerToast(w,
+				common.MsgError,
+				"Favicon error!",
+				fmt.Sprintf("Could not fetch favicon: %v", errMsg))
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
 			return
 		}
 		w.Write([]byte(fmt.Sprintf(favIconImage, fav.Name, fav.Name)))
@@ -310,7 +357,11 @@ func (t *TemplateHandler) UploadCustomFavicon() http.HandlerFunc {
 		if err != nil {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
 			t.Logger.ErrorRequest(fmt.Sprintf("could not upload the custom favicon; '%v'", err), r)
-			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
+			triggerToast(w,
+				common.MsgError,
+				"Favicon error!",
+				fmt.Sprintf("Could not upload the custom favicon: %v", errMsg))
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
 			return
 		}
 		defer file.Close()
@@ -318,34 +369,70 @@ func (t *TemplateHandler) UploadCustomFavicon() http.HandlerFunc {
 		cType := meta.Header.Get("Content-Type")
 		if !strings.HasPrefix(cType, "image") {
 			t.Logger.ErrorRequest(fmt.Sprintf("only image types are supported - got '%s'", cType), r)
-			w.Write([]byte(fmt.Sprintf(errorFavicon, "Only an image mimetype is supported!", "Only an image mimetype is supported!")))
+			triggerToast(w,
+				common.MsgError,
+				"Favicon error!",
+				"Only an image mimetype is supported!")
+			w.Write([]byte(fmt.Sprintf(errorFavicon, "Only an image mimetype is supported!")))
 			return
 		}
 		payload, err := io.ReadAll(file)
 		if err != nil {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
 			t.Logger.ErrorRequest(fmt.Sprintf("could not read data of upload '%s'", cType), r)
-			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
+			triggerToast(w,
+				common.MsgError,
+				"Favicon error!",
+				fmt.Sprintf("Could not read data of upload: %v!", errMsg))
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
 			return
 		}
 		fav, err := t.App.WriteLocalFavicon(meta.Filename, cType, payload)
 		if err != nil {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
-			t.Logger.ErrorRequest(fmt.Sprintf("could not fetch the custom favicon; '%v'", err), r)
-			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg, errMsg)))
+			t.Logger.ErrorRequest(fmt.Sprintf("could not write the custom favicon; '%v'", err), r)
+			triggerToast(w,
+				common.MsgError,
+				"Favicon error!",
+				fmt.Sprintf("Could not write the custom favicon: %v!", errMsg))
+			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
 			return
 		}
 		w.Write([]byte(fmt.Sprintf(favIconImage, fav.Name, fav.Name)))
 	}
 }
 
-// GetFaviconByID returns a stored favicon for the provided ID
-func (t *TemplateHandler) GetFaviconByID() http.HandlerFunc {
+// GetFaviconByBookmarkID returns the favicon of a given bookmark
+func (t *TemplateHandler) GetFaviconByBookmarkID() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := common.EnsureUser(r)
 		id := pathParam(r, "id")
-		t.Logger.InfoRequest(fmt.Sprintf("try to get favicon with the given ID '%s'", id), r)
+		t.Logger.InfoRequest(fmt.Sprintf("try to get bookmark's favicon with the given ID '%s'", id), r)
 		favicon, err := t.App.GetBookmarkFavicon(id, *user)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get favicon by ID; '%v'", err), r)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		http.ServeContent(w, r, favicon.Name, favicon.Modified, bytes.NewReader(favicon.Payload))
+	}
+}
+
+// GetFaviconByID returns a stored favicon by the provided object-ID
+// the object-ID is base64 encoded
+func (t *TemplateHandler) GetFaviconByID() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		encodedID := pathParam(r, "id")
+		decodedBytes, err := base64.StdEncoding.DecodeString(encodedID)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get decode ID; '%v'", err), r)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		id := string(decodedBytes)
+
+		t.Logger.InfoRequest(fmt.Sprintf("try to get favicon with the given ID '%s'", id), r)
+		favicon, err := t.App.GetFaviconByID(id)
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get favicon by ID; '%v'", err), r)
 			w.WriteHeader(http.StatusNotFound)

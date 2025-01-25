@@ -39,6 +39,11 @@ func GetFaviconFromURL(url string) (content Content, err error) {
 		iconURL string
 	)
 
+	if !strings.HasPrefix(url, "http") {
+		// if no scheme is supplied "assume" https as standard
+		url = "https://" + url
+	}
+
 	if scheme, baseURL, pageURL, err = parseURL(url); err != nil {
 		return
 	}
@@ -71,9 +76,17 @@ func GetFaviconFromURL(url string) (content Content, err error) {
 		// local to the page-URL
 		iconURL = strings.ReplaceAll(iconURL, "./", "/")
 		iconURL = pageURL + iconURL
+	} else if strings.HasPrefix(iconURL, ":///") {
+		// in this case neither the scheme nor the base-URL is provided
+		// add the known-existing parts
+		favFile := strings.ReplaceAll(iconURL, ":///", "")
+		iconURL = baseURL + "/" + favFile
 	} else if !strings.HasPrefix(iconURL, "http") {
 		// if a file without anything is specified "favicon.png"
 		// then use the page-url
+		if !strings.HasSuffix(pageURL, "/") {
+			pageURL += "/"
+		}
 		iconURL = pageURL + iconURL
 	}
 
@@ -199,7 +212,6 @@ func faviconParser(doc *html.Node, faviconDef string) (string, error) {
 		foundFavDev := false
 		favHrf := ""
 		for _, a := range node.Attr {
-
 			switch a.Key {
 			case "rel":
 				foundFavDev = a.Val == faviconDef
@@ -213,10 +225,15 @@ func faviconParser(doc *html.Node, faviconDef string) (string, error) {
 		return ""
 	}
 
+	foundIcon := false
 	crawler = func(node *html.Node) {
+		if foundIcon {
+			return
+		}
 		if node.Type == html.ElementNode && node.Data == "link" {
 			link = node
 			if extractFavIconURL(link, faviconDef) != "" {
+				foundIcon = true
 				return
 			}
 			for child := node.FirstChild; child != nil; child = child.NextSibling {

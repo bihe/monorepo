@@ -21,9 +21,6 @@ func isHtmlLike(payload []byte) bool {
 	return strings.Contains(input, "<html")
 }
 
-// IDEA: click on favicon - take over the payload ID and instruct htmx to use the given ID as
-// the favicon (and display it); use the given ID as the hidden id of the favIconImage @see FetchCustomFaviconURL
-
 func FaviconDialog(favicons []bookmarks.ObjectInfo) g.Node {
 	return h.Div(h.ID("modal"), g.Attr("_", "on closeModal add .closing then wait for animationend then remove me"),
 		h.Div(h.Class("modal-underlay"), g.Attr("_", "on click trigger closeModal")),
@@ -31,9 +28,17 @@ func FaviconDialog(favicons []bookmarks.ObjectInfo) g.Node {
 			h.Div(h.ID("favicon_grid"),
 				g.Map(favicons, func(f bookmarks.ObjectInfo) g.Node {
 					if isHtmlLike(f.Payload) {
+						// unfortunately we have stored some BS, so do not display it
 						return g.Text("")
 					}
-					return h.Img(h.Width("42px"), h.Height("42px"), h.Title(fmt.Sprintf("payload-size: %d", len(f.Payload))), h.Class("favicon_view"), h.Alt("fi"), h.Src(fmt.Sprintf("/bm/favicon/raw/%s?t=%d", base64enc(f.Name), f.Modified.Nanosecond())), h.Loading("lazy"))
+					return h.Img(
+						g.Attr("hx-get", fmt.Sprintf("/bm/favicon/select/%s", base64enc(f.Name))),
+						g.Attr("hx-trigger", "click"),
+						g.Attr("hx-target", "#bookmark_favicon_display"),
+						g.Attr("hx-swap", "outerHTML"),
+						g.Attr("_", "on click trigger closeModal"),
+						h.Width("42px"), h.Height("42px"), h.Title(fmt.Sprintf("payload-size: %d", len(f.Payload))), h.Class("favicon_view"), h.Alt("fi"), h.Src(fmt.Sprintf("/bm/favicon/raw/%s?t=%d", base64enc(f.Name), f.Modified.Nanosecond())), h.Loading("lazy"),
+					)
 				}),
 			),
 			h.Div(h.Class("mx-auto p-2"), h.Style("width: 90px;"),

@@ -63,6 +63,7 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 		r.Post("/favicon/page", templateHandler.FetchCustomFaviconFromPage())
 		r.Post("/favicon/url", templateHandler.FetchCustomFaviconURL())
 		r.Get("/favicon/{id}", templateHandler.GetFaviconByBookmarkID())
+		r.Get("/favicon/select/{id}", templateHandler.SelectExistingFavicon())
 		r.Get("/favicon/raw/{id}", templateHandler.GetFaviconByID())
 		r.Get("/favicon/temp/{id}", templateHandler.GetTempFaviconByID())
 		r.Post("/favicon/upload", templateHandler.UploadCustomFavicon())

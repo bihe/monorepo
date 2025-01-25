@@ -31,6 +31,7 @@ type BookmarkRepository interface {
 
 	GetBookmarkByID(id, username string) (Bookmark, error)
 	GetFolderByPath(path, username string) (Bookmark, error)
+	NumBookmarksReferencingFavicon(faviconID, username string) (int, error)
 }
 
 // CreateBookmarkRepo creates a new repository using read and write connections
@@ -145,6 +146,14 @@ func (r *dbBookmarkRepository) GetPathChildCount(path, username string) ([]NodeC
 // GetAllPaths returns all available paths for the given username
 func (r *dbBookmarkRepository) GetAllPaths(username string) ([]string, error) {
 	return r.availablePaths(username)
+}
+
+// NumBookmarksReferencingFavicon returns the number of bookmarks which use the same favicon
+func (r *dbBookmarkRepository) NumBookmarksReferencingFavicon(faviconID, username string) (int, error) {
+	var num int64
+	h := r.con.R().Model(&Bookmark{}).Where("favicon = ?", faviconID).Count(&num)
+	return int(num), h.Error
+
 }
 
 // modify data

@@ -824,3 +824,66 @@ func TestConcurrentWriteForConnection(t *testing.T) {
 		t.Errorf("could not create the bookmarks: %v", err)
 	}
 }
+
+func TestBookmarksReferencingSameFavicon(t *testing.T) {
+	repo, db := repository(t)
+	defer db.Close()
+
+	userName := "userName"
+	favicon := "favicon"
+
+	folder1 := store.Bookmark{
+		DisplayName: "Folder1",
+		Path:        "/",
+		Favicon:     favicon,
+		Type:        store.Folder,
+		UserName:    userName,
+	}
+	bm, err := repo.Create(folder1)
+	if err != nil {
+		t.Errorf("Could not create bookmarks: %v", err)
+	}
+	assert.NotEmpty(t, bm.ID)
+
+	folder2 := store.Bookmark{
+		DisplayName: "Folder2",
+		Path:        "/",
+		Favicon:     favicon,
+		Type:        store.Folder,
+		UserName:    userName,
+	}
+	bm, err = repo.Create(folder2)
+	if err != nil {
+		t.Errorf("Could not create bookmarks: %v", err)
+	}
+	assert.NotEmpty(t, bm.ID)
+
+	folder3 := store.Bookmark{
+		DisplayName: "Folder3",
+		Path:        "/",
+		Type:        store.Folder,
+		UserName:    userName,
+	}
+	bm, err = repo.Create(folder3)
+	if err != nil {
+		t.Errorf("Could not create bookmarks: %v", err)
+	}
+	assert.NotEmpty(t, bm.ID)
+
+	num, err := repo.NumBookmarksReferencingFavicon(favicon, userName)
+	if err != nil {
+		t.Errorf("could not count favicons; %v", err)
+	}
+	if num != 2 {
+		t.Error("expected 2 items to reference the favicon")
+	}
+
+	num, err = repo.NumBookmarksReferencingFavicon("NO_ID", userName)
+	if err != nil {
+		t.Errorf("could not count favicons; %v", err)
+	}
+	if num == 2 {
+		t.Error("expected 0 items to reference the favicon")
+	}
+
+}

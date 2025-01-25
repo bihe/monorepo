@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -29,11 +30,15 @@ type Application struct {
 	FaviconPath string
 }
 
+// ExistingFavicon is used to prefix a favicon ID which is already available
+const ExistingFavicon = "existing://"
+
 // CreateBookmark stores a new bookmark
 func (s *Application) CreateBookmark(bm Bookmark, user security.User) (*Bookmark, error) {
 	var (
 		savedItem store.Bookmark
 		t         store.NodeType
+		err       error
 	)
 
 	if bm.Path == "" || bm.DisplayName == "" {
@@ -48,31 +53,9 @@ func (s *Application) CreateBookmark(bm Bookmark, user security.User) (*Bookmark
 	// when a favicon is supplied, fetch the local temp favicon with the given id
 	// store the favicon in the repository and remove the old stored favicon
 	if bm.Favicon != "" {
-		obj, err := s.GetLocalFaviconByID(bm.Favicon)
+		bm.Favicon, err = s.saveFavicon(bm.Favicon)
 		if err != nil {
-			s.Logger.Error(fmt.Sprintf("wanted to access the provided favicon '%s' but got an error; %v", bm.Favicon, err))
-			return nil, fmt.Errorf("could not access the specified favicon")
-		}
-		// got a payload which should be persisted in the store
-		err = s.FavStore.InUnitOfWork(func(favRepo store.FaviconRepository) error {
-			if _, e := favRepo.Save(store.Favicon{
-				ID:           obj.Name,
-				Payload:      obj.Payload,
-				LastModified: obj.Modified,
-			}); e != nil {
-				return e
-			}
-			// the favicon was saved in the store - we can delete the local one
-			if e := s.RemoveLocalFavicon(obj.Name); e != nil {
-				s.Logger.Error(fmt.Sprintf("could not remove the local favicon; %v", err))
-				// we do not fail here, not worth the fail the overall operation if only the
-				// removal of the local file is not possible
-			}
-			return nil
-		})
-		if err != nil {
-			s.Logger.Error(fmt.Sprintf("got an error while trying to store the favicon; %v", err))
-			return nil, fmt.Errorf("could not store the specified favicon; %v", err)
+			return nil, err
 		}
 	}
 
@@ -255,7 +238,15 @@ func (s *Application) Delete(id string, user security.User) error {
 
 	// when a favicon is available remove it, if it is the only remaining one
 	if faviconId != "" {
-		err := s.FavStore.InUnitOfWork(func(favRepo store.FaviconRepository) error {
+		numFavicon, err := s.BookmarkStore.NumBookmarksReferencingFavicon(faviconId, user.Username)
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("could not check favicon references; %v", err))
+			return fmt.Errorf("error counting favicon references; %v", err)
+		}
+		if numFavicon != 0 {
+			return nil
+		}
+		err = s.FavStore.InUnitOfWork(func(favRepo store.FaviconRepository) error {
 			obj, e := favRepo.Get(faviconId)
 			if e != nil {
 				s.Logger.Warn(fmt.Sprintf("the specified favicon '%s' was not available in the store", faviconId))
@@ -327,31 +318,9 @@ func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark
 	// store the favicon in the repository and remove the old stored favicon
 	favicon := bm.Favicon
 	if favicon != "" && favicon != existing.Favicon {
-		obj, err := s.GetLocalFaviconByID(favicon)
+		favicon, err = s.saveFavicon(bm.Favicon)
 		if err != nil {
-			s.Logger.Error(fmt.Sprintf("wanted to access the provided favicon '%s' but got an error; %v", favicon, err))
-			return nil, fmt.Errorf("could not access the specified favicon")
-		}
-		// got a payload which should be persisted in the store
-		err = s.FavStore.InUnitOfWork(func(favRepo store.FaviconRepository) error {
-			if _, e := favRepo.Save(store.Favicon{
-				ID:           obj.Name,
-				Payload:      obj.Payload,
-				LastModified: obj.Modified,
-			}); e != nil {
-				return e
-			}
-			// the favicon was saved in the store - we can delete the local one
-			if e := s.RemoveLocalFavicon(obj.Name); e != nil {
-				s.Logger.Error(fmt.Sprintf("could not remove the local favicon; %v", err))
-				// we do not fail here, not worth the fail the overall operation if only the
-				// removal of the local file is not possible
-			}
-			return nil
-		})
-		if err != nil {
-			s.Logger.Error(fmt.Sprintf("got an error while trying to store the favicon; %v", err))
-			return nil, fmt.Errorf("could not store the specified favicon; %v", err)
+			return nil, err
 		}
 	} else {
 		// if no favicon change was found re-use the existing favicon
@@ -569,7 +538,7 @@ func (s *Application) GetAvailableFavicons(user security.User) ([]ObjectInfo, er
 	for faviconID := range uniqueFavicons {
 		favicon, err := s.FavStore.Get(faviconID)
 		if err != nil {
-			return nil, fmt.Errorf("could not get the favicon by id '%s'; %v", faviconID, err)
+			continue
 		}
 		if len(favicon.Payload) == 0 {
 			continue
@@ -593,10 +562,18 @@ func (s *Application) GetAvailableFavicons(user security.User) ([]ObjectInfo, er
 		}
 		i += 1
 	}
+
+	// be consistent in sorting
+	sort.Slice(favicons, func(i, j int) bool {
+		a := favicons[i]
+		b := favicons[j]
+		return a.Name < b.Name
+	})
+
 	return favicons, nil
 }
 
-// GetFaviconByID retrievs the favicon payload from the store
+// GetFaviconByID retrieves the favicon payload from the store
 func (s *Application) GetFaviconByID(faviconID string) (*ObjectInfo, error) {
 	if faviconID == "" {
 		return nil, app.ErrValidation("missing favicon id parameter")
@@ -739,6 +716,44 @@ func (s *Application) WriteLocalFavicon(name, mimeType string, payload []byte) (
 		Modified: time.Now(),
 	}
 	return &fi, nil
+}
+
+func (s *Application) saveFavicon(providedID string) (string, error) {
+	faviconID := providedID
+
+	// an existing favicon, which does not need to be processed is indicated with the given Prefix
+	// if this is found, remote the prefix and return to caller
+	if strings.HasPrefix(faviconID, ExistingFavicon) {
+		return strings.ReplaceAll(faviconID, ExistingFavicon, ""), nil
+	}
+
+	obj, err := s.GetLocalFaviconByID(providedID)
+	if err != nil {
+		s.Logger.Error(fmt.Sprintf("wanted to access the provided favicon '%s' but got an error; %v", providedID, err))
+		return "", fmt.Errorf("could not access the specified favicon")
+	}
+	// got a payload which should be persisted in the store
+	err = s.FavStore.InUnitOfWork(func(favRepo store.FaviconRepository) error {
+		if _, e := favRepo.Save(store.Favicon{
+			ID:           obj.Name,
+			Payload:      obj.Payload,
+			LastModified: obj.Modified,
+		}); e != nil {
+			return e
+		}
+		// the favicon was saved in the store - we can delete the local one
+		if e := s.RemoveLocalFavicon(obj.Name); e != nil {
+			s.Logger.Error(fmt.Sprintf("could not remove the local favicon; %v", err))
+			// we do not fail here, not worth the fail the overall operation if only the
+			// removal of the local file is not possible
+		}
+		return nil
+	})
+	if err != nil {
+		s.Logger.Error(fmt.Sprintf("got an error while trying to store the favicon; %v", err))
+		return "", fmt.Errorf("could not store the specified favicon; %v", err)
+	}
+	return faviconID, nil
 }
 
 // ---- Internals ----

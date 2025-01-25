@@ -265,6 +265,9 @@ const errorFavicon = `<span id="bookmark_favicon_display" class="error_icon">
 const favIconImage = `<img id="bookmark_favicon_display" class="bookmark_favicon_preview" src="/bm/favicon/temp/%s">
 <input type="hidden" name="bookmark_Favicon" value="%s"/>`
 
+const existingFaviconImage = `<img id="bookmark_favicon_display" class="bookmark_favicon_preview" src="/bm/favicon/raw/%s">
+<input type="hidden" name="bookmark_Favicon" value="%s"/>`
+
 // AvailableFaviconsDialog shows the dialog to edit favicons
 func (t *TemplateHandler) AvailableFaviconsDialog() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -274,6 +277,32 @@ func (t *TemplateHandler) AvailableFaviconsDialog() http.HandlerFunc {
 			t.Logger.Error(fmt.Sprintf("could not get available favicons for user '%s'", user.DisplayName), logging.ErrV(err), logging.LogV("username", user.Username))
 		}
 		html.FaviconDialog(favicons).Render(w)
+	}
+}
+
+func decodeBase64(input string) string {
+	decode, err := base64.StdEncoding.DecodeString(input)
+	if err != nil {
+		return ""
+	}
+	return string(decode)
+}
+
+// SelectExistingFavicon uses an already existing favicon
+func (t *TemplateHandler) SelectExistingFavicon() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		base64_id := pathParam(r, "id")
+		id := decodeBase64(base64_id)
+		if id == "" {
+			t.Logger.ErrorRequest("could not get the favicon ID", r)
+			triggerToast(w,
+				common.MsgError,
+				"Favicon error!",
+				"Could not select the favicon")
+			w.Write([]byte(fmt.Sprintf(errorFavicon, "Could not select favicon")))
+			return
+		}
+		w.Write([]byte(fmt.Sprintf(existingFaviconImage, base64_id, bookmarks.ExistingFavicon+id)))
 	}
 }
 

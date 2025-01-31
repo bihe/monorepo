@@ -363,8 +363,8 @@ a.bookmark_path {
   margin-top: 10vh;
 
   /* Sizing for visible dialog */
-  width: 80%;
-  max-width: 600px;
+  width: 75vw;
+  max-width: 75vw;
 
   /* Display properties for visible dialog*/
   border: solid 1px #999;
@@ -435,5 +435,18 @@ a.bookmark_path {
 }
 
 .favicon_view {
-  padding: 5px;
+  padding: 3px;
+}
+
+.favicon_view_selected {
+  padding: 3px;
+  border: dashed 3px red;
+  zoom: 1.5;
+}
+
+.favicon_grid_container {
+  overflow: auto;
+  scrollbar-color: #6c757d rgba(173, 181, 189);
+  scrollbar-width: thin;
+  max-height: 50vh;
 }

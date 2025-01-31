@@ -22,6 +22,7 @@ type Bookmark struct {
 	Error              string
 	Close              bool
 	TStamp             string
+	CurrentFavicon     string
 }
 
 type ValidatorInput struct {
@@ -70,20 +71,23 @@ var editLogic string
 func EditBookmarks(bm Bookmark, paths []string) g.Node {
 
 	var (
-		favicon       g.Node
-		faviconDetail g.Node
-		editDialog    g.Node
+		favicon         g.Node
+		faviconDetail   g.Node
+		editDialog      g.Node
+		availFaviconURL string
 	)
 
+	availFaviconURL = "/bm/favicon/available"
 	if bm.ID.Val != "-1" {
 		faviconDetail = h.Img(h.ID("bookmark_favicon_display"), h.Class(common.ClassCond("bookmark_favicon_preview", "invert", bm.InvertFaviconColor)), h.Src("/bm/favicon/"+bm.ID.Val+"?t="+bm.TStamp))
+		availFaviconURL += "?current=" + base64enc(bm.CurrentFavicon)
 	} else {
 		faviconDetail = h.A(h.ID("bookmark_favicon_display"), h.Span(h.Class("bookmark_empty"), h.I(h.Class("bookmark_favicon_empty_icon bi bi-question-lg"))))
 	}
 
 	favicon = h.Span(
 		h.ID("bookmark_favicon_select"),
-		g.Attr("hx-get", "/bm/favicon/edit"),
+		g.Attr("hx-get", availFaviconURL),
 		g.Attr("hx-target", "body"),
 		g.Attr("hx-swap", "beforeend"),
 		faviconDetail,

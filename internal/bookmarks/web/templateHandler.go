@@ -244,7 +244,7 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 			bm.CustomFavicon = html.ValidatorInput{Valid: true}
 			bm.InvertFaviconColor = (b.InvertFaviconColor == 1)
 			bm.TStamp = b.TStamp()
-
+			bm.CurrentFavicon = b.Favicon
 			paths, err = t.App.GetAllPaths(*user)
 			if err != nil {
 				t.Logger.ErrorRequest(fmt.Sprintf("could not get all paths for bookmarks; '%v'", err), r)
@@ -272,11 +272,12 @@ const existingFaviconImage = `<img id="bookmark_favicon_display" class="bookmark
 func (t *TemplateHandler) AvailableFaviconsDialog() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := common.EnsureUser(r)
+		currFavicon := queryParam(r, "current")
 		favicons, err := t.App.GetAvailableFavicons(*user)
 		if err != nil {
 			t.Logger.Error(fmt.Sprintf("could not get available favicons for user '%s'", user.DisplayName), logging.ErrV(err), logging.LogV("username", user.Username))
 		}
-		html.FaviconDialog(favicons).Render(w)
+		html.FaviconDialog(decodeBase64(currFavicon), favicons).Render(w)
 	}
 }
 

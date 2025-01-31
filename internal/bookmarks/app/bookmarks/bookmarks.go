@@ -556,7 +556,8 @@ func (s *Application) GetAvailableFavicons(user security.User) ([]ObjectInfo, er
 	for key := range uniquePayload {
 		favicon := uniquePayload[key]
 		favicons[i] = ObjectInfo{
-			Payload:  favicon.Payload,
+			// do not copy the payload around
+			//Payload:  favicon.Payload,
 			Name:     favicon.ID,
 			Modified: favicon.LastModified,
 		}

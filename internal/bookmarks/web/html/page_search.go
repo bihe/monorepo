@@ -53,6 +53,7 @@ func SearchContent(search string, items []bookmarks.Bookmark, ell EllipsisValues
 						h.Class("bookmark_name"),
 						h.Href(b.URL),
 						h.Title(b.DisplayName),
+						h.Target("_blank"),
 						g.Text(common.Ellipsis(b.DisplayName, ell.NodeLen, "...")),
 					)),
 					g.If(b.Type == bookmarks.Folder, h.A(

@@ -36,6 +36,7 @@ type TemplateHandler struct {
 const defaultPageSize = 20
 const searchParam = "q"
 const skipParam = "skip"
+const searchURL = "mydms"
 
 // DisplayDocuments shows the available documents for the given user
 func (t *TemplateHandler) DisplayDocuments() http.HandlerFunc {
@@ -56,7 +57,7 @@ func (t *TemplateHandler) DisplayDocuments() http.HandlerFunc {
 			html.DocumentsNavigation(search),
 			html.DocumentsContent(
 				html.DocumentList(numDocs, next, documents), search,
-			), search,
+			), searchURL,
 		).Render(w)
 	}
 }
@@ -408,7 +409,7 @@ func (t *TemplateHandler) versionString() string {
 }
 
 func (t *TemplateHandler) pageModel(pageTitle, searchStr, favicon string, user security.User) base.LayoutModel {
-	return common.CreatePageModel("/mydms", pageTitle, searchStr, favicon, t.versionString(), t.Env, user)
+	return common.CreatePageModel("/"+searchURL, pageTitle, searchStr, favicon, t.versionString(), t.Env, user)
 }
 
 func ensureUser(r *http.Request) *security.User {

@@ -2,6 +2,7 @@ package document
 
 import (
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"testing"
 	"time"
@@ -549,5 +550,136 @@ func TestSearchLists(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf(expectations, err)
 	}
+}
 
+//go:embed mydms.ddl
+var mydmsSchema string
+
+// TestSearchIssueUmlaute reproduces the issue with searching for german Umlaute (Ö,Ä, ...) does not work
+func TestSearchIssueUmlaute(t *testing.T) {
+	con := shared.NewConnForSqlite(":memory:")
+	con.DB.MustExec(mydmsSchema)
+	repo, err := NewRepository(con)
+	if err != nil {
+		t.Fatalf("could not create new repository; %v", err)
+	}
+
+	doc, err := repo.Save(DocEntity{
+		Title:         "TEST_öÄÜ",
+		SenderList:    "SenÖÄüder",
+		TagList:       "Tag_öäÜ",
+		InvoiceNumber: sql.NullString{String: "invoice_ÄÄÄ", Valid: true},
+	}, shared.Atomic{})
+	if err != nil {
+		t.Errorf("could not create a document; %v", err)
+	}
+
+	if doc.ID == "" {
+		t.Errorf("expected ID creation; got %v", doc.ID)
+	}
+
+	// simple search, return all
+	result, err := repo.Search(DocSearch{}, make([]OrderBy, 0))
+	if err != nil {
+		t.Errorf("error searching for documents; %v", err)
+	}
+	if result.Count == 0 {
+		t.Errorf("expected to find results, got %d", result.Count)
+	}
+
+	// search for part of the Title
+	result, err = repo.Search(DocSearch{
+		Title: "TEST",
+	}, make([]OrderBy, 0))
+	if err != nil {
+		t.Errorf("could not search for documents; %v", err)
+	}
+	if result.Count == 0 {
+		t.Errorf("expected to find results for 'TEST', got %d", result.Count)
+	}
+
+	// search for Umlaute (ö,ä,ü)
+	result, err = repo.Search(DocSearch{
+		Title: "öäü",
+	}, make([]OrderBy, 0))
+	if err != nil {
+		t.Errorf("could not search for documents; %v", err)
+	}
+	if result.Count == 0 {
+		t.Errorf("expected to find results for 'öäü', got %d", result.Count)
+	}
+
+	// search for Umlaute (ö,ä,ü) in invoice
+	result, err = repo.Search(DocSearch{
+		Title: "äää",
+	}, make([]OrderBy, 0))
+	if err != nil {
+		t.Errorf("could not search for documents; %v", err)
+	}
+	if result.Count == 0 {
+		t.Errorf("expected to find results for 'äää' in invoicenumber, got %d", result.Count)
+	}
+
+	// search for Umlaute (ö,ä,ü) in Tags
+	result, err = repo.Search(DocSearch{
+		Tag: "ü",
+	}, make([]OrderBy, 0))
+	if err != nil {
+		t.Errorf("could not search for documents; %v", err)
+	}
+	if result.Count == 0 {
+		t.Errorf("expected to find results for 'ü' in Tag, got %d", result.Count)
+	}
+
+	// search for Umlaute (ö,ä,ü) in Senders
+	result, err = repo.Search(DocSearch{
+		Sender: "Ö",
+	}, make([]OrderBy, 0))
+	if err != nil {
+		t.Errorf("could not search for documents; %v", err)
+	}
+	if result.Count == 0 {
+		t.Errorf("expected to find results for 'Ö' in Senders, got %d", result.Count)
+	}
+
+}
+
+func TestSearchListIssueUmlaute(t *testing.T) {
+	con := shared.NewConnForSqlite(":memory:")
+	con.DB.MustExec(mydmsSchema)
+	repo, err := NewRepository(con)
+	if err != nil {
+		t.Fatalf("could not create new repository; %v", err)
+	}
+
+	doc, err := repo.Save(DocEntity{
+		Title:      "Any_Document",
+		SenderList: "ÖÄÜ_Sender_Umlaute",
+		TagList:    "öäü_Tag_Umlaute",
+	}, shared.Atomic{})
+	if err != nil {
+		t.Errorf("could not create a document; %v", err)
+	}
+
+	if doc.ID == "" {
+		t.Errorf("expected ID creation; got %v", doc.ID)
+	}
+
+	// search for senders with the std string "Sender"
+	senders, err := repo.SearchLists("ÖÄÜ", SENDERS)
+	if err != nil {
+		t.Errorf("could not get senders; %v", err)
+	}
+	if len(senders) == 0 {
+		t.Errorf("expected to find a sender for 'ÖÄÜ', got %d", len(senders))
+	}
+
+	// search for senders with the std string "Sender"
+	tags, err := repo.SearchLists("öäü", TAGS)
+	if err != nil {
+		t.Errorf("could not get tags; %v", err)
+	}
+	if len(tags) == 0 {
+		t.Errorf("expected to find a tags for 'öäü', got %d", len(tags))
+	}
 }

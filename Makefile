@@ -74,7 +74,7 @@ go-clean:
 go-update:
 	@echo "  >  Go update dependencies ..."
 	go get -u -t ./...
-	go mod tidy -compat=1.23
+	go mod tidy -compat=1.24
 
 go-build:
 	@echo "  >  Building the monorepo ..."

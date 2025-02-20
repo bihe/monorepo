@@ -7,7 +7,9 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/ncruces/go-sqlite3"
 	_ "github.com/ncruces/go-sqlite3/embed"
+	"github.com/ncruces/go-sqlite3/ext/unicode"
 	"github.com/ncruces/go-sqlite3/gormlite"
 
 	//"gorm.io/driver/sqlite"
@@ -41,6 +43,8 @@ func MustCreateSqliteConn(connURL string) *sql.DB {
 		}
 	}
 
+	// register the unicode extension
+	sqlite3.AutoExtension(unicode.Register)
 	// use the configured sqlite3 driver available
 	db, err := sql.Open("sqlite3", baseDSN)
 	if err != nil {

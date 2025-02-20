@@ -234,15 +234,15 @@ func (rw *dbRepository) Search(s DocSearch, order []OrderBy) (d PagedDocResult, 
 
 	// use the supplied search-object to create the query
 	if s.Title != "" {
-		where += "\nAND ( replace(replace(replace(lower(title), 'Ä', 'ä'), 'Ü', 'ü'), 'Ö', 'ö') LIKE :search OR replace(replace(replace(lower(taglist), 'Ä', 'ä'), 'Ü', 'ü'), 'Ö', 'ö') LIKE :search OR replace(replace(replace(lower(senderlist), 'Ä', 'ä'), 'Ü', 'ü'), 'Ö', 'ö') LIKE :search OR replace(replace(replace(lower(invoicenumber), 'Ä', 'ä'), 'Ü', 'ü'), 'Ö', 'ö') LIKE :search)"
+		where += "\nAND ( lower(title) LIKE :search OR lower(taglist) LIKE :search OR lower(senderlist) LIKE :search OR lower(invoicenumber) LIKE :search)"
 		arg["search"] = "%" + strings.ToLower(s.Title) + "%"
 	}
 	if s.Tag != "" {
-		where += "\nAND replace(replace(replace(lower(taglist), 'Ä', 'ä'), 'Ü', 'ü'), 'Ö', 'ö') LIKE :tag"
+		where += "\nAND lower(taglist) LIKE :tag"
 		arg["tag"] = "%" + strings.ToLower(s.Tag) + "%"
 	}
 	if s.Sender != "" {
-		where += "\nAND replace(replace(replace(lower(senderlist), 'Ä', 'ä'), 'Ü', 'ü'), 'Ö', 'ö') LIKE :sender"
+		where += "\nAND lower(senderlist) LIKE :sender"
 		arg["sender"] = "%" + strings.ToLower(s.Sender) + "%"
 	}
 	if !s.From.IsZero() {
@@ -319,7 +319,7 @@ func (rw *dbRepository) SearchLists(s string, st SearchType) ([]string, error) {
 	search[TAGS] = "taglist"
 	search[SENDERS] = "senderlist"
 
-	query := "SELECT distinct(%s) as search FROM DOCUMENTS WHERE replace(replace(replace(lower(%s), 'Ä', 'ä'), 'Ü', 'ü'), 'Ö', 'ö') LIKE ?"
+	query := "SELECT distinct(%s) as search FROM DOCUMENTS WHERE lower(%s) LIKE ?"
 	query = fmt.Sprintf(query, search[st], search[st])
 
 	rows, err := rw.c.Queryx(query, "%"+strings.ToLower(s)+"%")

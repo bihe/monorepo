@@ -2,13 +2,13 @@ package filestore
 
 import (
 	"bytes"
+	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3iface"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/pkg/logging"
 )
@@ -32,30 +32,27 @@ const mimeType = "application/pdf"
 
 var logger = logging.NewNop()
 
-// Define a mock struct to be used in your unit tests of myFunc.
-// https://github.com/aws/aws-sdk-go/blob/master/service/s3/s3iface/interface.go
 type mockS3Client struct {
-	s3iface.S3API
 }
 
-func (m *mockS3Client) GetObject(input *s3.GetObjectInput) (*s3.GetObjectOutput, error) {
+func (m *mockS3Client) GetObject(ctx context.Context, input *s3.GetObjectInput, fn ...func(*s3.Options)) (*s3.GetObjectOutput, error) {
 	if *input.Key == "" || *input.Key == "null/null" {
 		return nil, fmt.Errorf("could not get object with Key %s", *input.Key)
 	}
 	return &s3.GetObjectOutput{
 		ContentType: aws.String(mimeType),
-		Body:        ioutil.NopCloser(bytes.NewReader([]byte(pdfPayload))),
+		Body:        io.NopCloser(bytes.NewReader([]byte(pdfPayload))),
 	}, nil
 }
 
-func (m *mockS3Client) PutObject(input *s3.PutObjectInput) (*s3.PutObjectOutput, error) {
+func (m *mockS3Client) PutObject(ctx context.Context, input *s3.PutObjectInput, fn ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
 	if *input.Key == "/" {
 		return nil, fmt.Errorf("could not upload object with Key %s", *input.Key)
 	}
 	return &s3.PutObjectOutput{}, nil
 }
 
-func (m *mockS3Client) DeleteObject(input *s3.DeleteObjectInput) (*s3.DeleteObjectOutput, error) {
+func (m *mockS3Client) DeleteObject(ctx context.Context, input *s3.DeleteObjectInput, fn ...func(*s3.Options)) (*s3.DeleteObjectOutput, error) {
 	if *input.Key == "/" {
 		return nil, fmt.Errorf("could not delete object with Key %s", *input.Key)
 	}
@@ -63,8 +60,14 @@ func (m *mockS3Client) DeleteObject(input *s3.DeleteObjectInput) (*s3.DeleteObje
 }
 
 func TestInitClient(t *testing.T) {
-	svc := NewService(logger, S3Config{})
+	svc := NewService(context.TODO(), logger, S3Config{})
 	err := svc.InitClient()
+	if err != nil {
+		t.Errorf("error initializing client")
+	}
+
+	svc = NewService(context.TODO(), logger, S3Config{EndPoint: "http://minio:9000"})
+	err = svc.InitClient()
 	if err != nil {
 		t.Errorf("error initializing client")
 	}
@@ -72,8 +75,8 @@ func TestInitClient(t *testing.T) {
 
 func TestGetS3Entry(t *testing.T) {
 	service := s3service{
-		config: S3Config{},
-		client: &mockS3Client{},
+		config:   S3Config{},
+		s3client: &mockS3Client{},
 	}
 
 	cases := []struct {
@@ -130,8 +133,8 @@ func TestGetS3Entry(t *testing.T) {
 
 func TestSaveS3Entry(t *testing.T) {
 	service := s3service{
-		config: S3Config{},
-		client: &mockS3Client{},
+		config:   S3Config{},
+		s3client: &mockS3Client{},
 	}
 	err := service.SaveFile(FileItem{
 		FileName:   "test.pdf",
@@ -156,8 +159,8 @@ func TestSaveS3Entry(t *testing.T) {
 
 func TestDeleteS3Entry(t *testing.T) {
 	service := s3service{
-		config: S3Config{},
-		client: &mockS3Client{},
+		config:   S3Config{},
+		s3client: &mockS3Client{},
 	}
 	err := service.DeleteFile("test.pdf")
 	if err != nil {

@@ -2,15 +2,16 @@ package filestore
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"golang.binggl.net/monorepo/pkg/logging"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 // --------------------------------------------------------------------------
@@ -37,10 +38,6 @@ type FileService interface {
 	DeleteFile(filePath string) (err error)
 }
 
-// --------------------------------------------------------------------------
-// interface implementation
-// --------------------------------------------------------------------------
-
 // S3Config defines the parameters to interact with S3 storage
 type S3Config struct {
 	Region   string
@@ -51,43 +48,63 @@ type S3Config struct {
 }
 
 // NewService returns a new instance of the fileservice
-func NewService(logger logging.Logger, config S3Config) FileService {
+func NewService(ctx context.Context, logger logging.Logger, config S3Config) FileService {
 	var svc FileService
 	{
-		svc = &s3service{config: config, logger: logger}
+		svc = &s3service{config: config, logger: logger, ctx: ctx}
 		svc = ServiceLoggingMiddleware(logger)(svc)
 	}
 	return svc
 }
 
+// --------------------------------------------------------------------------
+// interface implementation
+// --------------------------------------------------------------------------
+
+// define an interface to use it for mocking
+// https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/migrate-gosdk.html#mocking-and-iface
+type s3ServiceClient interface {
+	GetObject(context.Context, *s3.GetObjectInput, ...func(*s3.Options)) (*s3.GetObjectOutput, error)
+	PutObject(context.Context, *s3.PutObjectInput, ...func(*s3.Options)) (*s3.PutObjectOutput, error)
+	DeleteObject(context.Context, *s3.DeleteObjectInput, ...func(*s3.Options)) (*s3.DeleteObjectOutput, error)
+}
+
 type s3service struct {
-	logger logging.Logger
-	config S3Config
-	client s3iface.S3API
+	ctx      context.Context
+	logger   logging.Logger
+	config   S3Config
+	s3client s3ServiceClient
 }
 
 // InitClient determines if the backend store client was already initialized
-// if it is not initilized it creates a new client using the supplied config
+// if it is not initialized it creates a new client using the supplied config
 func (s *s3service) InitClient() (err error) {
-	if s.client == nil {
-		forcePathStyle := aws.Bool(false)
-		if s.config.EndPoint != "" {
-			forcePathStyle = aws.Bool(true)
-		}
-		s.logger.Debug(fmt.Sprintf("s3 config: endpoint=%s (forcePathStyle=%t)", s.config.EndPoint, *forcePathStyle))
-
-		sess, err := session.NewSession(&aws.Config{
-			Region:           aws.String(s.config.Region),
-			S3ForcePathStyle: forcePathStyle,
-			Endpoint:         aws.String(s.config.EndPoint),
-			Credentials:      credentials.NewStaticCredentials(s.config.Key, s.config.Secret, ""),
-		},
-		)
+	if s.s3client == nil {
+		cfg, err := config.LoadDefaultConfig(s.ctx)
 		if err != nil {
 			return fmt.Errorf("could not start a new S3 session. %v", err)
 		}
+		var (
+			client       *s3.Client
+			endpoint     string
+			usePathStyle bool
+		)
+		if s.config.EndPoint != "" && strings.HasPrefix(s.config.EndPoint, "http") {
+			endpoint = s.config.EndPoint
+			usePathStyle = true
+			s.logger.Debug(fmt.Sprintf("s3 config: endpoint=%s (forcePathStyle=%t)", s.config.EndPoint, usePathStyle))
+		}
 
-		s.client = s3.New(sess)
+		client = s3.NewFromConfig(cfg, func(o *s3.Options) {
+			o.Region = s.config.Region
+			if endpoint != "" {
+				o.UsePathStyle = usePathStyle
+				o.BaseEndpoint = &endpoint
+			}
+			o.Credentials = credentials.NewStaticCredentialsProvider(s.config.Key, s.config.Secret, "")
+		})
+
+		s.s3client = client
 	}
 	return nil
 }
@@ -110,7 +127,7 @@ func (s *s3service) GetFile(filePath string) (item FileItem, err error) {
 	path := parts[0]
 	fileName := parts[1]
 
-	s3obj, err := s.client.GetObject(
+	s3obj, err := s.s3client.GetObject(s.ctx,
 		&s3.GetObjectInput{
 			Bucket: aws.String(s.config.Bucket),
 			Key:    aws.String(fileURLPath),
@@ -141,7 +158,7 @@ func (s *s3service) SaveFile(file FileItem) (err error) {
 
 	fileSize := len(file.Payload)
 	storagePath := fmt.Sprintf("%s/%s", file.FolderName, file.FileName)
-	_, err = s.client.PutObject(&s3.PutObjectInput{
+	_, err = s.s3client.PutObject(s.ctx, &s3.PutObjectInput{
 		Bucket:        aws.String(s.config.Bucket),
 		Key:           aws.String(storagePath),
 		Body:          bytes.NewReader(file.Payload),
@@ -161,7 +178,7 @@ func (s *s3service) DeleteFile(filePath string) (err error) {
 		return err
 	}
 
-	_, err = s.client.DeleteObject(&s3.DeleteObjectInput{
+	_, err = s.s3client.DeleteObject(s.ctx, &s3.DeleteObjectInput{
 		Bucket: aws.String(s.config.Bucket),
 		Key:    aws.String(filePath),
 	})

@@ -4,9 +4,9 @@ import (
 	"golang.binggl.net/monorepo/pkg/logging"
 )
 
-// ServiceMiddleware describes a service (as opposed to endpoint) middleware.
+// ServiceMiddleware describes a service middleware.
 // it is used to intercept the method execution and perform actions before/after the
-// serivce method execution
+// service method execution
 type ServiceMiddleware func(FileService) FileService
 
 // ServiceLoggingMiddleware takes a logger as a dependency

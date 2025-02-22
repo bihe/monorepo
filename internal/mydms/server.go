@@ -1,6 +1,7 @@
 package mydms
 
 import (
+	"context"
 	"fmt"
 
 	"golang.binggl.net/monorepo/internal/mydms/app/config"
@@ -35,7 +36,7 @@ func Run(version, build, appName string) error {
 	}
 
 	var (
-		fileSvc = filestore.NewService(logger, filestore.S3Config{
+		fileSvc = filestore.NewService(context.Background(), logger, filestore.S3Config{
 			Bucket:   appCfg.Filestore.Bucket,
 			Region:   appCfg.Filestore.Region,
 			EndPoint: appCfg.Filestore.EndPoint,

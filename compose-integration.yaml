@@ -145,6 +145,12 @@ services:
                         MY_DATABASE__CONNECTIONSTRING: /store/mydms.db
                         MY_UPLOAD__UPLOADPATH: /opt/mydms/uploads
                         MY_UPLOAD__MAXUPLOADSIZE: 5000000
+                        MY_FILESTORE__REGION: "us-east-1"
+                        MY_FILESTORE__BUCKET: "testbucket"
+                        MY_FILESTORE__KEY: "s3_access_key"
+                        MY_FILESTORE__SECRET: "s3_access_secret"
+                        MY_FILESTORE__ENDPOINT: "http://minio:9000"
+
                 depends_on:
                         litestream:
                                 condition: service_healthy

@@ -8,6 +8,7 @@ import (
 const (
 	MsgSuccess = "success"
 	MsgError   = "error"
+	MsgInfo    = "info"
 )
 
 type ToastMessage struct {

@@ -1,6 +1,7 @@
 package html
 
 import (
+	_ "embed"
 	"fmt"
 
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
@@ -16,6 +17,9 @@ func getFaviconClass(b bookmarks.Bookmark) string {
 	}
 	return faviconClass
 }
+
+//go:embed copyClipboard.min.js
+var copyClipboard string
 
 func BookmarkList(path string, items []bookmarks.Bookmark, ell EllipsisValues) g.Node {
 	return h.Div(h.Class("bookmark_list"), h.ID("bookmark_list"),
@@ -75,6 +79,16 @@ func BookmarkList(path string, items []bookmarks.Bookmark, ell EllipsisValues) g
 										h.I(h.Class("bi bi-pencil"), g.Text(" Edit")),
 									),
 								),
+								g.If(b.Type == bookmarks.Node,
+									h.Li(
+										h.A(
+											h.Class("dropdown-item copy-clipboard-btn"),
+											h.Href("#"),
+											g.Attr("data-clipboard-text", b.URL),
+											h.I(h.Class("bi bi-clipboard"), g.Text(" to Clipboard")),
+										),
+									),
+								),
 								h.Li(
 									h.A(
 										h.Class("dropdown-item delete"),
@@ -94,6 +108,9 @@ func BookmarkList(path string, items []bookmarks.Bookmark, ell EllipsisValues) g
 					),
 				)
 			}),
+		),
+		g.El("script", g.Attr("type", "text/javascript"),
+			g.Raw(copyClipboard),
 		),
 	)
 }

@@ -224,14 +224,11 @@ func (t *TemplateHandler) UploadDocument() http.HandlerFunc {
 
 		initPass := r.Form.Get("doc-initPass")
 		newPass := r.Form.Get("doc-newPass")
-		var encReq upload.EncryptionRequest
-		if initPass != "" && newPass != "" {
-			// passwords are provided so we need to call the encryption service
-			encReq = upload.EncryptionRequest{
-				InitPassword: initPass,
-				Password:     newPass,
-			}
+		encReq := upload.EncryptionRequest{
+			InitPassword: initPass,
+			Password:     newPass,
 		}
+
 		cType := meta.Header.Get("Content-Type")
 		tempId, err := t.UploadSvc.Save(upload.File{
 			File:     file,

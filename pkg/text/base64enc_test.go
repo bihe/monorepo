@@ -11,7 +11,7 @@ const validDec = "/2023_06_03/EXAMPLE_DOCUMENT.PDF"
 
 const validEncUmlaute = "LzIwMjVfMDRfMTgvVVNJTkdfVU1MQVVURW/MiG/MiG/MiG/MiG/MiC5wZGY="
 const validDecUmlaute = "/2025_04_18/USING_UMLAUTEööööö.pdf"
-const validEncUmlauteURLEnc = "LzIwMjVfMDRfMTgvVVNJTkdfVU1MQVVURW%2FMiG%2FMiG%2FMiG%2FMiG%2FMiC5wZGY%3D"
+const validEncUmlauteURLEnc = "LzIwMjVfMDRfMTgvVVNJTkdfVU1MQVVURW-MiG-MiG-MiG-MiG-MiC5wZGY="
 
 func TestSafePathURLEncodingDecoding(t *testing.T) {
 	// enc/dec with umlaute and resulting "special characters"
@@ -21,6 +21,13 @@ func TestSafePathURLEncodingDecoding(t *testing.T) {
 	}
 
 	encoded := text.EncBase64SafePath(validDecUmlaute)
+	if encoded != validEncUmlauteURLEnc {
+		t.Errorf("could not encoded base64 with safe-path")
+	}
+}
+
+func TestBase64SafePathURLEnc(t *testing.T) {
+	encoded := text.SafePathEscapeBase64(validEncUmlaute)
 	if encoded != validEncUmlauteURLEnc {
 		t.Errorf("could not encoded base64 with safe-path")
 	}

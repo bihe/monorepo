@@ -2,7 +2,6 @@ package web
 
 import (
 	"bytes"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +11,7 @@ import (
 	"golang.binggl.net/monorepo/internal/bookmarks/web/html"
 	"golang.binggl.net/monorepo/internal/common"
 	"golang.binggl.net/monorepo/pkg/logging"
+	"golang.binggl.net/monorepo/pkg/text"
 )
 
 const errorFavicon = `<span id="bookmark_favicon_display" class="error_icon">
@@ -37,23 +37,15 @@ func (t *TemplateHandler) AvailableFaviconsDialog() http.HandlerFunc {
 		if err != nil {
 			t.Logger.Error(fmt.Sprintf("could not get available favicons for user '%s'", user.DisplayName), logging.ErrV(err), logging.LogV("username", user.Username))
 		}
-		html.FaviconDialog(decodeBase64(currFavicon), favicons).Render(w)
+		html.FaviconDialog(text.DecBase64(currFavicon), favicons).Render(w)
 	}
-}
-
-func decodeBase64(input string) string {
-	decode, err := base64.StdEncoding.DecodeString(input)
-	if err != nil {
-		return ""
-	}
-	return string(decode)
 }
 
 // SelectExistingFavicon uses an already existing favicon
 func (t *TemplateHandler) SelectExistingFavicon() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		base64_id := pathParam(r, "id")
-		id := decodeBase64(base64_id)
+		id := text.DecBase64(base64_id)
 		if id == "" {
 			t.Logger.ErrorRequest("could not get the favicon ID", r)
 			triggerToast(w,
@@ -184,13 +176,12 @@ func (t *TemplateHandler) GetFaviconByBookmarkID() http.HandlerFunc {
 func (t *TemplateHandler) GetFaviconByID() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		encodedID := pathParam(r, "id")
-		decodedBytes, err := base64.StdEncoding.DecodeString(encodedID)
-		if err != nil {
-			t.Logger.ErrorRequest(fmt.Sprintf("could not get decode ID; '%v'", err), r)
+		id := text.DecBase64(encodedID)
+		if id == "" {
+			t.Logger.ErrorRequest("could not get decode ID", r)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		id := string(decodedBytes)
 
 		t.Logger.InfoRequest(fmt.Sprintf("try to get favicon with the given ID '%s'", id), r)
 		favicon, err := t.App.GetFaviconByID(id)

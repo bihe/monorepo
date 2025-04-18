@@ -1,12 +1,12 @@
 package web
 
 import (
-	"encoding/base64"
 	"fmt"
 	"net/http"
 
 	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
 	"golang.binggl.net/monorepo/pkg/logging"
+	"golang.binggl.net/monorepo/pkg/text"
 )
 
 // FileHandler interacts with the backend filestore
@@ -23,9 +23,9 @@ func (f *FileHandler) GetDocumentPayload() http.HandlerFunc {
 		f.Logger.InfoRequest(fmt.Sprintf("fetch the document payload by id: '%s' for user: '%s'", path, user.Username), r)
 
 		// the provided path is base64 encoded
-		decodedPath, err := base64.StdEncoding.DecodeString(path)
-		if err != nil {
-			f.Logger.ErrorRequest(fmt.Sprintf("could not access the document payload; %v", err), r)
+		decodedPath := text.DecBase64SafePath(path)
+		if decodedPath == "" {
+			f.Logger.ErrorRequest("could not access the document payload", r)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}

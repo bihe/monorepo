@@ -2,7 +2,6 @@ package document
 
 import (
 	"database/sql"
-	"encoding/base64"
 	"fmt"
 	"strings"
 	"time"
@@ -13,6 +12,7 @@ import (
 	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
+	"golang.binggl.net/monorepo/pkg/text"
 )
 
 // --------------------------------------------------------------------------
@@ -202,7 +202,7 @@ func (s documentService) SaveDocument(doc Document, user security.User) (d Docum
 			s.logger.Info(fmt.Sprintf("SaveDocument: will update existing document ID '%s'", d.ID))
 			docE.Title = d.Title
 			docE.FileName = d.FileName
-			docE.PreviewLink = sql.NullString{String: base64.StdEncoding.EncodeToString([]byte(d.FileName)), Valid: true}
+			docE.PreviewLink = sql.NullString{String: text.EncBase64SafePath(d.FileName), Valid: true}
 			docE.Amount = d.Amount
 			docE.SenderList = senderList
 			docE.TagList = tagList
@@ -243,7 +243,7 @@ func (s documentService) convertToDomain(d DocEntity) Document {
 		preview = p.String
 	} else {
 		// missing DB value for preview-link
-		preview = base64.StdEncoding.EncodeToString([]byte(d.FileName))
+		preview = text.EncBase64SafePath(d.FileName)
 	}
 	if d.TagList != "" {
 		tags = strings.Split(d.TagList, ";")
@@ -345,7 +345,7 @@ func initDocument(d *Document, sList, tList string) DocEntity {
 	return DocEntity{
 		Title:         d.Title,
 		FileName:      d.FileName,
-		PreviewLink:   sql.NullString{String: base64.StdEncoding.EncodeToString([]byte(d.FileName)), Valid: true},
+		PreviewLink:   sql.NullString{String: text.EncBase64SafePath(d.FileName), Valid: true},
 		Amount:        d.Amount,
 		SenderList:    sList,
 		TagList:       tList,

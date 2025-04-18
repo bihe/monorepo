@@ -35,6 +35,7 @@ services:
                 command: "server /data --console-address ':9001'"
                 ports:
                         - "9001:9001"
+                        - "9000:9000"
                 healthcheck:
                         test:
                                 [

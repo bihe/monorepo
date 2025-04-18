@@ -6,6 +6,7 @@ import (
 
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/common"
+	"golang.binggl.net/monorepo/pkg/text"
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 )
@@ -80,7 +81,7 @@ func EditBookmarks(bm Bookmark, paths []string) g.Node {
 	availFaviconURL = "/bm/favicon/available"
 	if bm.ID.Val != "-1" {
 		faviconDetail = h.Img(h.ID("bookmark_favicon_display"), h.Class(common.ClassCond("bookmark_favicon_preview", "invert", bm.InvertFaviconColor)), h.Src("/bm/favicon/"+bm.ID.Val+"?t="+bm.TStamp))
-		availFaviconURL += "?current=" + base64enc(bm.CurrentFavicon)
+		availFaviconURL += "?current=" + text.EncBase64(bm.CurrentFavicon)
 	} else {
 		faviconDetail = h.A(h.ID("bookmark_favicon_display"), h.Span(h.Class("bookmark_empty"), h.I(h.Class("bookmark_favicon_empty_icon bi bi-question-lg"))))
 	}

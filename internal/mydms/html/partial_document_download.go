@@ -25,7 +25,7 @@ func DisplayDocumentDownload(doc Document) g.Node {
 	if doc.ID != "" && doc.FileName.Val != "" {
 		documentDownload = h.Div(h.Class("document_download"), h.ID("document_download_link"),
 			h.I(h.Class("bi bi-cloud-arrow-down")), g.Text(" "),
-			h.A(h.Class("document_download_link"), h.Href("/mydms/file/"+doc.PreviewLink.Val), h.Target("_NEW"), g.Text(doc.FileName.Val)),
+			h.A(h.Class("document_download_link"), h.Href("/mydms/file/"+fixPreviewLink(doc.PreviewLink.Val)), h.Target("_NEW"), g.Text(doc.FileName.Val)),
 			h.Input(h.Type("hidden"), h.Name("doc-tempID"), h.Value("-")),
 			h.Input(h.Type("hidden"), h.Name("doc-filename"), h.Value(doc.FileName.Val)),
 			removeLink,

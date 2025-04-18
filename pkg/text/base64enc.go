@@ -5,21 +5,18 @@ import (
 	"strings"
 )
 
-const base64SpecialPlus = "+"
-const base64SpecialSlash = "/"
-
 // get rid of "special characters" of base64 +,/
 var replacement = map[string]string{
-	base64SpecialPlus:  "_",
-	base64SpecialSlash: "-",
+	"+": "_",
+	"/": "-",
 }
 
 // SafePathEscapeBase64 takes a base64 encoded string and "cleans" it for URL-path use
 func SafePathEscapeBase64(input string) string {
 	enc := input
-	if strings.Contains(input, base64SpecialPlus) || strings.Contains(input, base64SpecialSlash) {
-		for k, v := range replacement {
-			enc = strings.ReplaceAll(enc, k, v)
+	for k := range replacement {
+		if strings.Contains(input, k) {
+			enc = strings.ReplaceAll(enc, k, replacement[k])
 		}
 	}
 	return enc

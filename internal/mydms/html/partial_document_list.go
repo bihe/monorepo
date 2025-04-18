@@ -3,26 +3,16 @@ package html
 import (
 	_ "embed"
 	"fmt"
-	"net/url"
-	"strings"
 
 	"golang.binggl.net/monorepo/internal/common"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
+	"golang.binggl.net/monorepo/pkg/text"
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 )
 
 //go:embed partial_document_list.css
 var partial_document_list_styles string
-
-// fixPreviewLink verifies if the base64 encoded string contains the special chars, not healthy for paths
-// if found, the link is corrected using safe-path encoding
-func fixPreviewLink(input string) string {
-	if strings.Contains(input, "/") {
-		return url.QueryEscape(input)
-	}
-	return input
-}
 
 func DocumentList(docNum, skip int, pd document.PagedDocument) g.Node {
 	elements := make([]g.Node, 0)
@@ -31,7 +21,7 @@ func DocumentList(docNum, skip int, pd document.PagedDocument) g.Node {
 		return h.Div(h.Class("card be_my_document"),
 			h.Div(h.Class("card-body"),
 				h.H5(h.Class("card-title"), h.Title(doc.Title),
-					h.A(h.Href("/mydms/file/"+fixPreviewLink(doc.PreviewLink)), h.Target("_NEW"),
+					h.A(h.Href("/mydms/file/"+text.SafePathEscapeBase64(doc.PreviewLink)), h.Target("_NEW"),
 						h.I(h.Class("bi bi-cloud-download")),
 					),
 					g.Text(" "),

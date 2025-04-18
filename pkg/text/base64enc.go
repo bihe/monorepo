@@ -2,26 +2,49 @@ package text
 
 import (
 	"encoding/base64"
-	"net/url"
+	"strings"
 )
 
+const base64SpecialPlus = "+"
+const base64SpecialSlash = "/"
+
+// get rid of "special characters" of base64 +,/
+var replacement = map[string]string{
+	base64SpecialPlus:  "_",
+	base64SpecialSlash: "-",
+}
+
+// SafePathEscapeBase64 takes a base64 encoded string and "cleans" it for URL-path use
+func SafePathEscapeBase64(input string) string {
+	enc := input
+	if strings.Contains(input, base64SpecialPlus) || strings.Contains(input, base64SpecialSlash) {
+		for k, v := range replacement {
+			enc = strings.ReplaceAll(enc, k, v)
+		}
+	}
+	return enc
+}
+
 // EncBase64SafePath encodes the input as base64.
-// In addition the result is URL-encoded, because of the two extra params +,/ in the base64 "vocabulary".
+// In addition the result is corrected to not collide in a URL-path scenario because of the two extra params +,/ in the base64 "vocabulary".
 // https://en.wikipedia.org/wiki/Base64
 func EncBase64SafePath(input string) string {
 	data := []byte(input)
 	encodedString := base64.StdEncoding.EncodeToString(data)
-	encodedString = url.QueryEscape(encodedString)
+	for k, v := range replacement {
+		encodedString = strings.ReplaceAll(encodedString, k, v)
+	}
+
 	return encodedString
 }
 
-// DecBase64SafePath decodes a base64 string, which was additionally URL-encoded to be used as web-URLs.
+// DecBase64SafePath decodes a base64 string, which was additionally cleaned to be used as web-URLs.
 func DecBase64SafePath(input string) string {
-	urldecoded, err := url.QueryUnescape(input)
-	if err != nil {
-		return ""
+	cleaned := input
+	for k := range replacement {
+		cleaned = strings.ReplaceAll(cleaned, replacement[k], k)
 	}
-	decode, err := base64.StdEncoding.DecodeString(urldecoded)
+	decode, err := base64.StdEncoding.DecodeString(cleaned)
 	if err != nil {
 		return ""
 	}

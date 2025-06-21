@@ -30,7 +30,7 @@ type TemplateHandler struct {
 // --------------------------------------------------------------------------
 
 type triggerDef struct {
-	common.ToastMessage
+	base.ToastMessage
 	Refresh string `json:"refreshBookmarkList,omitempty"`
 }
 
@@ -67,8 +67,8 @@ func getIntFromString(val string) int {
 
 func triggerRefreshWithToast(w http.ResponseWriter, errType, title, text string) {
 	triggerEvent := triggerDef{
-		ToastMessage: common.ToastMessage{
-			Event: common.ToastMessageContent{
+		ToastMessage: base.ToastMessage{
+			Event: base.ToastMessageContent{
 				Type:  errType,
 				Title: title,
 				Text:  text,
@@ -76,20 +76,20 @@ func triggerRefreshWithToast(w http.ResponseWriter, errType, title, text string)
 		},
 		Refresh: "now",
 	}
-	triggerJson := common.Json(triggerEvent)
+	triggerJson := handler.Json(triggerEvent)
 	w.Header().Add(htmxHeaderTrigger, triggerJson)
 }
 
 func triggerToast(w http.ResponseWriter, errType, title, text string) {
 	triggerEvent := triggerDef{
-		ToastMessage: common.ToastMessage{
-			Event: common.ToastMessageContent{
+		ToastMessage: base.ToastMessage{
+			Event: base.ToastMessageContent{
 				Type:  errType,
 				Title: title,
 				Text:  text,
 			},
 		},
 	}
-	triggerJson := common.Json(triggerEvent)
+	triggerJson := handler.Json(triggerEvent)
 	w.Header().Add(htmxHeaderTrigger, triggerJson)
 }

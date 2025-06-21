@@ -42,13 +42,13 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not delete bookmark with id '%s'; '%v'", id, err), r)
 			triggerRefreshWithToast(w,
-				common.MsgError,
+				base.MsgError,
 				"Bookmark delete error!",
 				fmt.Sprintf("Error: '%s'", err))
 			return
 		}
 		triggerRefreshWithToast(w,
-			common.MsgSuccess,
+			base.MsgSuccess,
 			"Bookmark deleted!",
 			fmt.Sprintf("The bookmark '%s' was deleted.", bm.DisplayName))
 
@@ -201,7 +201,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			t.Logger.Info("new bookmark created", logging.LogV("ID", created.ID))
 
 			triggerRefreshWithToast(w,
-				common.MsgSuccess,
+				base.MsgSuccess,
 				"Bookmark saved!",
 				fmt.Sprintf("The bookmark '%s' was created.", created.DisplayName))
 
@@ -241,7 +241,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			t.Logger.Info("bookmark updated", logging.LogV("ID", updated.ID))
 
 			triggerRefreshWithToast(w,
-				common.MsgSuccess,
+				base.MsgSuccess,
 				"Bookmark saved!",
 				fmt.Sprintf("The bookmark '%s' (%s) was updated.", existing.DisplayName, existing.ID))
 
@@ -280,14 +280,14 @@ func (t *TemplateHandler) SortBookmarks() http.HandlerFunc {
 		if err != nil {
 
 			triggerToast(w,
-				common.MsgError,
+				base.MsgError,
 				"Error sorting!",
 				fmt.Sprintf("Could not perform sorting: %v", err))
 			return
 		}
 
 		triggerRefreshWithToast(w,
-			common.MsgSuccess,
+			base.MsgSuccess,
 			"List sorted!",
 			fmt.Sprintf("%d bookmarks were successfully sorted", updates))
 	}

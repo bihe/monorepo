@@ -57,7 +57,7 @@ compose-integration: ## start the whole application for integration testing
 	ARCH=${ARCH} LSV="${LITESTREAM_V}/litestream-${LITESTREAM_V}-linux-${ARCH}-static.tar.gz" docker compose -f compose-integration.yaml rm && ARCH=${ARCH} LSV="${LITESTREAM_V}/litestream-${LITESTREAM_V}-linux-${ARCH}-static.tar.gz" docker compose -f compose-integration.yaml up --build
 
 integration-test: ## run the integration test with playwright. NOTE: the compose setup needs to be running
-	@echo "  >  Starting ede tests ..."
+	@echo "  >  Starting e2e tests ..."
 	uv run ./testdata/e2e/run.py
 
 # internal tasks

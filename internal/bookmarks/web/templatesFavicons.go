@@ -10,6 +10,7 @@ import (
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/web/html"
 	"golang.binggl.net/monorepo/internal/common"
+	base "golang.binggl.net/monorepo/pkg/handler/html"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/text"
 )
@@ -49,7 +50,7 @@ func (t *TemplateHandler) SelectExistingFavicon() http.HandlerFunc {
 		if id == "" {
 			t.Logger.ErrorRequest("could not get the favicon ID", r)
 			triggerToast(w,
-				common.MsgError,
+				base.MsgError,
 				"Favicon error!",
 				"Could not select the favicon")
 			w.Write([]byte(fmt.Sprintf(errorFavicon, "Could not select favicon")))
@@ -69,7 +70,7 @@ func (t *TemplateHandler) FetchCustomFaviconURL() http.HandlerFunc {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
 			t.Logger.ErrorRequest(fmt.Sprintf("could not fetch the custom favicon; '%v'", err), r)
 			triggerToast(w,
-				common.MsgError,
+				base.MsgError,
 				"Favicon error!",
 				fmt.Sprintf("Could not fetch favicon: %v", errMsg))
 			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
@@ -89,7 +90,7 @@ func (t *TemplateHandler) FetchCustomFaviconFromPage() http.HandlerFunc {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
 			t.Logger.ErrorRequest(fmt.Sprintf("could not fetch the page favicon; '%v'", err), r)
 			triggerToast(w,
-				common.MsgError,
+				base.MsgError,
 				"Favicon error!",
 				fmt.Sprintf("Could not fetch favicon: %v", errMsg))
 			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
@@ -111,7 +112,7 @@ func (t *TemplateHandler) UploadCustomFavicon() http.HandlerFunc {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
 			t.Logger.ErrorRequest(fmt.Sprintf("could not upload the custom favicon; '%v'", err), r)
 			triggerToast(w,
-				common.MsgError,
+				base.MsgError,
 				"Favicon error!",
 				fmt.Sprintf("Could not upload the custom favicon: %v", errMsg))
 			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
@@ -123,7 +124,7 @@ func (t *TemplateHandler) UploadCustomFavicon() http.HandlerFunc {
 		if !strings.HasPrefix(cType, "image") {
 			t.Logger.ErrorRequest(fmt.Sprintf("only image types are supported - got '%s'", cType), r)
 			triggerToast(w,
-				common.MsgError,
+				base.MsgError,
 				"Favicon error!",
 				"Only an image mimetype is supported!")
 			w.Write([]byte(fmt.Sprintf(errorFavicon, "Only an image mimetype is supported!")))
@@ -134,7 +135,7 @@ func (t *TemplateHandler) UploadCustomFavicon() http.HandlerFunc {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
 			t.Logger.ErrorRequest(fmt.Sprintf("could not read data of upload '%s'", cType), r)
 			triggerToast(w,
-				common.MsgError,
+				base.MsgError,
 				"Favicon error!",
 				fmt.Sprintf("Could not read data of upload: %v!", errMsg))
 			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))
@@ -145,7 +146,7 @@ func (t *TemplateHandler) UploadCustomFavicon() http.HandlerFunc {
 			errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
 			t.Logger.ErrorRequest(fmt.Sprintf("could not write the custom favicon; '%v'", err), r)
 			triggerToast(w,
-				common.MsgError,
+				base.MsgError,
 				"Favicon error!",
 				fmt.Sprintf("Could not write the custom favicon: %v!", errMsg))
 			w.Write([]byte(fmt.Sprintf(errorFavicon, errMsg)))

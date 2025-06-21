@@ -193,7 +193,7 @@ func (t *TemplateHandler) SearchListItems() http.HandlerFunc {
 			})
 		}
 
-		json := common.Json(listItems)
+		json := handler.Json(listItems)
 		w.Header().Add("content-type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(json))
@@ -250,7 +250,7 @@ func (t *TemplateHandler) UploadDocument() http.HandlerFunc {
 
 // we define a JSON structure which is used to trigger actions on the frontend via htmx
 type triggerDef struct {
-	common.ToastMessage
+	base.ToastMessage
 	Refresh string `json:"refreshDocumentList,omitempty"`
 }
 
@@ -337,9 +337,9 @@ func (t *TemplateHandler) SaveDocument() http.HandlerFunc {
 		// one) is the toast message to show a saved indicator
 		// two) is the notification to reload the document list, because of the changes
 		triggerEvent := triggerDef{
-			ToastMessage: common.ToastMessage{
-				Event: common.ToastMessageContent{
-					Type:  common.MsgSuccess,
+			ToastMessage: base.ToastMessage{
+				Event: base.ToastMessageContent{
+					Type:  base.MsgSuccess,
 					Title: "Document saved!",
 					Text:  fmt.Sprintf("The document with ID '%s' was saved.", savedDoc.ID),
 				},
@@ -347,7 +347,7 @@ func (t *TemplateHandler) SaveDocument() http.HandlerFunc {
 			Refresh: "now",
 		}
 		// https://htmx.org/headers/hx-trigger/
-		w.Header().Add("HX-Trigger", common.Json(triggerEvent))
+		w.Header().Add("HX-Trigger", handler.Json(triggerEvent))
 		validDoc.Close = true
 		html.EditDocumentDialog(validDoc, html.DisplayDocumentDownload(validDoc)).Render(w)
 	}
@@ -383,9 +383,9 @@ func (t *TemplateHandler) DeleteDocument() http.HandlerFunc {
 		// one) is the toast message to show a saved indicator
 		// two) is the notification to reload the document list, because of the changes
 		triggerEvent := triggerDef{
-			ToastMessage: common.ToastMessage{
-				Event: common.ToastMessageContent{
-					Type:  common.MsgSuccess,
+			ToastMessage: base.ToastMessage{
+				Event: base.ToastMessageContent{
+					Type:  base.MsgSuccess,
 					Title: "Document delete!",
 					Text:  fmt.Sprintf("The document with ID '%s' was removed.", id),
 				},
@@ -393,7 +393,7 @@ func (t *TemplateHandler) DeleteDocument() http.HandlerFunc {
 			Refresh: "now",
 		}
 		// https://htmx.org/headers/hx-trigger/
-		w.Header().Add("HX-Trigger", common.Json(triggerEvent))
+		w.Header().Add("HX-Trigger", handler.Json(triggerEvent))
 	}
 }
 

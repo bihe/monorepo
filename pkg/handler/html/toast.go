@@ -1,4 +1,4 @@
-package common
+package html
 
 import (
 	"encoding/json"
@@ -37,10 +37,10 @@ func createToastMessage(title, message, msgType string) string {
 			Text:  message,
 		},
 	}
-	return Json(toast)
+	return formatJson(toast)
 }
 
-func Json[T any](data T) string {
+func formatJson[T any](data T) string {
 	payload, err := json.Marshal(data)
 	if err != nil {
 		panic(fmt.Sprintf("could not marshall data; %v", err))

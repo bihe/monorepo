@@ -82,6 +82,16 @@ func SearchContent(search string, items []bookmarks.Bookmark, ell EllipsisValues
 									h.I(h.Class("bi bi-pencil"), g.Text(" Edit")),
 								),
 							),
+							g.If(b.Type == bookmarks.Node,
+								h.Li(
+									h.A(
+										h.Class("dropdown-item copy-clipboard-btn"),
+										h.Href("#"),
+										g.Attr("data-clipboard-text", b.URL),
+										h.I(h.Class("bi bi-clipboard"), g.Text(" to Clipboard")),
+									),
+								),
+							),
 							h.Li(
 								h.A(
 									h.Class("dropdown-item delete"),
@@ -98,6 +108,9 @@ func SearchContent(search string, items []bookmarks.Bookmark, ell EllipsisValues
 							),
 						),
 					),
+				),
+				g.El("script", g.Attr("type", "text/javascript"),
+					g.Raw(copyClipboard),
 				),
 			)
 		}),

@@ -264,6 +264,87 @@ func (s *Application) Delete(id string, user security.User) error {
 	return nil
 }
 
+// DeletePath is used for folders to remove a whole "structure" of bookmarks
+func (s *Application) DeletePath(id string, user security.User) error {
+	if id == "" {
+		return app.ErrValidation("missing id parameter")
+	}
+
+	faviconIDs := make([]string, 0)
+
+	s.Logger.Info(fmt.Sprintf("will try to delete bookmark-path for ID '%s'", id))
+	if err := s.BookmarkStore.InUnitOfWork(func(repo store.BookmarkRepository) error {
+		// 1) fetch the existing bookmark by id
+		existing, err := repo.GetBookmarkByID(id, user.Username)
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("could not find bookmark by id '%s': %v", id, err))
+			return err
+		}
+		if existing.Type != store.Folder {
+			s.Logger.Warn("this call is only applicable for folders")
+			return fmt.Errorf("DeletePath is only possible for folders")
+		}
+
+		// 2) fetch all items which start with the given path
+		startPath := ensureFolderPath(existing.Path, existing.DisplayName)
+		bookmarks, err := repo.GetBookmarksByPathStart(startPath, user.Username)
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("could not find bookmark starting by path '%s': %v", startPath, err))
+			return err
+		}
+
+		// 3) collect the favicon IDs to remove them later if necessary
+		if existing.Favicon != "" {
+			faviconIDs = append(faviconIDs, existing.Favicon)
+		}
+		for _, b := range bookmarks {
+			if b.Favicon != "" {
+				faviconIDs = append(faviconIDs, b.Favicon)
+			}
+		}
+
+		// 4) delete the bookmark path
+		err = repo.DeletePath(startPath, user.Username)
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("could not delete bookmark-path for '%s': %v", startPath, err))
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		s.Logger.Error(fmt.Sprintf("could not delete bookmark path because of error: %v", err))
+		return fmt.Errorf("error deleting bookmark path: %v", err)
+	}
+
+	// favicon cleanup
+	for _, fi := range faviconIDs {
+		// when a favicon is available remove it, if it is the only remaining one
+		numFavicon, err := s.BookmarkStore.NumBookmarksReferencingFavicon(fi, user.Username)
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("could not check favicon references; %v", err))
+			return fmt.Errorf("error counting favicon references; %v", err)
+		}
+		if numFavicon != 0 {
+			return nil
+		}
+		err = s.FavStore.InUnitOfWork(func(favRepo store.FaviconRepository) error {
+			obj, e := favRepo.Get(fi)
+			if e != nil {
+				s.Logger.Warn(fmt.Sprintf("the specified favicon '%s' was not available in the store", fi))
+				// exit here, nothing more to do
+				return nil
+			}
+			return favRepo.Delete(obj)
+		})
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("got an error while trying to delete the favicon; %v", err))
+			return fmt.Errorf("could not delete the specified favicon; %v", err)
+		}
+	}
+
+	return nil
+}
+
 // UpdateSortOrder modifies the display sort-order
 func (s *Application) UpdateSortOrder(sort BookmarksSortOrder, user security.User) (int, error) {
 	if len(sort.IDs) != len(sort.SortOrder) {
@@ -387,6 +468,38 @@ func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark
 			newPath := ensureFolderPath(bm.Path, bm.DisplayName)
 			oldPath := ensureFolderPath(existingPath, existingDisplayName)
 
+			// if the folder is moved to the target-path we need to treat the special case, that
+			// a folder with the same name might already exists in the target path.
+			// without any logic we would end up with two folders
+			// as we identify folders just by name (and not by ID) the logic below to update the
+			// child-count updates the entries to the "new" folder (even though that is no update, as
+			// we just deal with paths, which are the same /A/B vs /A/B)
+			//
+			// the "solution" is to get rid of one bookmark-folder. it is not important which one, because
+			// we just address by path (/A/B).
+			// the idea is to keep the folder which we are working on (this one) and remove the "other one"
+			sameFolders, err := repo.GetBookmarksByPath(bm.Path, user.Username)
+			if err != nil {
+				s.Logger.Error(fmt.Sprintf("could not get bookmarks by path '%s': %v", oldPath, err))
+				return err
+			}
+			sameFolderBookmarks := make([]store.Bookmark, 0)
+			for _, f := range sameFolders {
+				if f.Type == store.Folder && f.DisplayName == bm.DisplayName && f.ID != bm.ID {
+					sameFolderBookmarks = append(sameFolderBookmarks, f)
+				}
+			}
+			if len(sameFolderBookmarks) > 0 {
+				// we have found folders with the same name, remove the folder to have only one remaining
+				for _, f := range sameFolderBookmarks {
+					err = repo.Delete(f)
+					if err != nil {
+						s.Logger.Error(fmt.Sprintf("could not merge folders '%s': %v", f.DisplayName, err))
+						return err
+					}
+				}
+			}
+
 			s.Logger.Info(fmt.Sprintf("will update all old paths '%s' to new path '%s'", oldPath, newPath))
 			bookmarks, err := repo.GetBookmarksByPathStart(oldPath, user.Username)
 			if err != nil {
@@ -413,6 +526,12 @@ func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark
 					s.Logger.Error(fmt.Sprintf("cannot update bookmark path: %v", err))
 					return err
 				}
+			}
+
+			// after the update above, correct the child-count of this folder
+			if err := s.updateChildCountOfPath(newPath, user.Username, repo); err != nil {
+				s.Logger.Error(fmt.Sprintf("could not update child-count of folder-path '%s': %v", newPath, err))
+				return err
 			}
 		}
 
@@ -490,9 +609,13 @@ func (s *Application) GetBookmarkFavicon(bookmarkID string, user security.User) 
 		s.Logger.Error(fmt.Sprintf("could not find bookmark by id '%s': %v", bookmarkID, err))
 		return nil, app.ErrNotFound(fmt.Sprintf("could not find bookmark with ID '%s'", bookmarkID))
 	}
+	defaultFavicon := app.DefaultFavicon
+	if existing.Type == store.Folder {
+		defaultFavicon = app.DefaultIconFolder
+	}
 
 	fi := ObjectInfo{
-		Payload:  app.DefaultFavicon,
+		Payload:  defaultFavicon,
 		Name:     defaultFaviconName,
 		Modified: defaultFaviconModTime,
 	}

@@ -264,6 +264,87 @@ func (s *Application) Delete(id string, user security.User) error {
 	return nil
 }
 
+// DeletePath is used for folders to remove a whole "structure" of bookmarks
+func (s *Application) DeletePath(id string, user security.User) error {
+	if id == "" {
+		return app.ErrValidation("missing id parameter")
+	}
+
+	faviconIDs := make([]string, 0)
+
+	s.Logger.Info(fmt.Sprintf("will try to delete bookmark-path for ID '%s'", id))
+	if err := s.BookmarkStore.InUnitOfWork(func(repo store.BookmarkRepository) error {
+		// 1) fetch the existing bookmark by id
+		existing, err := repo.GetBookmarkByID(id, user.Username)
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("could not find bookmark by id '%s': %v", id, err))
+			return err
+		}
+		if existing.Type != store.Folder {
+			s.Logger.Warn("this call is only applicable for folders")
+			return fmt.Errorf("DeletePath is only possible for folders")
+		}
+
+		// 2) fetch all items which start with the given path
+		startPath := ensureFolderPath(existing.Path, existing.DisplayName)
+		bookmarks, err := repo.GetBookmarksByPathStart(startPath, user.Username)
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("could not find bookmark starting by path '%s': %v", startPath, err))
+			return err
+		}
+
+		// 3) collect the favicon IDs to remove them later if necessary
+		if existing.Favicon != "" {
+			faviconIDs = append(faviconIDs, existing.Favicon)
+		}
+		for _, b := range bookmarks {
+			if b.Favicon != "" {
+				faviconIDs = append(faviconIDs, b.Favicon)
+			}
+		}
+
+		// 4) delete the bookmark path
+		err = repo.DeletePath(startPath, user.Username)
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("could not delete bookmark-path for '%s': %v", startPath, err))
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		s.Logger.Error(fmt.Sprintf("could not delete bookmark path because of error: %v", err))
+		return fmt.Errorf("error deleting bookmark path: %v", err)
+	}
+
+	// favicon cleanup
+	for _, fi := range faviconIDs {
+		// when a favicon is available remove it, if it is the only remaining one
+		numFavicon, err := s.BookmarkStore.NumBookmarksReferencingFavicon(fi, user.Username)
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("could not check favicon references; %v", err))
+			return fmt.Errorf("error counting favicon references; %v", err)
+		}
+		if numFavicon != 0 {
+			return nil
+		}
+		err = s.FavStore.InUnitOfWork(func(favRepo store.FaviconRepository) error {
+			obj, e := favRepo.Get(fi)
+			if e != nil {
+				s.Logger.Warn(fmt.Sprintf("the specified favicon '%s' was not available in the store", fi))
+				// exit here, nothing more to do
+				return nil
+			}
+			return favRepo.Delete(obj)
+		})
+		if err != nil {
+			s.Logger.Error(fmt.Sprintf("got an error while trying to delete the favicon; %v", err))
+			return fmt.Errorf("could not delete the specified favicon; %v", err)
+		}
+	}
+
+	return nil
+}
+
 // UpdateSortOrder modifies the display sort-order
 func (s *Application) UpdateSortOrder(sort BookmarksSortOrder, user security.User) (int, error) {
 	if len(sort.IDs) != len(sort.SortOrder) {

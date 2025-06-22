@@ -341,7 +341,7 @@ func (r *dbBookmarkRepository) DeletePath(path, username string) error {
 		return fmt.Errorf("cannot delete folder '%s': %v", path, h.Error)
 	}
 
-	// entries with path /pa/th were deleted - also the folder /pa - th needs to be deleted
+	// entries with path /pa/th were deleted - also the folder /pa needs to be deleted
 	parentPath, _, ok := pathAndFolder(path)
 	if !ok {
 		return fmt.Errorf("could not get parent-path/folder of given path '%s'", path)

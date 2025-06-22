@@ -23,7 +23,11 @@ func (t *TemplateHandler) DeleteConfirm() http.HandlerFunc {
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmarks for id '%s'; '%v'", id, err), r)
 		}
-		base.DialogConfirmDeleteHx(bm.DisplayName, "/bm/delete/"+bm.ID).Render(w)
+		if bm.Type == bookmarks.Node {
+			base.DialogConfirmDeleteHx(bm.DisplayName, "/bm/delete/"+bm.ID).Render(w)
+		} else {
+			base.DialogConfirmDeleteForceHx(bm.DisplayName, "/bm/delete/"+bm.ID, "/bm/DeleteBookmarkForce/"+bm.ID).Render(w)
+		}
 	}
 }
 
@@ -39,6 +43,43 @@ func (t *TemplateHandler) DeleteBookmark() http.HandlerFunc {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmark for id '%s'; '%v'", id, err), r)
 		}
 		err = t.App.Delete(bm.ID, *user)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not delete bookmark with id '%s'; '%v'", id, err), r)
+			triggerRefreshWithToast(w,
+				base.MsgError,
+				"Bookmark delete error!",
+				fmt.Sprintf("Error: '%s'", err))
+			return
+		}
+		triggerRefreshWithToast(w,
+			base.MsgSuccess,
+			"Bookmark deleted!",
+			fmt.Sprintf("The bookmark '%s' was deleted.", bm.DisplayName))
+
+	}
+}
+
+// DeleteBookmarkForce deletes the given bookmark and replaces the bookmark-list with a new list without the deleted bookmark
+// The force method also removes children of folders forcefully
+func (t *TemplateHandler) DeleteBookmarkForce() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := pathParam(r, "id")
+		user := common.EnsureUser(r)
+
+		t.Logger.InfoRequest(fmt.Sprintf("get bookmark by id: '%s' for user: '%s'", id, user.Username), r)
+		bm, err := t.App.GetBookmarkByID(id, *user)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmark for id '%s'; '%v'", id, err), r)
+		}
+		if bm.Type == bookmarks.Node {
+			triggerRefreshWithToast(w,
+				base.MsgError,
+				"Operation not possible!",
+				"Only folders can be forcefully deleted!")
+			return
+		}
+
+		err = t.App.DeletePath(bm.ID, *user)
 		if err != nil {
 			t.Logger.ErrorRequest(fmt.Sprintf("could not delete bookmark with id '%s'; '%v'", id, err), r)
 			triggerRefreshWithToast(w,

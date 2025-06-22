@@ -552,6 +552,77 @@ func Test_DeleteBookmark(t *testing.T) {
 	}
 }
 
+func Test_DeleteBookmarkPath(t *testing.T) {
+	svc := app(t)
+	server := hostTestWebserver(t)
+	defer server.Close()
+
+	obj, err := svc.LocalFetchFaviconURL(server.URL + "/Wikipedia-logo.png")
+	if err != nil {
+		t.Errorf("error fetching favicon: %v", err)
+	}
+
+	// /folder/bookmark
+
+	folder := uuid.NewString()
+	bmF, _ := svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Folder,
+		DisplayName: folder,
+		Path:        "/",
+	}, user)
+
+	bookmark := uuid.NewString()
+	bm, _ := svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		DisplayName: bookmark,
+		URL:         "http://localhost",
+		Path:        "/" + folder,
+		Favicon:     obj.Name,
+	}, user)
+
+	err = svc.DeletePath(bmF.ID, user)
+	if err != nil {
+		t.Error("could not delete the folder-path", err)
+	}
+
+	_, err = svc.GetBookmarkByID(bm.ID, user)
+	if err == nil {
+		t.Errorf("expected an error because deleted bookmark with id %s", bm.ID)
+	}
+
+	_, err = svc.GetBookmarkByID(bmF.ID, user)
+	if err == nil {
+		t.Errorf("expected an error because deleted bookmark with id %s", bmF.ID)
+	}
+
+	// ---- error ----
+
+	err = svc.DeletePath("", user)
+	if err == nil {
+		t.Errorf("expected error for empty id")
+	}
+
+	err = svc.DeletePath("unknown-id", user)
+	if err == nil {
+		t.Errorf("expected error for unknown id")
+	}
+
+	// ---- Delete Item ----
+
+	bookmark = uuid.NewString()
+	bm, _ = svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		DisplayName: bookmark,
+		URL:         "http://localhost",
+		Path:        "/",
+	}, user)
+	err = svc.DeletePath(bm.ID, user)
+	if err == nil {
+		t.Errorf("expected error for type Node")
+	}
+
+}
+
 func Test_SortOrder(t *testing.T) {
 	svc := app(t)
 	// /sort

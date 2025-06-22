@@ -387,6 +387,38 @@ func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark
 			newPath := ensureFolderPath(bm.Path, bm.DisplayName)
 			oldPath := ensureFolderPath(existingPath, existingDisplayName)
 
+			// if the folder is moved to the target-path we need to treat the special case, that
+			// a folder with the same name might already exists in the target path.
+			// without any logic we would end up with two folders
+			// as we identify folders just by name (and not by ID) the logic below to update the
+			// child-count updates the entries to the "new" folder (even though that is no update, as
+			// we just deal with paths, which are the same /A/B vs /A/B)
+			//
+			// the "solution" is to get rid of one bookmark-folder. it is not important which one, because
+			// we just address by path (/A/B).
+			// the idea is to keep the folder which we are working on (this one) and remove the "other one"
+			sameFolders, err := repo.GetBookmarksByPath(bm.Path, user.Username)
+			if err != nil {
+				s.Logger.Error(fmt.Sprintf("could not get bookmarks by path '%s': %v", oldPath, err))
+				return err
+			}
+			sameFolderBookmarks := make([]store.Bookmark, 0)
+			for _, f := range sameFolders {
+				if f.Type == store.Folder && f.DisplayName == bm.DisplayName && f.ID != bm.ID {
+					sameFolderBookmarks = append(sameFolderBookmarks, f)
+				}
+			}
+			if len(sameFolderBookmarks) > 0 {
+				// we have found folders with the same name, remove the folder to have only one remaining
+				for _, f := range sameFolderBookmarks {
+					err = repo.Delete(f)
+					if err != nil {
+						s.Logger.Error(fmt.Sprintf("could not merge folders '%s': %v", f.DisplayName, err))
+						return err
+					}
+				}
+			}
+
 			s.Logger.Info(fmt.Sprintf("will update all old paths '%s' to new path '%s'", oldPath, newPath))
 			bookmarks, err := repo.GetBookmarksByPathStart(oldPath, user.Username)
 			if err != nil {
@@ -413,6 +445,12 @@ func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark
 					s.Logger.Error(fmt.Sprintf("cannot update bookmark path: %v", err))
 					return err
 				}
+			}
+
+			// after the update above, correct the child-count of this folder
+			if err := s.updateChildCountOfPath(newPath, user.Username, repo); err != nil {
+				s.Logger.Error(fmt.Sprintf("could not update child-count of folder-path '%s': %v", newPath, err))
+				return err
 			}
 		}
 

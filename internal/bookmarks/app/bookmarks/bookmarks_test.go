@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -964,4 +965,130 @@ func hostTestWebserver(t *testing.T) *httptest.Server {
 	mux.HandleFunc("/orf.at", func(w http.ResponseWriter, r *http.Request) { writeHTMLPayload(w, orfAT) })
 
 	return httptest.NewServer(mux)
+}
+
+// found an error when a folder named 'A' is moved to a location which already has a folder 'A'
+// no overwrite is performed but the result is that two folders 'A' are available side-by-side.
+func Test_MoveSameNamedFolder(t *testing.T) {
+	svc := app(t)
+	server := hostTestWebserver(t)
+	defer server.Close()
+
+	var user = security.User{
+		Username:    uuid.NewString(),
+		Email:       "a.b@c.de",
+		DisplayName: "Test_" + uuid.NewString(),
+	}
+
+	// create a TARGET-ROOT folder where we have an
+	// existing folder named Existing
+	//   /TARGET-ROOT
+	//    - /SubFolder
+	//	- Bookmark1
+	targetRoot := "TARGET-ROOT"
+	_, err := svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Folder,
+		DisplayName: targetRoot,
+		Path:        "/",
+	}, user)
+	if err != nil {
+		t.Errorf("could not create targetRoot; %v", err)
+	}
+	subFolderName := "Subfolder"
+	_, err = svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Folder,
+		DisplayName: subFolderName,
+		Path:        "/" + targetRoot,
+	}, user)
+	if err != nil {
+		t.Errorf("could not create subFolderName in targetRoot; %v", err)
+	}
+	_, err = svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		DisplayName: "Bookmark1",
+		URL:         "http://example.com",
+		Path:        "/" + targetRoot + "/" + subFolderName,
+	}, user)
+	if err != nil {
+		t.Errorf("could not create Bookmark in targetRoot/subFolderName; %v", err)
+	}
+
+	// create the same subfolder in ROOT
+	//   /SubFolder		<- move this folder to TARGET-ROOT
+	//	- Bookmark2
+	rootSubFolder, err := svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Folder,
+		DisplayName: subFolderName,
+		Path:        "/", // <-- create the same folder in ROOT
+	}, user)
+	if err != nil {
+		t.Errorf("could not create subFolderName in targetRoot; %v", err)
+	}
+	_, err = svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		DisplayName: "Bookmark2",
+		URL:         "http://example.com",
+		Path:        "/" + subFolderName,
+	}, user)
+	if err != nil {
+		t.Errorf("could not create Bookmark in targetRoot/subFolderName; %v", err)
+	}
+
+	// setting the stage done (longe one!)
+
+	// if the Folder /SubFolder is moved to /TARGET-ROOT/SubFolder the two folders
+	// with the same name need to be merged and the one remaining folder should have
+	// all the bookmarks of the two folders combined
+	rootSubFolder.Path = "/" + targetRoot
+	_, err = svc.UpdateBookmark(*rootSubFolder, user)
+	if err != nil {
+		t.Errorf("could not move rootSubFolder to targetRoot; %v", err)
+	}
+
+	folders, err := svc.GetBookmarksByPath("/"+targetRoot, user)
+	if err != nil {
+		t.Errorf("could not get bookmark folders for path /TARGET-ROOT; %v", err)
+	}
+	if len(folders) != 1 {
+		var names string
+		for _, f := range folders {
+			if names != "" {
+				names += ", "
+			}
+			names += fmt.Sprintf("name=%s (type=%s)", f.DisplayName, f.Type)
+		}
+		t.Errorf("expected on merged folder but got %d folders; %s", len(folders), names)
+	}
+
+	// the remaining folder should have two bookmarks
+	//   /TARGET-ROOT
+	//    - /SubFolder
+	//	- Bookmark1
+	//	- Bookmark2
+	bookmarks, err := svc.GetBookmarksByPath("/"+targetRoot+"/"+subFolderName, user)
+	if err != nil {
+		t.Errorf("could not get bookmark folders for path /TARGET-ROOT/Subfolder; %v", err)
+	}
+	if len(bookmarks) != 2 {
+		t.Errorf("expected to have 2 bookmarks but only got %d", len(bookmarks))
+	}
+	var bmNames string
+	for _, bm := range bookmarks {
+		if bmNames != "" {
+			bmNames += ","
+		}
+		bmNames += bm.DisplayName
+	}
+	if !(strings.Contains(bmNames, "Bookmark1") && strings.Contains(bmNames, "Bookmark2")) {
+		t.Errorf("expected to have 2 bookmarks Bookmark1/Bookmark2 but got %s", bmNames)
+	}
+
+	// the child-count of the SubFolder should be 2
+	subFolder, err := svc.GetBookmarkByID(rootSubFolder.ID, user)
+	if err != nil {
+		t.Fatalf("could not get bookmark folder 'SubFolder' by ID; %v", err)
+	}
+	if subFolder.ChildCount != 2 {
+		t.Errorf("expected a childcount of %d, but got %d", 2, subFolder.ChildCount)
+	}
 }

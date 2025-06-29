@@ -88,6 +88,7 @@ func EditBookmarks(bm Bookmark, paths []string) g.Node {
 
 	favicon = h.Span(
 		h.ID("bookmark_favicon_select"),
+		h.Class("bookmark_favicon_select"),
 		g.Attr("hx-get", availFaviconURL),
 		g.Attr("hx-target", "body"),
 		g.Attr("hx-swap", "beforeend"),

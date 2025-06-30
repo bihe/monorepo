@@ -258,9 +258,10 @@ a.bookmark_path {
 
 .bookmark_favicon_select {
   height: 57px;
-  /* border: solid 1px; */
   display: block;
   background-color: #999;
+  padding-left: 3px;
+  padding-right: 3px;
 }
 
 /* ------------------------------ bootstrap modal overwrite --------------------------- ------------*/

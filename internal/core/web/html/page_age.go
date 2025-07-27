@@ -1,14 +1,9 @@
 package html
 
 import (
-	_ "embed"
-
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 )
-
-//go:embed age.encryption.min.js
-var ageLogic string
 
 func AgeContent() g.Node {
 	return h.Div(h.Class("container-fluid"),
@@ -33,8 +28,6 @@ func AgeContent() g.Node {
 				h.Textarea(h.Class("form-control"), h.ID("age_output"), h.Placeholder("encrypted text"), h.Rows("5")),
 			),
 		),
-		h.Script(h.Src("/public/js/age-0.2.4.min.js")),
-		g.El("script", g.Attr("type", "text/javascript"), g.Raw(ageLogic)),
 	)
 }
 
@@ -52,10 +45,10 @@ func AgeNavigation(search string) g.Node {
 		h.Span(h.Class("right-action"),
 			h.Div(h.ID("request_indicator"), h.Class("request_indicator htmx-indicator"),
 				h.Div(h.Class("spinner-border text-light"), h.Role("status"),
-					h.Span(h.ID("loading_spinner"), h.Class("visually-hidden"), g.Text("Loading...")),
+					h.Span(h.Class("visually-hidden"), g.Text("Loading...")),
 				),
 			),
-			h.Button(h.ID("age_perform_action"), h.Class("btn btn-primary"), h.I(h.Class("bi bi-nut")), g.Text(" Go")),
+			h.A(h.Href("/age/action"), h.Type("button"), h.Class("btn btn-primary"), h.I(h.Class("bi bi-nut")), g.Text(" Go")),
 		),
 	)
 }

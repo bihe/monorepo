@@ -88,7 +88,6 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, logger logging
 	sec.Mount("/age", func() http.Handler {
 		r := chi.NewRouter()
 		r.Get("/", templateHandler.DisplayAgeStartPage())
-		r.Put("/toast", templateHandler.DisplayToastNotification())
 		return r
 	}())
 

@@ -25,6 +25,9 @@ func ServeStaticDir(r chi.Router, public string, static http.Dir) {
 
 	r.Get(public+"*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		file := strings.Replace(r.RequestURI, public, "", 1)
+		if file == "" {
+			file = strings.Replace(r.URL.Path, public, "", 1)
+		}
 		// if the file contains URL params, remove everything after ?
 		if strings.Contains(file, "?") {
 			parts := strings.Split(file, "?")
@@ -32,7 +35,7 @@ func ServeStaticDir(r chi.Router, public string, static http.Dir) {
 				file = parts[0] // use everything before the ?
 			}
 		}
-		if _, err := os.Stat(root + file); os.IsNotExist(err) {
+		if _, err := os.Stat(filepath.Join(root, file)); os.IsNotExist(err) {
 			http.ServeFile(w, r, path.Join(root, "index.html"))
 			return
 		}

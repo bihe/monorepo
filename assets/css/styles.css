@@ -124,8 +124,9 @@ a.bookmark_path {
 .bookmark_favicon_preview {
   width: 50px;
   height: 50px;
-  /* padding-right: 5px; */
-  padding-top: 5px;
+  padding-right: 3px;
+  padding-top: 7px;
+  padding-left: 3px;
 }
 
 .bookmark_empty {
@@ -134,8 +135,6 @@ a.bookmark_path {
   padding-right: 5px;
   padding-top: 5px;
   text-align: center;
-  border: solid 1px #999;
-  margin-top: 5px;
   display: block;
 }
 
@@ -256,12 +255,13 @@ a.bookmark_path {
   color: var(--bs-alert-color);
 }
 
+/*icon selected*/
 .bookmark_favicon_select {
   height: 57px;
+  width: 57px;
   display: block;
-  background-color: #999;
+  background-color: #ccc;
   padding-left: 3px;
-  padding-right: 3px;
 }
 
 /* ------------------------------ bootstrap modal overwrite --------------------------- ------------*/

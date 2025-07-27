@@ -27,6 +27,11 @@ var AvailableApps = []html.NavItem{
 		Icon:        "<i class=\"bi bi-diagram-2\"></i> ",
 		URL:         "/sites",
 	},
+	{
+		DisplayName: "Age",
+		Icon:        "<i class=\"bi bi-file-lock\"></i> ",
+		URL:         "/age",
+	},
 }
 
 // CreatePageModel provides the needed data for a page using the shared Layout

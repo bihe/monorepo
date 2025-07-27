@@ -84,6 +84,14 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, logger logging
 		return r
 	}())
 
+	// add the handlers for additional paths
+	sec.Mount("/age", func() http.Handler {
+		r := chi.NewRouter()
+		r.Get("/", templateHandler.DisplayAgeStartPage())
+		r.Put("/toast", templateHandler.DisplayToastNotification())
+		return r
+	}())
+
 	// call on the ROOT path
 	std.Get("/ok", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

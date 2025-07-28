@@ -1,6 +1,7 @@
 module golang.binggl.net/monorepo
 
 require (
+	filippo.io/age v1.2.1
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/aws/aws-sdk-go-v2 v1.36.5
 	github.com/aws/aws-sdk-go-v2/config v1.29.17

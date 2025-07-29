@@ -25,7 +25,7 @@ func EncryptStringPassphrase(input, passphrase string) (string, error) {
 
 	recipient, err := age.NewScryptRecipient(passphrase)
 	if err != nil {
-		return "", fmt.Errorf("could not create encrypter with passphrase; %v", err)
+		return "", err
 	}
 	err = encrypt([]age.Recipient{recipient}, in, out)
 	if err != nil {
@@ -63,6 +63,7 @@ func encrypt(recipients []age.Recipient, in io.Reader, out io.Writer) (err error
 	return nil
 }
 
+// DecryptStringPassphrase decrypts the given cryptText with the provided passphrase
 func DecryptStringPassphrase(cryptText, passphrase string) (string, error) {
 	if cryptText == "" {
 		return "", fmt.Errorf("no cryptText supplied")
@@ -76,7 +77,7 @@ func DecryptStringPassphrase(cryptText, passphrase string) (string, error) {
 
 	identity, err := age.NewScryptIdentity(passphrase)
 	if err != nil {
-		return "", fmt.Errorf("could not create decrypter with passphrase; %v", err)
+		return "", err
 	}
 	err = decrypt([]age.Identity{identity}, in, out)
 	if err != nil {

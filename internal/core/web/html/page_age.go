@@ -34,7 +34,7 @@ try {
 `
 
 func AgeContent(model AgeModel) g.Node {
-	return h.Div(h.ID("age_content_area"), h.Class("container-fluid"),
+	return h.Div(h.ID("age_content_area"), h.Class("container-fluid age_content"), g.Attr("data-bs-theme", "light"),
 		h.Div(h.Class("row"),
 			h.Form(g.Attr("hx-post", "/age"), g.Attr("hx-trigger", "performAgeAction from:document"), g.Attr("hx-swap", "outerHTML"), g.Attr("hx-indicator", "#request_indicator"),
 				h.P(h.Class("mb-3 page_label"),
@@ -60,17 +60,34 @@ func AgeContent(model AgeModel) g.Node {
 							h.I(h.Class("bi bi-eye")),
 							g.Attr("data-bs-toggle", "button"),
 						),
+						g.If(!model.Passphrase.Valid, h.Div(h.Class("invalid_input"), g.Text(model.Passphrase.Message))),
 					),
 				),
 
 				h.Div(h.Class("mb-3"),
 					h.Label(h.For("age_input"), h.Class("form-label"), g.Text("Input: ")),
-					h.Textarea(h.Class("form-control"), h.ID("age_input"), h.Placeholder("raw unencrypted text"), h.Rows("5")),
+					h.Textarea(
+						h.Class(common.ClassCond("form-control", "control_invalid", !model.InputText.Valid)),
+						h.ID("age_input"),
+						h.Name("age_input"),
+						h.Placeholder("raw unencrypted text"),
+						h.Rows("10"),
+						g.Raw(model.InputText.Val),
+					),
+					g.If(!model.InputText.Valid, h.Div(h.Class("invalid_input"), g.Text(model.InputText.Message))),
 				),
 
 				h.Div(h.Class("mb-3"),
 					h.Label(h.For("age_output"), h.Class("form-label"), g.Text("Encrypted: ")),
-					h.Textarea(h.Class("form-control"), h.ID("age_output"), h.Placeholder("encrypted text"), h.Rows("5")),
+					h.Textarea(
+						h.Class(common.ClassCond("form-control", "control_invalid", !model.OutputText.Valid)),
+						h.ID("age_output"),
+						h.Name("age_output"),
+						h.Placeholder("encrypted text"),
+						h.Rows("10"),
+						g.Raw(model.OutputText.Val),
+					),
+					g.If(!model.OutputText.Valid, h.Div(h.Class("invalid_input"), g.Text(model.OutputText.Message))),
 				),
 			),
 			h.Script(h.Type("text/javascript"), g.Raw(changePasswordJS)),
@@ -81,7 +98,8 @@ func AgeContent(model AgeModel) g.Node {
 func AgeStyle() g.Node {
 	return h.StyleEl(
 		h.Type("text/css"),
-		g.Raw(".page_label { margin-top: 10px;}"),
+		g.Raw(".page_label { margin-top: 10px;font-size:large;}"),
+		g.Raw(".age_content{height:100%;background-color:#F2F2F2;color:black}"),
 	)
 
 }

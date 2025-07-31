@@ -9,6 +9,7 @@ const (
 	MsgSuccess = "success"
 	MsgError   = "error"
 	MsgInfo    = "info"
+	MsgWarning = "warning"
 )
 
 type ToastMessage struct {

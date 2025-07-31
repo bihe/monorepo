@@ -468,3 +468,10 @@ a.bookmark_path {
   scrollbar-width: thin;
   max-height: 50vh;
 }
+
+.invalid_input {
+  width: 100%;
+  margin-top: .25rem;
+  font-size: .875em;
+  color: var(--bs-form-invalid-color);
+}

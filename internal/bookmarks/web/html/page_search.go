@@ -122,9 +122,19 @@ func SearchStyles() g.Node {
 }
 
 func SearchNavigation(search string) g.Node {
-	return h.Div(h.Class("application_name"),
-		h.Div(g.Text("~ searching for: "),
-			h.Span(h.Class("badge text-bg-success"), h.Style("font-size:small"), g.Text(search)),
+	return h.Nav(h.Class("navbar navbar-expand application_name"),
+		h.Div(h.Class("container-fluid"),
+			h.A(h.Class("navbar-brand application_title"), h.Href("#"), h.I(h.Class("bi bi-bookmark-star"))),
+
+			h.Div(h.Class("collapse navbar-collapse"),
+				h.Ul(h.Class("navbar-nav me-auto"),
+					h.Li(h.Class("nav-item"), h.A(h.Class("nav-link"),
+						h.Div(g.Text("~ searching for: "),
+							h.Span(h.Class("badge text-bg-success"), h.Style("font-size:small"), g.Text(search)),
+						),
+					)),
+				),
+			),
 		),
 	)
 }

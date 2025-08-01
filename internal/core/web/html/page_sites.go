@@ -31,15 +31,25 @@ func SiteStyles() g.Node {
 }
 
 func SiteNavigation(search string) g.Node {
-	return h.Div(h.Class("application_name"),
-		h.Div(g.Text("~ sites:")),
-		h.Span(h.Class("right-action"),
-			h.Div(h.ID("request_indicator"), h.Class("request_indicator htmx-indicator"),
-				h.Div(h.Class("spinner-border text-light"), h.Role("status"),
-					h.Span(h.Class("visually-hidden"), g.Text("Loading...")),
+
+	return h.Nav(h.Class("navbar navbar-expand application_name"),
+		h.Div(h.Class("container-fluid"),
+			h.A(h.Class("navbar-brand application_title"), h.Href("#"), h.I(h.Class("bi bi-diagram-2"))),
+
+			h.Div(h.Class("collapse navbar-collapse"),
+				h.Ul(h.Class("navbar-nav me-auto"),
+					h.Li(h.Class("nav-item"), h.A(h.Class("nav-link"), g.Text("> sites"))),
+				),
+				h.Form(
+					h.Div(h.ID("request_indicator"), h.Class("request_indicator htmx-indicator"),
+						h.Div(h.Class("spinner-border text-light"), h.Role("status"),
+							h.Span(h.Class("visually-hidden"), g.Text("Loading...")),
+						),
+					),
+
+					h.A(h.Href("/sites/edit"), h.Type("button"), h.Class("btn btn-light"), h.I(h.Class("bi bi-pen")), g.Text(" Edit")),
 				),
 			),
-			h.A(h.Href("/sites/edit"), h.Type("button"), h.Class("btn btn-light"), h.I(h.Class("bi bi-pen")), g.Text(" Edit")),
 		),
 	)
 }

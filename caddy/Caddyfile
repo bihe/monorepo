@@ -35,6 +35,13 @@ dev.binggl.net {
         }
     }
 
+     handle_path /age* {
+        rewrite * /age{path}
+        reverse_proxy http://core-3001:3000 {
+            import proxy-transport
+        }
+    }
+
     handle_path /mydms* {
         rewrite * /mydms{path}
         reverse_proxy http://mydms-3002:3000 {

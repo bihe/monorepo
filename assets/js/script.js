@@ -22,7 +22,7 @@
         document.getElementById('toast_messsage_text-' + toastType).textContent = evt.detail.text;
         document.getElementById('toastMessage-' + toastType).classList.add('show');
 
-        if (toastType === 'success' || toastType === 'info') {
+        if (toastType === 'success' || toastType === 'info' || toastType === 'warning') {
             setTimeout(() => {
                 // time to say goodbye
                 document.getElementById('toastMessage-' + toastType).classList.remove('show');

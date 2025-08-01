@@ -6,6 +6,26 @@ import (
 	h "maragu.dev/gomponents/html"
 )
 
+const sitesHeaderStyle = `
+.header {
+  background: darkred;
+}
+
+.header-search-field {
+  background-color: #A02003;
+  border: var(--bs-border-width) solid #731702;
+  color: #dddddd;
+}
+
+.header-search-field:focus {
+  border-color: yellow;
+}
+
+.header-search-field-prefix {
+  background-color: #A02003;
+  border: var(--bs-border-width) solid #731702;
+}`
+
 func SiteContent(userSites sites.UserSites) g.Node {
 	return h.Div(h.Class("container-fluid"),
 		h.Div(h.Class("row"),
@@ -27,7 +47,10 @@ func SiteContent(userSites sites.UserSites) g.Node {
 }
 
 func SiteStyles() g.Node {
-	return g.Text("")
+	return h.StyleEl(
+		h.Type("text/css"),
+		g.Raw(sitesHeaderStyle),
+	)
 }
 
 func SiteNavigation(search string) g.Node {

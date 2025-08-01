@@ -12,9 +12,7 @@ body {
   --lh: 55px;
 }
 
-.header {
-  background: darkred;
-}
+
 
 main {
   height: 100vh;
@@ -41,7 +39,7 @@ main {
   line-height: var(--lh);
   width: 100vw;
   display: flex;
-  font-size: large;
+  font-size: medium;
 }
 
 .application_title {
@@ -107,21 +105,6 @@ a.bookmark_name:hover {
 
 .invert {
   filter: invert(100%);
-}
-
-.search-field {
-  background-color: #A02003;
-  border: var(--bs-border-width) solid #731702;
-  color: #dddddd;
-}
-
-.search-field:focus {
-  border-color: yellow;
-}
-
-.search-field-prefix {
-  background-color: #A02003;
-  border: var(--bs-border-width) solid #731702;
 }
 
 a.bookmark_path {

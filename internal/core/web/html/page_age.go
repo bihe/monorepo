@@ -95,11 +95,36 @@ func AgeContent(model AgeModel) g.Node {
 	)
 }
 
+const ageHeaderStyle = `
+.header {
+  background: #F75305;
+}
+
+.header-search-field {
+  background-color: #FB7232;
+  border: var(--bs-border-width) solid #A03503;
+}
+
+.header-search-field::placeholder {
+  color: #333333;
+}
+
+.header-search-field:focus {
+  border-color: yellow;
+}
+
+.header-search-field-prefix {
+  background-color: #FB7232;
+  border: var(--bs-border-width) solid #A03503;
+  color: #333333;
+}`
+
 func AgeStyle() g.Node {
 	return h.StyleEl(
 		h.Type("text/css"),
 		g.Raw(".page_label { margin-top: 10px;font-size:large;}"),
 		g.Raw(".age_content{height:100%;background-color:#F2F2F2;color:black}"),
+		g.Raw(ageHeaderStyle),
 	)
 
 }

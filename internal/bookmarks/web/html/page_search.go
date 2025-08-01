@@ -118,7 +118,11 @@ func SearchContent(search string, items []bookmarks.Bookmark, ell EllipsisValues
 }
 
 func SearchStyles() g.Node {
-	return g.El("style", g.Attr("type", "text/css"), g.Text(".delete{font-weight:bold;color:red}"))
+	return h.StyleEl(
+		h.Type("text/css"),
+		g.Raw(".delete{font-weight:bold;color:red}"),
+		g.Raw(constBookmarkHeaderStyle),
+	)
 }
 
 func SearchNavigation(search string) g.Node {

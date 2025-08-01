@@ -28,7 +28,7 @@ var AvailableApps = []html.NavItem{
 		URL:         "/sites",
 	},
 	{
-		DisplayName: "Age",
+		DisplayName: "Encryption",
 		Icon:        "<i class=\"bi bi-file-lock\"></i> ",
 		URL:         "/age",
 	},

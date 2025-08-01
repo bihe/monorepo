@@ -17,10 +17,10 @@ func SiteEditContent(payload, err string) g.Node {
 }
 
 func SiteEditStyles() g.Node {
-	return h.StyleEl(h.Type("text/css"), g.Raw(`.right-action {
-	  position: absolute;
-	  right: 20px;
-	}`))
+	return h.StyleEl(
+		h.Type("text/css"),
+		g.Raw(sitesHeaderStyle),
+	)
 }
 
 const javascriptContent = `

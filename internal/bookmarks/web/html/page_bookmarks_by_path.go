@@ -17,11 +17,33 @@ func getPath(entries []BookmarkPathEntry) string {
 	return entries[len(entries)-1].UrlPath
 }
 
+const constBookmarkHeaderStyle = `
+.header {
+	background: #0F4F70;
+}
+
+.header-search-field {
+	background-color: #146690;
+	border: var(--bs-border-width) solid #092D3F;
+	color: #dddddd;
+}
+
+.header-search-field:focus {
+	border-color: yellow;
+}
+
+.header-search-field-prefix {
+	background-color: #146690;
+	border: var(--bs-border-width) solid #092D3F;
+}
+`
+
 func BookmarksByPathStyles() g.Node {
 	return h.StyleEl(
 		h.Type("text/css"),
 		g.Raw(".breadcrumb-item{--bs-breadcrumb-divider-color:#ffffff !important;--bs-breadcrumb-divider:'>';font-size:medium}.breadcrumb-item.active{color:#ffffff}li.breadcrumb-item > a{color:#ffffff}div.btn-group > button.btn.dropdown-toggle{--bs-btn-color:#ffffff}.delete{font-weight:bold;color:red}.right-action{position:absolute;right:20px}.sortInput{position:relative;top:18px}@media only screen and (min-device-width: 375px) and (max-device-width: 812px){.breadcrumb-item{--bs-breadcrumb-divider-color:#ffffff !important;--bs-breadcrumb-divider:'>';font-size:smaller}.breadcrumb-item.active{color:#ffffff}li.breadcrumb-item > a{color:#ffffff}}"),
 		g.Raw(".breadcrumb_navigation{padding-left:20px;position:relative;top:7px}"),
+		g.Raw(constBookmarkHeaderStyle),
 	)
 }
 

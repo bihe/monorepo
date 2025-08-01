@@ -52,7 +52,7 @@ func (t *TemplateHandler) DisplayDocuments() http.HandlerFunc {
 		documents, search, numDocs, next = t.getDocuments(r)
 
 		base.Layout(
-			t.pageModel("Documents", search, "/public/folder.svg", *user),
+			t.pageModel("Documents", search, "/public/mydms.svg", *user),
 			html.DocumentsStyles(),
 			html.DocumentsNavigation(search),
 			html.DocumentsContent(

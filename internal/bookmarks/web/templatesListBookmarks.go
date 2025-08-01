@@ -28,7 +28,7 @@ func (t *TemplateHandler) SearchBookmarks() http.HandlerFunc {
 		ell := html.GetEllipsisValues(r)
 
 		base.Layout(
-			t.pageModel("Bookmark Search", search, "/public/search_icon.svg", *user),
+			t.pageModel("Bookmark Search", search, "/public/bookmarks.svg", *user),
 			html.SearchStyles(),
 			html.SearchNavigation(search),
 			html.SearchContent(search, bms, ell),
@@ -111,7 +111,7 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 			// we need to treat the root folder in a "special" way
 			if path == "/" && strings.HasSuffix(folder.ID, "ROOT") {
 				// use a "default" favicon for the root folder
-				favicon = "/public/Clone_white.png"
+				favicon = "/public/bookmarks.svg"
 			}
 		}
 

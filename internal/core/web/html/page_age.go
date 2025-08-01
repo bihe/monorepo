@@ -97,7 +97,7 @@ func AgeContent(model AgeModel) g.Node {
 
 const ageHeaderStyle = `
 .header {
-  background: #F75305;
+  background: #CC4402;
 }
 
 .header-search-field {

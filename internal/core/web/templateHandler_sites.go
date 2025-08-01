@@ -13,6 +13,8 @@ import (
 )
 
 const sitesSearchURL = "/sites/search"
+const sitesBaseURL = "/sites"
+const sitesFavicon = "/public/sites.svg"
 
 // DisplaySites determined the sites of the current user and displays them
 func (t *TemplateHandler) DisplaySites() http.HandlerFunc {
@@ -27,7 +29,7 @@ func (t *TemplateHandler) DisplaySites() http.HandlerFunc {
 		}
 
 		base.Layout(
-			common.CreatePageModel("/sites", "Available Apps", search, "/public/folder.svg", t.versionString(), t.Env, *user),
+			common.CreatePageModel(sitesBaseURL, "Available Apps", search, sitesFavicon, t.versionString(), t.Env, *user),
 			html.SiteStyles(),
 			html.SiteNavigation(search),
 			html.SiteContent(usrSites),
@@ -51,7 +53,7 @@ func (t *TemplateHandler) ShowEditSites() http.HandlerFunc {
 		jsonPayload := handler.JsonIndent[sites.UserSites](usrSites)
 
 		base.Layout(
-			common.CreatePageModel("/sites", "Edit Apps", search, "/public/folder.svg", t.versionString(), t.Env, *user),
+			common.CreatePageModel(sitesBaseURL, "Edit Apps", search, sitesFavicon, t.versionString(), t.Env, *user),
 			html.SiteEditStyles(),
 			html.SiteEditNavigation(search),
 			html.SiteEditContent(jsonPayload, ""),
@@ -92,6 +94,6 @@ func (t *TemplateHandler) SaveSites() http.HandlerFunc {
 		}
 
 		// operation was successful return to the overview
-		w.Header().Add("HX-Location", "/sites")
+		w.Header().Add("HX-Location", sitesBaseURL)
 	}
 }

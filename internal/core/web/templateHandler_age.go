@@ -25,7 +25,7 @@ func (t *TemplateHandler) DisplayAgeStartPage() http.HandlerFunc {
 			OutputText: html.ValidatorInput{Valid: true},
 		}
 		base.Layout(
-			common.CreatePageModel("/age", "helpers to work with age", search, "/public/folder.svg", t.versionString(), t.Env, *user),
+			common.CreatePageModel("/age", "helpers to work with age", search, "/public/age.svg", t.versionString(), t.Env, *user),
 			html.AgeStyle(),
 			html.AgeNavigation(search),
 			html.AgeContent(model),

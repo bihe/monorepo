@@ -57,26 +57,30 @@ func Layout(model LayoutModel, style, navigation, content g.Node, searchURL stri
 			h.Link(h.Rel("stylesheet"), h.Href("/public/bootstrap-icons/bootstrap-icons.min.css")),
 			style,
 		},
+
 		Body: []g.Node{
 			h.Body(g.Attr("data-bs-theme", "dark"),
 				h.Header(
-					h.Nav(h.Class("navbar navbar-expand-md navbar-dark fixed-top header"),
+					h.Nav(h.Class("navbar navbar-expand-lg navbar-dark fixed-top header"),
 						h.Div(h.Class("container-fluid"),
-							h.Ul(h.Class("navbar-nav me-auto mb-lg-0"),
-								g.Map(model.Navigation, func(n NavItem) g.Node {
-									return h.Li(h.Class("nav-item"),
-										h.A(g.If(!n.Active, h.Class("nav-link")), g.If(n.Active, h.Class("nav-link active")), h.Href(n.URL),
-											g.Raw(n.Icon),
-											h.Span(h.Class("hide_mobile"), g.Text(n.DisplayName)),
-										),
-									)
-								}),
-							),
+							h.A(h.Class("navbar-brand"), h.Href("/"), h.I(h.Class("bi bi-1-square"))),
+
 							h.Button(h.Class("navbar-toggler"), h.Type("button"), g.Attr("data-bs-toggle", "collapse"), g.Attr("data-bs-target", "#navbarCollapse"),
 								h.Span(h.Class("navbar-toggler-icon")),
 							),
 							h.Div(h.Class("collapse navbar-collapse"), h.ID("navbarCollapse"),
-								h.Form(h.Class("w-100 me-3"), h.Role("search"), h.Method("GET"), h.Action(searchURL),
+								h.Ul(h.Class("navbar-nav me-auto mb-2 mb-lg-0"),
+									g.Map(model.Navigation, func(n NavItem) g.Node {
+										return h.Li(h.Class("nav-item"),
+											h.A(g.If(!n.Active, h.Class("nav-link")), g.If(n.Active, h.Class("nav-link active")), h.Href(n.URL),
+												g.Raw(n.Icon),
+												h.Span(h.Class("hide_mobile"), g.Text(n.DisplayName)),
+											),
+										)
+									}),
+								),
+
+								h.Form(h.Class("me-3"), h.Role("search"), h.Method("GET"), h.Action(searchURL),
 									h.Div(h.Class("input-group"),
 										h.Span(h.Class("input-group-text search-field-prefix"), h.ID("search-addon"), h.I(h.Class("bi bi-search"))),
 										h.Input(h.Type("search"), h.Name("q"), h.Class("form-control search-field"), h.Placeholder("Search... (Ctrl+B)"), h.ID("search-field"), g.Attr("control-id", "search-field"), h.AutoComplete("off"), h.Value(model.Search)),

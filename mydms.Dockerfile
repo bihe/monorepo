@@ -1,6 +1,6 @@
 ## backend build-phase
 ## --------------------------------------------------------------------------
-FROM golang:alpine AS BACKEND-BUILD
+FROM golang:alpine AS backend-build
 
 ARG buildtime_variable_version=3.0.0
 ARG buildtime_variable_timestamp=20220101
@@ -46,8 +46,8 @@ RUN mkdir -p /opt/mydms/uploads && mkdir -p /opt/mydms/etc && mkdir -p /opt/mydm
 RUN addgroup -g ${buildtime_variable_gid} -S ${buildtime_variable_groupname} && \
     adduser -u ${buildtime_variable_uid} -S ${buildtime_variable_username} -G ${buildtime_variable_groupname} -H -h /opt/mydms
 
-COPY --chown=${buildtime_variable_uid}:${buildtime_variable_gid} --from=BACKEND-BUILD /backend-build/mydms.api /opt/mydms
-COPY --chown=${buildtime_variable_uid}:${buildtime_variable_gid} --from=BACKEND-BUILD /backend-build/assets /opt/mydms/assets
+COPY --chown=${buildtime_variable_uid}:${buildtime_variable_gid} --from=backend-build /backend-build/mydms.api /opt/mydms
+COPY --chown=${buildtime_variable_uid}:${buildtime_variable_gid} --from=backend-build /backend-build/assets /opt/mydms/assets
 
 RUN chown ${buildtime_variable_uid}:${buildtime_variable_gid} /opt/mydms/etc \
     && chown ${buildtime_variable_uid}:${buildtime_variable_gid} /opt/mydms/logs \

@@ -21,6 +21,7 @@ func BookmarksByPathStyles() g.Node {
 	return h.StyleEl(
 		h.Type("text/css"),
 		g.Raw(".breadcrumb-item{--bs-breadcrumb-divider-color:#ffffff !important;--bs-breadcrumb-divider:'>';font-size:medium}.breadcrumb-item.active{color:#ffffff}li.breadcrumb-item > a{color:#ffffff}div.btn-group > button.btn.dropdown-toggle{--bs-btn-color:#ffffff}.delete{font-weight:bold;color:red}.right-action{position:absolute;right:20px}.sortInput{position:relative;top:18px}@media only screen and (min-device-width: 375px) and (max-device-width: 812px){.breadcrumb-item{--bs-breadcrumb-divider-color:#ffffff !important;--bs-breadcrumb-divider:'>';font-size:smaller}.breadcrumb-item.active{color:#ffffff}li.breadcrumb-item > a{color:#ffffff}}"),
+		g.Raw(".breadcrumb_navigation{padding-left:20px;position:relative;top:7px}"),
 	)
 }
 
@@ -35,7 +36,7 @@ func BookmarksByPathNavigation(entries []BookmarkPathEntry) g.Node {
 				breadcrumbs = append(breadcrumbs, h.Li(
 					h.Class("breadcrumb-item active"),
 					g.Attr("aria-current", "page"),
-					h.I(h.Class("bi bi-house")),
+					g.Text("/root"),
 				))
 			} else {
 				breadcrumbs = append(breadcrumbs, h.Li(
@@ -51,7 +52,7 @@ func BookmarksByPathNavigation(entries []BookmarkPathEntry) g.Node {
 					h.A(
 						h.Class("rootroot"),
 						h.Href("/bm/~"+e.UrlPath),
-						h.I(h.Class("bi bi-house")),
+						g.Text("/root"),
 					),
 				))
 			} else {
@@ -66,49 +67,57 @@ func BookmarksByPathNavigation(entries []BookmarkPathEntry) g.Node {
 		}
 	}
 
-	return h.Div(h.Class("application_name"),
-		h.Nav(
-			g.Attr("aria-label", "breadcrumb"),
-			h.Ol(
-				h.Class("breadcrumb"),
-				g.Group(breadcrumbs),
-			),
-		),
-		h.Span(
-			h.Class("right-action"),
-			h.Div(h.ID("request_indicator"), h.Class("request_indicator htmx-indicator"),
-				h.Div(h.Class("spinner-border text-light"), h.Role("status"),
-					h.Span(h.Class("visually-hidden"),
-						g.Text("Loading..."),
+	return h.Nav(h.Class("navbar navbar-expand application_name"),
+		h.Div(h.Class("container-fluid"),
+			h.A(h.Class("navbar-brand application_title"), h.Href("#"), h.I(h.Class("bi bi-bookmark-star"))),
+
+			h.Div(h.Class("collapse navbar-collapse"),
+				h.Ul(h.Class("navbar-nav me-auto"),
+					h.Li(h.Class("nav-item"),
+						h.Nav(h.Class("breadcrumb_navigation"),
+							g.Attr("aria-label", "breadcrumb"),
+							h.Ol(
+								h.Class("breadcrumb"),
+								g.Group(breadcrumbs),
+							),
+						),
 					),
 				),
-			),
-			h.Button(h.ID("btn_toggle_sorting"), h.Type("button"), g.Attr("data-bs-toggle", "button"), h.Class("btn sort_button"),
-				h.I(h.Class("bi bi-arrow-down-up"),
-					g.Text(" Sort"),
-				),
-			),
-			h.Span(h.ID("save_list_sort_order"), h.Class("sort_button d-none"),
-				h.Button(h.ID("btn_save_sorting"), h.Type("button"), h.Class("btn btn-success sort_button"),
-					h.I(h.Class("bi bi-sort-numeric-down"),
-						g.Text(" Save"),
+				h.Form(
+					h.Div(h.ID("request_indicator"), h.Class("request_indicator htmx-indicator"),
+						h.Div(h.Class("spinner-border text-light"), h.Role("status"),
+							h.Span(h.Class("visually-hidden"), g.Text("Loading...")),
+						),
+					),
+
+					h.Button(h.ID("btn_toggle_sorting"), h.Type("button"), g.Attr("data-bs-toggle", "button"), h.Class("btn sort_button"),
+						h.I(h.Class("bi bi-arrow-down-up"),
+							g.Text(" Sort"),
+						),
+					),
+					h.Span(h.ID("save_list_sort_order"), h.Class("sort_button d-none"),
+						h.Button(h.ID("btn_save_sorting"), h.Type("button"), h.Class("btn btn-success sort_button"),
+							h.I(h.Class("bi bi-sort-numeric-down"),
+								g.Text(" Save"),
+							),
+						),
+					),
+					h.Button(
+						h.Type("button"),
+						g.Attr("data-testid", "link-add-bookmark"),
+						h.Class("btn btn-primary new_button"),
+						g.Attr("data-bs-toggle", "modal"),
+						g.Attr("data-bs-target", "#modals-here"),
+						g.Attr("hx-target", "#modals-here"),
+						g.Attr("hx-trigger", "click"),
+						g.Attr("hx-get", "/bm/-1?path="+getPath(entries)),
+						h.I(h.Class("bi bi-plus"),
+							g.Text(" Add"),
+						),
 					),
 				),
-			),
-			h.Button(
-				h.Type("button"),
-				g.Attr("data-testid", "link-add-bookmark"),
-				h.Class("btn btn-primary new_button"),
-				g.Attr("data-bs-toggle", "modal"),
-				g.Attr("data-bs-target", "#modals-here"),
-				g.Attr("hx-target", "#modals-here"),
-				g.Attr("hx-trigger", "click"),
-				g.Attr("hx-get", "/bm/-1?path="+getPath(entries)),
-				h.I(h.Class("bi bi-plus"),
-					g.Text(" Add"),
-				),
+				g.El("script", g.Attr("type", "text/javascript"), g.Raw(sortingLogic)),
 			),
 		),
-		g.El("script", g.Attr("type", "text/javascript"), g.Raw(sortingLogic)),
 	)
 }

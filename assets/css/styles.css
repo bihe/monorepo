@@ -13,13 +13,16 @@ body {
 }
 
 .header {
-  background: #0d6efd;
+  background: darkred;
+}
+
+main {
+  height: 100vh;
 }
 
 .content_area {
-  height: calc(100vh - 109px);
+  height: 100%;
   overflow-y: auto;
-  border-top: darkgray dashed 1px;
 }
 
 .sub-navigation {
@@ -31,13 +34,18 @@ body {
   font-weight: 700;
   font-family: Roboto Mono, Courier New, Courier, monospace;
   padding-top: 3px;
+  background-color: #3B3B3B;
 }
 
 .application_name {
   line-height: var(--lh);
-  margin-left: 20px;
   width: 100vw;
   display: flex;
+  font-size: large;
+}
+
+.application_title {
+  margin-right: 1px;
 }
 
 .application_version {
@@ -102,14 +110,18 @@ a.bookmark_name:hover {
 }
 
 .search-field {
-  background-color: #0099ff;
-  border: var(--bs-border-width) solid #0000cc;
+  background-color: #A02003;
+  border: var(--bs-border-width) solid #731702;
   color: #dddddd;
 }
 
+.search-field:focus {
+  border-color: yellow;
+}
+
 .search-field-prefix {
-  background-color: #0d6efd;
-  border: var(--bs-border-width) solid #0000cc;
+  background-color: #A02003;
+  border: var(--bs-border-width) solid #731702;
 }
 
 a.bookmark_path {

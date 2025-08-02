@@ -9,6 +9,7 @@ import (
 	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/security"
 
+	"golang.binggl.net/monorepo/internal/common/crypter"
 	"golang.binggl.net/monorepo/internal/core/api"
 	"golang.binggl.net/monorepo/internal/core/app/conf"
 	"golang.binggl.net/monorepo/internal/core/app/oidc"
@@ -28,7 +29,7 @@ type HTTPHandlerOptions struct {
 }
 
 // MakeHTTPHandler creates a new handler implementation which is used together with the HTTP server
-func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, logger logging.Logger, opts HTTPHandlerOptions) http.Handler {
+func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, cryptSvc crypter.EncryptionService, logger logging.Logger, opts HTTPHandlerOptions) http.Handler {
 	std, sec := setupRouter(opts, logger)
 	oidcHandler := api.OidcHandler{
 		OidcSvc: oidcSvc,
@@ -50,9 +51,10 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, logger logging
 			BasePath:  "/public",
 			StartPage: "/sites",
 		},
-		SiteSvc: siteSvc,
-		Version: opts.Version,
-		Build:   opts.Build,
+		SiteSvc:    siteSvc,
+		CrypterSvc: cryptSvc,
+		Version:    opts.Version,
+		Build:      opts.Build,
 	}
 
 	// use this for development purposes only!
@@ -85,7 +87,7 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, logger logging
 	}())
 
 	// add the handlers for additional paths
-	sec.Mount("/age", func() http.Handler {
+	sec.Mount("/crypter", func() http.Handler {
 		r := chi.NewRouter()
 		r.Get("/", templateHandler.DisplayAgeStartPage())
 		r.Get("/search", templateHandler.DisplayAgeStartPage())

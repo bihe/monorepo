@@ -20,8 +20,8 @@ type AgeModel struct {
 
 const changePasswordJS = `
 try {
-  document.querySelector('#toggle_age_passphrase').addEventListener('click', (event) => {
-    	let x = document.getElementById("age_passphrase");
+  document.querySelector('#toggle_crypter_passphrase').addEventListener('click', (event) => {
+    	let x = document.getElementById("crypter_passphrase");
 	if (x.type === "password") {
 		x.type = "text";
 	} else {
@@ -36,25 +36,25 @@ try {
 func AgeContent(model AgeModel) g.Node {
 	return h.Div(h.ID("age_content_area"), h.Class("container-fluid age_content"), g.Attr("data-bs-theme", "light"),
 		h.Div(h.Class("row"),
-			h.Form(g.Attr("hx-post", "/age"), g.Attr("hx-trigger", "performAgeAction from:document"), g.Attr("hx-swap", "outerHTML"), g.Attr("hx-indicator", "#request_indicator"),
+			h.Form(g.Attr("hx-post", "/crypter"), g.Attr("hx-trigger", "performCrypterAction from:document"), g.Attr("hx-swap", "outerHTML"), g.Attr("hx-indicator", "#request_indicator"),
 				h.P(h.Class("mb-3 page_label"),
-					g.Text("To encrypt and decrypt content the tool "), h.A(h.Href("https://github.com/FiloSottile/age"), g.Text("age")), g.Text(" is used. The process is using a passphrase to simplify the overall interaction. The passphrase needs to be remembered to decrypt a given input."),
+					g.Text("To encrypt and decrypt content AES is used. The passphrase needs to be remembered to decrypt a given input."),
 				),
 
 				h.Div(h.Class("mb-3"),
-					h.Label(h.For("age_passphrase"), h.Class("form-label"), g.Text("Passphrase: ")),
+					h.Label(h.For("crypter_passphrase"), h.Class("form-label"), g.Text("Passphrase: ")),
 
 					h.Div(h.Class("input-group mb-3"),
 						h.Input(
 							h.Type("password"),
-							h.ID("age_passphrase"),
+							h.ID("crypter_passphrase"),
 							h.Placeholder("passphrase"),
 							h.Class(common.ClassCond("form-control", "control_invalid", !model.Passphrase.Valid)),
-							h.Name("age_passphrase"),
+							h.Name("crypter_passphrase"),
 							h.Value(model.Passphrase.Val),
 						),
 						h.Button(
-							h.ID("toggle_age_passphrase"),
+							h.ID("toggle_crypter_passphrase"),
 							h.Class("btn btn-outline-secondary"),
 							h.Type("button"),
 							h.I(h.Class("bi bi-eye")),
@@ -65,11 +65,11 @@ func AgeContent(model AgeModel) g.Node {
 				),
 
 				h.Div(h.Class("mb-3"),
-					h.Label(h.For("age_input"), h.Class("form-label"), g.Text("Input: ")),
+					h.Label(h.For("crypter_input"), h.Class("form-label"), g.Text("Input: ")),
 					h.Textarea(
 						h.Class(common.ClassCond("form-control", "control_invalid", !model.InputText.Valid)),
-						h.ID("age_input"),
-						h.Name("age_input"),
+						h.ID("crypter_input"),
+						h.Name("crypter_input"),
 						h.Placeholder("raw unencrypted text"),
 						h.Rows("10"),
 						g.Raw(model.InputText.Val),
@@ -78,11 +78,11 @@ func AgeContent(model AgeModel) g.Node {
 				),
 
 				h.Div(h.Class("mb-3"),
-					h.Label(h.For("age_output"), h.Class("form-label"), g.Text("Encrypted: ")),
+					h.Label(h.For("crypter_output"), h.Class("form-label"), g.Text("Encrypted: ")),
 					h.Textarea(
 						h.Class(common.ClassCond("form-control", "control_invalid", !model.OutputText.Valid)),
-						h.ID("age_output"),
-						h.Name("age_output"),
+						h.ID("crypter_output"),
+						h.Name("crypter_output"),
 						h.Placeholder("encrypted text"),
 						h.Rows("10"),
 						g.Raw(model.OutputText.Val),
@@ -131,8 +131,8 @@ func AgeStyle() g.Node {
 
 const triggerAgeAction = `
 try {
-  document.querySelector('#age_perform_action').addEventListener('click', (event) => {
-    htmx.trigger('#age_perform_action', 'performAgeAction');
+  document.querySelector('#crypter_perform_action').addEventListener('click', (event) => {
+    htmx.trigger('#crypter_perform_action', 'performCrypterAction');
   });
 } catch(error) {
   console.error(error);
@@ -147,7 +147,7 @@ func AgeNavigation(search string) g.Node {
 
 			h.Div(h.Class("collapse navbar-collapse"),
 				h.Ul(h.Class("navbar-nav me-auto"),
-					h.Li(h.Class("nav-item"), h.A(h.Class("nav-link"), g.Text("> age"))),
+					h.Li(h.Class("nav-item"), h.A(h.Class("nav-link"), g.Text("> crypter"))),
 				),
 				h.Form(
 					h.Div(h.ID("request_indicator"), h.Class("request_indicator htmx-indicator"),
@@ -158,7 +158,7 @@ func AgeNavigation(search string) g.Node {
 
 					h.Button(
 						h.Type("button"),
-						h.ID("age_perform_action"),
+						h.ID("crypter_perform_action"),
 						h.Class("btn btn-primary"),
 						h.I(h.Class("bi bi-nut")),
 						g.Text(" Go"),

@@ -5,12 +5,12 @@ import (
 	"net/http"
 
 	"golang.binggl.net/monorepo/internal/common"
-	"golang.binggl.net/monorepo/internal/core/app/agecrypt"
+	"golang.binggl.net/monorepo/internal/common/crypter"
 	"golang.binggl.net/monorepo/internal/core/web/html"
 	base "golang.binggl.net/monorepo/pkg/handler/html"
 )
 
-const ageSearchURL = "/age/search"
+const ageSearchURL = "/crypter/search"
 
 // DisplayAgeStartPage is used to show the start-page of the util app for age
 func (t *TemplateHandler) DisplayAgeStartPage() http.HandlerFunc {
@@ -49,7 +49,7 @@ func (t *TemplateHandler) PerformAgeAction() http.HandlerFunc {
 
 		var (
 			form       html.AgeModel
-			formPrefix = "age_"
+			formPrefix = "crypter_"
 			passphrase string
 			inputText  string
 			outputText string
@@ -90,7 +90,11 @@ func (t *TemplateHandler) PerformAgeAction() http.HandlerFunc {
 		if validData {
 			// happy path
 			if inputText != "" {
-				encrypted, err := agecrypt.EncryptStringPassphrase(inputText, passphrase)
+				encryptedBytes, err := t.CrypterSvc.Encrypt(r.Context(), crypter.Request{
+					Payload:  []byte(inputText),
+					Password: passphrase,
+					Type:     crypter.String,
+				})
 				if err != nil {
 					t.Logger.ErrorRequest(fmt.Sprintf("cannot encrypt provided data; '%v'", err), r)
 
@@ -100,11 +104,39 @@ func (t *TemplateHandler) PerformAgeAction() http.HandlerFunc {
 					html.AgeContent(form).Render(w)
 					return
 				}
-				form.OutputText.Val = encrypted
+				// we want to have a nice "armor" output
+				armor, err := crypter.Armor(string(encryptedBytes))
+				if err != nil {
+					t.Logger.ErrorRequest(fmt.Sprintf("cannot put a nice armor around encrypted txt; '%v'", err), r)
+
+					form.InputText.Valid = false
+					form.InputText.Message = err.Error()
+
+					html.AgeContent(form).Render(w)
+					return
+				}
+
+				form.OutputText.Val = armor
 				form.OutputText.Valid = true
 
 			} else if outputText != "" {
-				decrypted, err := agecrypt.DecryptStringPassphrase(outputText, passphrase)
+				// the cipher input has an armor format / de-armor it first
+				dearmor, err := crypter.DeArmor(outputText)
+				if err != nil {
+					t.Logger.ErrorRequest(fmt.Sprintf("cannot remove the armor from the provided data; '%v'", err), r)
+
+					form.OutputText.Valid = false
+					form.OutputText.Message = err.Error()
+
+					html.AgeContent(form).Render(w)
+					return
+				}
+
+				decryptedBytes, err := t.CrypterSvc.Decrypt(r.Context(), crypter.Request{
+					Payload:  []byte(dearmor),
+					Password: passphrase,
+					Type:     crypter.String,
+				})
 				if err != nil {
 					t.Logger.ErrorRequest(fmt.Sprintf("cannot decrypt provided data; '%v'", err), r)
 
@@ -114,7 +146,7 @@ func (t *TemplateHandler) PerformAgeAction() http.HandlerFunc {
 					html.AgeContent(form).Render(w)
 					return
 				}
-				form.InputText.Val = decrypted
+				form.InputText.Val = string(decryptedBytes)
 				form.InputText.Valid = true
 			}
 

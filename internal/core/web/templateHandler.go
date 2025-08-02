@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"golang.binggl.net/monorepo/internal/common/crypter"
 	"golang.binggl.net/monorepo/internal/core/app/sites"
 	"golang.binggl.net/monorepo/pkg/handler"
 	"golang.binggl.net/monorepo/pkg/handler/html"
@@ -17,9 +18,10 @@ import (
 // As additional benefit the build should be faster, because the nodejs build can be removed
 type TemplateHandler struct {
 	*handler.TemplateHandler
-	SiteSvc sites.Service
-	Version string
-	Build   string
+	SiteSvc    sites.Service
+	CrypterSvc crypter.EncryptionService
+	Version    string
+	Build      string
 }
 
 // DisplayToastNotification shows a toast notification

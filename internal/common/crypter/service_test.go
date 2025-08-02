@@ -5,14 +5,14 @@ import (
 	"os"
 	"testing"
 
-	"golang.binggl.net/monorepo/internal/mydms/app/crypter"
+	"golang.binggl.net/monorepo/internal/common/crypter"
 	"golang.binggl.net/monorepo/pkg/logging"
 )
 
 var logger = logging.NewNop()
 
-const encryptedPDF = "../../../../testdata/encrypted.pdf"
-const unencryptedPDF = "../../../../testdata/unencrypted.pdf"
+const encryptedPDF = "../../../testdata/encrypted.pdf"
+const unencryptedPDF = "../../../testdata/unencrypted.pdf"
 
 func TestEncryption_Validate_Input(t *testing.T) {
 	svc := crypter.NewService(logger)
@@ -22,17 +22,13 @@ func TestEncryption_Validate_Input(t *testing.T) {
 		req  crypter.Request
 	}{
 		{
-			name: "expect empty token",
-			req:  crypter.Request{},
-		},
-		{
-			name: "expect missing newpass",
+			name: "expect missing password",
 			req:  crypter.Request{},
 		},
 		{
 			name: "expect missing payload",
 			req: crypter.Request{
-				NewPass: "12345",
+				Password: "12345",
 			},
 		},
 	}
@@ -58,7 +54,7 @@ func TestFileCrypter_Encrypt_File(t *testing.T) {
 		Payload:  payload,
 		Type:     crypter.PDF,
 		InitPass: "12345",
-		NewPass:  "54321",
+		Password: "54321",
 	})
 	if err != nil {
 		t.Errorf("error returned: %v", err)
@@ -78,7 +74,7 @@ func TestFileCrypter_Encrypt_UnencryptedFile(t *testing.T) {
 		Payload:  payload,
 		Type:     crypter.PDF,
 		InitPass: "",
-		NewPass:  "54321",
+		Password: "54321",
 	})
 	if err != nil {
 		t.Errorf("error returned: %v", err)
@@ -86,4 +82,43 @@ func TestFileCrypter_Encrypt_UnencryptedFile(t *testing.T) {
 	if len(crypto_payload) == 0 {
 		t.Errorf("no success encrypting file")
 	}
+}
+
+func TestStringCrypter(t *testing.T) {
+	password := "1245"
+	plainText := "hello, world"
+
+	svc := crypter.NewService(logger)
+	encryptedBytes, err := svc.Encrypt(context.TODO(),
+		crypter.Request{
+			Password: password,
+			Payload:  []byte(plainText),
+			Type:     crypter.String,
+		},
+	)
+
+	if err != nil {
+		t.Errorf("could not encrypt string: %v", err)
+	}
+	if len(encryptedBytes) == 0 {
+		t.Error("the encryption produced zero/nil bytes")
+	}
+
+	// round-trip: decrypt the string again
+	decryptedBytes, err := svc.Decrypt(context.TODO(), crypter.Request{
+		Password: password,
+		Payload:  encryptedBytes,
+		Type:     crypter.String,
+	})
+
+	if err != nil {
+		t.Errorf("could not decrypt string: %v", err)
+	}
+	if len(decryptedBytes) == 0 {
+		t.Error("the decryption produced zero/nil bytes")
+	}
+	if string(decryptedBytes) != plainText {
+		t.Errorf("the round-trip did not work; expected '%s', got '%s'", plainText, string(decryptedBytes))
+	}
+
 }

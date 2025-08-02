@@ -3,6 +3,7 @@ package web_test
 import (
 	"net/http"
 
+	"golang.binggl.net/monorepo/internal/common/crypter"
 	"golang.binggl.net/monorepo/internal/core"
 	"golang.binggl.net/monorepo/internal/core/app/conf"
 	"golang.binggl.net/monorepo/internal/core/app/oidc"
@@ -37,8 +38,8 @@ func (*mockOIDCService) LoginSiteOIDC(state, oidcState, oidcCode, site, redirect
 var _ oidc.Service = &mockOIDCService{}
 
 func templateHandler(siteSvc sites.Service) http.Handler {
-
-	return core.MakeHTTPHandler(&mockOIDCService{}, siteSvc, logger, core.HTTPHandlerOptions{
+	crypterSvc := crypter.NewService(logger)
+	return core.MakeHTTPHandler(&mockOIDCService{}, siteSvc, crypterSvc, logger, core.HTTPHandlerOptions{
 		BasePath:  "./",
 		ErrorPath: "/error",
 		Version:   "1.0",

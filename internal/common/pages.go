@@ -30,7 +30,7 @@ var AvailableApps = []html.NavItem{
 	{
 		DisplayName: "Encryption",
 		Icon:        "<i class=\"bi bi-file-lock\"></i> ",
-		URL:         "/age",
+		URL:         "/crypter",
 	},
 }
 

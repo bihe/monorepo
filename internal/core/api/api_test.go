@@ -3,6 +3,7 @@ package api_test
 import (
 	"net/http"
 
+	"golang.binggl.net/monorepo/internal/common/crypter"
 	"golang.binggl.net/monorepo/internal/core"
 	"golang.binggl.net/monorepo/internal/core/app/conf"
 	"golang.binggl.net/monorepo/internal/core/app/oidc"
@@ -18,14 +19,15 @@ import (
 var logger = logging.NewNop()
 
 type handlerOps struct {
-	oidcSvc oidc.Service
-	siteSvc sites.Service
-	version string
-	build   string
+	oidcSvc    oidc.Service
+	siteSvc    sites.Service
+	crypterSvc crypter.EncryptionService
+	version    string
+	build      string
 }
 
 func handlerWith(ops *handlerOps) http.Handler {
-	return core.MakeHTTPHandler(ops.oidcSvc, ops.siteSvc, logger, core.HTTPHandlerOptions{
+	return core.MakeHTTPHandler(ops.oidcSvc, ops.siteSvc, ops.crypterSvc, logger, core.HTTPHandlerOptions{
 		BasePath:  "./",
 		ErrorPath: "/error",
 		Config: conf.AppConfig{

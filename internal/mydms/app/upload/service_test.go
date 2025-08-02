@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"golang.binggl.net/monorepo/internal/mydms/app/crypter"
+	"golang.binggl.net/monorepo/internal/common/crypter"
 	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	"golang.binggl.net/monorepo/pkg/logging"
 
@@ -63,6 +63,10 @@ func (m *mockEncService) Encrypt(ctx context.Context, req crypter.Request) ([]by
 	if m.fail {
 		return nil, fmt.Errorf("error")
 	}
+	return nil, nil
+}
+
+func (m *mockEncService) Decrypt(ctx context.Context, req crypter.Request) ([]byte, error) {
 	return nil, nil
 }
 

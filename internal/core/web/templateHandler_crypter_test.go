@@ -38,7 +38,7 @@ func Test_ShowStartPage(t *testing.T) {
 
 	// arrange
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/age", nil)
+	req := httptest.NewRequest("GET", "/crypter", nil)
 	addJwtAuth(req)
 
 	// act
@@ -47,7 +47,7 @@ func Test_ShowStartPage(t *testing.T) {
 	// assert
 	assert.Equal(t, http.StatusOK, rec.Code)
 	body, _ := io.ReadAll(rec.Body)
-	assert.Contains(t, string(body), "Age")
+	assert.Contains(t, string(body), "Crypter")
 }
 
 func Test_Encrypt(t *testing.T) {
@@ -55,10 +55,10 @@ func Test_Encrypt(t *testing.T) {
 
 	// arrange
 	form := url.Values{}
-	form.Add("age_passphrase", "test")
-	form.Add("age_input", "hello, world - from unit-tes")
+	form.Add("crypter_passphrase", "test")
+	form.Add("crypter_input", "hello, world - from unit-test")
 
-	req := httptest.NewRequest("POST", "/age", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest("POST", "/crypter", strings.NewReader(form.Encode()))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	addJwtAuth(req)
 	rec := httptest.NewRecorder()
@@ -70,24 +70,25 @@ func Test_Encrypt(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 	body, _ := io.ReadAll(rec.Body)
 	// this is the indicator, that the provided HTML output has age-encrypted content
-	assert.Contains(t, string(body), "-----END AGE ENCRYPTED FILE-----")
+	assert.Contains(t, string(body), "-----END ENCRYPTED CONTENT-----")
 }
 
-const encryptedText = `-----BEGIN AGE ENCRYPTED FILE-----
-YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IHNjcnlwdCBrUm5OL3YvQVNiZXpMYjlq
-aVY2anl3IDE4ClIrcHNtT1BvbHhjOExkKzl4bjh6dElFNWZncU14U3hIWmppU2VK
-V29uNlEKLS0tIEZwSHlWa2Qzakxzajhrei9idy9vYkIxTWs3MzkxWFBQREtRdjFo
-cmYvVlkKjk0tE6iPhl6qBaMDmKFsBwrm/l1i7uYjhjDbkKumxjWKoIgt6BTWz9tb
-bgAT6zPh8j7cjIH1LBJQvFU0vA==
------END AGE ENCRYPTED FILE-----`
+const encryptedText = `-----BEGIN ENCRYPTED CONTENT-----
+1Vfcq4zdPGAHL0OQss57YU23bBbATf9y
+nP6V-oTdFCZTo-8LmXm_RFlX9PTcEFD7
+3wtqGP6aqGY_8NF7M3n4hYd_TXdTSdTo
+FNjJKHgS0fOsHiZb661kUv8AX3ctcR2O
+bW_-XwEvN_yC5Bo9DDYUBACCaVD8dnT-
+vvgUMFroHKY=
+-----END ENCRYPTED CONTENT-----`
 
 func Test_Decrypt(t *testing.T) {
 	th := templateHandler(&mockSiteService{})
 	// arrange
 	form := url.Values{}
-	form.Add("age_passphrase", "test")
-	form.Add("age_output", encryptedText)
-	req := httptest.NewRequest("POST", "/age", strings.NewReader(form.Encode()))
+	form.Add("crypter_passphrase", "test")
+	form.Add("crypter_output", encryptedText)
+	req := httptest.NewRequest("POST", "/crypter", strings.NewReader(form.Encode()))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	addJwtAuth(req)
 	rec := httptest.NewRecorder()
@@ -105,9 +106,9 @@ func Test_DecryptWrongPassphrase(t *testing.T) {
 	th := templateHandler(&mockSiteService{})
 	// arrange
 	form := url.Values{}
-	form.Add("age_passphrase", "wrong-passphrase")
-	form.Add("age_output", encryptedText)
-	req := httptest.NewRequest("POST", "/age", strings.NewReader(form.Encode()))
+	form.Add("crypter_passphrase", "wrong-passphrase")
+	form.Add("crypter_output", encryptedText)
+	req := httptest.NewRequest("POST", "/crypter", strings.NewReader(form.Encode()))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	addJwtAuth(req)
 	rec := httptest.NewRecorder()
@@ -118,7 +119,7 @@ func Test_DecryptWrongPassphrase(t *testing.T) {
 	// assert
 	assert.Equal(t, http.StatusOK, rec.Code)
 	body, _ := io.ReadAll(rec.Body)
-	assert.Contains(t, string(body), "could not create decryption writer with passphrase; no identity matched any of the recipients")
+	assert.Contains(t, string(body), "no hmac found in decrypted result - operation invalid")
 }
 
 func Test_InputValidation(t *testing.T) {
@@ -128,10 +129,10 @@ func Test_InputValidation(t *testing.T) {
 
 	// arrange
 	form := url.Values{}
-	form.Add("age_passphrase", "")
-	form.Add("age_input", "hello world")
+	form.Add("crypter_passphrase", "")
+	form.Add("crypter_input", "hello world")
 
-	req := httptest.NewRequest("POST", "/age", strings.NewReader(form.Encode()))
+	req := httptest.NewRequest("POST", "/crypter", strings.NewReader(form.Encode()))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	addJwtAuth(req)
 	rec := httptest.NewRecorder()
@@ -148,11 +149,11 @@ func Test_InputValidation(t *testing.T) {
 
 	// arrange
 	form = url.Values{}
-	form.Add("age_passphrase", "test")
-	form.Add("age_input", "hello world")
-	form.Add("age_output", "encrypted")
+	form.Add("crypter_passphrase", "test")
+	form.Add("crypter_input", "hello world")
+	form.Add("crypter_output", "encrypted")
 
-	req = httptest.NewRequest("POST", "/age", strings.NewReader(form.Encode()))
+	req = httptest.NewRequest("POST", "/crypter", strings.NewReader(form.Encode()))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	addJwtAuth(req)
 	rec = httptest.NewRecorder()
@@ -169,11 +170,11 @@ func Test_InputValidation(t *testing.T) {
 
 	// arrange
 	form = url.Values{}
-	form.Add("age_passphrase", "test")
-	form.Add("age_input", "")
-	form.Add("age_output", "")
+	form.Add("crypter_passphrase", "test")
+	form.Add("crypter_input", "")
+	form.Add("crypter_output", "")
 
-	req = httptest.NewRequest("POST", "/age", strings.NewReader(form.Encode()))
+	req = httptest.NewRequest("POST", "/crypter", strings.NewReader(form.Encode()))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	addJwtAuth(req)
 	rec = httptest.NewRecorder()

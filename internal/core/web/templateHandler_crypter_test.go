@@ -145,6 +145,25 @@ func Test_InputValidation(t *testing.T) {
 	body, _ := io.ReadAll(rec.Body)
 	assert.Contains(t, string(body), "a passphrase is needed")
 
+	// max length of passphrase
+
+	// arrange
+	form = url.Values{}
+	form.Add("crypter_passphrase", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaA")
+
+	req = httptest.NewRequest("POST", "/crypter", strings.NewReader(form.Encode()))
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	addJwtAuth(req)
+	rec = httptest.NewRecorder()
+
+	// act
+	th.ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, rec.Code)
+	body, _ = io.ReadAll(rec.Body)
+	assert.Contains(t, string(body), "the maximum length of the passphrase is 32 chars")
+
 	// both text-input fields are filled
 
 	// arrange
@@ -166,7 +185,7 @@ func Test_InputValidation(t *testing.T) {
 	body, _ = io.ReadAll(rec.Body)
 	assert.Contains(t, string(body), "both fields are filled / cannot decide what to do")
 
-	// both text-input fields are emptz
+	// both text-input fields are empty
 
 	// arrange
 	form = url.Values{}

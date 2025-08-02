@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 
+	"golang.binggl.net/monorepo/internal/common/crypter"
 	"golang.binggl.net/monorepo/internal/core/app/conf"
 	"golang.binggl.net/monorepo/internal/core/app/oidc"
 	"golang.binggl.net/monorepo/internal/core/app/sites"
@@ -38,7 +39,8 @@ func Run(version, build, appName string) error {
 		oidcConfig, oidcVerifier = oidc.NewConfigAndVerifier(appCfg.OIDC)
 		oidcSvc                  = oidc.New(oidcConfig, oidcVerifier, appCfg.Security, repo)
 		siteSvc                  = sites.New(appCfg.Security.Claim.Roles[0], repo)
-		handler                  = MakeHTTPHandler(oidcSvc, siteSvc, logger, HTTPHandlerOptions{
+		crypterSvc               = crypter.NewService(logger)
+		handler                  = MakeHTTPHandler(oidcSvc, siteSvc, crypterSvc, logger, HTTPHandlerOptions{
 			BasePath:  basePath,
 			ErrorPath: appCfg.ErrorPath,
 			Config:    appCfg,

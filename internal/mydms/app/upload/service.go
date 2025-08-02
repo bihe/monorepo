@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"golang.binggl.net/monorepo/internal/mydms/app/crypter"
+	"golang.binggl.net/monorepo/internal/common/crypter"
 	"golang.binggl.net/monorepo/pkg/logging"
 )
 
@@ -130,7 +130,7 @@ func (s *uploadService) Save(file File) (string, error) {
 
 		payload, err = s.crypter.Encrypt(ctxt, crypter.Request{
 			InitPass: file.Enc.InitPassword,
-			NewPass:  file.Enc.Password,
+			Password: file.Enc.Password,
 			Type:     crypter.PDF, // only encrypt PDFs for now
 			Payload:  payload,
 		})

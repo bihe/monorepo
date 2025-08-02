@@ -35,8 +35,8 @@ dev.binggl.net {
         }
     }
 
-     handle_path /age* {
-        rewrite * /age{path}
+     handle_path /crypter* {
+        rewrite * /crypter{path}
         reverse_proxy http://core-3001:3000 {
             import proxy-transport
         }

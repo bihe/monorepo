@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"golang.binggl.net/monorepo/internal/common/crypter"
 	"golang.binggl.net/monorepo/internal/mydms/app/config"
-	"golang.binggl.net/monorepo/internal/mydms/app/crypter"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
 	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
 	"golang.binggl.net/monorepo/internal/mydms/app/shared"

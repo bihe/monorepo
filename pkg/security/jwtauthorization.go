@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/lestrrat-go/jwx/jwa"
-	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/lestrrat-go/jwx/v3/jwa"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 )
 
 // RoleDelimiter specifies the element used to separate a list of roles
@@ -24,6 +24,8 @@ const surname = "Surname"
 const givenName = "GivenName"
 const profileURL = "ProfileURL"
 const claims = "Claims"
+
+const jwtKeyAlgorithm = "HS256"
 
 // JWTAuthorization handles authorization of supplied JWT tokens
 type JWTAuthorization struct {
@@ -112,13 +114,24 @@ func Authorize(required Claim, claims []string) (roles []string, allClaims []Cla
 
 // ParseJwtToken parses, validates and extracts data from a jwt token
 func ParseJwtToken(token, tokenSecret, issuer string) (JwtTokenPayload, error) {
-	t, err := jwt.Parse([]byte(token), jwt.WithVerify(jwa.HS256, []byte(tokenSecret)))
+	algo, err := jwa.KeyAlgorithmFrom(jwtKeyAlgorithm)
+	if err != nil {
+		return JwtTokenPayload{}, err
+	}
+
+	t, err := jwt.Parse([]byte(token), jwt.WithVerify(true), jwt.WithValidate(true), jwt.WithKey(algo, []byte(tokenSecret)))
 	if err != nil {
 		return JwtTokenPayload{}, err
 	}
 	if err = jwt.Validate(t, jwt.WithIssuer(issuer)); err != nil {
 		return JwtTokenPayload{}, err
 	}
+
+	jwtId, _ := t.JwtID()
+	jwtSubject, _ := t.Subject()
+	jwtIssuer, _ := t.Issuer()
+	jwtExpiry, _ := t.Expiration()
+	jwtIssuedAt, _ := t.IssuedAt()
 
 	return JwtTokenPayload{
 		Type:        getTokenValueString(t, jwtType),
@@ -131,17 +144,22 @@ func ParseJwtToken(token, tokenSecret, issuer string) (JwtTokenPayload, error) {
 		ProfileURL:  getTokenValueString(t, profileURL),
 		Claims:      getTokenValueSlice(t, claims),
 		StandardClaims: StandardClaims{
-			ID:        t.JwtID(),
-			Subject:   t.Subject(),
-			Issuer:    t.Issuer(),
-			ExpiresAt: t.Expiration().Unix(),
-			IssuedAt:  t.IssuedAt().Unix(),
+			ID:        jwtId,
+			Subject:   jwtSubject,
+			Issuer:    jwtIssuer,
+			ExpiresAt: jwtExpiry.Unix(),
+			IssuedAt:  jwtIssuedAt.Unix(),
 		},
 	}, nil
 }
 
 // CreateToken uses the configuration and supplied parameter to create a new token
 func CreateToken(issuer string, key []byte, expiry int, c Claims) (string, error) {
+	algo, err := jwa.KeyAlgorithmFrom(jwtKeyAlgorithm)
+	if err != nil {
+		return "", err
+	}
+
 	defaultExp := 7
 	if expiry == 0 {
 		expiry = defaultExp
@@ -169,7 +187,7 @@ func CreateToken(issuer string, key []byte, expiry int, c Claims) (string, error
 	t.Set(profileURL, c.ProfileURL)
 	t.Set(claims, c.Claims)
 
-	payload, err := jwt.Sign(t, jwa.HS256, key)
+	payload, err := jwt.Sign(t, jwt.WithKey(algo, key))
 	if err != nil {
 		return "", fmt.Errorf("could not create jwt token: %w", err)
 	}
@@ -177,26 +195,26 @@ func CreateToken(issuer string, key []byte, expiry int, c Claims) (string, error
 }
 
 func getTokenValueString(t jwt.Token, key string) string {
-	v, ok := t.Get(key)
-	if ok {
-		return v.(string)
+	var value string
+	err := t.Get(key, &value)
+	if err == nil {
+		return value
 	}
 	return ""
 }
 
 func getTokenValueSlice(t jwt.Token, key string) []string {
-	var s = make([]string, 0)
-	v, ok := t.Get(key)
-	if ok {
-		// []string was converted to []interface{} - ah, generics would be great - golang2.0!
-		vv, ok := v.([]interface{})
-		if ok {
-			for _, item := range vv {
-				s = append(s, item.(string))
-			}
+	var result = make([]string, 0)
+	var s = make([]any, 0)
+	err := t.Get(key, &s)
+	if err == nil {
+		for _, item := range s {
+			result = append(result, item.(string))
 		}
+
+		return result
 	}
-	return s
+	return result
 }
 
 func parseDuration(duration string) time.Duration {

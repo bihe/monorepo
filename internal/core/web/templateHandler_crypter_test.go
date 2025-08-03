@@ -55,7 +55,7 @@ func Test_Encrypt(t *testing.T) {
 
 	// arrange
 	form := url.Values{}
-	form.Add("crypter_passphrase", "test")
+	form.Add("crypter_passphrase", "test1")
 	form.Add("crypter_input", "hello, world - from unit-test")
 
 	req := httptest.NewRequest("POST", "/crypter", strings.NewReader(form.Encode()))
@@ -74,19 +74,19 @@ func Test_Encrypt(t *testing.T) {
 }
 
 const encryptedText = `-----BEGIN ENCRYPTED CONTENT-----
-1Vfcq4zdPGAHL0OQss57YU23bBbATf9y
-nP6V-oTdFCZTo-8LmXm_RFlX9PTcEFD7
-3wtqGP6aqGY_8NF7M3n4hYd_TXdTSdTo
-FNjJKHgS0fOsHiZb661kUv8AX3ctcR2O
-bW_-XwEvN_yC5Bo9DDYUBACCaVD8dnT-
-vvgUMFroHKY=
+CEibBk8vd5VtU0q5nMyVdyrGpsn1-bpd
+g92JkhCsll4lHsTDSVWj9U8nzMo6V2_y
+RqCp-AzTPDl6UEhAnLylEvCvOCD9OUaV
+89pTkbeHdeAVkW-_bEvGD8OemerlnZpH
+e2oWF3HbSXJCTfkuIQIkmMa2khUC5sk0
+n3mrRLqUvjE=
 -----END ENCRYPTED CONTENT-----`
 
 func Test_Decrypt(t *testing.T) {
 	th := templateHandler(&mockSiteService{})
 	// arrange
 	form := url.Values{}
-	form.Add("crypter_passphrase", "test")
+	form.Add("crypter_passphrase", "test1")
 	form.Add("crypter_output", encryptedText)
 	req := httptest.NewRequest("POST", "/crypter", strings.NewReader(form.Encode()))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -119,7 +119,7 @@ func Test_DecryptWrongPassphrase(t *testing.T) {
 	// assert
 	assert.Equal(t, http.StatusOK, rec.Code)
 	body, _ := io.ReadAll(rec.Body)
-	assert.Contains(t, string(body), "no hmac found in decrypted result - operation invalid")
+	assert.Contains(t, string(body), "could not decrypt, invalid input")
 }
 
 func Test_InputValidation(t *testing.T) {
@@ -144,6 +144,25 @@ func Test_InputValidation(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 	body, _ := io.ReadAll(rec.Body)
 	assert.Contains(t, string(body), "a passphrase is needed")
+
+	// min length of passphrase
+
+	// arrange
+	form = url.Values{}
+	form.Add("crypter_passphrase", "1234")
+
+	req = httptest.NewRequest("POST", "/crypter", strings.NewReader(form.Encode()))
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	addJwtAuth(req)
+	rec = httptest.NewRecorder()
+
+	// act
+	th.ServeHTTP(rec, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, rec.Code)
+	body, _ = io.ReadAll(rec.Body)
+	assert.Contains(t, string(body), "the minimum length of the passphrase is 5 chars")
 
 	// max length of passphrase
 

@@ -37,7 +37,7 @@ func decryptAES(cipherText, passphrase string) ([]byte, error) {
 	decrypted := string(decryptedPayload)
 	index := strings.LastIndex(decrypted, ".")
 	if index == -1 {
-		return nil, fmt.Errorf("no hmac found in decrypted result - operation invalid")
+		return nil, fmt.Errorf("could not decrypt, invalid input")
 	}
 
 	textEnc := decrypted[:index]

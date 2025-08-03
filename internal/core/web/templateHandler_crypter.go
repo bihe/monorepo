@@ -69,12 +69,17 @@ func (t *TemplateHandler) PerformAgeAction() http.HandlerFunc {
 			form.Passphrase.Valid = false
 			form.Passphrase.Message = "a passphrase is needed"
 			validData = false
-		}
-
-		if len(passphrase) > 32 {
-			form.Passphrase.Valid = false
-			form.Passphrase.Message = "the maximum length of the passphrase is 32 chars"
-			validData = false
+		} else {
+			if len(passphrase) > 32 {
+				form.Passphrase.Valid = false
+				form.Passphrase.Message = "the maximum length of the passphrase is 32 chars"
+				validData = false
+			}
+			if len(passphrase) < 5 {
+				form.Passphrase.Valid = false
+				form.Passphrase.Message = "the minimum length of the passphrase is 5 chars"
+				validData = false
+			}
 		}
 
 		if inputText == "" && outputText == "" {

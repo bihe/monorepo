@@ -12,30 +12,30 @@ import (
 
 const ageSearchURL = "/crypter/search"
 
-// DisplayAgeStartPage is used to show the start-page of the util app for age
-func (t *TemplateHandler) DisplayAgeStartPage() http.HandlerFunc {
+// DisplayCrypterStartPage is used to show the start-page of the util app for encryption/decryption
+func (t *TemplateHandler) DisplayCrypterStartPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := common.EnsureUser(r)
 		search := ""
-		t.Logger.InfoRequest(fmt.Sprintf("display age start-page for user: '%s'", user.Username), r)
+		t.Logger.InfoRequest(fmt.Sprintf("display crypter start-page for user: '%s'", user.Username), r)
 
-		model := html.AgeModel{
+		model := html.CrypterModel{
 			Passphrase: html.ValidatorInput{Valid: true},
 			InputText:  html.ValidatorInput{Valid: true},
 			OutputText: html.ValidatorInput{Valid: true},
 		}
 		base.Layout(
-			common.CreatePageModel("/age", "helpers to work with age", search, "/public/age.svg", t.versionString(), t.Env, *user),
-			html.AgeStyle(),
-			html.AgeNavigation(search),
-			html.AgeContent(model),
+			common.CreatePageModel("/crypter", "helpers to work with encryption/decryption", search, "/public/crypter.svg", t.versionString(), t.Env, *user),
+			html.CrypterStyle(),
+			html.CrypterNavigation(search),
+			html.CrypterContent(model),
 			ageSearchURL,
 		).Render(w)
 	}
 }
 
-// PerformAgeAction takes the provided input (passphrase, inputText, encryptedText) and encrypts/decrypts using age
-func (t *TemplateHandler) PerformAgeAction() http.HandlerFunc {
+// PerformCrypterAction takes the provided input (passphrase, inputText, encryptedText) and encrypts/decrypts
+func (t *TemplateHandler) PerformCrypterAction() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := common.EnsureUser(r)
 		t.Logger.InfoRequest(fmt.Sprintf("perform page action for user: '%s'", user.Username), r)
@@ -48,7 +48,7 @@ func (t *TemplateHandler) PerformAgeAction() http.HandlerFunc {
 		}
 
 		var (
-			form       html.AgeModel
+			form       html.CrypterModel
 			formPrefix = "crypter_"
 			passphrase string
 			inputText  string
@@ -112,7 +112,7 @@ func (t *TemplateHandler) PerformAgeAction() http.HandlerFunc {
 					form.InputText.Valid = false
 					form.InputText.Message = err.Error()
 
-					html.AgeContent(form).Render(w)
+					html.CrypterContent(form).Render(w)
 					return
 				}
 				// we want to have a nice "armor" output
@@ -123,7 +123,7 @@ func (t *TemplateHandler) PerformAgeAction() http.HandlerFunc {
 					form.InputText.Valid = false
 					form.InputText.Message = err.Error()
 
-					html.AgeContent(form).Render(w)
+					html.CrypterContent(form).Render(w)
 					return
 				}
 
@@ -139,7 +139,7 @@ func (t *TemplateHandler) PerformAgeAction() http.HandlerFunc {
 					form.OutputText.Valid = false
 					form.OutputText.Message = err.Error()
 
-					html.AgeContent(form).Render(w)
+					html.CrypterContent(form).Render(w)
 					return
 				}
 
@@ -154,20 +154,20 @@ func (t *TemplateHandler) PerformAgeAction() http.HandlerFunc {
 					form.OutputText.Valid = false
 					form.OutputText.Message = err.Error()
 
-					html.AgeContent(form).Render(w)
+					html.CrypterContent(form).Render(w)
 					return
 				}
 				form.InputText.Val = string(decryptedBytes)
 				form.InputText.Valid = true
 			}
 
-			triggerToast(w, base.MsgSuccess, "Age in action", "Processed the provided input via age!")
+			triggerToast(w, base.MsgSuccess, "Crypter in action", "Processed the provided input!")
 
-			html.AgeContent(form).Render(w)
+			html.CrypterContent(form).Render(w)
 			return
 		}
 		triggerToast(w, base.MsgWarning, "Validation", "Invalid input provided!")
 
-		html.AgeContent(form).Render(w)
+		html.CrypterContent(form).Render(w)
 	}
 }

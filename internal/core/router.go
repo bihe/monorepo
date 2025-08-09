@@ -89,9 +89,9 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, cryptSvc crypt
 	// add the handlers for additional paths
 	sec.Mount("/crypter", func() http.Handler {
 		r := chi.NewRouter()
-		r.Get("/", templateHandler.DisplayAgeStartPage())
-		r.Get("/search", templateHandler.DisplayAgeStartPage())
-		r.Post("/", templateHandler.PerformAgeAction())
+		r.Get("/", templateHandler.DisplayCrypterStartPage())
+		r.Get("/search", templateHandler.DisplayCrypterStartPage())
+		r.Post("/", templateHandler.PerformCrypterAction())
 		r.Put("/toast", templateHandler.DisplayToastNotification())
 		return r
 	}())

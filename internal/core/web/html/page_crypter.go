@@ -12,7 +12,7 @@ type ValidatorInput struct {
 	Message string
 }
 
-type AgeModel struct {
+type CrypterModel struct {
 	Passphrase ValidatorInput
 	InputText  ValidatorInput
 	OutputText ValidatorInput
@@ -33,7 +33,7 @@ try {
 }
 `
 
-func AgeContent(model AgeModel) g.Node {
+func CrypterContent(model CrypterModel) g.Node {
 	return h.Div(h.ID("age_content_area"), h.Class("container-fluid age_content"), g.Attr("data-bs-theme", "light"),
 		h.Div(h.Class("row"),
 			h.Form(g.Attr("hx-post", "/crypter"), g.Attr("hx-trigger", "performCrypterAction from:document"), g.Attr("hx-swap", "outerHTML"), g.Attr("hx-indicator", "#request_indicator"),
@@ -95,7 +95,7 @@ func AgeContent(model AgeModel) g.Node {
 	)
 }
 
-const ageHeaderStyle = `
+const crypterHeaderStyle = `
 .header {
   background: #CC4402;
 }
@@ -119,17 +119,17 @@ const ageHeaderStyle = `
   color: #333333;
 }`
 
-func AgeStyle() g.Node {
+func CrypterStyle() g.Node {
 	return h.StyleEl(
 		h.Type("text/css"),
 		g.Raw(".page_label { margin-top: 10px;font-size:large;}"),
 		g.Raw(".age_content{height:100%;background-color:#F2F2F2;color:black}"),
-		g.Raw(ageHeaderStyle),
+		g.Raw(crypterHeaderStyle),
 	)
 
 }
 
-const triggerAgeAction = `
+const triggerCrypterAction = `
 try {
   document.querySelector('#crypter_perform_action').addEventListener('click', (event) => {
     htmx.trigger('#crypter_perform_action', 'performCrypterAction');
@@ -139,7 +139,7 @@ try {
 }
 `
 
-func AgeNavigation(search string) g.Node {
+func CrypterNavigation(search string) g.Node {
 
 	return h.Nav(h.Class("navbar navbar-expand application_name"),
 		h.Div(h.Class("container-fluid"),
@@ -164,7 +164,7 @@ func AgeNavigation(search string) g.Node {
 						g.Text(" Go"),
 					),
 				),
-				h.Script(h.Type("text/javascript"), g.Raw(triggerAgeAction)),
+				h.Script(h.Type("text/javascript"), g.Raw(triggerCrypterAction)),
 			),
 		),
 	)

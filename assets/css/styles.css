@@ -5,14 +5,13 @@ body {
   font-size: .9em;
   background-color: #37474F;
   color: white;
-  overflow: hidden;
+  overflow: auto;
+  height: 100%;
 }
 
 :root {
   --lh: 55px;
 }
-
-
 
 main {
   height: 100vh;

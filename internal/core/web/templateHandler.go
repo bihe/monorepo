@@ -1,7 +1,6 @@
 package web
 
 import (
-	"fmt"
 	"net/http"
 
 	"golang.binggl.net/monorepo/internal/common/crypter"
@@ -78,8 +77,4 @@ func triggerToast(w http.ResponseWriter, errType, title, text string) {
 	}
 	triggerJson := handler.Json(triggerEvent)
 	w.Header().Add(htmxHeaderTrigger, triggerJson)
-}
-
-func (t *TemplateHandler) versionString() string {
-	return fmt.Sprintf("%s-%s", t.Version, t.Build)
 }

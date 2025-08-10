@@ -14,6 +14,7 @@ import (
 type TemplateHandler struct {
 	Logger    logging.Logger
 	Env       config.Environment
+	Commit    string
 	BasePath  string
 	StartPage string
 }
@@ -22,7 +23,7 @@ type TemplateHandler struct {
 func (t *TemplateHandler) Show403() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
-		html.ErrorPage403(t.BasePath, t.Env).Render(w)
+		html.ErrorPage403(t.BasePath, t.Env, t.Commit).Render(w)
 	}
 }
 
@@ -30,13 +31,13 @@ func (t *TemplateHandler) Show403() http.HandlerFunc {
 func (t *TemplateHandler) Show404() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
-		html.ErrorPage404(t.BasePath).Render(w)
+		html.ErrorPage404(t.BasePath, t.Env, t.Commit).Render(w)
 	}
 }
 
 // RenderErr uses the application template to render the error-page
 func (t *TemplateHandler) RenderErr(r *http.Request, w http.ResponseWriter, message string) {
-	html.ErrorApplication(t.BasePath, t.Env, t.StartPage, r, message).Render(w)
+	html.ErrorApplication(t.BasePath, t.Env, t.Commit, t.StartPage, r, message).Render(w)
 }
 
 // Json serialized the given data

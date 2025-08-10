@@ -1,7 +1,6 @@
 package web
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -38,12 +37,8 @@ type triggerDef struct {
 // https://htmx.org/headers/hx-trigger/
 const htmxHeaderTrigger = "HX-Trigger"
 
-func (t *TemplateHandler) versionString() string {
-	return fmt.Sprintf("%s-%s", t.Version, t.Build)
-}
-
 func (t *TemplateHandler) pageModel(pageTitle, searchStr, favicon string, user security.User) base.LayoutModel {
-	return common.CreatePageModel("/bm", pageTitle, searchStr, favicon, t.versionString(), t.Env, user)
+	return common.CreatePageModel("/bm", pageTitle, searchStr, favicon, t.Version, t.Build, t.Env, user)
 }
 
 func queryParam(r *http.Request, name string) string {

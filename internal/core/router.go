@@ -48,6 +48,7 @@ func MakeHTTPHandler(oidcSvc oidc.Service, siteSvc sites.Service, cryptSvc crypt
 		TemplateHandler: &handler.TemplateHandler{
 			Logger:    logger,
 			Env:       opts.Config.Environment,
+			Commit:    opts.Build,
 			BasePath:  "/public",
 			StartPage: "/sites",
 		},

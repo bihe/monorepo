@@ -36,6 +36,7 @@ func MakeHTTPHandler(docSvc document.Service, uploadSvc upload.Service, fileSvc 
 		TemplateHandler: &handler.TemplateHandler{
 			Logger:    logger,
 			Env:       opts.Config.Environment,
+			Commit:    opts.Build,
 			BasePath:  "/public",
 			StartPage: "/mydms",
 		},

@@ -401,12 +401,8 @@ func (t *TemplateHandler) DeleteDocument() http.HandlerFunc {
 //  Internals
 // --------------------------------------------------------------------------
 
-func (t *TemplateHandler) versionString() string {
-	return fmt.Sprintf("%s-%s", t.Version, t.Build)
-}
-
 func (t *TemplateHandler) pageModel(pageTitle, searchStr, favicon string, user security.User) base.LayoutModel {
-	return common.CreatePageModel("/"+searchURL, pageTitle, searchStr, favicon, t.versionString(), t.Env, user)
+	return common.CreatePageModel("/"+searchURL, pageTitle, searchStr, favicon, t.Version, t.Build, t.Env, user)
 }
 
 func ensureUser(r *http.Request) *security.User {

@@ -35,7 +35,7 @@ var AvailableApps = []html.NavItem{
 }
 
 // CreatePageModel provides the needed data for a page using the shared Layout
-func CreatePageModel(pageURL, pageTitle, search, favicon, version string, env config.Environment, user security.User) html.LayoutModel {
+func CreatePageModel(pageURL, pageTitle, search, favicon, timeStamp, commit string, env config.Environment, user security.User) html.LayoutModel {
 	appNav := make([]html.NavItem, 0)
 	var title string
 	for _, a := range AvailableApps {
@@ -51,7 +51,8 @@ func CreatePageModel(pageURL, pageTitle, search, favicon, version string, env co
 	model := html.LayoutModel{
 		PageTitle:  pageTitle,
 		Favicon:    favicon,
-		Version:    version,
+		TimeStamp:  timeStamp,
+		Commit:     commit,
 		User:       user,
 		Search:     search,
 		Navigation: appNav,

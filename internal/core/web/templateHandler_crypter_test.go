@@ -69,7 +69,7 @@ func Test_Encrypt(t *testing.T) {
 	// assert
 	assert.Equal(t, http.StatusOK, rec.Code)
 	body, _ := io.ReadAll(rec.Body)
-	// this is the indicator, that the provided HTML output has age-encrypted content
+	// this is the indicator, that the provided HTML output has encrypted content
 	assert.Contains(t, string(body), "-----END ENCRYPTED CONTENT-----")
 }
 

@@ -4,7 +4,9 @@ html {
     padding: 0;
     height: 100%;
     font-family: 'Roboto Mono', monospace;
-    font-size: 0.9em
+    font-size: 0.9em;
+    color: #000000;
+    background-color: #ffffff;
 }
 
 .container .item {

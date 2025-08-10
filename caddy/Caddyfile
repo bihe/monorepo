@@ -49,13 +49,7 @@ dev.binggl.net {
         }
     }
 
-    ## public is the same for all we use the core-service to host it
-    handle_path /public* {
-        rewrite * /public{path}
-        reverse_proxy http://core-3001:3000 {
-            import proxy-transport
-        }
-    }
+
 
     handle_path /gettoken* {
         rewrite * /gettoken{path}
@@ -87,6 +81,14 @@ dev.binggl.net {
         }
     }
 
+    ## ----------------------------------------------------------------------
+    ##   /public assets hosted for all applications
+    ## ----------------------------------------------------------------------
+
+    handle_path /public* {
+        root * /opt/frontend/assets
+        file_server
+    }
     handle_errors {
         @4xx expression `{http.error.status_code} == 404`
         rewrite * /index.html

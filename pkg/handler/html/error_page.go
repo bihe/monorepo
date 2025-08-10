@@ -2,6 +2,7 @@ package html
 
 import (
 	_ "embed"
+	"fmt"
 	"net/http"
 
 	"golang.binggl.net/monorepo/pkg/config"
@@ -11,7 +12,7 @@ import (
 )
 
 // ErrorPage404 creates a HTML page used to indicate that a resource cannot be found
-func ErrorPage404(basePath string) g.Node {
+func ErrorPage404(basePath string, env config.Environment, commit string) g.Node {
 	body := h.Div(
 		h.Class("container"),
 		h.Div(
@@ -28,11 +29,11 @@ func ErrorPage404(basePath string) g.Node {
 		),
 	)
 
-	return errorLayout(basePath, body)
+	return errorLayout(env, commit, "404 - not found / binggl.net", "The specified resource could not be found", basePath, body)
 }
 
 // ErrorPage403 is used to indicate that the request lacks the necessary authorization to access the resource
-func ErrorPage403(basePath string, env config.Environment) g.Node {
+func ErrorPage403(basePath string, env config.Environment, commit string) g.Node {
 	body := h.Div(
 		h.Class("container"),
 		h.Div(
@@ -55,11 +56,11 @@ func ErrorPage403(basePath string, env config.Environment) g.Node {
 		),
 	)
 
-	return errorLayout(basePath, body)
+	return errorLayout(env, commit, "403 - no access / binggl.net", "Not allowed to access the specified resource", basePath, body)
 }
 
 // ErrorApplication is used for general errors
-func ErrorApplication(basePath string, env config.Environment, startPage string, r *http.Request, err string) g.Node {
+func ErrorApplication(basePath string, env config.Environment, commit, startPage string, r *http.Request, err string) g.Node {
 	headerKeys := make([]string, 0)
 	for k := range r.Header {
 		headerKeys = append(headerKeys, k)
@@ -99,21 +100,38 @@ func ErrorApplication(basePath string, env config.Environment, startPage string,
 		h.A(h.ID("go_home"), h.Href(startPage), h.Button(h.Type("button"), h.Class("btn btn-lg btn-primary"), g.Text("Go back to Start-Page"))),
 	)
 
-	return errorLayout(basePath, body)
+	return errorLayout(env, commit, "500 - error / binggl.net", "Error occurred trying to access the specified resource", basePath, body)
 }
 
-func errorLayout(basePath string, body g.Node) g.Node {
+func errorCssItems(basePath string, env config.Environment, commit string) []g.Node {
+	nodes := make([]g.Node, 0)
+	if env == config.Development {
+		nodes = append(nodes, []g.Node{
+			h.Link(h.Rel("stylesheet"), h.Href(basePath+"/bootstrap/css/bootstrap.min.css")),
+			h.Link(h.Rel("stylesheet"), h.Href(basePath+"/fonts/local.css")),
+		}...)
+		return nodes
+	}
+
+	// all other environments
+	nodes = append(nodes, h.Link(h.Rel("stylesheet"), h.Href(fmt.Sprintf(basePath+"/bundle/%s.css", commit))))
+	return nodes
+}
+
+func errorLayout(env config.Environment, commit, title, description, basePath string, body g.Node) g.Node {
+	headerItems := make([]g.Node, 0)
+	headerItems = append(headerItems, []g.Node{
+		h.Base(h.Href("/")),
+		h.Meta(g.Attr("creator", "https://www.gomponents.com/")),
+		h.Link(h.Rel("shortcut icon"), h.ID("site-favicon"), h.Type("image/x-icon"), h.Href("public/folder.svg")),
+	}...)
+	headerItems = append(headerItems, errorCssItems(basePath, env, commit)...)
+	headerItems = append(headerItems, errorStyles())
+
 	return c.HTML5(c.HTML5Props{
-		Title:       "404 - not found / binggl.net",
-		Description: "The specified resource could not be found",
-		Head: []g.Node{
-			h.Base(h.Href("/")),
-			h.Meta(g.Attr("creator", "https://www.gomponents.com/")),
-			h.Link(h.Rel("shortcut icon"), h.ID("site-favicon"), h.Type("image/x-icon"), h.Href("public/folder.svg")),
-			h.Link(h.Href(basePath+"/bootstrap/css/bootstrap.min.css"), h.Rel("stylesheet")),
-			h.Link(h.Href(basePath+"/fonts/local.css"), h.Rel("stylesheet")),
-			errorStyles(),
-		},
+		Title:       title,
+		Description: description,
+		Head:        headerItems,
 		Body: []g.Node{
 			h.Body(
 				h.Div(

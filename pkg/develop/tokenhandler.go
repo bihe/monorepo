@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -73,8 +74,37 @@ func (d devTokenHandler) index() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		jwt := createJWTCookie(d.Env, w)
 
+		// write the relevant cookie for development
+		cookie := http.Cookie{
+			Name:     "login_token",
+			Value:    jwt,
+			HttpOnly: true, // only let the api access those cookies
+			Domain:   "localhost",
+			Path:     "/",
+			Secure:   false,
+		}
+		http.SetCookie(w, &cookie)
+
+		content := `<html>
+<body>
+	<textarea rows="10" cols="100">%s</textarea>
+	<br/>
+	<br/>
+	<a href="%s">Goto Start</a>
+</body>
+</html>`
+		referrer := r.Header.Get("Referer")
+		if referrer != "" {
+			// get the "base-path"
+			parts := strings.Split(referrer, "/")
+			referrer = fmt.Sprintf("http://%s/%s", r.Host, parts[3])
+		}
+		if referrer == "" {
+			referrer = "/"
+		}
+		w.Header().Add("Content-Type", "text/html")
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(jwt))
+		w.Write([]byte(fmt.Sprintf(content, jwt, referrer)))
 	}
 }
 

@@ -5,25 +5,34 @@ body {
   font-size: .9em;
   background-color: #37474F;
   color: white;
-  overflow: auto;
+  overflow: hidden;
   height: 100%;
 }
 
 :root {
-  --lh: 55px;
+  --header-height: 3.5rem;
+  --sub-navigation-height: 3.6rem;
+  --total-head-height: 6.5rem;
+  --content-area-bottom-padding: 2rem;
+}
+
+.navbar {
+  height: var(--header-height);
 }
 
 main {
-  height: 100vh;
+  height: 100%;
 }
 
 .content_area {
-  height: 100%;
+  height: calc(100vh - var(--total-head-height));
+  padding-bottom: var(--content-area-bottom-padding);
   overflow-y: auto;
+  background-color: #525252;
 }
 
 .sub-navigation {
-  height: var(--lh);
+  height: var(--sub-navigation-height);
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -35,7 +44,7 @@ main {
 }
 
 .application_name {
-  line-height: var(--lh);
+  line-height: var(--sub-navigation-height);
   width: 100vw;
   display: flex;
   font-size: medium;
@@ -82,7 +91,7 @@ main {
 }
 
 .bookmark_item:hover {
-  background-color: #555555;
+  background-color: #696969;
 }
 
 .bookmark_item:last-child {

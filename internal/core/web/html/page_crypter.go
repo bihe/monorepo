@@ -117,13 +117,22 @@ const crypterHeaderStyle = `
   background-color: #FB7232;
   border: var(--bs-border-width) solid #A03503;
   color: #333333;
-}`
+}
+
+.content_area {
+    height: calc(100vh - var(--total-head-height));
+    overflow-y: auto;
+    padding-bottom: 0rem;
+    background-color: #F2F2F2;
+    color: black;
+}
+
+`
 
 func CrypterStyle() g.Node {
 	return h.StyleEl(
 		h.Type("text/css"),
 		g.Raw(".page_label { margin-top: 10px;font-size:large;}"),
-		g.Raw(".age_content{height:100%;background-color:#F2F2F2;color:black}"),
 		g.Raw(crypterHeaderStyle),
 	)
 
@@ -160,8 +169,8 @@ func CrypterNavigation(search string) g.Node {
 						h.Type("button"),
 						h.ID("crypter_perform_action"),
 						h.Class("btn btn-primary"),
-						h.I(h.Class("bi bi-nut")),
-						g.Text(" Go"),
+						h.I(h.Class("bi bi-box-arrow-right")),
+						g.Text(" Action"),
 					),
 				),
 				h.Script(h.Type("text/javascript"), g.Raw(triggerCrypterAction)),

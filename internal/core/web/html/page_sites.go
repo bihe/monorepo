@@ -24,6 +24,12 @@ const sitesHeaderStyle = `
 .header-search-field-prefix {
   background-color: #A02003;
   border: var(--bs-border-width) solid #731702;
+}
+
+.content_area {
+    height: calc(100vh - var(--total-head-height));
+    overflow-y: auto;
+    padding-bottom: 0rem;
 }`
 
 func SiteContent(userSites sites.UserSites) g.Node {
@@ -70,7 +76,7 @@ func SiteNavigation(search string) g.Node {
 						),
 					),
 
-					h.A(h.Href("/sites/edit"), h.Type("button"), h.Class("btn btn-light"), h.I(h.Class("bi bi-pen")), g.Text(" Edit")),
+					h.A(h.Href("/sites/edit"), h.Type("button"), h.Class("btn btn-primary"), h.I(h.Class("bi bi-pen")), g.Text(" Edit")),
 				),
 			),
 		),

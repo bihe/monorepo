@@ -31,7 +31,6 @@ const sitesHeaderStyle = `
 }
 
 .content_area {
-    height:100%;
     padding-bottom: 0rem;
 }`
 

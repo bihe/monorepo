@@ -96,6 +96,10 @@ func CrypterContent(model CrypterModel) g.Node {
 }
 
 const crypterHeaderStyle = `
+body {
+	background-color: #F2F2F2;
+}
+
 .header {
   background: #CC4402;
 }
@@ -124,8 +128,6 @@ const crypterHeaderStyle = `
 }
 
 .content_area {
-    height: calc(100vh - var(--total-head-height));
-    background-color: #F2F2F2;
     color: black;
 }
 

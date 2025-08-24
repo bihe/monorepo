@@ -11,6 +11,10 @@ const sitesHeaderStyle = `
   background: darkred;
 }
 
+.navbar-menu-area {
+  background: darkred;
+}
+
 .header-search-field {
   background-color: #A02003;
   border: var(--bs-border-width) solid #731702;
@@ -27,8 +31,7 @@ const sitesHeaderStyle = `
 }
 
 .content_area {
-    height: calc(100vh - var(--total-head-height));
-    overflow-y: auto;
+    height:100%;
     padding-bottom: 0rem;
 }`
 

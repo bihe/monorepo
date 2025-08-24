@@ -100,6 +100,10 @@ const crypterHeaderStyle = `
   background: #CC4402;
 }
 
+.navbar-menu-area {
+  background: #CC4402;
+}
+
 .header-search-field {
   background-color: #FB7232;
   border: var(--bs-border-width) solid #A03503;
@@ -126,6 +130,8 @@ const crypterHeaderStyle = `
     background-color: #F2F2F2;
     color: black;
 }
+
+
 
 `
 

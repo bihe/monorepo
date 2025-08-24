@@ -11,8 +11,8 @@ body {
 
 :root {
   --header-height: 3.5rem;
+  --header-height-offset: 3.0rem;
   --sub-navigation-height: 3.6rem;
-  --total-head-height: 6.5rem;
   --content-area-bottom-padding: 2rem;
 }
 
@@ -20,14 +20,14 @@ body {
   height: var(--header-height);
 }
 
-main {
-  height: 100%;
+.main-area {
+  height: calc(100vh - var(--header-height-offset));
+  overflow-y: auto;
 }
 
 .content_area {
-  height: calc(100vh - var(--total-head-height));
+  height: 100%;
   padding-bottom: var(--content-area-bottom-padding);
-  overflow-y: auto;
   background-color: #525252;
 }
 

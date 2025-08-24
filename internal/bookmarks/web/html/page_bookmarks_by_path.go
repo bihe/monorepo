@@ -22,6 +22,10 @@ const constBookmarkHeaderStyle = `
 	background: #0F4F70;
 }
 
+.navbar-menu-area {
+  	background: #0F4F70;
+}
+
 .header-search-field {
 	background-color: #146690;
 	border: var(--bs-border-width) solid #092D3F;

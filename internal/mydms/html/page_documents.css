@@ -55,6 +55,10 @@
 	background: #00691B;
 }
 
+.navbar-menu-area {
+	background: #00691B;
+}
+
 .header-search-field {
 	background-color: #00771e;
 	border: var(--bs-border-width) solid #004712;

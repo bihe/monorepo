@@ -125,8 +125,6 @@ const crypterHeaderStyle = `
 
 .content_area {
     height: calc(100vh - var(--total-head-height));
-    overflow-y: auto;
-    padding-bottom: 0rem;
     background-color: #F2F2F2;
     color: black;
 }

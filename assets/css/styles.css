@@ -26,7 +26,6 @@ body {
 }
 
 .content_area {
-  height: 100%;
   padding-bottom: var(--content-area-bottom-padding);
   background-color: #525252;
 }

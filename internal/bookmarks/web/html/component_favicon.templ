@@ -1,0 +1,62 @@
+package html
+
+import "golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
+import "fmt"
+import "strings"
+import "golang.binggl.net/monorepo/pkg/text"
+
+func isHtmlLike(payload []byte) bool {
+	input := string(payload)
+	return strings.Contains(input, "<html")
+}
+
+templ FaviconModalDialog(currFaviconID string, favicons []bookmarks.ObjectInfo, searchTerm string){
+
+    {{ currFaviconID = text.DecBase64(currFaviconID) }}
+
+    <div id="modal" _="on closeModal add .closing then wait for animationend then remove me" role="dialog">
+
+        <div class="modal-content-area">
+            <div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="search_favicon_pre"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" placeholder="Favicon" name="search_favicon" id="search_favicon" value={ searchTerm } autofocus="true"
+                        hx-post="/bm/favicon/available"
+                        hx-trigger="keyup[key=='Enter']"
+                        hx-target="#favicon_grid"
+                        hx-swap="outerHTML"
+                    />
+                </div>
+            </div>
+            <div id="favicon_grid" class="favicon_grid_container">
+                for _, f := range favicons {
+                    if !isHtmlLike(f.Payload) {
+						{{ className := "favicon_view" }}
+                        if currFaviconID == f.Name {
+                            {{ className = "favicon_view_selected" }}
+                        }
+
+                        <img
+                            hx-get={ fmt.Sprintf("/bm/favicon/select/%s", text.EncBase64(f.Name)) }
+                            hx-trigger="click"
+                            hx-target="#bookmark_favicon_display"
+                            hx-swap="outerHTML"
+                            _="on click trigger closeModal"
+                            width="42px"
+                            height="42px"
+                            title={ fmt.Sprintf("name: %s", f.Name) }
+                            class={ className }
+                            alt="fi"
+                            src={ fmt.Sprintf("/bm/favicon/raw/%s?t=%d", text.EncBase64(f.Name), f.Modified.Nanosecond()) }
+                            loading="lazy"
+                        />
+					}
+                }
+            </div>
+            <div class="mx-auto p-2" style="width:90px;">
+                <button class="btn btn-secondary" style="width: 90px;" _="on click trigger closeModal">Close</button>
+            </div>
+        </div>
+    </div>
+
+}

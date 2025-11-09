@@ -646,8 +646,18 @@ func (s *Application) GetBookmarkFavicon(bookmarkID string, user security.User) 
 
 // GetAvailableFavicons retrieves all available favicons of the stored bookmarks.
 // It does not return duplicates, but focuses on unique favicons by comparing the stored payload.
-func (s *Application) GetAvailableFavicons(user security.User) ([]ObjectInfo, error) {
-	bookmarks, err := s.BookmarkStore.GetAllBookmarks(user.Username)
+// A optional search-term is provided to filter bookmarks by name and as a result the given favicons.
+func (s *Application) GetAvailableFavicons(user security.User, search string) ([]ObjectInfo, error) {
+	var (
+		bookmarks []store.Bookmark
+		err       error
+	)
+	if search != "" {
+		bookmarks, err = s.BookmarkStore.GetBookmarksByName(search, user.Username)
+	} else {
+		bookmarks, err = s.BookmarkStore.GetAllBookmarks(user.Username)
+
+	}
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve bookmarks for user '%s'; %v", user.Username, err)
 	}

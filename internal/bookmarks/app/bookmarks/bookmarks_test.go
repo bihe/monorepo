@@ -954,7 +954,7 @@ func Test_GetAllAvailableFavicons(t *testing.T) {
 	// we created 4 bookmarks with 2 different favicons. The result of all available favicons should be just 2
 	// 4were saved but 2 used the same favicon, therefor the unique result should be only 2.
 
-	favicons, err := svc.GetAvailableFavicons(favUser)
+	favicons, err := svc.GetAvailableFavicons(favUser, "")
 	if err != nil {
 		t.Errorf("could not get available favicons; %v", err)
 	}
@@ -990,7 +990,7 @@ func Test_GetAllAvailableFavicons(t *testing.T) {
 		Email:       "a.b@c.de",
 		DisplayName: "Unknown_" + uuid.NewString(),
 	}
-	favicons, err = svc.GetAvailableFavicons(unknownUser)
+	favicons, err = svc.GetAvailableFavicons(unknownUser, "")
 	if err != nil {
 		t.Errorf("could not get available favicons; %v", err)
 	}

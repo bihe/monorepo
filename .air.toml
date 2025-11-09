@@ -6,26 +6,26 @@ tmp_dir = "./tmp"
   # -------------------------------------------------------------------------
   # core
   # -------------------------------------------------------------------------
-  args_bin = [
-    "--port",
-    "3003",
-    "--basepath",
-    "./internal/core"
-  ]
-  bin = "./tmp/core.api"
-  cmd = "go build -ldflags=\"-X main.Version=NOW -X main.Build=DEV\" -o ./tmp/core.api ./cmd/core/server/main.go"
-
-  # -------------------------------------------------------------------------
-  # bookmarks
-  # -------------------------------------------------------------------------
   #args_bin = [
   #  "--port",
   #  "3003",
   #  "--basepath",
-  #  "./internal/bookmarks"
+  #  "./internal/core"
   #]
-  #bin = "./tmp/bookmarks.api"
-  #cmd = "go build -ldflags=\"-X main.Version=NOW -X main.Build=DEV\" -o ./tmp/bookmarks.api ./cmd/bookmarks/server/main.go"
+  #bin = "./tmp/core.api"
+  #cmd = "go tool templ generate && go build -ldflags=\"-X main.Version=NOW -X main.Build=DEV\" -o ./tmp/core.api ./cmd/core/server/main.go"
+
+  # -------------------------------------------------------------------------
+  # bookmarks
+  # -------------------------------------------------------------------------
+  args_bin = [
+    "--port",
+    "3003",
+    "--basepath",
+    "./internal/bookmarks"
+  ]
+  bin = "./tmp/bookmarks.api"
+  cmd = "go tool templ generate && go build -ldflags=\"-X main.Version=NOW -X main.Build=DEV\" -o ./tmp/bookmarks.api ./cmd/bookmarks/server/main.go"
 
 
   # -------------------------------------------------------------------------
@@ -38,17 +38,17 @@ tmp_dir = "./tmp"
   #  "./internal/mydms"
   #]
   #bin = "./tmp/mydms.api"
-  #cmd = "go build -ldflags=\"-X main.Version=NOW -X main.Build=DEV\" -o ./tmp/mydms.api ./cmd/mydms/server/main.go"
+  #cmd = "go tool templ generate && go build -ldflags=\"-X main.Version=NOW -X main.Build=DEV\" -o ./tmp/mydms.api ./cmd/mydms/server/main.go"
 
   delay = 500
   exclude_dir = ["assets", "tmp", "vendor", "testdata", "frontend", "caddy", ".vscode", "doc", "tmp", "tools", "upload", "litestream", "_logs"]
   exclude_file = []
-  exclude_regex = ["_test.go"]
+  exclude_regex = ["_test.go", ".*_templ.go"]
   exclude_unchanged = false
   follow_symlink = false
   full_bin = ""
   include_dir = []
-  include_ext = ["go", "tpl", "html"]
+  include_ext = ["go", "tpl", "templ", "html"]
   include_file = []
   kill_delay = "0s"
   log = "build-errors.log"

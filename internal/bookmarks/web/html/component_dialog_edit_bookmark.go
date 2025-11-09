@@ -90,7 +90,7 @@ func EditBookmarks(bm Bookmark, paths []string) g.Node {
 		h.ID("bookmark_favicon_select"),
 		h.Class("bookmark_favicon_select"),
 		g.Attr("hx-get", availFaviconURL),
-		g.Attr("hx-target", "body"),
+		g.Attr("hx-target", "#modals-here"), // put it next to the other modals, otherwise we cannot use input-boxes
 		g.Attr("hx-swap", "beforeend"),
 		faviconDetail,
 	)
@@ -228,7 +228,7 @@ func EditBookmarks(bm Bookmark, paths []string) g.Node {
 	)
 
 	return h.Div(h.Class("modal-dialog modal-xl"), h.ID("bookmark_edit_dialog"),
-		g.If(bm.Close, g.El("script", g.Attr("type", "text/javascript"), g.Raw("bootstrap.Modal.getInstance('#modals-here').toggle();"))),
+		g.If(bm.Close, g.El("script", g.Attr("type", "text/javascript"), g.Raw("bootstrap.Modal.getInstance('#component_dialog_edit_bookmarks_modal').toggle();"))),
 		g.If(!bm.Close,
 			g.Group{
 				editDialog,

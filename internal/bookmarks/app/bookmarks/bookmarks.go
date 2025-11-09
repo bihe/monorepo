@@ -507,6 +507,13 @@ func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark
 				return err
 			}
 
+			// when we rename a bunch of items in bookmarks the sort-order is relevant
+			// the bookmarks need to be sorted by path, otherwise an issue arises with "children" and the check
+			// for the existence of the parent path
+			sort.Slice(bookmarks, func(i, j int) bool {
+				return bookmarks[i].Path < bookmarks[j].Path
+			})
+
 			for _, updateBm := range bookmarks {
 				updatePath := strings.ReplaceAll(updateBm.Path, oldPath, newPath)
 				if _, err := repo.Update(store.Bookmark{

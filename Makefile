@@ -17,7 +17,7 @@ RESET  := $(shell tput -Txterm sgr0)
 ## set the default architecture should work for most Linux systems
 ARCH := amd64
 ## we use litestream to sync databases, specify the version to use
-LITESTREAM_V := v0.3.9
+LITESTREAM_V := v0.5.2
 
 UNAME_M := $(shell uname -m)
 ifeq ($(UNAME_M), x86_64)

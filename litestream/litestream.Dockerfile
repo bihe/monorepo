@@ -46,6 +46,8 @@ COPY --chown=${buildtime_variable_uid}:${buildtime_variable_gid} --from=build /b
 COPY --chown=${buildtime_variable_uid}:${buildtime_variable_gid} ./restore_replicate.sh /opt/litestream
 COPY --chown=${buildtime_variable_uid}:${buildtime_variable_gid} ./healthcheck.sh /opt/litestream
 
+RUN chmod +x /opt/litestream/*.sh
+
 USER ${buildtime_variable_username}
 
 CMD ["/opt/litestream/restore_replicate.sh"]

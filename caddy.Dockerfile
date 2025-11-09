@@ -8,6 +8,7 @@ RUN npm install -g esbuild
 # start the bundeling
 WORKDIR /bundler
 COPY ./assets ./
+RUN chmod +x ./*.sh
 RUN rm -rf ./bundle
 RUN ./bundle.sh auto ${COMMIT}
 

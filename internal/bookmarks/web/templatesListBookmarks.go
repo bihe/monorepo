@@ -3,6 +3,7 @@ package web
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"golang.binggl.net/monorepo/internal/bookmarks/web/html"
@@ -16,6 +17,7 @@ const searchURL = "/bm/search"
 func (t *TemplateHandler) SearchBookmarks() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		search := queryParam(r, "q")
+		search = unescape(search)
 		user := common.EnsureUser(r)
 
 		t.Logger.InfoRequest(fmt.Sprintf("get bookmarks by name: '%s' for user: '%s'", search, user.Username), r)
@@ -41,6 +43,7 @@ func (t *TemplateHandler) SearchBookmarks() http.HandlerFunc {
 func (t *TemplateHandler) SearchBookmarksPartial() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		search := queryParam(r, "q")
+		search = unescape(search)
 		user := common.EnsureUser(r)
 
 		t.Logger.InfoRequest(fmt.Sprintf("get search bookmark-list partial by name: '%s' for user: '%s'", search, user.Username), r)
@@ -58,6 +61,7 @@ func (t *TemplateHandler) SearchBookmarksPartial() http.HandlerFunc {
 func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		path := pathParam(r, "*")
+		path = unescape(path)
 		if path == "" {
 			// start with the root path
 			path = "/"
@@ -130,6 +134,7 @@ func (t *TemplateHandler) GetBookmarksForPath() http.HandlerFunc {
 func (t *TemplateHandler) GetBookmarksForPathPartial() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		path := pathParam(r, "*")
+		path = unescape(path)
 		user := common.EnsureUser(r)
 
 		t.Logger.InfoRequest(fmt.Sprintf("get bookmark-list partial for path: '%s' for user: '%s'", path, user.Username), r)
@@ -140,4 +145,15 @@ func (t *TemplateHandler) GetBookmarksForPathPartial() http.HandlerFunc {
 		}
 		html.BookmarkList(path, bms, html.GetEllipsisValues(r)).Render(w)
 	}
+}
+
+func unescape(path string) string {
+	if path == "" {
+		return ""
+	}
+	cleanedPath, err := url.PathUnescape(path)
+	if err != nil {
+		return path
+	}
+	return cleanedPath
 }

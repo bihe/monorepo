@@ -78,7 +78,7 @@ func EditBookmarks(bm Bookmark, paths []string) g.Node {
 		availFaviconURL string
 	)
 
-	availFaviconURL = "/bm/favicon/available"
+	availFaviconURL = "/bm/AvailableFaviconsDialog"
 	if bm.ID.Val != "-1" {
 		faviconDetail = h.Img(h.ID("bookmark_favicon_display"), h.Class(common.ClassCond("bookmark_favicon_preview", "invert", bm.InvertFaviconColor)), h.Src("/bm/favicon/"+bm.ID.Val+"?t="+bm.TStamp))
 		availFaviconURL += "?current=" + text.EncBase64(bm.CurrentFavicon)
@@ -90,7 +90,7 @@ func EditBookmarks(bm Bookmark, paths []string) g.Node {
 		h.ID("bookmark_favicon_select"),
 		h.Class("bookmark_favicon_select"),
 		g.Attr("hx-get", availFaviconURL),
-		g.Attr("hx-target", "body"),
+		g.Attr("hx-target", "#modals-here"), // put it next to the other modals, otherwise we cannot use input-boxes
 		g.Attr("hx-swap", "beforeend"),
 		faviconDetail,
 	)

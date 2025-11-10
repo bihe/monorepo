@@ -33,18 +33,30 @@ const existingFaviconImage = `<img id="bookmark_favicon_display" class="bookmark
 func (t *TemplateHandler) AvailableFaviconsDialog() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := common.EnsureUser(r)
+		currFavicon := queryParam(r, "current")
+		favicons, err := t.App.GetAvailableFavicons(*user, "")
+		if err != nil {
+			t.Logger.Error(fmt.Sprintf("could not get available favicons for user '%s'", user.DisplayName), logging.ErrV(err), logging.LogV("username", user.Username))
+		}
+		faviconDialog := html.FaviconModalDialog(currFavicon, favicons, "")
+		faviconDialog.Render(r.Context(), w)
+	}
+}
+
+// FaviconGridPartial provides the grid of available favicons
+func (t *TemplateHandler) FaviconGridPartial() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := common.EnsureUser(r)
 		filterFavicon := ""
 		if r.ParseForm() == nil {
 			filterFavicon = r.FormValue("search_favicon")
 			t.Logger.Debug("will filter for favicon", logging.LogV("search_favicon", filterFavicon))
 		}
-
-		currFavicon := queryParam(r, "current")
 		favicons, err := t.App.GetAvailableFavicons(*user, filterFavicon)
 		if err != nil {
 			t.Logger.Error(fmt.Sprintf("could not get available favicons for user '%s'", user.DisplayName), logging.ErrV(err), logging.LogV("username", user.Username))
 		}
-		faviconDialog := html.FaviconModalDialog(currFavicon, favicons, filterFavicon)
+		faviconDialog := html.FaviconGrid("", favicons, filterFavicon)
 		faviconDialog.Render(r.Context(), w)
 	}
 }

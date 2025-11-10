@@ -78,7 +78,7 @@ func EditBookmarks(bm Bookmark, paths []string) g.Node {
 		availFaviconURL string
 	)
 
-	availFaviconURL = "/bm/favicon/available"
+	availFaviconURL = "/bm/AvailableFaviconsDialog"
 	if bm.ID.Val != "-1" {
 		faviconDetail = h.Img(h.ID("bookmark_favicon_display"), h.Class(common.ClassCond("bookmark_favicon_preview", "invert", bm.InvertFaviconColor)), h.Src("/bm/favicon/"+bm.ID.Val+"?t="+bm.TStamp))
 		availFaviconURL += "?current=" + text.EncBase64(bm.CurrentFavicon)
@@ -228,7 +228,7 @@ func EditBookmarks(bm Bookmark, paths []string) g.Node {
 	)
 
 	return h.Div(h.Class("modal-dialog modal-xl"), h.ID("bookmark_edit_dialog"),
-		g.If(bm.Close, g.El("script", g.Attr("type", "text/javascript"), g.Raw("bootstrap.Modal.getInstance('#component_dialog_edit_bookmarks_modal').toggle();"))),
+		g.If(bm.Close, g.El("script", g.Attr("type", "text/javascript"), g.Raw("bootstrap.Modal.getInstance('#modals-here').toggle();"))),
 		g.If(!bm.Close,
 			g.Group{
 				editDialog,

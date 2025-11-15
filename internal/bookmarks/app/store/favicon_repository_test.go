@@ -8,11 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/internal/bookmarks/app"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
-	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/persistence"
 )
-
-var logger = logging.NewNop()
 
 func favRepo(t *testing.T) (store.FaviconRepository, *sql.DB) {
 	var (

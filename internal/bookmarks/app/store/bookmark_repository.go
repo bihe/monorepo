@@ -93,7 +93,7 @@ func (r *dbBookmarkRepository) GetBookmarksByName(name, username string) ([]Book
 // GetBookmarkByID returns the bookmark specified by the given id - for the user
 func (r *dbBookmarkRepository) GetBookmarkByID(id, username string) (Bookmark, error) {
 	var bookmark Bookmark
-	h := r.con.R().Where(&Bookmark{ID: id, UserName: username}).First(&bookmark)
+	h := r.con.R().Joins("File").Where(&Bookmark{ID: id, UserName: username}).First(&bookmark)
 	return bookmark, h.Error
 }
 
@@ -277,6 +277,7 @@ func (r *dbBookmarkRepository) Update(item Bookmark) (Bookmark, error) {
 	bm.Highlight = item.Highlight
 	bm.ChildCount = item.ChildCount
 	bm.InvertFaviconColor = item.InvertFaviconColor
+	bm.File = item.File
 
 	h = r.con.W().Save(&bm)
 	if h.Error != nil {

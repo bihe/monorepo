@@ -19,7 +19,18 @@ const (
 	Node NodeType = "Node"
 	// Folder is used to group nodes
 	Folder NodeType = "Folder"
+	// File is similar to node but has a binary payload
+	FileItem NodeType = "File"
 )
+
+// File represents a binary payload
+type File struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	MimeType string `json:"mimeType"`
+	Payload  []byte `json:"payload"`
+	Size     int    `json:"size"`
+}
 
 // Bookmark is the model provided via the REST API
 type Bookmark struct {
@@ -35,6 +46,7 @@ type Bookmark struct {
 	Highlight          int        `json:"highlight"`
 	Favicon            string     `json:"favicon"`
 	InvertFaviconColor int        `json:"invertFaviconColor"`
+	File               *File      `json:"file,omitempty"`
 }
 
 // TStamp returns either the modified or created timestamp of the bookmark as unix time

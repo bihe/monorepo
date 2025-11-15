@@ -13,6 +13,8 @@ const (
 	Node NodeType = iota
 	// Folder defines a structure/grouping of nodes
 	Folder
+	// FileItem is similar to a Node, but is defined by a file
+	FileItem
 )
 
 // NodeCount displays the number of child-elements for a given path (1 level)
@@ -36,6 +38,8 @@ type Bookmark struct {
 	Highlight          int        `gorm:"COLUMN:highlight;DEFAULT:0;NOT NULL"`
 	Favicon            string     `gorm:"TYPE:varchar(128);COLUMN:favicon;"`
 	InvertFaviconColor int        `gorm:"COLUMN:invert_favicon_color;DEFAULT:0;NOT NULL"`
+	File               *File      `gorm:"foreignKey:file_id;default:SET NULL;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	FileID             *string
 }
 
 func (b Bookmark) String() string {
@@ -56,4 +60,17 @@ type Favicon struct {
 
 func (Favicon) TableName() string {
 	return "FAVICONS"
+}
+
+// A File represents a binary ot text file (defined by the mime-type)
+type File struct {
+	ID       string `gorm:"primary_key;TYPE:varchar(128);COLUMN:id;NOT NULL"`
+	Name     string `gorm:"TYPE:varchar(128);COLUMN:name;NOT NULL"`
+	MimeType string `gorm:"TYPE:varchar(128);COLUMN:mime_type;NOT NULL"`
+	Payload  []byte `gorm:"COLUMN:payload;TYPE:bytes;NOT NULL"`
+	Size     int    `gorm:"COLUMN:size;DEFAULT:0;NOT NULL"`
+}
+
+func (File) TableName() string {
+	return "FILES"
 }

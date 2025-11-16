@@ -59,7 +59,8 @@ type ServiceOptions struct {
 
 // NewService creates a new Service instance
 func NewService(init ServiceOptions) Service {
-	duration := 0 * time.Second
+	// 30s default
+	duration := 30 * time.Second
 	if init.TimeOut != "" {
 		duration = parseDuration(init.TimeOut)
 	}

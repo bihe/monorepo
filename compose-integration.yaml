@@ -178,6 +178,9 @@ services:
                         BM_BASECONFIG__LOGGING__GRAYLOGSERVER: $LOGGING_GRAYLOGSERVER
                         BM_BASECONFIG__ASSETS__ASSETDIR: ./assets
                         BM_DATABASE__CONNECTIONSTRING: /store/bookmarks.db
+                        BM_FAVICONUPLOADPATH: /opt/bookmarks/uploads
+                        BM_UPLOAD__UPLOADPATH: /opt/bookmarks/uploads
+                        BM_UPLOAD__MAXUPLOADSIZE: 5000000
                 depends_on:
                         litestream:
                                 condition: service_healthy

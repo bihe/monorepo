@@ -65,3 +65,15 @@ database:
 
 # place to store the downloaded favicons
 faviconUploadPath: "./uploads/"
+
+# configuration of the upload service used
+upload:
+    allowedFileTypes:
+        - "pdf"
+        - "jpg"
+        - "jpeg"
+        - "png"
+        - "gif"
+        - "svg"
+    maxUploadSize: 5000000
+    uploadPath: "./uploads/"

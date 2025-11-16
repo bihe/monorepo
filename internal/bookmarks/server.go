@@ -8,6 +8,7 @@ import (
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/conf"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
+	"golang.binggl.net/monorepo/internal/common/upload"
 	"golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/develop"
 	"golang.binggl.net/monorepo/pkg/logging"
@@ -29,11 +30,19 @@ func Run(version, build, appName string) error {
 	defer db.Close()
 
 	var (
-		bRepo, fRepo = setupRepositories(db, logger)
-		app          = &bookmarks.Application{
+		bRepo, favRepo, fileRepo = setupRepositories(db, logger)
+		uploadSvc                = upload.NewService(upload.ServiceOptions{
+			Logger:           logger,
+			Store:            upload.NewStore(appCfg.Upload.UploadPath),
+			MaxUploadSize:    appCfg.Upload.MaxUploadSize,
+			AllowedFileTypes: appCfg.Upload.AllowedFileTypes,
+		})
+		app = &bookmarks.Application{
 			Logger:        logger,
 			BookmarkStore: bRepo,
-			FavStore:      fRepo,
+			FavStore:      favRepo,
+			FileStore:     fileRepo,
+			UploadSvc:     uploadSvc,
 			FaviconPath:   path.Join(basePath, appCfg.FaviconUploadPath),
 		}
 		handler = MakeHTTPHandler(app, logger, HTTPHandlerOptions{
@@ -76,10 +85,10 @@ func logConfig(cfg conf.AppConfig) logging.Logger {
 }
 
 // setupRepositories enables the SQLITE repositories for the application
-func setupRepositories(db *sql.DB, logger logging.Logger) (store.BookmarkRepository, store.FaviconRepository) {
+func setupRepositories(db *sql.DB, logger logging.Logger) (store.BookmarkRepository, store.FaviconRepository, store.FileRepository) {
 	con, err := persistence.CreateGormSqliteCon(db)
 	if err != nil {
 		panic(fmt.Sprintf("cannot create database connection: %v", err))
 	}
-	return store.CreateBookmarkRepo(con, logger), store.CreateFaviconRepo(con, logger)
+	return store.CreateBookmarkRepo(con, logger), store.CreateFaviconRepo(con, logger), store.CreateFileRepo(con, logger)
 }

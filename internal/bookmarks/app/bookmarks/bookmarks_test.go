@@ -1,6 +1,7 @@
 package bookmarks_test
 
 import (
+	"bytes"
 	_ "embed"
 	"fmt"
 	"net/http"
@@ -14,12 +15,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
+	"golang.binggl.net/monorepo/internal/common/upload"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/persistence"
 	"golang.binggl.net/monorepo/pkg/security"
 )
 
 const faviconPath = "/tmp"
+const maxUploadSize = 5000000
+
+var allowedFileTypes = []string{"pdf"}
 
 var user = security.User{
 	Username:    "test",
@@ -27,17 +32,59 @@ var user = security.User{
 	DisplayName: "Test",
 }
 
+type mockUploadStore struct {
+	fail   bool
+	upload upload.Upload
+}
+
+func (m *mockUploadStore) Write(item upload.Upload) (err error) {
+	if m.fail {
+		return fmt.Errorf("error")
+	}
+	m.upload = item
+	return nil
+}
+
+func (m *mockUploadStore) Read(id string) (upload.Upload, error) {
+	if m.fail {
+		return upload.Upload{}, fmt.Errorf("error")
+	}
+	if id == m.upload.ID {
+		return m.upload, nil
+	}
+	return upload.Upload{}, fmt.Errorf("error")
+}
+
+func (m *mockUploadStore) Delete(id string) (err error) {
+	if m.fail {
+		return fmt.Errorf("error")
+	}
+	m.upload = upload.Upload{}
+	return nil
+}
+
+var _ upload.Store = &mockUploadStore{}
+
 func app(t *testing.T) bookmarks.Application {
-	bRepo, fRepo := repositories(t)
+	bRepo, fRepo, fileRepo := repositories(t)
+	uploadSvc := upload.NewService(upload.ServiceOptions{
+		Logger:           logging.NewNop(),
+		Crypter:          nil,
+		MaxUploadSize:    maxUploadSize,
+		AllowedFileTypes: allowedFileTypes,
+		Store:            &mockUploadStore{},
+	})
 	return bookmarks.Application{
 		BookmarkStore: bRepo,
 		FavStore:      fRepo,
 		Logger:        logging.NewNop(),
 		FaviconPath:   faviconPath,
+		FileStore:     fileRepo,
+		UploadSvc:     uploadSvc,
 	}
 }
 
-func repositories(t *testing.T) (store.BookmarkRepository, store.FaviconRepository) {
+func repositories(t *testing.T) (store.BookmarkRepository, store.FaviconRepository, store.FileRepository) {
 	var (
 		err error
 	)
@@ -47,10 +94,10 @@ func repositories(t *testing.T) (store.BookmarkRepository, store.FaviconReposito
 		t.Fatalf("cannot create database connection: %v", err)
 	}
 	// Migrate the schema
-	con.W().AutoMigrate(&store.Bookmark{}, &store.Favicon{})
+	con.W().AutoMigrate(&store.Bookmark{}, &store.Favicon{}, &store.File{})
 	con.Read = con.Write
 	logger := logging.NewNop()
-	return store.CreateBookmarkRepo(con, logger), store.CreateFaviconRepo(con, logger)
+	return store.CreateBookmarkRepo(con, logger), store.CreateFaviconRepo(con, logger), store.CreateFileRepo(con, logger)
 }
 
 func Test_GetBookmark_NotFound(t *testing.T) {
@@ -103,6 +150,8 @@ func Test_CreateBookmark(t *testing.T) {
 	}
 
 	// ---- error case ----
+
+	// missing path
 	_, err = svc.CreateBookmark(bookmarks.Bookmark{
 		Type:        bookmarks.Folder,
 		Path:        "",
@@ -112,10 +161,105 @@ func Test_CreateBookmark(t *testing.T) {
 		t.Errorf("error expected")
 	}
 
+	// missing name
 	_, err = svc.CreateBookmark(bookmarks.Bookmark{
 		Type:        bookmarks.Folder,
 		Path:        "/",
 		DisplayName: "",
+	}, user)
+	if err == nil {
+		t.Errorf("error expected")
+	}
+
+	// missing URL
+	_, err = svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		Path:        "/",
+		DisplayName: "test",
+	}, user)
+	if err == nil {
+		t.Errorf("error expected")
+	}
+
+	// missing File
+	_, err = svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.FileItem,
+		Path:        "/",
+		DisplayName: "test",
+	}, user)
+	if err == nil {
+		t.Errorf("error expected")
+	}
+}
+
+// rather small PDF payload
+// https://stackoverflow.com/questions/17279712/what-is-the-smallest-possible-valid-pdf
+const pdfPayload = `%PDF-1.0
+1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 3 3]>>endobj
+xref
+0 4
+0000000000 65535 f
+0000000010 00000 n
+0000000053 00000 n
+0000000102 00000 n
+trailer<</Size 4/Root 1 0 R>>
+startxref
+149
+%EOF
+`
+
+func Test_CreateBookmark_File(t *testing.T) {
+	svc := app(t)
+
+	fileID, err := svc.UploadSvc.Save(upload.File{
+		Name:     "test.pdf",
+		MimeType: "application/pdf",
+		File:     bytes.NewReader([]byte(pdfPayload)),
+		Size:     int64(len([]byte(pdfPayload))),
+	})
+	if fileID == "" {
+		t.Errorf("could not save file; %v", err)
+	}
+
+	bm, err := svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.FileItem,
+		Path:        "/",
+		DisplayName: "test",
+		FileID:      fileID,
+	}, user)
+	if err != nil {
+		t.Errorf("could not create bookmark; %v", err)
+	}
+
+	if bm.Type != bookmarks.FileItem {
+		t.Errorf("the type of the created item is wrong, expected '%v', got '%v'", bookmarks.FileItem, bm.Type)
+	}
+	if bm.FileID == "" {
+		t.Errorf("the bookmark is missing a file")
+	}
+
+	// retrieve the bookmark again
+	fetched, err := svc.GetBookmarkByID(bm.ID, user)
+	if err != nil {
+		t.Errorf("could not fetch bookmark; %v", err)
+	}
+
+	if fetched.FileID == "" {
+		t.Errorf("the fetched bookmark is missing a fileID")
+	}
+	if fetched.FilePayload.Payload == nil {
+		t.Errorf("the fetched bookmark is missing a file payload")
+	}
+
+	// ---- error case ----
+
+	// missing path
+	_, err = svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.Node,
+		Path:        "/",
+		DisplayName: "a",
+		URL:         "https://abc.de",
+		FileID:      "a file was supplied",
 	}, user)
 	if err == nil {
 		t.Errorf("error expected")
@@ -860,6 +1004,60 @@ func Test_UpateBookmarks_WithFavicons(t *testing.T) {
 		t.Errorf("could not update bookmark; %v", err)
 	}
 	assert.Equal(t, obj.Name, bm.Favicon)
+}
+
+func Test_UpdateBookmarks_WithFile(t *testing.T) {
+	svc := app(t)
+
+	fileID, _ := svc.UploadSvc.Save(upload.File{
+		Name:     "test.pdf",
+		MimeType: "application/pdf",
+		File:     bytes.NewReader([]byte(pdfPayload)),
+		Size:     int64(len([]byte(pdfPayload))),
+	})
+	bm, _ := svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.FileItem,
+		Path:        "/",
+		DisplayName: "test.pdf",
+		FileID:      fileID,
+	}, user)
+
+	// get the bookmark
+	b, _ := svc.GetBookmarkByID(bm.ID, user)
+	if b == nil {
+		t.Fatalf("could not get bookmark by id %s", bm.ID)
+	}
+
+	// update the bookmark by changing the file
+	fileID, _ = svc.UploadSvc.Save(upload.File{
+		Name:     "test_updated.pdf",
+		MimeType: "application/pdf",
+		File:     bytes.NewReader([]byte(pdfPayload)),
+		Size:     int64(len([]byte(pdfPayload))),
+	})
+	b.FileID = fileID
+
+	bm, err := svc.UpdateBookmark(*b, user)
+	if err != nil {
+		t.Errorf("could not update bookmark, %v", err)
+	}
+
+	// retrieve the bookmark again
+	fetched, err := svc.GetBookmarkByID(bm.ID, user)
+	if err != nil {
+		t.Errorf("could not fetch bookmark; %v", err)
+	}
+
+	if fetched.FileID == "" {
+		t.Errorf("the fetched bookmark is missing a fileID")
+	}
+	if fetched.FilePayload.Payload == nil {
+		t.Errorf("the fetched bookmark is missing a file payload")
+	}
+	if fetched.FilePayload.Name != "test_updated.pdf" {
+		t.Errorf("the file payload of the bookmark was not saved")
+	}
+
 }
 
 func Test_GetAllAvailableFavicons(t *testing.T) {

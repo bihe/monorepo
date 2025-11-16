@@ -2,8 +2,7 @@ if (document.querySelector('#type_Bookmark')) {
     document.querySelector('#type_Bookmark').addEventListener('change', (event) => {
         if (event.target.value === 'Node') {
             document.querySelector('#url_section').classList.remove('d-none');
-        } else {
-            document.querySelector('#url_section').classList.add('d-none');
+            document.querySelector('#file_section').classList.add('d-none');
         }
     });
 }
@@ -12,8 +11,16 @@ if (document.querySelector('#type_Folder')) {
     document.querySelector('#type_Folder').addEventListener('change', (event) => {
         if (event.target.value === 'Folder') {
             document.querySelector('#url_section').classList.add('d-none');
-        } else {
-            document.querySelector('#url_section').classList.remove('d-none');
+            document.querySelector('#file_section').classList.add('d-none');
+        }
+    });
+}
+
+if (document.querySelector('#type_File')) {
+    document.querySelector('#type_File').addEventListener('change', (event) => {
+        if (event.target.value === 'File') {
+            document.querySelector('#url_section').classList.add('d-none');
+            document.querySelector('#file_section').classList.remove('d-none');
         }
     });
 }

@@ -18,6 +18,8 @@ type FileRepository interface {
 
 // CreateFileRepo creates a new repository
 func CreateFileRepo(con persistence.Connection, logger logging.Logger) FileRepository {
+	// this simplifies live-migrations by telling gorm to create missing tables
+	con.W().AutoMigrate(&File{}, &Bookmark{})
 	return &dbFileRepository{
 		con:    con,
 		logger: logger,

@@ -277,7 +277,7 @@ func (r *dbBookmarkRepository) Update(item Bookmark) (Bookmark, error) {
 	bm.Highlight = item.Highlight
 	bm.ChildCount = item.ChildCount
 	bm.InvertFaviconColor = item.InvertFaviconColor
-	bm.File = item.File
+	bm.FileID = item.FileID
 
 	h = r.con.W().Save(&bm)
 	if h.Error != nil {

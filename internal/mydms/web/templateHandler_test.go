@@ -9,12 +9,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"golang.binggl.net/monorepo/internal/common/upload"
 	"golang.binggl.net/monorepo/internal/mydms"
 	"golang.binggl.net/monorepo/internal/mydms/app/config"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
 	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
 	"golang.binggl.net/monorepo/internal/mydms/app/shared"
-	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	conf "golang.binggl.net/monorepo/pkg/config"
 	"golang.binggl.net/monorepo/pkg/logging"
 )

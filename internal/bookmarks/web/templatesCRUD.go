@@ -3,11 +3,13 @@ package web
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"golang.binggl.net/monorepo/internal/bookmarks/app/bookmarks"
 	"golang.binggl.net/monorepo/internal/bookmarks/web/html"
 	"golang.binggl.net/monorepo/internal/common"
+	"golang.binggl.net/monorepo/internal/common/upload"
 	base "golang.binggl.net/monorepo/pkg/handler/html"
 	"golang.binggl.net/monorepo/pkg/logging"
 )
@@ -114,6 +116,7 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 			bm.Path = html.ValidatorInput{Val: queryParam(r, "path"), Valid: true}
 			bm.DisplayName = html.ValidatorInput{Valid: true}
 			bm.URL = html.ValidatorInput{Valid: true}
+			bm.File = html.ValidatorInput{Valid: true}
 			bm.CustomFavicon = html.ValidatorInput{Valid: true}
 			bm.Type = bookmarks.Node
 			bm.TStamp = fmt.Sprintf("%d", time.Now().Unix())
@@ -140,6 +143,59 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 			}
 		}
 		html.EditBookmarks(bm, paths).Render(w)
+	}
+}
+
+func (t *TemplateHandler) errorUploadWidget(w http.ResponseWriter, errMsg string) {
+	triggerToast(w, base.MsgError, "Upload error!", errMsg)
+	html.UploadWidget(false, true, html.FileContent{}).Render(w)
+}
+
+// UploadBookmarkFile handles file-uploads for the bookmark edit form
+func (t *TemplateHandler) UploadFile() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := pathParam(r, "id")
+
+		if id == "" {
+			// Parse our multipart form, respect the max upload size
+			r.ParseMultipartForm(t.App.UploadSvc.MaxUploadSize())
+
+			file, meta, err := r.FormFile("bookmark_fileUpload")
+			if err != nil {
+				errMsg := strings.ReplaceAll(err.Error(), "\"", "'")
+				t.Logger.ErrorRequest(fmt.Sprintf("could not upload file; '%v'", err), r)
+				t.errorUploadWidget(w, fmt.Sprintf("Could not upload file: %v", errMsg))
+				return
+			}
+			defer file.Close()
+
+			cType := meta.Header.Get("Content-Type")
+
+			uploadId, err := t.App.UploadSvc.Save(upload.File{
+				File:     file,
+				Name:     meta.Filename,
+				MimeType: cType,
+				Size:     meta.Size,
+			})
+			if err != nil {
+				t.Logger.ErrorRequest(fmt.Sprintf("could not upload file; '%v'", err), r)
+				t.errorUploadWidget(w, fmt.Sprintf("Could not upload file: %v", err))
+				return
+			}
+
+			html.UploadWidget(false, false, html.FileContent{
+				FileName: meta.Filename,
+				FileID:   uploadId,
+			}).Render(w)
+		} else {
+			// clear the upload file again
+			err := t.App.UploadSvc.Delete(id)
+			if err != nil {
+				t.Logger.Warn("could not delete uploaded file", logging.ErrV(err))
+				triggerToast(w, base.MsgError, "Upload error!", fmt.Sprintf("Could not delete uploaded file: %v", err))
+			}
+			html.UploadWidget(false, false, html.FileContent{}).Render(w)
+		}
 	}
 }
 
@@ -171,8 +227,15 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 		recv.InvertFaviconColor = getIntFromString(r.FormValue(formPrefix + "InvertFaviconColor"))
 		recv.Type = bookmarks.Node
 		recv.Favicon = r.FormValue(formPrefix + "Favicon")
-		if r.FormValue(formPrefix+"Type") == "Folder" {
+		recv.FileID = r.FormValue(formPrefix + "FileID")
+
+		switch r.FormValue(formPrefix + "Type") {
+		case "Node":
+			recv.Type = bookmarks.Node
+		case "Folder":
 			recv.Type = bookmarks.Folder
+		case "File":
+			recv.Type = bookmarks.FileItem
 		}
 
 		// validation
@@ -192,11 +255,19 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			validData = false
 		}
 		formBm.Type = recv.Type
+		formBm.URL = html.ValidatorInput{Val: recv.URL, Valid: true}
 		if formBm.Type == bookmarks.Node {
-			formBm.URL = html.ValidatorInput{Val: recv.URL, Valid: true}
 			if recv.URL == "" {
 				formBm.URL.Valid = false
 				formBm.URL.Message = "missing value!"
+				validData = false
+			}
+		}
+		formBm.File = html.ValidatorInput{Val: recv.FileID, Valid: true}
+		if formBm.Type == bookmarks.FileItem {
+			if recv.FileID == "" {
+				formBm.File.Valid = false
+				formBm.File.Message = "missing value!"
 				validData = false
 			}
 		}
@@ -225,6 +296,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 				DisplayName:        recv.DisplayName,
 				Type:               recv.Type,
 				URL:                recv.URL,
+				FileID:             recv.FileID,
 				InvertFaviconColor: recv.InvertFaviconColor,
 				Favicon:            recv.Favicon,
 			}

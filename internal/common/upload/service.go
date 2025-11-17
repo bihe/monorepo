@@ -44,6 +44,8 @@ type Service interface {
 	Save(file File) (string, error)
 	Read(id string) (Upload, error)
 	Delete(id string) error
+	MaxUploadSize() int64
+	AllowedFileTypes() []string
 }
 
 // ServiceOptions defines parameters used to initialize a new Service
@@ -102,6 +104,14 @@ type uploadService struct {
 
 // compile time check if all methods of Service are implemented in the uploadService
 var _ Service = &uploadService{}
+
+func (s *uploadService) MaxUploadSize() int64 {
+	return s.maxUploadSize
+}
+
+func (s *uploadService) AllowedFileTypes() []string {
+	return s.allowedFileTypes
+}
 
 func (s *uploadService) Save(file File) (string, error) {
 	var (

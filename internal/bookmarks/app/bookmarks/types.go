@@ -43,11 +43,12 @@ type Bookmark struct {
 
 // A FilePayload represents a saved file used with a bookmark
 type FilePayload struct {
-	ID       string `json:"id,omitempty"`
-	Name     string `json:"name,omitempty"`
-	MimeType string `json:"mime_type,omitempty"`
-	Payload  []byte `json:"payload,omitempty"`
-	Size     int    `json:"size,omitempty"`
+	ID       string    `json:"id,omitempty"`
+	Name     string    `json:"name,omitempty"`
+	MimeType string    `json:"mime_type,omitempty"`
+	Payload  []byte    `json:"payload,omitempty"`
+	Size     int       `json:"size,omitempty"`
+	Modified time.Time `json:"modified,omitempty"`
 }
 
 // TStamp returns either the modified or created timestamp of the bookmark as unix time

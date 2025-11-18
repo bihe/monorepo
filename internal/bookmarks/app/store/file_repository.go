@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"golang.binggl.net/monorepo/pkg/logging"
@@ -60,6 +61,7 @@ func (r *dbFileRepository) Save(item File) (File, error) {
 		file.Name = item.Name
 		file.Size = item.Size
 		file.Payload = item.Payload
+		file.Modified = time.Now()
 		if h := r.con.W().Save(&file); h.Error != nil {
 			return File{}, fmt.Errorf("could not save file: %v", h.Error)
 		}
@@ -71,6 +73,7 @@ func (r *dbFileRepository) Save(item File) (File, error) {
 		Name:     item.Name,
 		Size:     item.Size,
 		Payload:  item.Payload,
+		Modified: time.Now(),
 	}
 	if h := r.con.W().Create(&file); h.Error != nil {
 		return File{}, fmt.Errorf("could not save File: %v", h.Error)

@@ -64,11 +64,12 @@ func (Favicon) TableName() string {
 
 // A File represents a binary ot text file (defined by the mime-type)
 type File struct {
-	ID       string `gorm:"primary_key;TYPE:varchar(128);COLUMN:id;NOT NULL"`
-	Name     string `gorm:"TYPE:varchar(128);COLUMN:name;NOT NULL"`
-	MimeType string `gorm:"TYPE:varchar(128);COLUMN:mime_type;NOT NULL"`
-	Payload  []byte `gorm:"COLUMN:payload;TYPE:bytes;NOT NULL"`
-	Size     int    `gorm:"COLUMN:size;DEFAULT:0;NOT NULL"`
+	ID       string    `gorm:"primary_key;TYPE:varchar(128);COLUMN:id;NOT NULL"`
+	Name     string    `gorm:"TYPE:varchar(128);COLUMN:name;NOT NULL"`
+	MimeType string    `gorm:"TYPE:varchar(128);COLUMN:mime_type;NOT NULL"`
+	Payload  []byte    `gorm:"COLUMN:payload;TYPE:bytes;NOT NULL"`
+	Size     int       `gorm:"COLUMN:size;DEFAULT:0;NOT NULL"`
+	Modified time.Time `gorm:"COLUMN:modified;NOT NULL"`
 }
 
 func (File) TableName() string {

@@ -76,6 +76,7 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 		r.Post("/UploadFile", templateHandler.UploadFile())
 		r.Delete("/UploadFile/{id}", templateHandler.UploadFile())
 		r.Post("/SaveBookmark", templateHandler.SaveBookmark())
+		r.Get("/GetBookmarkFile/{id}", templateHandler.GetBookmarkFile())
 		r.Get("/", templateHandler.GetBookmarksForPath())
 		return r
 	}())

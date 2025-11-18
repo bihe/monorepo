@@ -1,6 +1,7 @@
 package web
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"strings"
@@ -403,5 +404,40 @@ func (t *TemplateHandler) SortBookmarks() http.HandlerFunc {
 			base.MsgSuccess,
 			"List sorted!",
 			fmt.Sprintf("%d bookmarks were successfully sorted", updates))
+	}
+}
+
+// GetBookmarkFile retrieves the file payload of a bookmark and returns the content
+func (t *TemplateHandler) GetBookmarkFile() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := pathParam(r, "id")
+		user := common.EnsureUser(r)
+
+		bm, err := t.App.GetBookmarkByID(id, *user)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get bookmark by ID '%s'; '%v'", id, err), r)
+			w.WriteHeader(http.StatusNotFound)
+			t.RenderErr(r, w, "the requested bookmark is not available")
+			return
+		}
+
+		if bm.Type != bookmarks.FileItem {
+			t.Logger.ErrorRequest(fmt.Sprintf("the given bookmark '%s' is not a file-type bookmark.", id), r)
+			w.WriteHeader(http.StatusNotFound)
+			t.RenderErr(r, w, "the requested bookmark does not support files")
+			return
+		}
+
+		if bm.FileID == "" || bm.FilePayload == nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("the given bookmark '%s' does not reference a file.", id), r)
+			w.WriteHeader(http.StatusBadRequest)
+			t.RenderErr(r, w, "there is no file available for the given bookmark")
+			return
+		}
+
+		// return the file item
+		file := bm.FilePayload
+		w.Header().Add("Content-Type", file.MimeType)
+		http.ServeContent(w, r, file.Name, file.Modified, bytes.NewReader(file.Payload))
 	}
 }

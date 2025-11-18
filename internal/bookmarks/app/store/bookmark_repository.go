@@ -57,14 +57,14 @@ type dbBookmarkRepository struct {
 // GetAllBookmarks retrieves all available bookmarks for the given user
 func (r *dbBookmarkRepository) GetAllBookmarks(username string) ([]Bookmark, error) {
 	var bookmarks []Bookmark
-	h := r.con.R().Order("sort_order").Order("display_name").Where(&Bookmark{UserName: username}).Find(&bookmarks)
+	h := r.con.R().Joins("File").Order("sort_order").Order("display_name").Where(&Bookmark{UserName: username}).Find(&bookmarks)
 	return bookmarks, h.Error
 }
 
 // GetBookmarksByPath return the bookmark elements which have the given path
 func (r *dbBookmarkRepository) GetBookmarksByPath(path, username string) ([]Bookmark, error) {
 	var bookmarks []Bookmark
-	h := r.con.R().Order("sort_order").Order("display_name").Where(&Bookmark{
+	h := r.con.R().Joins("File").Order("sort_order").Order("display_name").Where(&Bookmark{
 		UserName: username,
 		Path:     path,
 	}).Find(&bookmarks)
@@ -74,7 +74,7 @@ func (r *dbBookmarkRepository) GetBookmarksByPath(path, username string) ([]Book
 // GetBookmarksByPathStart return the bookmark elements which path starts with
 func (r *dbBookmarkRepository) GetBookmarksByPathStart(path, username string) ([]Bookmark, error) {
 	var bookmarks []Bookmark
-	h := r.con.R().
+	h := r.con.R().Joins("File").
 		Order("type desc").
 		Order("sort_order").
 		Order("display_name").
@@ -85,7 +85,7 @@ func (r *dbBookmarkRepository) GetBookmarksByPathStart(path, username string) ([
 // GetBookmarksByName searches for bookmarks by the given name
 func (r *dbBookmarkRepository) GetBookmarksByName(name, username string) ([]Bookmark, error) {
 	var bookmarks []Bookmark
-	h := r.con.R().Order("sort_order").Order("display_name").
+	h := r.con.R().Joins("File").Order("sort_order").Order("display_name").
 		Where("user_name = ? AND lower(display_name) LIKE ?", username, "%"+strings.ToLower(name)+"%").Find(&bookmarks)
 	return bookmarks, h.Error
 }

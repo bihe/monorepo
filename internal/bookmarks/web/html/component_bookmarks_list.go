@@ -18,6 +18,53 @@ func getFaviconClass(b bookmarks.Bookmark) string {
 	return faviconClass
 }
 
+func displayBookmarkType(bm bookmarks.Bookmark, ell EllipsisValues) g.Node {
+	var link g.Node
+
+	switch bm.Type {
+	case bookmarks.Node:
+		link = h.A(
+			h.Class("bookmark_name"),
+			h.Href(bm.URL),
+			h.Title(bm.DisplayName),
+			h.Target("_blank"),
+			g.Text(common.Ellipsis(bm.DisplayName, ell.NodeLen, "...")),
+		)
+	case bookmarks.FileItem:
+		fileSize := 0
+		if bm.FilePayload != nil {
+			fileSize = bm.FilePayload.Size
+		}
+		link = h.A(
+			h.Class("bookmark_name"),
+			h.Href("/bm/GetBookmarkFile/"+bm.ID),
+			h.Title(bm.DisplayName),
+			h.Target("_blank"),
+			g.Text(common.Ellipsis(bm.DisplayName, ell.NodeLen, "...")+formatFileSize(fileSize)),
+		)
+	case bookmarks.Folder:
+		link = h.A(
+			h.Class("bookmark_name"),
+			h.Href("/bm/~"+common.EnsureTrailingSlash(bm.Path)+bm.DisplayName),
+			h.Title(bm.DisplayName),
+			g.Text(common.Ellipsis(bm.DisplayName, ell.FolderLen, "...")),
+		)
+	}
+	return link
+}
+
+func formatFileSize(size int) string {
+	const megabyte = 1024 * 1024
+	if size < megabyte {
+		// Format as kilobytes
+		kb := float64(size) / 1024
+		return fmt.Sprintf(" (%.1f KB)", kb)
+	}
+	// Format as megabytes
+	mb := float64(size) / float64(megabyte)
+	return fmt.Sprintf(" (%.2f MB)", mb)
+}
+
 //go:embed copyClipboard.min.js
 var copyClipboard string
 
@@ -41,23 +88,7 @@ func BookmarkList(path string, items []bookmarks.Bookmark, ell EllipsisValues) g
 							g.If(b.ChildCount > 0, h.Span(h.Class("top-0 start-100 translate-middle badge rounded-pill bg-danger"), g.Text(fmt.Sprintf("%d", b.ChildCount)))),
 						),
 						g.Text(" "),
-						g.If(b.Type == bookmarks.Node,
-							h.A(
-								h.Class("bookmark_name"),
-								h.Href(b.URL),
-								h.Title(b.DisplayName),
-								h.Target("_blank"),
-								g.Text(common.Ellipsis(b.DisplayName, ell.NodeLen, "...")),
-							),
-						),
-						g.If(b.Type == bookmarks.Folder,
-							h.A(
-								h.Class("bookmark_name"),
-								h.Href("/bm/~"+common.EnsureTrailingSlash(b.Path)+b.DisplayName),
-								h.Title(b.DisplayName),
-								g.Text(common.Ellipsis(b.DisplayName, ell.FolderLen, "...")),
-							),
-						),
+						displayBookmarkType(b, ell),
 						h.Input(h.Type("hidden"), h.Name("ID"), h.Value(b.ID)),
 					),
 					h.Div(h.Class("p2 ms-auto")),

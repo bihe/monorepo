@@ -661,9 +661,15 @@ func (s *Application) GetBookmarkFavicon(bookmarkID string, user security.User) 
 		s.Logger.Error(fmt.Sprintf("could not find bookmark by id '%s': %v", bookmarkID, err))
 		return nil, app.ErrNotFound(fmt.Sprintf("could not find bookmark with ID '%s'", bookmarkID))
 	}
+
 	defaultFavicon := app.DefaultFavicon
-	if existing.Type == store.Folder {
+	switch existing.Type {
+	case store.Node:
+		defaultFavicon = app.DefaultFavicon
+	case store.Folder:
 		defaultFavicon = app.DefaultIconFolder
+	case store.FileItem:
+		defaultFavicon = app.DefaultIconFile
 	}
 
 	fi := ObjectInfo{

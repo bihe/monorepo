@@ -38,7 +38,7 @@ type Bookmark struct {
 	Highlight          int        `gorm:"COLUMN:highlight;DEFAULT:0;NOT NULL"`
 	Favicon            string     `gorm:"TYPE:varchar(128);COLUMN:favicon;"`
 	InvertFaviconColor int        `gorm:"COLUMN:invert_favicon_color;DEFAULT:0;NOT NULL"`
-	File               *File      `gorm:"foreignKey:file_id;default:SET NULL;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	File               *File      `gorm:"foreignKey:FileID;default:SET NULL;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	FileID             *string
 }
 
@@ -64,14 +64,26 @@ func (Favicon) TableName() string {
 
 // A File represents a binary ot text file (defined by the mime-type)
 type File struct {
-	ID       string    `gorm:"primary_key;TYPE:varchar(128);COLUMN:id;NOT NULL"`
-	Name     string    `gorm:"TYPE:varchar(128);COLUMN:name;NOT NULL"`
-	MimeType string    `gorm:"TYPE:varchar(128);COLUMN:mime_type;NOT NULL"`
-	Payload  []byte    `gorm:"COLUMN:payload;TYPE:bytes;NOT NULL"`
-	Size     int       `gorm:"COLUMN:size;DEFAULT:0;NOT NULL"`
-	Modified time.Time `gorm:"COLUMN:modified;NOT NULL"`
+	ID           string      `gorm:"primary_key;TYPE:varchar(128);COLUMN:id;NOT NULL"`
+	Name         string      `gorm:"TYPE:varchar(128);COLUMN:name;NOT NULL"`
+	MimeType     string      `gorm:"TYPE:varchar(128);COLUMN:mime_type;NOT NULL"`
+	Size         int         `gorm:"COLUMN:size;DEFAULT:0;NOT NULL"`
+	Modified     time.Time   `gorm:"COLUMN:modified;NOT NULL"`
+	FileObject   *FileObject `gorm:"foreignKey:FileObjectID;default:SET NULL;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	FileObjectID *string
 }
 
 func (File) TableName() string {
 	return "FILES"
+}
+
+// A FileObject holds the actual file payload. It is used to separate the file meta-data from the payload.
+// As a result Bookmark and File can be happily joined, without fetching the full payload.
+type FileObject struct {
+	ID      string `gorm:"primary_key;TYPE:varchar(128);COLUMN:id;NOT NULL"`
+	Payload []byte `gorm:"COLUMN:payload;TYPE:bytes;NOT NULL"`
+}
+
+func (FileObject) TableName() string {
+	return "FILEOBJECTS"
 }

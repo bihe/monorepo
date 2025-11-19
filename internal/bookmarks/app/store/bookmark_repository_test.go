@@ -28,8 +28,8 @@ func repositoryFile(file string, t *testing.T) (store.BookmarkRepository, *sql.D
 		t.Fatalf("cannot create database connection: %v", err)
 	}
 	// Migrate the schema
-	con.Write.AutoMigrate(&store.Bookmark{})
-	con.Read.AutoMigrate(&store.Bookmark{})
+	con.Write.AutoMigrate(&store.FileObject{}, &store.File{}, &store.Bookmark{})
+	con.Read.AutoMigrate(&store.FileObject{}, &store.File{}, &store.Bookmark{})
 	db, err := con.Write.DB()
 	if err != nil {
 		t.Fatalf("could not get DB handle; %v", err)

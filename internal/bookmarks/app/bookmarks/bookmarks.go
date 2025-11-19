@@ -970,8 +970,10 @@ func (s *Application) processFile(bookmarkFileID string) (string, error) {
 		file, e := repo.Save(store.File{
 			Name:     upload.FileName,
 			MimeType: upload.MimeType,
-			Payload:  upload.Payload,
-			Size:     len(upload.Payload),
+			FileObject: &store.FileObject{
+				Payload: upload.Payload,
+			},
+			Size: len(upload.Payload),
 		})
 		if e != nil {
 			return e

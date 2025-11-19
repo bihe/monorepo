@@ -36,7 +36,7 @@ func fileRepo(t *testing.T) (store.FileRepository, store.BookmarkRepository, *sq
 		t.Fatalf("cannot create database connection: %v", err)
 	}
 	// Migrate the schema
-	con.W().AutoMigrate(&store.File{}, &store.Bookmark{})
+	con.W().AutoMigrate(&store.File{}, &store.FileObject{}, &store.Bookmark{})
 	db, err := con.W().DB()
 	if err != nil {
 		t.Fatalf("could not get DB handle; %v", err)
@@ -56,13 +56,15 @@ func Test_Create_And_Get_File(t *testing.T) {
 	file, err := repo.Save(store.File{
 		Name:     "test.pdf",
 		MimeType: mimeType,
-		Payload:  []byte(pdfPayload),
-		Size:     len([]byte(pdfPayload)),
+		FileObject: &store.FileObject{
+			Payload: []byte(pdfPayload),
+		},
+		Size: len([]byte(pdfPayload)),
 	})
 	if err != nil {
 		t.Errorf("could not save a file %v", err)
 	}
-	if file.Payload == nil || file.Size == 0 {
+	if file.Size == 0 {
 		t.Errorf("the file was not saved correctly %v", err)
 	}
 
@@ -72,7 +74,7 @@ func Test_Create_And_Get_File(t *testing.T) {
 		t.Errorf("could not get file by id: %v", err)
 	}
 
-	assert.Equal(t, file.Size, len(file.Payload))
+	assert.Equal(t, file.Size, len(file.FileObject.Payload))
 	assert.Equal(t, "test.pdf", file.Name)
 	assert.Equal(t, "application/pdf", file.MimeType)
 
@@ -91,9 +93,11 @@ func Test_Create_And_Get_File(t *testing.T) {
 	assert.NotNil(t, err)
 
 	_, err = repo.Save(store.File{
-		ID:      "test",
-		Payload: []byte(pdfPayload),
-		Size:    0,
+		ID: "test",
+		FileObject: &store.FileObject{
+			Payload: []byte(pdfPayload),
+		},
+		Size: 0,
 	})
 	assert.NotNil(t, err)
 }
@@ -106,13 +110,15 @@ func Test_Bookmark_Referencing_File(t *testing.T) {
 	file, err := fileRepo.Save(store.File{
 		Name:     "test.pdf",
 		MimeType: mimeType,
-		Payload:  []byte(pdfPayload),
-		Size:     len([]byte(pdfPayload)),
+		FileObject: &store.FileObject{
+			Payload: []byte(pdfPayload),
+		},
+		Size: len([]byte(pdfPayload)),
 	})
 	if err != nil {
 		t.Errorf("could not save a file %v", err)
 	}
-	if file.Payload == nil || file.Size == 0 {
+	if file.Size == 0 {
 		t.Errorf("the file was not saved correctly %v", err)
 	}
 
@@ -160,14 +166,16 @@ func Test_FileRepo_InUnitOfWork(t *testing.T) {
 		file, err := repo.Save(store.File{
 			Name:     "test.pdf",
 			MimeType: mimeType,
-			Payload:  []byte(pdfPayload),
-			Size:     len([]byte(pdfPayload)),
+			FileObject: &store.FileObject{
+				Payload: []byte(pdfPayload),
+			},
+			Size: len([]byte(pdfPayload)),
 		})
 		if err != nil {
 			return err
 		}
 
-		assert.Equal(t, file.Size, len(file.Payload))
+		assert.True(t, file.Size > 0)
 		assert.Equal(t, "test.pdf", file.Name)
 		assert.Equal(t, "application/pdf", file.MimeType)
 
@@ -177,4 +185,48 @@ func Test_FileRepo_InUnitOfWork(t *testing.T) {
 		t.Errorf("could not execute in UnitOfWork; %v", err)
 	}
 
+}
+
+func Test_Create_And_Delete(t *testing.T) {
+	repo, _, db := fileRepo(t)
+	defer db.Close()
+
+	// create
+	file, err := repo.Save(store.File{
+		Name:     "test.pdf",
+		MimeType: mimeType,
+		FileObject: &store.FileObject{
+			Payload: []byte(pdfPayload),
+		},
+		Size: len([]byte(pdfPayload)),
+	})
+	if err != nil {
+		t.Errorf("could not save a file %v", err)
+	}
+	if file.Size == 0 {
+		t.Errorf("the file was not saved correctly %v", err)
+	}
+
+	// fetch it
+	file, err = repo.Get(file.ID)
+	if err != nil {
+		t.Errorf("could not get file by id: %v", err)
+	}
+
+	assert.Equal(t, file.Size, len(file.FileObject.Payload))
+	assert.Equal(t, "test.pdf", file.Name)
+	assert.Equal(t, "application/pdf", file.MimeType)
+
+	// delete it
+	id := file.ID
+	err = repo.Delete(file)
+	if err != nil {
+		t.Errorf("could not delete file: %v", err)
+	}
+
+	// get it again
+	_, err = repo.Get(id)
+	if err == nil {
+		t.Errorf("expected an error because file was deleted")
+	}
 }

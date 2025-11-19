@@ -87,11 +87,15 @@ func entityToModel(b store.Bookmark) *Bookmark {
 		fileID = *b.FileID
 	}
 	if b.File != nil {
+		var payload []byte
+		if b.File.FileObject != nil {
+			payload = b.File.FileObject.Payload
+		}
 		file := FilePayload{
 			ID:       b.File.ID,
 			Name:     b.File.Name,
 			MimeType: b.File.MimeType,
-			Payload:  b.File.Payload,
+			Payload:  payload,
 			Size:     b.File.Size,
 		}
 		filePayload = &file

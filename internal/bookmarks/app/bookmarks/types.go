@@ -25,28 +25,27 @@ const (
 
 // Bookmark is the model provided via the REST API
 type Bookmark struct {
-	ID                 string       `json:"id"`
-	Path               string       `json:"path"`
-	DisplayName        string       `json:"displayName"`
-	URL                string       `json:"url"`
-	SortOrder          int          `json:"sortOrder"`
-	Type               NodeType     `json:"type"`
-	Created            time.Time    `json:"created"`
-	Modified           *time.Time   `json:"modified,omitempty"`
-	ChildCount         int          `json:"childCount"`
-	Highlight          int          `json:"highlight"`
-	Favicon            string       `json:"favicon"`
-	InvertFaviconColor int          `json:"invertFaviconColor"`
-	FileID             string       `json:"file,omitempty"`
-	FilePayload        *FilePayload `json:"file_payload,omitempty"`
+	ID                 string     `json:"id"`
+	Path               string     `json:"path"`
+	DisplayName        string     `json:"displayName"`
+	URL                string     `json:"url"`
+	SortOrder          int        `json:"sortOrder"`
+	Type               NodeType   `json:"type"`
+	Created            time.Time  `json:"created"`
+	Modified           *time.Time `json:"modified,omitempty"`
+	ChildCount         int        `json:"childCount"`
+	Highlight          int        `json:"highlight"`
+	Favicon            string     `json:"favicon"`
+	InvertFaviconColor int        `json:"invertFaviconColor"`
+	FileID             string     `json:"file,omitempty"`
+	FileMeta           *FileMeta  `json:"file_meta,omitempty"`
 }
 
-// A FilePayload represents a saved file used with a bookmark
-type FilePayload struct {
+// A FileMeta represents a saved file used with a bookmark
+type FileMeta struct {
 	ID       string    `json:"id,omitempty"`
 	Name     string    `json:"name,omitempty"`
 	MimeType string    `json:"mime_type,omitempty"`
-	Payload  []byte    `json:"payload,omitempty"`
 	Size     int       `json:"size,omitempty"`
 	Modified time.Time `json:"modified,omitempty"`
 }
@@ -80,25 +79,20 @@ type ObjectInfo struct {
 
 func entityToModel(b store.Bookmark) *Bookmark {
 	var (
-		fileID      string
-		filePayload *FilePayload
+		fileID   string
+		fileMeta *FileMeta
 	)
 	if b.FileID != nil {
 		fileID = *b.FileID
 	}
 	if b.File != nil {
-		var payload []byte
-		if b.File.FileObject != nil {
-			payload = b.File.FileObject.Payload
-		}
-		file := FilePayload{
+		file := FileMeta{
 			ID:       b.File.ID,
 			Name:     b.File.Name,
 			MimeType: b.File.MimeType,
-			Payload:  payload,
 			Size:     b.File.Size,
 		}
-		filePayload = &file
+		fileMeta = &file
 	}
 	return &Bookmark{
 		ID:                 b.ID,
@@ -114,7 +108,7 @@ func entityToModel(b store.Bookmark) *Bookmark {
 		Favicon:            b.Favicon,
 		InvertFaviconColor: b.InvertFaviconColor,
 		FileID:             fileID,
-		FilePayload:        filePayload,
+		FileMeta:           fileMeta,
 	}
 }
 

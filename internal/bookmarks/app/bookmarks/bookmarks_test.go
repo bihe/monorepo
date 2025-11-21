@@ -247,7 +247,13 @@ func Test_CreateBookmark_File(t *testing.T) {
 	if fetched.FileID == "" {
 		t.Errorf("the fetched bookmark is missing a fileID")
 	}
-	if fetched.FilePayload.Payload == nil {
+
+	filePayload, err := svc.GetBookmarkPayloadByID(fetched.ID, user)
+	if err != nil {
+		t.Errorf("cannot fetch bookmark file payload; %v", err)
+	}
+
+	if filePayload == nil {
 		t.Errorf("the fetched bookmark is missing a file payload")
 	}
 
@@ -263,6 +269,41 @@ func Test_CreateBookmark_File(t *testing.T) {
 	}, user)
 	if err == nil {
 		t.Errorf("error expected")
+	}
+}
+
+func Test_Create_And_Delete_Bookmark_File(t *testing.T) {
+	svc := app(t)
+
+	fileID, err := svc.UploadSvc.Save(upload.File{
+		Name:     "test.pdf",
+		MimeType: "application/pdf",
+		File:     bytes.NewReader([]byte(pdfPayload)),
+		Size:     int64(len([]byte(pdfPayload))),
+	})
+	if fileID == "" {
+		t.Errorf("could not save file; %v", err)
+	}
+
+	bm, err := svc.CreateBookmark(bookmarks.Bookmark{
+		Type:        bookmarks.FileItem,
+		Path:        "/",
+		DisplayName: "test",
+		FileID:      fileID,
+	}, user)
+	if err != nil {
+		t.Errorf("could not create bookmark; %v", err)
+	}
+
+	// retrieve the bookmark again
+	fetched, err := svc.GetBookmarkByID(bm.ID, user)
+	if err != nil {
+		t.Errorf("could not fetch bookmark; %v", err)
+	}
+
+	err = svc.DeleteBookmarkFile(fetched.ID, user)
+	if err != nil {
+		t.Errorf("could not delete bookmark file; %v", err)
 	}
 }
 
@@ -1051,13 +1092,18 @@ func Test_UpdateBookmarks_WithFile(t *testing.T) {
 	if fetched.FileID == "" {
 		t.Errorf("the fetched bookmark is missing a fileID")
 	}
-	if fetched.FilePayload.Payload == nil {
-		t.Errorf("the fetched bookmark is missing a file payload")
-	}
-	if fetched.FilePayload.Name != "test_updated.pdf" {
+	if fetched.FileMeta.Name != "test_updated.pdf" {
 		t.Errorf("the file payload of the bookmark was not saved")
 	}
 
+	filePayload, err := svc.GetBookmarkPayloadByID(fetched.ID, user)
+	if err != nil {
+		t.Errorf("cannot fetch bookmark file payload; %v", err)
+	}
+
+	if filePayload == nil {
+		t.Errorf("the fetched bookmark is missing a file payload")
+	}
 }
 
 func Test_GetAllAvailableFavicons(t *testing.T) {

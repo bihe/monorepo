@@ -32,8 +32,8 @@ func displayBookmarkType(bm bookmarks.Bookmark, ell EllipsisValues) g.Node {
 		)
 	case bookmarks.FileItem:
 		fileSize := 0
-		if bm.FilePayload != nil {
-			fileSize = bm.FilePayload.Size
+		if bm.FileMeta != nil {
+			fileSize = bm.FileMeta.Size
 		}
 		link = h.A(
 			h.Class("bookmark_name"),

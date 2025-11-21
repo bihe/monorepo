@@ -117,7 +117,7 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 			bm.Path = html.ValidatorInput{Val: queryParam(r, "path"), Valid: true}
 			bm.DisplayName = html.ValidatorInput{Valid: true}
 			bm.URL = html.ValidatorInput{Valid: true}
-			bm.File = html.ValidatorInput{Valid: true}
+			bm.File = html.FileValidatorInput{Valid: true}
 			bm.CustomFavicon = html.ValidatorInput{Valid: true}
 			bm.Type = bookmarks.Node
 			bm.TStamp = fmt.Sprintf("%d", time.Now().Unix())
@@ -138,6 +138,13 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 			bm.InvertFaviconColor = (b.InvertFaviconColor == 1)
 			bm.TStamp = b.TStamp()
 			bm.CurrentFavicon = b.Favicon
+			if b.FileMeta != nil {
+				bm.File = html.FileValidatorInput{
+					FileName: b.FileMeta.Name,
+					Valid:    true,
+				}
+			}
+
 			paths, err = t.App.GetAllPaths(*user)
 			if err != nil {
 				t.Logger.ErrorRequest(fmt.Sprintf("could not get all paths for bookmarks; '%v'", err), r)
@@ -149,7 +156,7 @@ func (t *TemplateHandler) EditBookmarkDialog() http.HandlerFunc {
 
 func (t *TemplateHandler) errorUploadWidget(w http.ResponseWriter, errMsg string) {
 	triggerToast(w, base.MsgError, "Upload error!", errMsg)
-	html.UploadWidget(false, true, html.FileContent{}).Render(w)
+	html.UploadWidget(false, html.Bookmark{}).Render(w)
 }
 
 // UploadBookmarkFile handles file-uploads for the bookmark edit form
@@ -184,9 +191,11 @@ func (t *TemplateHandler) UploadFile() http.HandlerFunc {
 				return
 			}
 
-			html.UploadWidget(false, false, html.FileContent{
-				FileName: meta.Filename,
-				FileID:   uploadId,
+			html.UploadWidget(false, html.Bookmark{
+				File: html.FileValidatorInput{
+					UploadTokenID: uploadId,
+					FileName:      meta.Filename,
+				},
 			}).Render(w)
 		} else {
 			// clear the upload file again
@@ -195,8 +204,27 @@ func (t *TemplateHandler) UploadFile() http.HandlerFunc {
 				t.Logger.Warn("could not delete uploaded file", logging.ErrV(err))
 				triggerToast(w, base.MsgError, "Upload error!", fmt.Sprintf("Could not delete uploaded file: %v", err))
 			}
-			html.UploadWidget(false, false, html.FileContent{}).Render(w)
+			html.UploadWidget(false, html.Bookmark{}).Render(w)
 		}
+	}
+}
+
+// DeleteBookmarkFile remove an existing bookmark file
+func (t *TemplateHandler) DeleteBookmarkFile() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := pathParam(r, "id")
+		if id == "" {
+			triggerToast(w, base.MsgError, "Missing Parameter!", "The required parameter 'id' was not supplied!")
+			html.UploadWidget(false, html.Bookmark{}).Render(w)
+			return
+		}
+
+		user := common.EnsureUser(r)
+		err := t.App.DeleteBookmarkFile(id, *user)
+		if err != nil {
+			triggerToast(w, base.MsgError, "Error!", fmt.Sprintf("Could not delete the file: '%v'!", err))
+		}
+		html.UploadWidget(false, html.Bookmark{}).Render(w)
 	}
 }
 
@@ -229,6 +257,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 		recv.Type = bookmarks.Node
 		recv.Favicon = r.FormValue(formPrefix + "Favicon")
 		recv.FileID = r.FormValue(formPrefix + "FileID")
+		recvFileName := r.FormValue(formPrefix + "FileName")
 
 		switch r.FormValue(formPrefix + "Type") {
 		case "Node":
@@ -264,9 +293,9 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 				validData = false
 			}
 		}
-		formBm.File = html.ValidatorInput{Val: recv.FileID, Valid: true}
+		formBm.File = html.FileValidatorInput{UploadTokenID: recv.FileID, Valid: true}
 		if formBm.Type == bookmarks.FileItem {
-			if recv.FileID == "" {
+			if recv.FileID == "" && recvFileName == "" {
 				formBm.File.Valid = false
 				formBm.File.Message = "missing value!"
 				validData = false
@@ -343,6 +372,7 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			existing.InvertFaviconColor = recv.InvertFaviconColor
 			existing.URL = recv.URL
 			existing.Favicon = recv.Favicon
+			existing.FileID = recv.FileID
 			formBm.TStamp = existing.TStamp()
 			updated, err := t.App.UpdateBookmark(*existing, *user)
 			if err != nil {
@@ -428,16 +458,24 @@ func (t *TemplateHandler) GetBookmarkFile() http.HandlerFunc {
 			return
 		}
 
-		if bm.FileID == "" || bm.FilePayload == nil {
+		if bm.FileID == "" {
 			t.Logger.ErrorRequest(fmt.Sprintf("the given bookmark '%s' does not reference a file.", id), r)
 			w.WriteHeader(http.StatusBadRequest)
 			t.RenderErr(r, w, "there is no file available for the given bookmark")
 			return
 		}
 
+		payload, err := t.App.GetBookmarkPayloadByID(id, *user)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("the given bookmark '%s' does not have a file payload.", id), r)
+			w.WriteHeader(http.StatusBadRequest)
+			t.RenderErr(r, w, "there is no file available for the given bookmark")
+			return
+		}
+
 		// return the file item
-		file := bm.FilePayload
+		file := bm.FileMeta
 		w.Header().Add("Content-Type", file.MimeType)
-		http.ServeContent(w, r, file.Name, file.Modified, bytes.NewReader(file.Payload))
+		http.ServeContent(w, r, file.Name, file.Modified, bytes.NewReader(payload))
 	}
 }

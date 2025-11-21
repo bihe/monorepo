@@ -120,12 +120,49 @@ func (s *Application) GetBookmarkByID(id string, user security.User) (*Bookmark,
 	if id == "" {
 		return nil, app.ErrValidation("no id supplied to fetch bookmark")
 	}
+	var (
+		bm  store.Bookmark
+		err error
+	)
 
-	bm, err := s.BookmarkStore.GetBookmarkByID(id, user.Username)
+	bm, err = s.BookmarkStore.GetBookmarkByID(id, user.Username)
 	if err != nil {
 		return nil, app.ErrNotFound(fmt.Sprintf("could not fetch bookmark; %v", err))
 	}
 	return entityToModel(bm), nil
+}
+
+// GetBookmarkPayloadByID returns the payload of a given bookmark
+func (s *Application) GetBookmarkPayloadByID(id string, user security.User) ([]byte, error) {
+	if id == "" {
+		return nil, app.ErrValidation("no id supplied to fetch bookmark")
+	}
+	var (
+		bm  store.Bookmark
+		err error
+	)
+
+	bm, err = s.BookmarkStore.GetBookmarkByID(id, user.Username)
+	if err != nil {
+		return nil, app.ErrNotFound(fmt.Sprintf("could not fetch bookmark; %v", err))
+	}
+
+	if bm.File == nil {
+		return nil, fmt.Errorf("cannot fetch payload, no file availabe")
+	}
+	if bm.File.FileObjectID == nil {
+		return nil, fmt.Errorf("cannot fetch payload, no file availabe")
+	}
+	payloadID := *bm.File.FileObjectID
+	file, err := s.FileStore.Get(payloadID)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch payload; %v", err)
+	}
+	if file.FileObject == nil {
+		return nil, fmt.Errorf("cannot fetch payload, no file availabe")
+	}
+
+	return file.FileObject.Payload, nil
 }
 
 // GetBookmarksByPath retrieves bookmarks by a given path
@@ -375,6 +412,37 @@ func (s *Application) DeletePath(id string, user security.User) error {
 	return nil
 }
 
+// DeleteBookmarkFile removes an existing file stored with a bookmark
+func (s *Application) DeleteBookmarkFile(bookmarkID string, user security.User) error {
+	if bookmarkID == "" {
+		return app.ErrValidation("missing bookmarkId parameter")
+	}
+
+	bm, err := s.BookmarkStore.GetBookmarkByID(bookmarkID, user.Username)
+	if err != nil {
+		return app.ErrNotFound(fmt.Sprintf("could not fetch bookmark; %v", err))
+	}
+
+	fileID := *bm.FileID
+	s.Logger.Info(fmt.Sprintf("will try to delete file with ID '%s'", fileID))
+	if err := s.FileStore.InUnitOfWork(func(repo store.FileRepository) error {
+		existing, err := repo.Get(fileID)
+		if err != nil {
+			return fmt.Errorf("no file available with given id: %v", err)
+		}
+		err = repo.Delete(existing)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		s.Logger.Error(fmt.Sprintf("could not delete bookmark because of error: %v", err))
+		return fmt.Errorf("error deleting bookmark: %v", err)
+	}
+	return nil
+}
+
 // UpdateSortOrder modifies the display sort-order
 func (s *Application) UpdateSortOrder(sort BookmarksSortOrder, user security.User) (int, error) {
 	if len(sort.IDs) != len(sort.SortOrder) {
@@ -441,7 +509,11 @@ func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark
 
 	// if there is a new file during the update, process the new file
 	existingFile := bm.FileID
-	if existingFile != "" && existingFile != *existing.FileID {
+	existingFileID := ""
+	if existing.FileID != nil {
+		existingFileID = *existing.FileID
+	}
+	if existingFile != "" && existingFile != existingFileID {
 		savedFileId, err := s.processFile(bm.FileID)
 		if err != nil {
 			return nil, err

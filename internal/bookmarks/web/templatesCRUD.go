@@ -268,6 +268,13 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			recv.Type = bookmarks.FileItem
 		}
 
+		paths, err = t.App.GetAllPaths(*user)
+		if err != nil {
+			t.Logger.ErrorRequest(fmt.Sprintf("could not get all paths for bookmarks; '%v'", err), r)
+			t.RenderErr(r, w, fmt.Sprintf("could not get paths for bookmark; '%v'", err))
+			return
+		}
+
 		// validation
 		validData := true
 		formBm.TStamp = fmt.Sprintf("%d", time.Now().Unix())
@@ -353,10 +360,6 @@ func (t *TemplateHandler) SaveBookmark() http.HandlerFunc {
 			return
 
 		} else {
-			paths, err = t.App.GetAllPaths(*user)
-			if err != nil {
-				t.Logger.ErrorRequest(fmt.Sprintf("could not get all paths for bookmarks; '%v'", err), r)
-			}
 
 			// update an exiting entry
 			existing, err := t.App.GetBookmarkByID(recv.ID, *user)

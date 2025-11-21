@@ -14,6 +14,7 @@ import (
 	"golang.binggl.net/monorepo/internal/bookmarks/app"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/favicon"
 	"golang.binggl.net/monorepo/internal/bookmarks/app/store"
+	"golang.binggl.net/monorepo/internal/common/upload"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 )
@@ -28,6 +29,10 @@ type Application struct {
 	FavStore store.FaviconRepository
 	// FaviconPath defines a path on disk to store a favicon
 	FaviconPath string
+	// FileStore persists files
+	FileStore store.FileRepository
+	// UploadSvc manages file uploads
+	UploadSvc upload.Service
 }
 
 // ExistingFavicon is used to prefix a favicon ID which is already available
@@ -39,6 +44,7 @@ func (s *Application) CreateBookmark(bm Bookmark, user security.User) (*Bookmark
 		savedItem store.Bookmark
 		t         store.NodeType
 		err       error
+		fileID    *string
 	)
 
 	if bm.Path == "" || bm.DisplayName == "" {
@@ -46,8 +52,22 @@ func (s *Application) CreateBookmark(bm Bookmark, user security.User) (*Bookmark
 		return nil, app.ErrValidation("invalid request data supplied, missing Path or DisplayName")
 	}
 
-	if bm.Type == Folder {
+	switch bm.Type {
+	case Node:
+		if bm.URL == "" {
+			return nil, app.ErrValidation("invalid request data supplied, missing URL for bookmark")
+		}
+		if bm.FileID != "" {
+			return nil, app.ErrValidation("invalid request data supplied, a node does not have a file")
+		}
+		t = store.Node
+	case Folder:
 		t = store.Folder
+	case FileItem:
+		if bm.FileID == "" {
+			return nil, app.ErrValidation("invalid request data supplied, missing File for bookmark")
+		}
+		t = store.FileItem
 	}
 
 	// when a favicon is supplied, fetch the local temp favicon with the given id
@@ -57,6 +77,15 @@ func (s *Application) CreateBookmark(bm Bookmark, user security.User) (*Bookmark
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	// take care if a file was uploaded. the id provided is a token to fetch/store the binary payload
+	if bm.FileID != "" {
+		savedFileId, err := s.processFile(bm.FileID)
+		if err != nil {
+			return nil, err
+		}
+		fileID = &savedFileId
 	}
 
 	if err := s.BookmarkStore.InUnitOfWork(func(repo store.BookmarkRepository) error {
@@ -70,6 +99,7 @@ func (s *Application) CreateBookmark(bm Bookmark, user security.User) (*Bookmark
 			SortOrder:          bm.SortOrder,
 			Highlight:          bm.Highlight,
 			InvertFaviconColor: bm.InvertFaviconColor,
+			FileID:             fileID,
 		})
 		if err != nil {
 			return err
@@ -90,12 +120,49 @@ func (s *Application) GetBookmarkByID(id string, user security.User) (*Bookmark,
 	if id == "" {
 		return nil, app.ErrValidation("no id supplied to fetch bookmark")
 	}
+	var (
+		bm  store.Bookmark
+		err error
+	)
 
-	bm, err := s.BookmarkStore.GetBookmarkByID(id, user.Username)
+	bm, err = s.BookmarkStore.GetBookmarkByID(id, user.Username)
 	if err != nil {
 		return nil, app.ErrNotFound(fmt.Sprintf("could not fetch bookmark; %v", err))
 	}
 	return entityToModel(bm), nil
+}
+
+// GetBookmarkPayloadByID returns the payload of a given bookmark
+func (s *Application) GetBookmarkPayloadByID(id string, user security.User) ([]byte, error) {
+	if id == "" {
+		return nil, app.ErrValidation("no id supplied to fetch bookmark")
+	}
+	var (
+		bm  store.Bookmark
+		err error
+	)
+
+	bm, err = s.BookmarkStore.GetBookmarkByID(id, user.Username)
+	if err != nil {
+		return nil, app.ErrNotFound(fmt.Sprintf("could not fetch bookmark; %v", err))
+	}
+
+	if bm.File == nil {
+		return nil, fmt.Errorf("cannot fetch payload, no file availabe")
+	}
+	if bm.File.FileObjectID == nil {
+		return nil, fmt.Errorf("cannot fetch payload, no file availabe")
+	}
+	payloadID := *bm.File.FileObjectID
+	file, err := s.FileStore.Get(payloadID)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch payload; %v", err)
+	}
+	if file.FileObject == nil {
+		return nil, fmt.Errorf("cannot fetch payload, no file availabe")
+	}
+
+	return file.FileObject.Payload, nil
 }
 
 // GetBookmarksByPath retrieves bookmarks by a given path
@@ -345,6 +412,37 @@ func (s *Application) DeletePath(id string, user security.User) error {
 	return nil
 }
 
+// DeleteBookmarkFile removes an existing file stored with a bookmark
+func (s *Application) DeleteBookmarkFile(bookmarkID string, user security.User) error {
+	if bookmarkID == "" {
+		return app.ErrValidation("missing bookmarkId parameter")
+	}
+
+	bm, err := s.BookmarkStore.GetBookmarkByID(bookmarkID, user.Username)
+	if err != nil {
+		return app.ErrNotFound(fmt.Sprintf("could not fetch bookmark; %v", err))
+	}
+
+	fileID := *bm.FileID
+	s.Logger.Info(fmt.Sprintf("will try to delete file with ID '%s'", fileID))
+	if err := s.FileStore.InUnitOfWork(func(repo store.FileRepository) error {
+		existing, err := repo.Get(fileID)
+		if err != nil {
+			return fmt.Errorf("no file available with given id: %v", err)
+		}
+		err = repo.Delete(existing)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		s.Logger.Error(fmt.Sprintf("could not delete bookmark because of error: %v", err))
+		return fmt.Errorf("error deleting bookmark: %v", err)
+	}
+	return nil
+}
+
 // UpdateSortOrder modifies the display sort-order
 func (s *Application) UpdateSortOrder(sort BookmarksSortOrder, user security.User) (int, error) {
 	if len(sort.IDs) != len(sort.SortOrder) {
@@ -379,8 +477,9 @@ func (s *Application) UpdateSortOrder(sort BookmarksSortOrder, user security.Use
 // UpdateBookmark a bookmark
 func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark, error) {
 	var (
-		id   string
-		item store.Bookmark
+		id     string
+		item   store.Bookmark
+		fileID *string
 	)
 	if bm.Path == "" || bm.DisplayName == "" || bm.ID == "" {
 		s.Logger.Error("required fields of bookmarks missing")
@@ -406,6 +505,22 @@ func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark
 	} else {
 		// if no favicon change was found re-use the existing favicon
 		favicon = existing.Favicon
+	}
+
+	// if there is a new file during the update, process the new file
+	existingFile := bm.FileID
+	existingFileID := ""
+	if existing.FileID != nil {
+		existingFileID = *existing.FileID
+	}
+	if existingFile != "" && existingFile != existingFileID {
+		savedFileId, err := s.processFile(bm.FileID)
+		if err != nil {
+			return nil, err
+		}
+		fileID = &savedFileId
+	} else {
+		fileID = existing.FileID
 	}
 
 	s.Logger.Info(fmt.Sprintf("will try to update existing bookmark entry: '%s (%s)'", bm.DisplayName, bm.ID))
@@ -455,6 +570,7 @@ func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark
 			Favicon:            favicon,
 			Highlight:          bm.Highlight,
 			InvertFaviconColor: bm.InvertFaviconColor,
+			FileID:             fileID,
 		})
 		if err != nil {
 			s.Logger.Error(fmt.Sprintf("could not update bookmark: %v", err))
@@ -529,6 +645,7 @@ func (s *Application) UpdateBookmark(bm Bookmark, user security.User) (*Bookmark
 					Highlight:          updateBm.Highlight,
 					Favicon:            updateBm.Favicon,
 					InvertFaviconColor: updateBm.InvertFaviconColor,
+					FileID:             updateBm.FileID,
 				}); err != nil {
 					s.Logger.Error(fmt.Sprintf("cannot update bookmark path: %v", err))
 					return err
@@ -616,9 +733,15 @@ func (s *Application) GetBookmarkFavicon(bookmarkID string, user security.User) 
 		s.Logger.Error(fmt.Sprintf("could not find bookmark by id '%s': %v", bookmarkID, err))
 		return nil, app.ErrNotFound(fmt.Sprintf("could not find bookmark with ID '%s'", bookmarkID))
 	}
+
 	defaultFavicon := app.DefaultFavicon
-	if existing.Type == store.Folder {
+	switch existing.Type {
+	case store.Node:
+		defaultFavicon = app.DefaultFavicon
+	case store.Folder:
 		defaultFavicon = app.DefaultIconFolder
+	case store.FileItem:
+		defaultFavicon = app.DefaultIconFile
 	}
 
 	fi := ObjectInfo{
@@ -859,6 +982,8 @@ func (s *Application) WriteLocalFavicon(name, mimeType string, payload []byte) (
 	return &fi, nil
 }
 
+// ---- Internals ----
+
 func (s *Application) saveFavicon(providedID string) (string, error) {
 	faviconID := providedID
 
@@ -897,7 +1022,52 @@ func (s *Application) saveFavicon(providedID string) (string, error) {
 	return faviconID, nil
 }
 
-// ---- Internals ----
+func (s *Application) processFile(bookmarkFileID string) (string, error) {
+	var (
+		fileID string
+	)
+
+	if bookmarkFileID == "" {
+		return fileID, nil
+	}
+
+	// the file was upload before and we have a reference of the id
+	// we validate the existence of the ID and store the file.
+	upload, err := s.UploadSvc.Read(bookmarkFileID)
+	if err != nil {
+		s.Logger.Error(fmt.Sprintf("the given file is not available %v", err), logging.LogV("FileID", bookmarkFileID))
+		return "", fmt.Errorf("could not fetch the file identified by '%s'", bookmarkFileID)
+	}
+	err = s.FileStore.InUnitOfWork(func(repo store.FileRepository) error {
+		file, e := repo.Save(store.File{
+			Name:     upload.FileName,
+			MimeType: upload.MimeType,
+			FileObject: &store.FileObject{
+				Payload: upload.Payload,
+			},
+			Size: len(upload.Payload),
+		})
+		if e != nil {
+			return e
+		}
+		fileID = file.ID
+		s.Logger.Info("saved a new file", logging.LogV("ID", fileID))
+
+		e = s.UploadSvc.Delete(bookmarkFileID)
+		if e != nil {
+			// fail silently: it is not important for the overall logic, that
+			// the uploaded file is deleted.
+			s.Logger.Error(fmt.Sprintf("could not cleanup uploaded file; %v", err))
+		}
+		return nil
+	})
+	if err != nil {
+		s.Logger.Error(fmt.Sprintf("got an error while trying to store the file; %v", err))
+		return fileID, fmt.Errorf("could not store the specified file; %v", err)
+	}
+	return fileID, nil
+
+}
 
 func (s *Application) resize(content favicon.Content, x, y int) favicon.Content {
 	resized, err := favicon.ResizeImage(content, x, y)

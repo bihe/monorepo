@@ -16,6 +16,7 @@ type Bookmark struct {
 	Path               ValidatorInput
 	DisplayName        ValidatorInput
 	URL                ValidatorInput
+	File               FileValidatorInput
 	Type               bookmarks.NodeType
 	CustomFavicon      ValidatorInput
 	InvertFaviconColor bool
@@ -32,15 +33,35 @@ type ValidatorInput struct {
 	Message string
 }
 
+type FileValidatorInput struct {
+	FileName      string
+	UploadTokenID string
+	Valid         bool
+	Message       string
+}
+
 func nodeTypeInput(bm Bookmark, t bookmarks.NodeType) g.Node {
-	id_bookmark_type := "type_Bookmark"
-	bookmark_type := "Node"
-	label := "Bookmark"
-	if t == bookmarks.Folder {
+	var (
+		id_bookmark_type string
+		bookmark_type    string
+		label            string
+	)
+
+	switch t {
+	case bookmarks.Node:
+		id_bookmark_type = "type_Bookmark"
+		bookmark_type = "Node"
+		label = "Bookmark"
+	case bookmarks.Folder:
 		id_bookmark_type = "type_Folder"
 		bookmark_type = "Folder"
 		label = "Folder"
+	case bookmarks.FileItem:
+		id_bookmark_type = "type_File"
+		bookmark_type = "File"
+		label = "File"
 	}
+
 	var checked g.Node
 	if bm.Type == t {
 		checked = h.Checked()
@@ -50,6 +71,141 @@ func nodeTypeInput(bm Bookmark, t bookmarks.NodeType) g.Node {
 		h.Input(h.Class(common.ClassCond("form-check-input", "disable", bm.ID.Val != "-1")), h.Type("radio"), h.Name("bookmark_Type"), h.ID(id_bookmark_type), h.Value(bookmark_type), checked),
 		h.Label(h.Class(common.ClassCond("form-check-label", "disable", bm.ID.Val != "-1")), h.For(id_bookmark_type), g.Text(label)),
 	)
+}
+
+type FileContent struct {
+	UploadFileName string
+	UploadFileID   string
+	BookmarkID     string
+	FileName       string
+	FileID         string
+}
+
+func UploadWidget(hide bool, bm Bookmark) g.Node {
+	invalid := !bm.File.Valid
+
+	if bm.File.UploadTokenID != "" {
+		fileNode := h.Div(
+			h.Input(h.Type("hidden"), h.Name("bookmark_FileID"), h.Value(bm.File.UploadTokenID)),
+			h.Class(common.ClassCond("input-group mb-3", "d-none", hide)),
+			h.ID("file_section"),
+			h.Div(h.Class("container"),
+				h.Div(h.Class("row"),
+					h.Div(h.Class("col"),
+						h.Span(h.I(h.Class("bi bi-file-earmark")), g.Text(bm.File.FileName)),
+					),
+					h.Div(h.Class("col text-end"),
+						h.A(
+							h.I(h.Class("bi bi-trash-fill")),
+							g.Attr("hx-delete", "/bm/UploadFile/"+bm.File.UploadTokenID),
+							g.Attr("hx-trigger", "click"),
+							g.Attr("hx-target", "#file_section"),
+							g.Attr("hx-indicator", "#indicator"),
+							g.Attr("hx-swap", "outerHTML"),
+						),
+					),
+				),
+			),
+		)
+		return fileNode
+	}
+
+	if bm.File.FileName != "" {
+		fileNode := h.Div(
+			h.Input(h.Type("hidden"), h.Name("bookmark_FileName"), h.Value(bm.File.FileName)),
+			h.Class(common.ClassCond("input-group mb-3", "d-none", hide)),
+			h.ID("file_section"),
+			h.Div(h.Class("container"),
+				h.Div(h.Class("row"),
+					h.Div(h.Class("col"),
+						h.Span(h.I(h.Class("bi bi-file-earmark")),
+							h.A(
+								h.Href("/bm/GetBookmarkFile/"+bm.ID.Val),
+								h.Target("_blank"),
+								g.Text(bm.File.FileName),
+							),
+						),
+					),
+					h.Div(h.Class("col text-end"),
+						h.A(
+							h.I(h.Class("bi bi-trash-fill")),
+							g.Attr("hx-delete", "/bm/DeleteBookmarkFile/"+bm.ID.Val),
+							g.Attr("hx-trigger", "click"),
+							g.Attr("hx-target", "#file_section"),
+							g.Attr("hx-indicator", "#indicator"),
+							g.Attr("hx-swap", "outerHTML"),
+						),
+					),
+				),
+			),
+		)
+		return fileNode
+	}
+
+	uploadNode := h.Div(h.Class(common.ClassCond("input-group mb-3", "d-none", hide)), h.ID("file_section"),
+		h.Input(
+			h.Type("file"),
+			h.Class(common.ClassCond("form-control", "control_invalid", invalid)),
+			h.ID("bookmark_file"),
+			h.Name("bookmark_fileUpload"),
+			h.Accept("image/*,.png,.jpeg,.jpg,.gif,.svg,application/pdf"),
+		),
+		h.Button(
+			h.Type("button"),
+			h.ID("btnUploadBookmarkFile"),
+			h.Class("btn btn-outline-secondary"),
+			g.Attr("hx-post", "/bm/UploadFile"),
+			g.Attr("hx-encoding", "multipart/form-data"),
+			g.Attr("hx-trigger", "click"),
+			g.Attr("hx-target", "#file_section"),
+			g.Attr("hx-params", "bookmark_fileUpload"),
+			g.Attr("hx-indicator", "#indicator"),
+			g.Attr("hx-swap", "outerHTML"),
+			h.I(h.Class("bi bi-upload")),
+		),
+	)
+	return uploadNode
+}
+
+func urlFileElements(bm Bookmark) g.Node {
+	nodes := make([]g.Node, 0)
+	showURL := false
+	showFile := false
+
+	switch bm.Type {
+	case bookmarks.Node:
+		showURL = true
+		showFile = false
+	case bookmarks.FileItem:
+		showURL = false
+		showFile = true
+	case bookmarks.Folder:
+		showURL = false
+		showFile = false
+	}
+
+	urlNode := h.Div(h.Class(common.ClassCond("input-group mb-3", "d-none", !showURL)), h.ID("url_section"),
+		h.Span(h.Class("input-group-text"), h.ID("url"), h.I(h.Class("bi bi-link-45deg"))),
+		h.Input(h.Type("text"), h.ID("bookmark_URL"), h.Class(common.ClassCond("form-control", "control_invalid", !bm.URL.Valid)), h.Placeholder("URL"), h.Name("bookmark_URL"), h.Value(bm.URL.Val)),
+		h.Button(
+			h.Type("button"),
+			h.Class("btn btn-outline-secondary"),
+			g.Attr("hx-post", "/bm/favicon/page"),
+			g.Attr("hx-trigger", "click"),
+			g.Attr("hx-target", "#bookmark_favicon_display"),
+			g.Attr("hx-params", "bookmark_URL"),
+			g.Attr("hx-swap", "outerHTML"),
+			g.Attr("hx-indicator", "#indicator"),
+			h.I(h.Class("bi bi-arrow-clockwise")),
+		),
+	)
+	fileNode := UploadWidget(!showFile, bm)
+
+	nodes = append(nodes, fileNode)
+	nodes = append(nodes, urlNode)
+
+	return g.Group(nodes)
+
 }
 
 func selected(condition bool) g.Node {
@@ -105,6 +261,7 @@ func EditBookmarks(bm Bookmark, paths []string) g.Node {
 			h.Input(h.Type("hidden"), h.Name("bookmark_ID"), h.Value(bm.ID.Val)),
 			h.Div(h.Class("modal-body"),
 				nodeTypeInput(bm, bookmarks.Node),
+				nodeTypeInput(bm, bookmarks.FileItem),
 				nodeTypeInput(bm, bookmarks.Folder),
 				h.Div(h.Class("spacer")),
 				h.Div(h.Class("flex_layout"),
@@ -115,23 +272,7 @@ func EditBookmarks(bm Bookmark, paths []string) g.Node {
 						h.Label(h.For("bookmark_DisplayName"), g.Text("Displayname")),
 					),
 				),
-				g.If(bm.Type == bookmarks.Node,
-					h.Div(h.Class("input-group mb-3"), h.ID("url_section"),
-						h.Span(h.Class("input-group-text"), h.ID("url"), h.I(h.Class("bi bi-link-45deg"))),
-						h.Input(h.Type("text"), h.ID("bookmark_URL"), h.Class(common.ClassCond("form-control", "control_invalid", !bm.URL.Valid)), h.Placeholder("URL"), h.Name("bookmark_URL"), h.Value(bm.URL.Val)),
-						h.Button(
-							h.Type("button"),
-							h.Class("btn btn-outline-secondary"),
-							g.Attr("hx-post", "/bm/favicon/page"),
-							g.Attr("hx-trigger", "click"),
-							g.Attr("hx-target", "#bookmark_favicon_display"),
-							g.Attr("hx-params", "bookmark_URL"),
-							g.Attr("hx-swap", "outerHTML"),
-							g.Attr("hx-indicator", "#indicator"),
-							h.I(h.Class("bi bi-arrow-clockwise")),
-						),
-					),
-				),
+				urlFileElements(bm),
 				h.Div(h.Class("form-floating mb-3"),
 					h.Select(h.Class("form-select"), h.ID("bookmark_Path"), h.Name("bookmark_Path"), h.Required(),
 						g.If(bm.ID.Val != "-1",
@@ -219,7 +360,7 @@ func EditBookmarks(bm Bookmark, paths []string) g.Node {
 					h.ID("btn-bookmark-save"),
 					h.Type("button"),
 					h.Class("btn btn-success"),
-					g.Attr("hx-post", "/bm"),
+					g.Attr("hx-post", "/bm/SaveBookmark"),
 					g.Attr("hx-target", "#bookmark_edit_dialog"),
 					g.Text("Save"),
 				),

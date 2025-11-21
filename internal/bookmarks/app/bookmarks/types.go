@@ -19,6 +19,8 @@ const (
 	Node NodeType = "Node"
 	// Folder is used to group nodes
 	Folder NodeType = "Folder"
+	// File is similar to node but has a binary payload
+	FileItem NodeType = "File"
 )
 
 // Bookmark is the model provided via the REST API
@@ -35,6 +37,17 @@ type Bookmark struct {
 	Highlight          int        `json:"highlight"`
 	Favicon            string     `json:"favicon"`
 	InvertFaviconColor int        `json:"invertFaviconColor"`
+	FileID             string     `json:"file,omitempty"`
+	FileMeta           *FileMeta  `json:"file_meta,omitempty"`
+}
+
+// A FileMeta represents a saved file used with a bookmark
+type FileMeta struct {
+	ID       string    `json:"id,omitempty"`
+	Name     string    `json:"name,omitempty"`
+	MimeType string    `json:"mime_type,omitempty"`
+	Size     int       `json:"size,omitempty"`
+	Modified time.Time `json:"modified,omitempty"`
 }
 
 // TStamp returns either the modified or created timestamp of the bookmark as unix time
@@ -65,6 +78,22 @@ type ObjectInfo struct {
 // --------------------------------------------------------------------------
 
 func entityToModel(b store.Bookmark) *Bookmark {
+	var (
+		fileID   string
+		fileMeta *FileMeta
+	)
+	if b.FileID != nil {
+		fileID = *b.FileID
+	}
+	if b.File != nil {
+		file := FileMeta{
+			ID:       b.File.ID,
+			Name:     b.File.Name,
+			MimeType: b.File.MimeType,
+			Size:     b.File.Size,
+		}
+		fileMeta = &file
+	}
 	return &Bookmark{
 		ID:                 b.ID,
 		DisplayName:        b.DisplayName,
@@ -78,6 +107,8 @@ func entityToModel(b store.Bookmark) *Bookmark {
 		ChildCount:         b.ChildCount,
 		Favicon:            b.Favicon,
 		InvertFaviconColor: b.InvertFaviconColor,
+		FileID:             fileID,
+		FileMeta:           fileMeta,
 	}
 }
 
@@ -90,8 +121,15 @@ func entityListToModel(bms []store.Bookmark) []Bookmark {
 }
 
 func entityEnumToModel(t store.NodeType) NodeType {
-	if t == store.Folder {
-		return Folder
+	var nodeType NodeType
+
+	switch t {
+	case store.Node:
+		nodeType = Node
+	case store.Folder:
+		nodeType = Folder
+	case store.FileItem:
+		nodeType = FileItem
 	}
-	return Node
+	return nodeType
 }

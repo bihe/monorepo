@@ -7,3 +7,6 @@ var DefaultFavicon []byte
 
 //go:embed folder.svg
 var DefaultIconFolder []byte
+
+//go:embed file.svg
+var DefaultIconFile []byte

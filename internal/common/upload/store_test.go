@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"golang.binggl.net/monorepo/internal/mydms/app/upload"
+	"golang.binggl.net/monorepo/internal/common/upload"
 )
 
 func TestStore_Write_Read_Delete(t *testing.T) {

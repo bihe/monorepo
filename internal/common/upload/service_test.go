@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"golang.binggl.net/monorepo/internal/common/crypter"
-	"golang.binggl.net/monorepo/internal/mydms/app/upload"
+	"golang.binggl.net/monorepo/internal/common/upload"
 	"golang.binggl.net/monorepo/pkg/logging"
 
 	"github.com/stretchr/testify/assert"
@@ -16,7 +16,7 @@ import (
 
 var logger = logging.NewNop()
 
-const unencryptedPDF = "../../../../testdata/unencrypted.pdf"
+const unencryptedPDF = "../../../testdata/unencrypted.pdf"
 
 // --------------------------------------------------------------------------
 

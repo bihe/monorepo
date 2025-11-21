@@ -74,11 +74,11 @@ go-clean:
 go-update:
 	@echo "  >  Go update dependencies ..."
 	go get -u -t ./...
-	go mod tidy -compat=1.24
+	go mod tidy -compat=1.25
 
 go-build:
 	@echo "  >  Building the monorepo ..."
-	go build ./...
+	go tool templ generate && go build ./...
 
 go-test:
 	@echo "  >  Testing the monorepo ..."

@@ -73,8 +73,12 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 		r.Put("/toast", templateHandler.DisplayToastNotification())
 		r.Post("/sort", templateHandler.SortBookmarks())
 		r.Get("/{id}", templateHandler.EditBookmarkDialog())
+		r.Post("/UploadFile", templateHandler.UploadFile())
+		r.Delete("/UploadFile/{id}", templateHandler.UploadFile())
+		r.Post("/SaveBookmark", templateHandler.SaveBookmark())
+		r.Get("/GetBookmarkFile/{id}", templateHandler.GetBookmarkFile())
+		r.Delete("/DeleteBookmarkFile/{id}", templateHandler.DeleteBookmarkFile())
 		r.Get("/", templateHandler.GetBookmarksForPath())
-		r.Post("/", templateHandler.SaveBookmark())
 		return r
 	}())
 

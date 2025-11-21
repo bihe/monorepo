@@ -23,7 +23,7 @@ COPY ./assets ./assets
 
 ##
 ## go build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} go build -ldflags="-s -w -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o bookmarks.api ./cmd/bookmarks/server/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} go tool templ generate && go build -ldflags="-s -w -X main.Version=${TSTAMP} -X main.Build=${COMMIT}" -o bookmarks.api ./cmd/bookmarks/server/main.go
 
 ## --------------------------------------------------------------------------
 

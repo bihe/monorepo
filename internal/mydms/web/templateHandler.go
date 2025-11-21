@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"golang.binggl.net/monorepo/internal/common"
+	"golang.binggl.net/monorepo/internal/common/upload"
 	"golang.binggl.net/monorepo/internal/mydms/app/document"
-	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	"golang.binggl.net/monorepo/internal/mydms/html"
 	"golang.binggl.net/monorepo/pkg/handler"
 	base "golang.binggl.net/monorepo/pkg/handler/html"

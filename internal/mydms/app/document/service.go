@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/microcosm-cc/bluemonday"
+	"golang.binggl.net/monorepo/internal/common/upload"
 	"golang.binggl.net/monorepo/internal/mydms/app/filestore"
 	"golang.binggl.net/monorepo/internal/mydms/app/shared"
-	"golang.binggl.net/monorepo/internal/mydms/app/upload"
 	"golang.binggl.net/monorepo/pkg/logging"
 	"golang.binggl.net/monorepo/pkg/security"
 	"golang.binggl.net/monorepo/pkg/text"

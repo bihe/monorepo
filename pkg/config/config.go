@@ -14,15 +14,23 @@ const (
 
 // BaseConfig holds the application configuration
 type BaseConfig struct {
-	Security    Security
-	Logging     LogConfig
-	Cors        CorsSettings
-	Environment Environment
-	Cookies     ApplicationCookies
-	Assets      AssetSettings
-	AppName     string
-	HostID      string
-	ErrorPath   string
+	Security     Security
+	Logging      LogConfig
+	Cors         CorsSettings
+	Environment  Environment
+	Cookies      ApplicationCookies
+	Assets       AssetSettings
+	AppName      string
+	HostID       string
+	ErrorPath    string
+	Applications []Application
+}
+
+// Application defines available apps used to dynamically build up the navigation
+type Application struct {
+	DisplayName string
+	Icon        string
+	URL         string
 }
 
 // Security settings for the application

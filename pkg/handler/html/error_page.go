@@ -33,7 +33,10 @@ func ErrorPage404(basePath string, env config.Environment, commit string) g.Node
 }
 
 // ErrorPage403 is used to indicate that the request lacks the necessary authorization to access the resource
-func ErrorPage403(basePath string, env config.Environment, commit string) g.Node {
+func ErrorPage403(basePath string, env config.Environment, commit string, redirectURL string) g.Node {
+	if redirectURL == "" {
+		redirectURL = "https://one.binggl.net/oidc/start"
+	}
 	body := h.Div(
 		h.Class("container"),
 		h.Div(
@@ -42,7 +45,7 @@ func ErrorPage403(basePath string, env config.Environment, commit string) g.Node
 			h.H2(g.Text("Access denied")),
 			h.P(g.Text("You are not logged in or you do not have permission to access this page!")),
 			h.A(
-				h.ID("link-oidc-start"), h.Href("https://one.binggl.net/oidc/start"),
+				h.ID("link-oidc-start"), h.Href(redirectURL),
 				h.Button(h.Type("button"), h.Class("btn btn-lg btn-warning"), g.Text("Login to access the page")),
 			),
 			g.If(env == config.Development, h.Div(

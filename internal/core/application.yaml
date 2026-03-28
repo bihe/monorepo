@@ -5,6 +5,19 @@ baseconfig:
     hostID: localhost-dev
     environment: Development
     errorPath: /error
+    applications:
+        - displayName: "Bookmarks"
+          icon: '<i class="bi bi-bookmark-star"></i> '
+          url: "/bm"
+        - displayName: "Documents"
+          icon: '<i class="bi bi-file-earmark-pdf"></i> '
+          url: "/mydms"
+        - displayName: "[Sites]"
+          icon: '<i class="bi bi-diagram-2"></i> '
+          url: "/sites"
+        - displayName: "[Encryption]"
+          icon: '<i class="bi bi-file-lock"></i> '
+          url: "/crypter"
 
     # allow cross-origin requests
     cors:

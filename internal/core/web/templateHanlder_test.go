@@ -39,6 +39,7 @@ var _ oidc.Service = &mockOIDCService{}
 
 func templateHandler(siteSvc sites.Service) http.Handler {
 	crypterSvc := crypter.NewService(logger)
+
 	return core.MakeHTTPHandler(&mockOIDCService{}, siteSvc, crypterSvc, logger, core.HTTPHandlerOptions{
 		BasePath:  "./",
 		ErrorPath: "/error",

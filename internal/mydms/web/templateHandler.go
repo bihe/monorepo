@@ -26,17 +26,26 @@ import (
 // As additional benefit the build should be faster, because the nodejs build can be removed
 type TemplateHandler struct {
 	*handler.TemplateHandler
-	DocSvc        document.Service
-	UploadSvc     upload.Service
-	Version       string
-	Build         string
-	MaxUploadSize int64
+	DocSvc           document.Service
+	UploadSvc        upload.Service
+	Version          string
+	Build            string
+	MaxUploadSize    int64
+	LoginRedirectURL string
 }
 
 const defaultPageSize = 20
 const searchParam = "q"
 const skipParam = "skip"
 const searchURL = "mydms"
+
+// Show403 displays a page which indicates that the given user has no access to the system
+func (t *TemplateHandler) Show403() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+		base.ErrorPage403(t.BasePath, t.Env, t.Commit, t.LoginRedirectURL).Render(w)
+	}
+}
 
 // DisplayDocuments shows the available documents for the given user
 func (t *TemplateHandler) DisplayDocuments() http.HandlerFunc {
@@ -402,7 +411,7 @@ func (t *TemplateHandler) DeleteDocument() http.HandlerFunc {
 // --------------------------------------------------------------------------
 
 func (t *TemplateHandler) pageModel(pageTitle, searchStr, favicon string, user security.User) base.LayoutModel {
-	return common.CreatePageModel("/"+searchURL, pageTitle, searchStr, favicon, t.Version, t.Build, t.Env, user)
+	return common.CreatePageModel("/"+searchURL, pageTitle, searchStr, favicon, t.Version, t.Build, t.Env, user, t.Applications)
 }
 
 func ensureUser(r *http.Request) *security.User {

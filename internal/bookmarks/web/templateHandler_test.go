@@ -49,6 +49,7 @@ func bookmarkHandler(bRepo store.BookmarkRepository, fRepo store.FaviconReposito
 			FaviconPath:   "/tmp",
 		},
 	}
+
 	return bm.MakeHTTPHandler(ops.app, logger, bm.HTTPHandlerOptions{
 		BasePath:  "./",
 		ErrorPath: "/error",
@@ -72,6 +73,28 @@ func bookmarkHandler(bRepo store.BookmarkRepository, fRepo store.FaviconReposito
 				Assets: config.AssetSettings{
 					AssetDir:    "./",
 					AssetPrefix: "/static",
+				},
+				Applications: []config.Application{
+					{
+						DisplayName: "Bookmarks",
+						Icon:        "",
+						URL:         "/bm",
+					},
+					{
+						DisplayName: "Documents",
+						Icon:        "",
+						URL:         "/mydms",
+					},
+					{
+						DisplayName: "Sites",
+						Icon:        "",
+						URL:         "/sites",
+					},
+					{
+						DisplayName: "Encryption",
+						Icon:        "",
+						URL:         "/crypter",
+					},
 				},
 			},
 		},

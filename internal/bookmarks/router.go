@@ -29,11 +29,12 @@ func MakeHTTPHandler(app *bookmarks.Application, logger logging.Logger, opts HTT
 
 	templateHandler := &web.TemplateHandler{
 		TemplateHandler: &handler.TemplateHandler{
-			Logger:    logger,
-			Env:       opts.Config.Environment,
-			Commit:    opts.Build,
-			BasePath:  "/public",
-			StartPage: "/bm",
+			Logger:       logger,
+			Env:          opts.Config.Environment,
+			Commit:       opts.Build,
+			BasePath:     "/public",
+			StartPage:    "/bm",
+			Applications: opts.Config.Applications,
 		},
 		App:     app,
 		Version: opts.Version,

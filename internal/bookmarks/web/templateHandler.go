@@ -33,7 +33,17 @@ type triggerDef struct {
 const htmxHeaderTrigger = "HX-Trigger"
 
 func (t *TemplateHandler) pageModel(pageTitle, searchStr, favicon string, user security.User) base.LayoutModel {
-	return common.CreatePageModel("/bm", pageTitle, searchStr, favicon, t.Version, t.Build, t.Env, user)
+	return common.CreatePageModel(
+		"/bm",
+		pageTitle,
+		searchStr,
+		favicon,
+		t.Version,
+		t.Build,
+		t.Env,
+		user,
+		t.Applications,
+	)
 }
 
 func queryParam(r *http.Request, name string) string {

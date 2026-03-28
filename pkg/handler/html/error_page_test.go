@@ -25,7 +25,7 @@ func Test404ErrorPage(t *testing.T) {
 
 func Test403ErrorPage(t *testing.T) {
 	var outBuffer bytes.Buffer
-	page := html.ErrorPage403("--basepath--", config.Development, "dev")
+	page := html.ErrorPage403("--basepath--", config.Development, "dev", "")
 	if err := page.Render(&outBuffer); err != nil {
 		t.Error(err)
 	}
@@ -43,7 +43,7 @@ func Test403ErrorPage(t *testing.T) {
 
 	// try with different environment
 	outBuffer.Reset()
-	html.ErrorPage403("--basepath--", config.Integration, "dev").Render(&outBuffer)
+	html.ErrorPage403("--basepath--", config.Integration, "dev", "").Render(&outBuffer)
 	output = outBuffer.String()
 	if !strings.Contains(output, "Generate development token") {
 		t.Errorf("the Development env should have a button with the text '%s'", "Generate development token")

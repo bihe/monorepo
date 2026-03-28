@@ -29,7 +29,9 @@ func (t *TemplateHandler) DisplaySites() http.HandlerFunc {
 		}
 
 		base.Layout(
-			common.CreatePageModel(sitesBaseURL, "Available Apps", search, sitesFavicon, t.Version, t.Build, t.Env, *user),
+			common.CreatePageModel(sitesBaseURL, "Available Apps",
+				search, sitesFavicon, t.Version, t.Build, t.Env, *user, t.Applications,
+			),
 			html.SiteStyles(),
 			html.SiteNavigation(search),
 			html.SiteContent(usrSites),
@@ -53,7 +55,8 @@ func (t *TemplateHandler) ShowEditSites() http.HandlerFunc {
 		jsonPayload := handler.JsonIndent[sites.UserSites](usrSites)
 
 		base.Layout(
-			common.CreatePageModel(sitesBaseURL, "Edit Apps", search, sitesFavicon, t.Version, t.Build, t.Env, *user),
+			common.CreatePageModel(sitesBaseURL, "Edit Apps",
+				search, sitesFavicon, t.Version, t.Build, t.Env, *user, t.Applications),
 			html.SiteEditStyles(),
 			html.SiteEditNavigation(search),
 			html.SiteEditContent(jsonPayload, ""),

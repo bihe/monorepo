@@ -25,7 +25,8 @@ func (t *TemplateHandler) DisplayCrypterStartPage() http.HandlerFunc {
 			OutputText: html.ValidatorInput{Valid: true},
 		}
 		base.Layout(
-			common.CreatePageModel("/crypter", "helpers to work with encryption/decryption", search, "/public/crypter.svg", t.Version, t.Build, t.Env, *user),
+			common.CreatePageModel("/crypter", "helpers to work with encryption/decryption",
+				search, "/public/crypter.svg", t.Version, t.Build, t.Env, *user, t.Applications),
 			html.CrypterStyle(),
 			html.CrypterNavigation(search),
 			html.CrypterContent(model),

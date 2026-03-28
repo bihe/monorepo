@@ -9,7 +9,6 @@ on:
         options:
           - bookmarks
           - core
-          - mydms
           - frontend
           - litestream
         required: true
@@ -91,23 +90,6 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/core:latest
             ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/core:${{ env.GIT_HASH }}
-
-      # ---------------------------------------------------------------------
-
-      - name: "Build :: mydms"
-        if: github.event.inputs.imageName == 'mydms'
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: mydms.Dockerfile
-          build-args: |
-            buildtime_variable_version=${{ env.BUILD_ID }}
-            buildtime_variable_timestamp=${{ env.BUILD_DATE }}
-            buildtime_variable_commit=${{ env.GIT_HASH }}
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/mydms:latest
-            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/mydms:${{ env.GIT_HASH }}
 
       # ---------------------------------------------------------------------
 

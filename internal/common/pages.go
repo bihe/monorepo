@@ -10,40 +10,25 @@ import (
 	h "maragu.dev/gomponents/html"
 )
 
-// AvailableApps statically defines the available Applications/Navigation-Pages
-var AvailableApps = []html.NavItem{
-	{
-		DisplayName: "Bookmarks",
-		Icon:        "<i class=\"bi bi-bookmark-star\"></i> ",
-		URL:         "/bm",
-	},
-	{
-		DisplayName: "Documents",
-		Icon:        "<i class=\"bi bi-file-earmark-pdf\"></i> ",
-		URL:         "/mydms",
-	},
-	{
-		DisplayName: "Sites",
-		Icon:        "<i class=\"bi bi-diagram-2\"></i> ",
-		URL:         "/sites",
-	},
-	{
-		DisplayName: "Encryption",
-		Icon:        "<i class=\"bi bi-file-lock\"></i> ",
-		URL:         "/crypter",
-	},
-}
-
 // CreatePageModel provides the needed data for a page using the shared Layout
-func CreatePageModel(pageURL, pageTitle, search, favicon, timeStamp, commit string, env config.Environment, user security.User) html.LayoutModel {
+func CreatePageModel(pageURL, pageTitle, search, favicon, timeStamp, commit string, env config.Environment, user security.User, applications []config.Application) html.LayoutModel {
 	appNav := make([]html.NavItem, 0)
-	var title string
-	for _, a := range AvailableApps {
+	var (
+		title  string
+		active bool
+	)
+	for _, a := range applications {
+		active = false
 		if a.URL == pageURL {
-			a.Active = true
+			active = true
 			title = a.DisplayName
 		}
-		appNav = append(appNav, html.NavItem{DisplayName: a.DisplayName, Icon: a.Icon, URL: a.URL, Active: a.Active})
+		appNav = append(appNav, html.NavItem{
+			DisplayName: a.DisplayName,
+			Icon:        a.Icon,
+			URL:         a.URL,
+			Active:      active,
+		})
 	}
 	if pageTitle == "" {
 		pageTitle = title

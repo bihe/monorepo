@@ -12,18 +12,19 @@ import (
 
 // TemplateHandler provides some basics for HTML template based handlers
 type TemplateHandler struct {
-	Logger    logging.Logger
-	Env       config.Environment
-	Commit    string
-	BasePath  string
-	StartPage string
+	Logger       logging.Logger
+	Env          config.Environment
+	Commit       string
+	BasePath     string
+	StartPage    string
+	Applications []config.Application
 }
 
 // Show403 displays a page which indicates that the given user has no access to the system
 func (t *TemplateHandler) Show403() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
-		html.ErrorPage403(t.BasePath, t.Env, t.Commit).Render(w)
+		html.ErrorPage403(t.BasePath, t.Env, t.Commit, "").Render(w)
 	}
 }
 

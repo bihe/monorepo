@@ -8,6 +8,8 @@
 
 set -e
 
+filesize() { if [[ "$(uname)" == "Darwin" ]]; then stat -f%z "$1"; else stat -c%s "$1"; fi; }
+
 ASSETS_DIR="."
 DIST_DIR="bundle"
 TEMP_BUNDLE="temp_bundle.js"
@@ -139,5 +141,5 @@ echo "✅ Gzip version: $GZIP_FILE"
 echo "📁 Original size: $(du -h "$OUTPUT_FILE" | cut -f1)"
 echo "📁 Gzip size: $(du -h "$GZIP_FILE" | cut -f1)"
 echo "🔧 Minifier used: $MINIFIER"
-echo "📊 Compression ratio: $(echo "scale=1; $(stat -f%z "$GZIP_FILE") * 100 / $(stat -f%z "$OUTPUT_FILE")" | bc)%"
+echo "📊 Compression ratio: $(echo "scale=1; $(filesize "$GZIP_FILE") * 100 / $(filesize "$OUTPUT_FILE")" | bc)%"
 echo "🔗 Use in HTML: <script src=\"./bundle/$BUNDLE_ID.js\"></script>"

@@ -34,17 +34,19 @@ func MakeHTTPHandler(docSvc document.Service, uploadSvc upload.Service, fileSvc 
 
 	templateHandler := &web.TemplateHandler{
 		TemplateHandler: &handler.TemplateHandler{
-			Logger:    logger,
-			Env:       opts.Config.Environment,
-			Commit:    opts.Build,
-			BasePath:  "/public",
-			StartPage: "/mydms",
+			Logger:       logger,
+			Env:          opts.Config.Environment,
+			Commit:       opts.Build,
+			BasePath:     "/public",
+			StartPage:    "/mydms",
+			Applications: opts.Config.Applications,
 		},
-		DocSvc:        docSvc,
-		UploadSvc:     uploadSvc,
-		Version:       opts.Version,
-		Build:         opts.Build,
-		MaxUploadSize: opts.Config.Upload.MaxUploadSize,
+		DocSvc:           docSvc,
+		UploadSvc:        uploadSvc,
+		Version:          opts.Version,
+		Build:            opts.Build,
+		MaxUploadSize:    opts.Config.Upload.MaxUploadSize,
+		LoginRedirectURL: opts.Config.Security.LoginRedirect,
 	}
 
 	fileHandler := &web.FileHandler{

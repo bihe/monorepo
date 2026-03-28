@@ -62,6 +62,10 @@ integration-test: ## run the integration test with playwright. NOTE: the compose
 
 # internal tasks
 
+setup:
+	mkdir -p ./dist/linux/amd64
+	mkdir -p ./dist/linux/arm64
+
 go-clean:
 	@echo "  >  Cleaning build cache"
 	go clean ./...
@@ -70,15 +74,20 @@ go-clean:
 	rm -f ./dist/login.api
 	rm -f ./dist/mydms.api
 	rm -f ./dist/bookmarks.api
+	rm -rf ./dist
 
 go-update:
 	@echo "  >  Go update dependencies ..."
 	go get -u -t ./...
 	go mod tidy -compat=1.25
 
-go-build:
+go-build: setup
 	@echo "  >  Building the monorepo ..."
 	go tool templ generate && go build ./...
+	@echo "  >  Build mydms for both amd64 and arm64"
+	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -ldflags="-w -s -X main.Version=${BUILD} -X main.Build=${COMMIT}" -o ./dist/linux/amd64/mydms ./cmd/mydms/server/main.go
+	CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build -ldflags="-w -s -X main.Version=${BUILD} -X main.Build=${COMMIT}" -o ./dist/linux/arm64/mydms ./cmd/mydms/server/main.go
+
 
 go-test:
 	@echo "  >  Testing the monorepo ..."

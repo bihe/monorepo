@@ -9,6 +9,7 @@ if [ -z "$mode" ]; then
   exit 1
 fi
 
+. .env
 
 if [ ! -e "./litestream" ]; then
   # get litestream binary
@@ -25,7 +26,10 @@ if [ -d "./${mode}" ]; then
   mkdir ./${mode}
 fi
 
-. ./.env
+if [ -d "./offline" ]; then
+  rm -rf ./offline
+  mkdir ./offline
+fi
 
 if [[ -z "${LITESTREAM_ACCESS_KEY_ID}" ]]; then
   echo "LITESTREAM_ACCESS_KEY_ID is required"
@@ -45,8 +49,9 @@ echo "will restore from s3 ..."
 echo $CORE_REPLICA_URL
 echo $BOOKMARKS_REPLICA_URL
 echo $MYDMS_REPLICA_URL
+echo $MYDMS_OFFLINE_REPLICA_URL
 
 ./litestream restore -o ./${mode}/core.db $CORE_REPLICA_URL
 ./litestream restore -o ./${mode}/bookmarks.db $BOOKMARKS_REPLICA_URL
 ./litestream restore -o ./${mode}/mydms.db $MYDMS_REPLICA_URL
-
+./litestream restore -o ./offline/mydms.db $MYDMS_OFFLINE_REPLICA_URL
